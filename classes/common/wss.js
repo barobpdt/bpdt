@@ -48,7 +48,7 @@
 			line0.incr();
 		} else {
 			config.errorCode="400"
-			print("웹소켓 헤더오류 ",config.recvRemainSize );
+			print("웹소켓 헤더오류 ", line0, line1 );
 			return
 		}
 		type		= line0.findPos('::').trim();
@@ -60,18 +60,13 @@
 		
 		print("@@ 웹소켓 메시지처리 시작 $type ==>  $header", data.size(), size, contentType )
 		if( size > data.size() ) {
-			/*
 			config.recvRemainSize = size - data.size();
 			config.recvData=data;
 			config.with(type, header, contentType)
-			return;
-			*/
 			print("@@ 소켓 요청 크기오류 [$type : $header]", type, header, contentType, size, config.recvRemainSize);
+			return;
 		}
-		this.socketMessageApply(client, type, header, contentType, data, info)
-	}
-	socketMessageApply(client, type, &header, contentType, &data, &info) {
-		print("socketMessageApply", type, header, data.size() )	
+		
 		if(type.start('req_')) {
 			requestType = type
 		} else {
@@ -85,7 +80,7 @@
 			param =_node()
 			param.parseJson(data)
 		}
-		print("@@ socketMessageApply", type, requestType, fc )	
+		print("@@ 웹소켓 메시지처리 정보", type, requestType, fc )	
 		if(typeof(fc,'func')) {
 			arr = args().reuse()
 			arr.add(client, requestType, header, resultInfo, resultContentType, data, param )
@@ -104,6 +99,15 @@
 		size=responseData.size();
 		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	}
+	req_chunkFileUpload(client, requestType, &header, resultInfo, resultContentType, data, param) {
+		type='res_imageSend'
+		errorCode = 200
+		resultContentType='file'
+		responseData="data/clipboard_captures/$header"
+		size=responseData.size();
+		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
+	}
+	
 	req_login(client, requestType, &header, resultInfo, resultContentType, data, param) {
 		type='res_login'
 		resultContentType='text'
@@ -137,19 +141,7 @@
 		size=responseData.size();
 		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	}
-	req_chunkFileUpload(client, requestType, &header, resultInfo, resultContentType, data, param) {
-		type='res_imageSend'
-		errorCode = 200
-		user=header.findPos("/").trim()
-		name=header.trim()
-		savePath="data/clipboard_captures/$name";
-		fileWrite(savePath, data);
-		resultContentType='file'
-		responseData=savePath
-		size=responseData.size();
-		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	
-	}
 	apiService(service, &uri, param, buffer) {
 		return was().service(service, &uri, param, buffer)
 	}
