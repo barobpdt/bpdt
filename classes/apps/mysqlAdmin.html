@@ -1,0 +1,1097 @@
+<widgets base="mysqlAdmin">
+	<page id="main" margin=0 title="mysql DB관리툴">
+		<canvas id="topTitle" height="25">
+		<splitter>
+	</page>
+	
+	/* #1 splitter 페이지 정보 */
+	<page id="leftPanel" margin="0">
+		<tab id="leftTab">
+	</page>
+	
+	<page id="contentPanel" margin="0">
+		<canvas id="title" height="28">
+		<div id="div">
+	</page> 
+	
+	/* ## leftPanel 페이지 정보 */
+	<page id="dbTableInfo">
+		<canvas id="form">
+	</page>
+	
+	<page id="dbApiInfo">
+		<canvas id="form">
+	</page>	
+	
+	<page id="appLangInfo" title="다국어관리 기능구현">
+		<canvas id="form">
+	</page>	
+</widgets>
+
+<script module="main">
+	init() {
+		@topTitle=widget('topTitle')
+		@splitter=widget('splitter')
+		@left=page('leftPanel')
+		@tab=widget(leftPanel, 'leftTab')
+		@dbTableInfo=page('dbTableInfo')
+		@dbApiInfo=page('dbApiInfo') 
+		
+		addModule(widget(dbTableInfo,'form'), 'dbTableForm')
+		
+		
+		@dbApiForm=dbApiInfo.getWidget('form') class(dbApiForm)
+		@content=page('contentPanel')
+		@contentDiv=content.get('div')
+		@page.spacing(content,0)
+		splitter.addPage(left)
+		splitter.addPage(content) 
+		this.timer(250)
+	}
+	initPage() {
+		@page.spacing(0)
+		this.positionLoad()
+		this.open() 
+		this.startFlag=false
+		this.startTick=System.tick()
+		dbTableInfo.child(0).margin(0,2,2,0)
+		dbApiInfo.child(0).margin(0,2,2,0)
+		total=splitter.sizes().sum()
+		splitter.sizes(recalc(total, '3,7')) 
+		splitter.stretchFactor(1)
+		topTitle.setEvent('onDraw', this, this.drawTopTitle)
+		this.setEvent('onKeyDown', this.keydown)
+		this.initData()
+		this.initLeftPanel()
+		this.initContent()
+	}
+	initData() {
+		_node('dbTableFilter.comboData').with([
+			{ code:all, 	value:전체 }
+			{ code:table, 	value:테이블명 }
+			{ code:comment,	value:설명 }
+			{ code:column, 	value:컬럼명 }
+		]) 
+	}
+	onTimer() { 
+		if( this.firstCall ) {
+			this.firstCall=false
+			this.initPage()
+		}
+		tree=this.var(filterChangeTree)
+		if( tree ) {
+			 dist=System.tick() - tree.var(filterChangeTick);
+			 if( dist>600 ) {			 	 
+				this.var(filterChangeTree, null)
+				tree.var(filterChangeTick, System.tick() )
+				tree.update()
+			 }
+		}
+		if( this.var(logMessageTick) ) {
+			dist=System.tick() - this.var(logMessageTick);
+			if(dist>2000) {
+				this.var(logMessage, null)
+				this.var(logMessageTick, 0)
+				topTitle.redraw()
+			}
+		} else if( this.var(logMessage) ) {
+			this.var(logMessageTick, System.tick() )
+			topTitle.redraw()
+		}
+		
+		if( this.var(strEditQuery) ) {	
+			curPage=this.member(currentContentPage)
+			if(curPage) {
+				query=this.var(strEditQuery)
+				splitter=findTag(curPage,'splitter')
+				hh=splitter.sizes().get(1)
+				if(hh<100) {
+					tot=splitter.sizes().sum()
+					splitter.sizes(recalc(tot,'*,300'))
+				}
+				editor=findTag(splitter, 'editor')
+				form=findTag(splitter, 'canvas')
+				editor.insertQuery(query)
+				form.setQuery(query)
+				this.var(strEditQuery, null)
+			}
+		}
+	}
+	onClose() {
+		this.positionSave()
+	}
+	initLeftPanel() { 
+		tab.addPage(dbTableInfo, '테이블', 'vicon:database_table')
+		tab.addPage(dbApiInfo, 'API정보', 'vicon:database_lightning')
+		tab.current(0) 
+	}
+	
+	initContent() { 
+		idx=this.incrNum('editorIndex')
+		src=format('<page id="#{0}"><splitter type="vbox"></page>', "sqlEdit_$idx")
+		page=widgetMake(src)
+		title=content.getWidget("title") class(title, 'formContentTitle', true)
+		if(page) {
+			@page.margin(page, 0,0,6,0)
+			@currentContentPage=page
+			splitter=page.getWidget('splitter', true)
+			editor=page.widgetMake('editor','e0')
+			form=page.widgetMake('canvas','c0')
+			form.minSize(0,30)
+			splitter.addPage(editor) class(editor, 'editorSql')
+			splitter.addPage(form) class(form,'formSqlEditForm')
+			contentDiv.addPage(page,true)
+			total=splitter.sizes().sum()
+			splitter.sizes(recalc(total,'*,30'))
+			splitter.stretchFactor(0)
+			@currentEditor=editor
+		}
+	}
+	drawTopTitle(dc,rc) {
+		rc.inject(x,y,w,h)
+		dc.save()
+		dc.mode()
+		c=randomColor()
+		start=thisVal('titleStartColor', c.darkColor(10))
+		mid=start.darkColor(100)
+		end=start.darkColor(200)
+		dc.fill('gradient', 0,0, w,h, 0, end, 0.4, mid, 1, start)
+		dc.font('size:11, weight:bold').pen('#f0f0f0aa').text(rc.incrX(10), "모꼬지 DB관리툴")
+		dc.rectLine(rc, 4, end)
+		msg=this.var(logMessage)
+		if(msg) {
+			tw=this.textSize(msg)+50
+			rcMessage=rc.rightCenter(tw,16,-8) 
+			dc.font(10).pen('#f0f0f0aa').text(rcMessage, msg)
+		}
+		dc.restore()
+	}
+	/* 트리클릭 후처리 */
+	dbTableTreeChange(node) {
+		@currentTreeNode= node
+		
+		print("tabl tree changed")
+	}
+	dbApiTreeChange(node) {
+		
+	}
+	/* 단축키 처리 */
+	keydown(key,a,b) {
+		tag=sender.tag
+		if( a&KEY.ctrl ) {
+			switch(key) {
+			case KEY.Q:
+				this.quickKeydown()
+			case KEY.Up:
+				if(a&KEY.shift) {
+					return this.treeExpandAll(false)
+				}
+			case KEY.Down:
+				if(a&KEY.shift) {
+					return this.treeExpandAll(true)
+				}
+			default:
+			}
+		}
+	}
+	quickKeydown() {
+		cur=tab.current()
+		form=cur.get('form')
+		combo=form.combo
+		combo.showPopup()
+	}
+	treeExpandAll(expand, skip) {
+		cur=tab.current()
+		form=cur.get('form')
+		tree=form.tree
+		while(row, tree.rootNode()) {
+			tree.expand(row, expand)
+		}
+		not(skip) {
+			form.expandFlag=expand
+			form.redraw()
+		}
+		return true;
+	}
+</script>
+
+<script id="dbTableForm">
+	init() {
+		@widgetList = this.addArray('@widgetList')
+		@tree=widgetAdd('tree','dbTableTree','rectId:body','@tree')
+		@combo=widgetAdd('combo','dbTableFilterKind', 'rectId:combo')
+		@filter=widgetAdd('input','dbTableFilter', 'rectId:filter')
+		@popup=widgetAdd('canvas','popupTableInfo', 'popup:true', 'canvasPopup') 
+		
+		setEvent(filter, 'onTextChange', this, this.filterChange)
+		
+		setEvent(tree,'onDraw', this, this.treeDraw)
+		setEvent(tree,'onMouseDown', this, this.treeMouseDown)
+		setEvent(tree,'onMouseMove', this, this.treeMouseMove)
+		setEvent(tree,'onFilter', this, this.treeFilter)
+		
+		tree.model('TABLE_NAME')
+		tree.var(treeMode, false)
+		combo.addItem(_node('dbTableFilter.comboData'), 'code,value')
+		setEvent(combo,'onChange', this, this.filterKindChange)
+		
+		setEvent('onDraw', this.drawForm)
+		setEvent('onMouseMove', this.formMouseMove)
+		setEvent('onMouseClick', this.formClick)
+
+		this.timer(250, this.treeData)
+	}
+	 
+	updateForm(rc) {
+		vbox(rc,'*,32').inject(rcBody,rcBarBottom)
+		hbox(rcBarBottom.margin(2,2,0,4),"85,110,*").inject(rcCombo, rcFilter, rcSpace)
+		rcButtons=rcBarBottom.rightCenter(80, 24, -5)
+		while(rcCur, hbox(rcButtons, 3), idx ) { 
+			btn = rectMap("button_$idx", rcCur, 'button', rcCur.incrXW(2,2))
+			not(btn.propSet) {
+				switch(idx) {
+				case 0: icon='vicon:database_edit', tip='테이블 정보 추가/수정'
+				case 1: icon='vicon:database_table', tip='테이블 정보보기'
+				case 2: icon='icons:arrow_up', tip='테이블 펼치기' 
+				}
+				node.propSet = true
+				node.with(icon, tip)
+			}
+		}
+		rectMap('rcBody', 'layout')
+		rectMap('rcBarBottom', 'layout')
+		rectMap('rcCombo', 'form')
+		rectMap('rcFilter', 'form')
+		rectMap('rcSpace', 'label')
+		while(widget, widgetList) {
+			rc=rectMap(widget.get('rectId'))
+			if(typeof(rc,'rect')) widget.move(rc)
+		}
+	} 
+	drawForm(dc, rc) {
+		not(rc.eq(this.rect()) return;
+		not(rc.eq(this.rcCanvas)) this.updateForm(rc)
+		this.rcCanvas = rc
+		rcBody = rectMap('body')
+		rcBar = rectMap('bottomBar')
+		dc.fill('#fff')
+		dc.rectLine(rc.incr(1), 0, '#ddd') 
+		dc.rectLine(rcBody, 4, '#ddd')
+		dc.fill(rcBody, '#eee')
+		dc.fill(rcBar, '#aaa')
+		dc.text(rcBody, form.id)
+		while(btn, rectTypeArray('button',true) ) {
+			rcBtn=btn.rcDraw
+			if( rcBtn.eq(this.overRect) ) {
+				dc.fill(rcBtn, '#ccc')	
+			}
+			dc.rectLine(rcBtn, 0, '#ddd')
+			if( btn.icon ) {
+				dc.image(rcBtn.center(18,18), btn.icon)
+			}
+		}
+	}
+	formMouseMove(pt) {		
+		// 버튼 툴팁추가
+		while(btn, rectTypeArray('button',true) ) {
+			rcBtn=btn.rcDraw
+			if(rcBtn.contains(pt)) {
+				not(rcBtn.eq(this.overRect) ) this.redraw()
+				this.overRect = rcBtn
+				if(btn.tip) this.tooltip(btn.tip, true)
+				return 
+			}
+		}
+		if(this.overRect) {
+			this.tooltip('',false)
+			this.redraw()
+		}
+	}
+	formClick(pt) {
+		while(btn, rectTypeArray('button',true) ) {
+			rcBtn=btn.rcDraw
+			not(rcBtn.contains(pt)) continue;
+			clicButton(btn)
+		}
+	}
+	clickButton(btn) {
+		print("click button => ", btn)
+	}
+	treeData() {
+		root=tree.model()
+		db=Baro.db('muk')
+		db.fetchAll(this.conf('tableInfo'), root, true)
+		while(cur, root) {
+			cur.type='table' 
+		}
+		tree.update()
+	}
+	treeDraw(dc, node, index, state, over) { 
+		rc=tree.draw(dc, dc.rect(), node, col, state, over)
+		node.rcIcon=rc.moveLeft(18,18,-2,0,true)
+		btnIcon=''
+		switch(node.type) {
+		case table:
+			text= node.TABLE_NAME
+			comment= node.TABLE_COMMENT
+			dc.font(11, color('#445'))
+			btnIcon='vicon:database_table'
+		case column:
+			text = node.COLUMN_NAME
+			comment=node.COLUMN_COMMENT
+			dc.font(11, color('#99a'))
+		default:
+		}
+		dc.textSize(text).inject(tw, th)
+		dist=rc.width() - tw;
+		dc.text(rc, text)
+		if(dist.gt(60)) {
+			tw+=4;
+			rcIcon=rc.incrX(tw).leftCenter(20,20) 
+			if(btnIcon) {
+				dc.rectLine(rcIcon,0,'#eee')
+				dc.image(rcIcon.center(18,18), btnIcon)
+				node.rcBtn=rcIcon
+				rcIcon=rcIcon.moveRight(20,20,4)
+			}
+			dc.rectLine(rcIcon,0,'#eee')
+			dc.image(rcIcon, "icons:copy_check")
+			node.rcCopy=rcIcon
+			if(comment) {
+				tw+=20;
+				rcComment=rc.incrXW(tw, 4) 
+				dc.font(9,color('#966'))
+				dc.text(rcComment, "- $comment", "right")
+			}
+		} 
+	}
+	treeMouseMove(pos) {
+		node=tree.at(pos)
+		if(node ) {
+			node.inject(rcBtn, rcCopy)
+			if(rcBtn.contains(pos) || rcCopy.contains(pos)) {
+				this.rcOver=node.rcBtn
+				this.cursor(CURSOR.PointingHandCursor)
+				return
+			}
+		}
+		if( this.rcOver) {
+			this.rcOver=null
+			this.cursor(0)
+		}
+	}
+	treeMouseDown(pos,key,btn) { 
+		node=tree.at(pos)
+		not(node) return;
+		node.inject(rcIcon, rcBtn, rcCopy)
+		if(rcIcon.contains(pos)) return;
+		if( this.rcOver ) {
+			if( rcBtn.contains(pos) ) {
+				this.popupTableInfo(node)
+				return 'ignore'
+			}
+			if( rcCopy.contains(pos) ) {
+				if(node.type.eq('table')) {
+					text=node.TABLE_NAME
+				} else {
+					text=node.COLUMN_NAME
+				}
+				System.copyText(text)
+				page('main').var(logMessage, "$text 가 복사되었습니다")
+				return 'ignore'
+			}
+		}
+		rc=tree.nodeRect(node)
+		if(this.currentTreeNode!=node) {
+			tree.current(node)
+			tree.expand(node, true, true)
+			this.currentTreeNode=node
+			page('main').dbTableTreeChange(node)
+		}
+		return 'ignore';
+	}
+	treeFilter(node) {
+		text=filter.value()
+		cur=combo.current()
+		not( text && cur ) return true;
+		type=node.type, kind=cur.code
+		if( type.eq('column') ) {
+			return node.ok;
+		}
+		ok=false
+		switch(kind) {
+		case all:
+			if(node.TABLE_NAME.find(text,2)) ok=true
+			while(cur,node) {
+				if(cur.COLUMN_NAME.find(text)) {
+					ok=true
+					cur.ok=true
+				} else {
+					cur.ok=false
+				}
+			}
+		case table:
+			if(node.TABLE_NAME.find(text,2)) {
+				ok=true
+				while(cur,node) cur.ok=true
+			}
+		case column:
+			while(cur,node) {
+				if(cur.COLUMN_NAME.find(text,2)) {
+					ok=true
+					cur.ok=true
+				} else {
+					cur.ok=false
+				}
+			}
+		case comment: 
+			if(node.TABLE_COMMENT.find(text,2)) ok=true;
+			while(cur,node) {
+				if(cur.COLUMN_COMMENT.find(text,2)) {
+					ok=true
+					cur.ok=true
+				} else {
+					cur.ok=false
+				}
+			}
+		default:
+		}
+		return ok;
+	}	
+	filterChange() { 
+		tree.var(filterChangeTick, System.tick())
+		page('main').var(filterChangeTree, tree)
+	}	
+	filterKindChange(idx) {
+		node=sender.current() not(node) return;
+		this.var(filterKind, node.code)
+		filter.focus()
+		tree.update()
+	}
+	popupTableInfo(node) {
+		rc=tree.nodeRect(node)
+		rcPopup=rc(rc.rb(),900,450)
+		print("popup info node=>$node", rc, rcPopup)
+		rcGlobal=tree.mapGlobal(rcPopup)
+		popup.move(rcGlobal)
+		popup.open()
+		popup.active()
+		popup.setTable(node)
+	}
+</script>
+
+class dbApiForm & form {
+	initForm(parent) {
+		@tree=widgetMake('tree','dbApiTree', 'rcBody') class(tree,'tree')
+		@combo=widgetMake('combo','dbApiFilterKind', 'rcCombo')
+		@filter=widgetMake('input','dbApiFilter', 'rcFilter')
+		this.setEvent('onDraw', this, this.drawLayout)
+		tree.setEvent('onDraw', this, this.treeDraw) 
+		tree.model('name')
+		tree.var(treeMode, false)
+		combo.addItem(_node('dbTableFilter.comboData'), 'code,value')
+		combo.setEvent('onChange', this, this.kindChange)
+		this.var(filterKind, 'all')
+		this.treeData()
+	}
+	updateWidget(rc) {
+		not(rc) rc=this.rect()
+		vbox(rc,'*,32').inject(rcBody,rcBar)
+		hbox(rcBar.margin(2,2,0,8),"85,110,*").inject(rcCombo, rcFilter, rcSpace)
+		this.rcBase=rc
+		this.with(rcBody, rcBar)
+		this.setFormRect()
+	}
+	drawLayout(dc, rc) { 
+		form=this
+		if( rc.eq(form.rect()) ) {
+			not(rc.eq(form.rcBase)) {
+				this.updateWidget(rc)
+			}
+			form.inject(rcBody, rcBar )
+			dc.fill('#fff')
+			dc.rectLine(rc.incr(1), 0, '#ddd') 
+			dc.rectLine(rcBody, 4, '#ddd')
+			dc.fill(rcBody, '#eee')
+			dc.fill(rcBar, '#aaa')
+			dc.text(rcBody, form.id)
+		} else {
+			form.inject(rcBody, rcBar )
+			dc.fill(rcBar, '#aaa')
+		}
+	}
+	treeData() {
+		root=tree.model()
+		root.addNode().with(name:쿼리실행정보, type:root)
+		tree.update()
+	}
+	treeDraw(dc, node, index, state, over) {
+		rc=this.drawSelect(dc, dc.rect(), node, state, over)
+		switch(node.type) {
+		case root:
+			dc.text(rc, node.name)
+		default:
+		}
+	}
+	kindChange(cur) {
+		
+	}
+}
+
+class formContentTitle {
+	initClass() {
+		class(this, 'form')
+		this.addButtons('LangMng', '다국어관리', color('#888'))
+	}
+	updateForm(rc) {
+		formInfo=this.getButtonWidth()
+		hbox(rc.incrYH(2,2), "*,80,$formInfo").inject(rcTitle, rcCheck, rcLangMng)
+		this.setFormRect()
+	}
+	drawForm(dc, rc) {
+		dc.font(11).pen('#eee').text(rc.incrX(8,0), "쿼리실행창") 
+		dc.pen('#445').text(rc.incrX(9,1), "쿼리실행창") 
+	}
+	buttonClick(id) {
+		page=this.getWidget('appLangInfo')
+		form=page.getWidget('form')
+		not(checkClass(form,'appLangForm')) class(form,'appLangForm',true)
+		page.setEvent('onClose', page, form.pageClose)
+		page.positionLoad()
+		page.open()
+		page.active()
+	}
+}
+
+class formSqlEditForm {
+	initClass() {
+		class(this, 'form')
+		@grid=widgetMake('grid','gridDbSelect','rcGrid')
+		grid.model('name')
+		this.addButtons('QueryRun, QuerySave, ApiMake, *', '쿼리실행, 쿼리저장, API만들기, *', color('#5B6B9DAA') )
+		this.initFormCheck('child')
+	}
+	updateForm(rc) {
+		vbox(rc,'*,32').inject(rcBody, rcButtons)
+		rcGrid=null
+		if( rcBody.height() > 100 ) {
+			rcGrid=rcBody.incr(2)
+		} 
+		btnInfo=this.getButtonWidth()
+		hbox(rcButtons.incrYH(2,2), btnInfo).inject(rcQueryRun, rcQuerySave, rcApiMake, rcSpace)
+		this.with(rcBody, rcButtons)
+		this.setFormRect()
+	}
+	drawForm(dc, rc) {
+		this.inject(rcBody, rcButtons)
+		dc.rectLine(rcButtons.incrY(-1), 2, '#fff')
+		dc.rectLine(rcButtons, 2, '#aaa')
+	}
+	setQuery(sql) {
+		root=grid.rootNode().removeAll()
+		db=Baro.db('muk')
+		db.fetchAll(sql, root, true)
+		ss='', num=0
+		while(field,root.var(fields),num) {
+			if(num) ss.add(',')
+			ss.add(field)
+		}
+		grid.fields(ss)
+		if( num<10 ) {
+			grid.size().inject(gw, gh)
+			grid.headerWidth(recalc(gw,num))
+		} else {
+			a=_arr()
+			while(n=0, num) {
+				a.add(100)
+			}
+			grid.headerWidth(a)
+		}
+		grid.update()
+	}
+	clickApiMake() {
+		Cf.debug(true, "data/logs")
+		classLayout("app/sourceEditor").open()
+	}
+}
+
+
+
+/* 테이블 컬럼정보 조회 */
+class popupTableInfo {
+	initClass() {
+		class(this,'form')
+		this.addButtons(
+			'AddField, MoveDown, MoveUp, MakeQuery, *, DeleteRow, NewTable', 
+			'필드추가, 아래로, 위로, 선택 쿼리작성, *, 삭제, 새테이블 만들기', color('#8B3D53AA')
+		)
+		@grid=widgetMake('grid', 'gridTableInfo', 'rcGrid') class(grid, 'grid')
+		input=widgetMake('input', 'inlineInfoEditor')
+		input.parentWidget(this)
+		input.setEvent('onKeyDown', this, this.keydown)
+		grid.setInput(input)
+		grid.model(#[
+			chk:선택						#40
+			, column_name:컬럼명			#200
+			, column_type: 데이터타입	#100
+			, column_comment: 설명		#200
+			, is_nullable: NULL여부		#80
+			, column_default: 기본값		#80
+			, column_key: 키정보			#80
+			, ordinal_position: 정렬
+		])
+		grid.is('stretchLast', true)
+		grid.var(bgColor, color('#528B3DE0'))
+		grid.setEvent('onDraw', this.gridDraw)
+		grid.setEvent('onMouseDown', this, this.gridMouseDown)
+		grid.setEvent('onMouseWheel', this, this.gridMouseWheel)
+		this.updateButtons=null
+		this.initFormCheck('child')
+		this.timer(500)
+	}
+	onTimer() {
+		if( grid.var(editStartTick)) {
+			grid.var(editStartTick,0)
+			grid.inputFocus()
+		}
+	}
+	updateForm(rc) {
+		vbox(rc, '*,32').inject(rcBody, rcStatus)
+		rcGrid=rcBody.incr(2)
+		btnInfo=this.getButtonWidth()
+		arr=hbox(rcStatus.incrYH(4,2), btnInfo)
+		while(btn, buttons, idx ) {
+			not(btn.rectId) continue;
+			btn.rectClient=arr.get(idx)
+		}
+		this.setFormRect()
+		this.with(rcBody, rcStatus)
+	}
+	drawForm(dc, rc) {
+		this.inject(rcBody, rcStatus)
+		dc.fill(rcBody, '#fff')
+		dc.fill(rcStatus, '#ccc')
+		dc.rectLine(rc, 34, '#999', 2)
+	}
+	keydown(k,a,b) {
+		if(k.eq(KEY.Escape)) {
+			return grid.inputHide();
+		}
+		if(k.eq(KEY.Enter, KEY.Return, KEY.Tab)  ) {
+			node=grid.var(editNode)
+			if(node.flag(NODE.add)) {
+				field=grid.var(currentEditField)
+				fields=grid.fields()
+				cur=findField(fields, 'field', field) idx=cur.index() + 1;
+				next=fields.child(idx)
+				grid.inputHide(true)
+				if(next) {
+					grid.edit(node, next.field)
+				} else {
+					grid.inputHide()
+				}
+			} else {
+				next=grid.nextNode(node)
+				grid.inputHide(true)
+				if(next) grid.edit(next,'column_comment')
+			}
+		}
+	}
+	gridMouseWheel(delta) {
+		grid.inputHide()
+	}
+	gridMouseDown(pos) {
+		hh=grid.headerHeight()
+		node=grid.at(pos.incrY(hh))
+		not(node) {
+			grid.inputHide()
+			return; 
+		}
+		field=node.var(code)
+		if(field.eq('chk')) {
+			chk=when(node.flag(NODE.check), false, true)
+			node.flag(NODE.check, chk)
+			grid.update()
+		} else if(field.eq('column_comment') ) {
+			grid.edit(node, field)
+		} else if(node.flag(NODE.add)) {
+			grid.edit(node, field)
+		}
+	}
+	gridDraw(dc, node, index, state) {
+		field=grid.field(index)
+		rc=grid.drawState(dc, node, state, index, field )
+		this.gridDrawNode(dc, rc, node, field)
+	}
+	gridDrawNode(dc,rc, node, field) { 
+		if(field.eq('chk')) {
+			if(node.flag(NODE.add)) {
+				dc.fill(rc.incr(2),'#eaa')
+			} else if(node.flag(NODE.modify)) {
+				dc.fill(rc.incr(2),'#aae')
+			}
+			if(node.flag(NODE.check)) {				
+				dc.image(rc.center(20,20), 'icons:check1')
+			} else {
+				dc.rectLine(rc.center(16,16), 0, '#888', 2)
+			} 
+		} else {
+			dc.text(rc.incrX(2), node.get(field))
+		}
+	}
+	setTable(node) {
+		db=Baro.db('muk')
+		root=grid.rootNode().removeAll()
+		root.TABLE_NAME=node.TABLE_NAME
+		db.fetchAll(this.conf("columnDetail"), root, true)
+		this.title("테이블: ${node.TABLE_NAME} 컬럼수: ${root.childCount()}")
+		print("popup set table node==>$node, root:$root")
+		grid.update()
+	}
+	
+	buttonClick(id) {
+		fnm="click$id"
+		fc=this.get(fnm)
+		if(typeof(fc,'func')) call(fc, this)
+	}
+	clickAddField() {
+		field=grid.fields().child(1).get('field')
+		root=grid.rootNode()
+		cur=root.addNode()
+		cur.flag(NODE.add, true)
+		grid.update()
+		grid.current(cur)
+		grid.edit(cur, field)
+	}
+	clickMoveDown() {
+		cur=grid.current()
+		next=grid.nextNode(cur)
+		if(next) grid.current(next)
+	}
+	clickMoveUp() {
+		cur=grid.current()
+		prev=grid.prevNode(cur)
+		if(prev) grid.current(prev)
+	}
+	clickMakeQuery() {
+		root=grid.rootNode()
+		table=root.TABLE_NAME
+		ss='', num=0
+		while(cur, root) { 
+			if(cur.flag(NODE.check) ) { 
+				if(ss) ss.add(', ')
+				ss.add(cur.column_name)
+				num++;
+			}
+		}
+		not(num) {
+			return this.alert('선택된 필드정보가 없습니다')
+		} 
+		sql=#[
+			SELECT
+				${ss}
+			FROM
+				muknoori.${table}
+			WHERE 1=1
+		];
+		print("make query : ", sql)
+		page('main').var(strEditQuery, sql)
+	}
+
+}
+
+/* 다국어처리폼 */
+class appLangForm {
+	initClass() {
+		class(this,'form')
+		@db=Baro.db('muk')
+		@grid=widgetMake('grid', 'gridTest', 'rcGrid') class(grid, 'grid')
+		input=widgetMake('input', 'inlineEditor')
+		input.parentWidget(this)
+		input.setEvent('onKeyDown', this, this.keydown)
+		grid.setInput(input)
+		grid.setEvent('onDraw', this, this.gridDraw)
+		grid.setEvent('onFilter', this, this.gridFilter)
+		grid.setEvent('onMouseDown', this, this.gridMouseDown)
+		grid.setEvent('onMouseWheel', this, this.gridMouseWheel)
+		
+		@comboUseYn=widgetMake('combo','langUseYn', 'rcComboUseYn')
+		@comboKind=widgetMake('combo','langFilterKind', 'rcComboKind')
+		@filter=widgetMake('input','langFilter','rcFilter')
+		this.addButtons('LangAdd, LangApply, LangDelete', '신규,적용,삭제')
+		grid.model(#[
+			chk:선택 #40,
+			status:상태 #60,
+			APP_LANG_KEY 	: 다국어키 	#200,
+			APP_LANG_NM_KR	: 한글		#200,
+			APP_LANG_NM_EN	: 영문		#200,
+			APP_LANG_NM_CH	: 중문		#200,
+			APP_LANG_NM_JP	: 일문		#200,
+			USE_YN			: 사용여부	#80,
+			ADD_DT			: 등록일시	#100
+		])
+		@allFields=splitArray('APP_LANG_KEY,APP_LANG_NM_KR,APP_LANG_NM_EN', 'langFilter') 
+		comboUseYn.addItem(@data.useYn(), 'code,value') 
+		comboUseYn.setEvent('onChange', this, this.comboUseYnChange)
+		comboKind.addItem(_node('data.langFilterKind').with([
+			{code:all,value:전체}
+			{code:langKey,value:키조회}
+			{code:langKr,value:한글조회}
+		]), 'code,value')
+		comboKind.current(1)
+		comboKind.setEvent('onChange', this, this.comboFilterChange)
+		filter.setEvent('onTextChange', this, this.filterChange)
+		this.filterKind='langKey'
+		this.initFormCheck('child')
+		this.gridData()
+		this.timer(500)
+	}
+	onTimer() {
+		if( grid.var(editStartTick)) {
+			grid.var(editStartTick,0)
+			grid.inputFocus()
+		}
+		if( this.var(filterChangeTick)) {
+			dist=System.tick() - this.var(filterChangeTick);
+			if(dist>250) {
+				this.var(filterChangeTick,0)
+				grid.update()
+			}
+		}
+	}
+	pageClose() {
+		if(sender) sender.positionSave()
+	}
+	filterChange() {
+		this.var(filterChangeTick, System.tick())
+	}
+	comboUseYnChange() {
+		cur=sender.current()
+		this.filterUseYn=cur.code
+		grid.update()
+	}
+	comboFilterChange() {
+		cur=sender.current()
+		this.filterKind=cur.code
+		grid.update()		
+	}
+	updateForm(rc) {
+		vbox(rc,'*,40').inject(rcBody, rcStatus) 
+		formInfo=this.getButtonWidth()
+		formInfo.add(',90,*,80,150')
+		rcGrid=rcBody.incr(2)
+		rcBar=rcStatus.incrYH(4,6)
+		hbox(rcBar, formInfo).inject(rcLangAdd, rcLangApply, rcLangDelete, rcComboUseYn, rcSpace, rcComboKind, rcFilter)
+		rcFilter.incrW(-4)
+		this.with(rcBody, rcStatus, rcSpace)
+		this.setFormRect()
+		this.gridHederWidth(rcGrid)
+	}
+	buttonClick(id) {
+		switch(id) {
+		case LangAdd:
+			field=grid.fields().child(2).get('field')
+			root=grid.rootNode()
+			cur=root.addNode()
+			cur.flag(NODE.add, true)
+			grid.update()
+			grid.current(cur)
+			grid.edit(cur,field)
+		case LangApply:
+			Cf.error(true)
+			not(this.confirm("변경내용을 적용 하시겠습니까?")) return;
+			cntInsert=0, cntModify=0
+			root=grid.rootNode()
+			while(cur, root) {
+				if(cur.flag(NODE.add)) {
+					db.exec(this.conf('langInsert'),cur)
+					cntInsert++;
+				} else if(cur.flag(NODE.modify)) {
+					db.exec(this.conf('langModify'),cur)
+					cntModify++;
+				}
+				err=Cf.error()
+				if(err) return this.alert("저장중 오류가 발생했습니다 오류:$err")
+			}
+			cnt=cntInsert+cntModify;
+			if(cnt) {
+				this.gridData()
+			} else {
+				this.alert("변경된 내용이 없습니다")
+			}
+		case LangDelete:
+			not(this.confirm("선택내용을 삭제 하시겠습니까?")) return;
+			cnt=0
+			arr=_arr()
+			root=grid.rootNode()
+			while(cur, root) {
+				if(cur.flag(NODE.check)) {
+					not(cur.flag(NODE.add)) {
+						db.exec(this.conf('langDelete'),cur)
+					}
+					arr.add(cur)
+					cnt++;
+				}
+			}
+			while(cur, arr.revers()) {
+				root.remove(cur)
+			}
+			if(cnt) {
+				this.gridData()
+			} else {
+				this.alert("변경된 내용이 없습니다")
+			}
+		default:
+		} 
+	}
+	drawForm(dc, rc) {
+		this.inject(rcBody, rcStatus, rcSpace)
+		dc.fill(rcBody,'#eee')
+		dc.fill(rcStatus,'#ccc')
+		dc.rectLine(rc,34,'#aaa')
+	}
+	keydown(k,a,b) {
+		if(k.eq(KEY.Escape)) {
+			return grid.inputHide();
+		}
+		if(k.eq(KEY.Enter, KEY.Return, KEY.Tab)  ) {
+			node=grid.var(editNode)
+			field=grid.var(currentEditField)
+			fields=grid.fields()
+			cur=findField(fields, 'field', field) idx=cur.index() + 1;
+			next=fields.child(idx)
+			grid.inputHide(true)
+			if(next) {
+				grid.edit(node, next.field)
+			} else {
+				grid.inputHide()
+			}
+		}
+	}
+	gridDraw(dc, node, index, state) {
+		field=grid.field(index)
+		rc=grid.drawState(dc, node, state, index, field )
+		this.gridDrawNode(dc, rc, node, field)
+	}
+	gridDrawNode(dc, rc, node, field) { 
+		if(field.eq('chk')) {
+			if(node.flag(NODE.check)) {				
+				dc.image(rc.center(20,20), 'icons:check1')
+			} else {
+				dc.rectLine(rc.center(16,16), 0, '#888', 2)
+			} 
+		} else if(field.eq('status')) {
+			if(node.flag(NODE.add)) {
+				dc.pen('#33e').text(rc,'신규','center')
+			} else if(node.flag(NODE.modify)) {
+				dc.pen('#d3e').text(rc,'수정','center')
+			}		
+		} else {
+			dc.text(rc.incrX(2), node.get(field))
+		}
+	}
+	gridMouseWheel(delta) {
+		grid.inputHide()
+	}
+	gridMouseDown(pos) {
+		hh=grid.headerHeight()
+		node=grid.at(pos.incrY(hh))
+		not(node) return; 
+		field=node.var(code)
+		if(field.eq('status')) return;
+		if(field.eq('chk')) {
+			chk=when(node.flag(NODE.check), false, true)
+			node.flag(NODE.check, chk)
+			grid.update()
+		} else {
+			grid.edit(node, field)
+		}
+	}
+	gridHederWidth(rc) {
+		ss=''
+		while(cur, grid.fields(), n) {
+			cur.inject(field, width)
+			if(n) ss.add(',')
+			if(field.eq('chk')) {
+				ss.add('40px')
+			} else if(field.eq('status')) {
+				ss.add('60px');
+			} else {
+				not(width) width=100
+				ss.add(width)
+			}
+		}
+		tw=rc.width()-22;
+		print("heder width ", tw, ss)
+		grid.headerWidth(recalc(tw,ss))
+	}
+	gridFilter(node) {
+		if(node.flag(NODE.add)) {
+			return true;
+		}
+		text=filter.value()		
+		not(text) {
+			if(this.filterUseYn) {
+				return node.cmp('USE_YN',this.filterUseYn);
+			}
+			return true;
+		}
+		if(this.filterUseYn) {
+			ok=node.cmp('USE_YN',this.filterUseYn)
+			not(ok) return false;
+		}
+		kind=this.filterKind
+		not(kind) kind='all'
+		switch(kind) {
+		case all:
+			while(field, allFields) {
+				if(node.get(field).find(text,2)) return true;
+			}
+		case langKey:
+			if(node.get('APP_LANG_KEY').find(text,2) ) return true;
+		case langKr:
+			if(node.get('APP_LANG_NM_KR').find(text,2) ) return true;
+		default:
+		}
+		return false;
+	}
+	gridData() {
+		root=grid.rootNode().removeAll()
+		grid.selectClear()
+		db.fetchAll(this.conf('langSelect'), root)
+		grid.update()
+	}
+}
+
+<sql id="tableInfo">
+	SELECT TABLE_NAME, TABLE_COMMENT, CREATE_TIME
+	FROM
+		INFORMATION_SCHEMA.TABLES
+	WHERE
+		TABLE_SCHEMA = 'muknoori' and TABLE_TYPE ='BASE TABLE'
+</sql>
+<sql id="fieldInfo">
+	SELECT
+		TABLE_NAME, COLUMN_NAME, COLUMN_COMMENT
+	FROM
+		INFORMATION_SCHEMA.COLUMNS
+	WHERE
+		TABLE_SCHEMA = 'muknoori' AND TABLE_NAME = #{TABLE_NAME}    
+</sql>
+<sql id="fieldDetail">
+	SELECT
+		  T.table_name 
+		, C.column_name
+		, C.column_comment
+		, C.ordinal_position
+		, C.column_type
+		, C.is_nullable
+		, C.column_default
+		, C.column_key
+   FROM
+	   information_schema.TABLES AS T
+   JOIN
+	  information_schema.COLUMNS AS C ON T.table_name = C.table_name and T.table_schema ='muknoori' and T.TABLE_NAME =#{TABLE_NAME}
+   ORDER BY T.table_name
+</sql> 
+

@@ -1,0 +1,115 @@
+<widgets>
+	<page id="main" title="소스 테스트 페이지" onInit() { addModule() }>
+		<splitter type="vbox">
+	</page>
+	// ##소스편집 
+	<page id="editPanel" margin="0,8,0,0">
+		<hbox>
+			<label id="editorTitle" stretch=1>
+			<label text="찾기: "><input id="searchInput">
+		</hbox>
+		<editor id="editor">
+		<hbox>
+			<button id="btnRun" text="실행" onClick() { page().runScript() }>
+			<label id="editorInfo" stretch=1>
+		</hbox>
+	</page>
+	// ##로그출력
+	<page id="logPanel" margin="0,8,0,0">
+		<hbox>
+			<label id="logTitle" stretch=1>
+			<label text="찾기: "><input id="searchInput" onEnter() { page().searchText(this)}>
+		</hbox>
+		<editor id="editor">
+		<hbox>
+			<button id="btnClear" text="지우기" onClick() { page().clearLog() }>
+			<label id="logInfo" stretch=1>
+		</hbox>
+	</page>
+	// ##키맵등록 ctrl+s
+	<dialog id="keyMapInput" title="키맵등록 페이지">
+	<form>
+		<row>
+		<label text="키맵"><input id="key">
+		</row>
+		<row>
+		<label text="설명"><input id="note">
+		</row>
+	</form>
+	</dialog>
+
+	<dialog id="keyTemplateInput" title="키탬플릿등록 페이지">
+		<form>
+			<row>
+				<label text="탬플릿"><input id="key">
+			</row>
+			<row>
+				<label text="설명"><input id="note">
+			</row>
+		</form>
+	</dialog>
+</widgets>
+
+<script module="main">
+	init() {
+        include('classes/common/page.js')
+        include('classes/common/editor.js')
+        include('classes/apps/sourceRun#editPanel.js')
+        addModule(this, 'page')
+		@editPanel  = page("editPanel", true)
+		@logPanel   = page("logPanel", true)
+		@splitter   = widget("splitter")
+		splitter.addPage(editPanel)
+		splitter.addPage(logPanel)
+		this.positionLoad()
+		this.timer(200, this.setSplitterSize)
+	}
+	onEvent(type, node) {
+		
+	}
+	onActivationChange() {
+		if( this.is('active') ) {
+			editPanel.editorFocus();
+		}
+	}
+	onClose() {
+		this.positionSave();
+	}
+	onTimer() {
+		str=logReader('sourceRun').timeout();
+		if(str) logPanel.appendLog(str)
+	}
+	editorFocus() {
+		editPanel.editorFocus()
+	}
+	setSplitterSize() {
+		total=splitter.sizes().sum();
+		if(total>600) {
+			arr=recalc(total, "550,*");
+		} else {
+			arr=recalc(total, "7,3")
+		}
+		splitter.sizes(arr);
+		print("set splitter sizes==>", arr );
+	}
+</script>
+
+<script module="logPanel">
+	initPage() {
+		@editor=widget('editor')
+		@logTitle=widget('logTitle')	
+		@logInfo=widget('logInfo')
+	}
+	appendLog(str) {
+		editor.append(str, true);
+	}
+	clearLog() {
+		editor.clear();
+		Cf.debug('clear')
+		page('editPanel').editorFocus()
+	}
+	apiResult(socket, uri, &data, param) {
+		this.appendLog("$uri => $data")
+	}
+</script>
+

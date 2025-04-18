@@ -1,0 +1,222 @@
+c=cmd()
+s=#[
+cd ${cd}
+npm init -y	
+npm i react react-dom react-router-dom
+npm i -D @babel/preset-env @babel/preset-typescript @babel/preset-react core-js
+npm i -D webpack webpack-cli webpack-dev-server webpack-merge
+npm i -D css-loader style-loader babel-loader
+npm i -D html-webpack-plugin css-minimizer-webpack-plugin mini-css-extract-plugin webpack-bundle-analyzer
+# "React"를 사용하고 "HMR"이 필요하다면 설치
+npm i @pmmmwh/react-refresh-webpack-plugin
+npm i -D typescript ts-node @types/react @types/react-dom @types/webpack @types/webpack-dev-server @types/node
+
+# "tailwindcss"를 사용하기 위해 설치
+npm i -D tailwindcss postcss autoprefixer
+
+# 로더 설치
+npm i -D postcss-loader
+npx tailwindcss init
+]
+
+s.ref()
+while(s.valid()) {
+	line = s.findPos("\n").trim()
+	not(line) continue;
+	if(line.ch('#')) continue;
+	c.cmdAdd(line)
+}
+c.run()
+~~
+##> expo template
+	npx create-expo-app --template 
+		[default|blank|blank-typescript|bare-minimum]
+	--example	
+	
+	npx expo install react-dom react-native-web @expo/metro-runtime
+	# router
+	npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar
+	#tailwincss
+	npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
+
+##> run expo init
+	cd #{cd}
+	expo init #{app}
+
+##> runx expo install
+	cd #{app}
+	npx expo install react-native-web@~0.18.10 react-dom@18.2.0 @expo/webpack-config@^18.0.1
+	npm i react-native-web
+	npm i --save react-dom
+	npm i --save-dev babel-plugin-react-native-web
+	npm i --save-dev @babel/core babel-loader url-loader webpack webpack-cli webpack-dev-server
+	npm i @babel/preset-react html-webpack-plugin
+	 
+
+
+##> install
+npm init -y
+npm install --save-dev webpack webpack-cli
+npm install --save-dev @babel/core babel-loader @babel/preset-env @babel/preset-react
+npm install --save-dev html-webpack-plugin
+npm install react react-dom
+npm i -D style-loader css-loader 
+
+npm start
+
+##> webpack.config.js
+const path = require("path");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+module.exports = {
+	mode: "development",  
+	entry: "./src/index.tsx",
+	output: { filename: "main.js", path: path.resolve(__dirname, "dist"), clean:true },
+	resolve: { extensions: ['.ts', '.tsx', '.js', '.jsx'] },
+	module: {
+		rules: [
+			{ test: /\.(js|ts|tsx)$/i, exclude: /node_modules/, use: { 
+				loader: 'ts-loader' 
+			}},
+			/*
+			{ test: /\.js$/, exclude: /node_modules/, use: { 
+				loader: 'babel-loader',
+				options: { presets: ["@babel/preset-env", "@babel/preset-react"] }
+			}},
+			*/
+			{ test: /\.css$/, use: ["style-loader", "css-loader"] }, 
+			{ test: /\.(png|svg|jpg|jpeg|gif)$/i, type: 'asset/resource' }
+			{
+				test: /\.(jpg|jpeg|gif|png|svg|ico)?$/,
+				use: [
+				  {
+					loader: "url-loader",
+					options: {
+					  limit: 10000,
+					  fallback: "file-loader",
+					  name: "images/[name].[ext]",
+					},
+				  },
+				],
+			},
+			{
+				test: /\.(woff|woff2|eot|ttf|otf)$/,
+				use: [
+				  {
+					loader: "url-loader",
+					options: {
+					  limit: 10000,
+					  fallback: "file-loader",
+					  name: "fonts/[name].[ext]",
+					},
+				  },
+				],
+			},
+		],
+	},
+	plugins: [
+		new HtmlWebpackPlugin( {template: './public/index.html'
+		, filename: './index.html', }),
+	],
+};
+
+##> babel.config.json
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      { "targets": { "esmodules": true } }
+    ],
+    [
+      "@babel/preset-react", 
+	  { "runtime": "automatic"}
+    ]
+  ]
+}
+
+##> package.json
+	"scripts": {
+		"start": "open http://localhost:8888/ && python3 -m http.server 8888",
+		"build": "npx babel app.js --out-file app.min.js --presets minify --watch"
+	}
+	"scripts": {
+		"start": "webpack serve --open",   // 데브 서버 실행 스크립트
+		"build": "webpack --watch"         // watch 옵션을 사용하여 파일 변경 시 자동 빌드
+	},
+	"scripts": {
+		"dev": "webpack-dev-server --config webpack.dev.js --open --hot",
+		"build": "webpack --config webpack.prod.js",
+		"start": "webpack --config webpack.dev.js",
+		"storybook": "storybook dev -p 6006",
+		"build-storybook": "storybook build"
+	},
+
+##> App.tsx
+import React from "react";
+const App = () => {
+  const [state, setState] = React.useState(0);
+  const handleButton = () => {
+    setState((prev) => prev + 1);
+  };
+  return (
+    <div>
+      Hello React!
+      <button onClick={handleButton}>{state}</button>
+    </div>
+  );
+};
+export default App;
+
+##> index.tsx
+import App from './App';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+
+##> index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />	
+    <title>Rick and Morty</title>
+  </head>
+  <body>
+    <section id="root"></section>
+  </body>
+</html>
+
+## tsconfig.json
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "noEmit": false,
+    "baseUrl": "./src",
+    "paths": {
+      "@components/*": ["components/*"]
+    },
+    "outDir": "./dist"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

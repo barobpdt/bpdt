@@ -1,0 +1,21 @@
+<widgets base="myapp">
+	<page id="main" title="소스 테스트 페이지" onInit() { addModule() }>
+		<editor id="e">
+		<hbox>
+			<button id="ok" text="ok">
+			<space>
+		</hbox>
+	</page> 
+</widgets>
+
+<script module="main">
+	init() {
+		print("myapp:main init 함수시작")
+		@ok = this.get('ok')
+		@editor = this.get('e')
+		setEvent('onClick',this.clickOk,ok)
+	}
+	clickOk() {
+		print("ok click ", this)
+	}
+</script>

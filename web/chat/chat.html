@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 메시지</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="chat.css">
+    <link href="https://emoji-css.afeld.me/emoji.css" rel="stylesheet">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/js/common.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="chat-container page">
+        <div class="chat-header">
+            <h1>채팅 메시지</h1>
+            <div class="user-info">
+                <span class="user-name">사용자</span>
+                <span class="status online"></span>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <!-- 메시지가 여기에 동적으로 추가됩니다 -->
+            <div class="message received">
+                <div class="message-content">
+                    <p>안녕하세요! 무엇을 도와드릴까요?</p>
+                    <span class="message-time">10:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-toolbar">
+                <button id="emoji-button" class="toolbar-button">
+                    <i class="far fa-smile"></i>
+                </button>
+                <label class="toolbar-button upload-clip">
+                    <i class="fas fa-paperclip"></i>
+                </label>
+            </div>
+            
+            <div class="emoji-picker" id="emoji-picker">
+                <div class="emoji-category">
+                    <h4>표정</h4>
+                    <div class="emoji-list">
+                        <span class="emoji" data-emoji="😀">😀</span>
+                        <span class="emoji" data-emoji="😃">😃</span>
+                        <span class="emoji" data-emoji="😄">😄</span>
+                        <span class="emoji" data-emoji="😁">😁</span>
+                        <span class="emoji" data-emoji="😅">😅</span>
+                        <span class="emoji" data-emoji="😂">😂</span>
+                        <span class="emoji" data-emoji="🤣">🤣</span>
+                        <span class="emoji" data-emoji="😊">😊</span>
+                        <span class="emoji" data-emoji="😇">😇</span>
+                        <span class="emoji" data-emoji="🙂">🙂</span>
+                        <span class="emoji" data-emoji="🙃">🙃</span>
+                        <span class="emoji" data-emoji="😉">😉</span>
+                        <span class="emoji" data-emoji="😌">😌</span>
+                        <span class="emoji" data-emoji="😍">😍</span>
+                        <span class="emoji" data-emoji="🥰">🥰</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <h4>동물</h4>
+                    <div class="emoji-list">
+                        <span class="emoji" data-emoji="🐶">🐶</span>
+                        <span class="emoji" data-emoji="🐱">🐱</span>
+                        <span class="emoji" data-emoji="🐭">🐭</span>
+                        <span class="emoji" data-emoji="🐹">🐹</span>
+                        <span class="emoji" data-emoji="🐰">🐰</span>
+                        <span class="emoji" data-emoji="🦊">🦊</span>
+                        <span class="emoji" data-emoji="🐻">🐻</span>
+                        <span class="emoji" data-emoji="🐼">🐼</span>
+                        <span class="emoji" data-emoji="🐨">🐨</span>
+                        <span class="emoji" data-emoji="🐯">🐯</span>
+                        <span class="emoji" data-emoji="🦁">🦁</span>
+                        <span class="emoji" data-emoji="🐮">🐮</span>
+                        <span class="emoji" data-emoji="🐷">🐷</span>
+                        <span class="emoji" data-emoji="🐸">🐸</span>
+                        <span class="emoji" data-emoji="🐵">🐵</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <h4>음식</h4>
+                    <div class="emoji-list">
+                        <span class="emoji" data-emoji="🍎">🍎</span>
+                        <span class="emoji" data-emoji="🍐">🍐</span>
+                        <span class="emoji" data-emoji="🍊">🍊</span>
+                        <span class="emoji" data-emoji="🍋">🍋</span>
+                        <span class="emoji" data-emoji="🍌">🍌</span>
+                        <span class="emoji" data-emoji="🍉">🍉</span>
+                        <span class="emoji" data-emoji="🍇">🍇</span>
+                        <span class="emoji" data-emoji="🍓">🍓</span>
+                        <span class="emoji" data-emoji="🍈">🍈</span>
+                        <span class="emoji" data-emoji="🍒">🍒</span>
+                        <span class="emoji" data-emoji="🍑">🍑</span>
+                        <span class="emoji" data-emoji="🥭">🥭</span>
+                        <span class="emoji" data-emoji="🍍">🍍</span>
+                        <span class="emoji" data-emoji="🥥">🥥</span>
+                        <span class="emoji" data-emoji="🥝">🥝</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-wrapper">
+                <textarea id="message-input" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+                <button id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            
+            <div class="file-preview" id="file-preview">
+                <!-- 업로드된 파일 미리보기가 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+    
+	<div class="upload-container page">    
+		<div class="upload-area" id="uploadArea">
+			<div class="upload-icon">📁</div>
+			<div class="upload-text">파일을 드래그하거나 클릭하여 업로드하세요</div>
+			<input type="file" class="file-input" id="fileInput" multiple>
+		</div>
+
+		<div class="file-list" id="fileList"></div>
+		<div class="progress-container" id="uploadProgress"></div>
+
+		<div class="button-group">
+			<button class="button upload-button" id="uploadButton">업로드</button>
+			<button class="button clear-button" id="clearButton">초기화</button>
+			<span style="flex:1"></span>
+			<button class="button clear-button" id="cancleButton">취소</button>
+		</div>
+    </div>
+</div>
+
+    <script src="/js/chat.js"></script>
+   
+    <script>
+		const ws=websocketConnect('ws://localhost:8092/chat')
+		const upload=wsChunkUploadFiles(ws)
+		
+		$(document).ready(function() {
+			initChat()
+			initUpload()
+			togglePage('chat')
+			$('.toolbar-button.upload-clip').on('click', ()=>togglePage('upload'))
+			$('#cancleButton').on('click', ()=>togglePage('chat'))
+			$('#uploadButton').on('click', ()=>uploadStart())
+			
+		})
+		const togglePage = (name) => {
+			$('.container').find('.page').each((n,el) => $(el).hide())
+			$('.container').find('.'+name+'-container').show()
+		}
+		const uploadStart = () => {
+			upload.start(pageInfo.files)
+		}
+		
+        
+        pageInfo.closeMode = 'close'
+        pageInfo.wsCallback = function(header, data) {
+            console.log("@@ websocket callback => header=="+header, data )
+            var pos = header.indexOf('\r\n')
+            if( pos==-1) return console.log("@@ websocket 헤더 오류")
+            if( header.charAt(0)!='@' ) return console.log("@@ websocket 헤더 타입 시작 오류")
+            const line = header.substr(1,pos)
+            const info = header.substr(pos+2)
+            const a=line.split('::') // 타입, 오류코드
+            const b=info.split('::') // 데이터크기, 요청타입, 결과타입, 결과정보
+            // ${size},${requestType},${resultType},${resultInfo}
+            const type = a[0]
+			console.log('@@ web socket type=='+type)
+            if( type=='req_login' ) {
+                ws.sendData('req_login','',{id:'a',passwd:'b'})
+            }
+            if(type=='res_login' ) {
+				ws.sendData('req_rommInfo','',{id:'a',passwd:'b'})
+            }
+        }
+    </script>
+	
+	<style>
+		.upload-clip {
+			cursor:pointer;
+		}
+	</style>
+</body>
+</html> 

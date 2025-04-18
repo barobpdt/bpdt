@@ -1,0 +1,142 @@
+[
+  {
+    "name": "최소연",
+    "phone": "010-5463-1484",
+    "email": "최소연470@hanmail.net",
+    "address": "광주 중구 53번지",
+    "group": "직장"
+  },
+  {
+    "name": "박도윤",
+    "phone": "010-5373-9057",
+    "email": "박도윤133@nate.com",
+    "address": "용인 영등포구 17번지",
+    "group": "가족"
+  },
+  {
+    "name": "강소연",
+    "phone": "010-1655-4356",
+    "email": "강소연473@nate.com",
+    "address": "광주 성동구 75번지",
+    "group": "친구"
+  },
+  {
+    "name": "장수아",
+    "phone": "010-1000-4561",
+    "email": "장수아923@nate.com",
+    "address": "광주 성동구 71번지",
+    "group": "직장"
+  },
+  {
+    "name": "정서현",
+    "phone": "010-7271-2570",
+    "email": "정서현719@gmail.com",
+    "address": "서울 강남구 75번지",
+    "group": "기타"
+  },
+  {
+    "name": "이수아",
+    "phone": "010-7812-1636",
+    "email": "이수아367@gmail.com",
+    "address": "용인 성동구 91번지",
+    "group": "가족"
+  },
+  {
+    "name": "윤소연",
+    "phone": "010-5512-3398",
+    "email": "윤소연877@daum.net",
+    "address": "광주 종로구 77번지",
+    "group": "기타"
+  },
+  {
+    "name": "김수아",
+    "phone": "010-4650-4192",
+    "email": "김수아533@daum.net",
+    "address": "대구 송파구 80번지",
+    "group": "기타"
+  },
+  {
+    "name": "장수아",
+    "phone": "010-7051-2424",
+    "email": "장수아35@naver.com",
+    "address": "부산 마포구 72번지",
+    "group": "가족"
+  },
+  {
+    "name": "최지민",
+    "phone": "010-1931-4857",
+    "email": "최지민101@nate.com",
+    "address": "대구 강남구 27번지",
+    "group": "친구"
+  },
+  {
+    "name": "장지우",
+    "phone": "010-1436-1669",
+    "email": "장지우506@naver.com",
+    "address": "고양 서초구 54번지",
+    "group": "기타"
+  },
+  {
+    "name": "윤현우",
+    "phone": "010-5596-7666",
+    "email": "윤현우54@gmail.com",
+    "address": "광주 강서구 24번지",
+    "group": "기타"
+  },
+  {
+    "name": "김서연",
+    "phone": "010-1386-2841",
+    "email": "김서연761@nate.com",
+    "address": "부산 서초구 35번지",
+    "group": "직장"
+  },
+  {
+    "name": "김지우",
+    "phone": "010-4802-3769",
+    "email": "김지우620@daum.net",
+    "address": "서울 마포구 78번지",
+    "group": "기타"
+  },
+  {
+    "name": "정수아",
+    "phone": "010-8468-4850",
+    "email": "정수아204@gmail.com",
+    "address": "대구 중구 21번지",
+    "group": "가족"
+  },
+  {
+    "name": "최준호",
+    "phone": "010-7850-6201",
+    "email": "최준호466@daum.net",
+    "address": "수원 마포구 46번지",
+    "group": "친구"
+  },
+  {
+    "name": "윤준호",
+    "phone": "010-8100-9211",
+    "email": "윤준호166@gmail.com",
+    "address": "울산 서초구 42번지",
+    "group": "기타"
+  },
+  {
+    "name": "장수아",
+    "phone": "010-2332-5138",
+    "email": "장수아154@nate.com",
+    "address": "고양 영등포구 84번지",
+    "group": "가족"
+  },
+  {
+    "name": "이소연",
+    "phone": "010-5069-5730",
+    "email": "이소연326@gmail.com",
+    "address": "서울 중구 94번지",
+    "group": "기타"
+  },
+  {
+    "name": "정소연",
+    "phone": "010-9077-7034",
+    "email": "정소연108@naver.com",
+    "address": "수원 송파구 42번지",
+    "group": "가족"
+  }
+]

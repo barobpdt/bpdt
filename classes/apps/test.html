@@ -1,0 +1,25 @@
+<widgets>
+	<page id="main" title="소스 테스트 페이지" onInit() { addModule() }>
+		<canvas id="c">
+		<hbox>
+			<button id="ok" text="ok">
+			<space>
+		</hbox>
+	</page> 
+</widgets>
+
+<script module="main">
+	init() {
+		print("test:main init 함수시작")
+		@ok = widget('ok')
+		@canvas = widget('c')
+		
+		include('classes_simple/test/canvas1.js')
+		addModule(canvas,'canvas:c1')
+		setEvent(canvas,'onDraw',canvas.draw)
+		setEvent(ok,'onClick',this.okClick)
+	}
+	okClick() {
+		print("ok click ", this)
+	}
+</script>
