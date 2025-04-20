@@ -109,12 +109,18 @@ include(name, checkRealod) {
 	not(name.find('.')) {
 		name.add('.js')
 	}
-	filenm = name
+	path = conf('include.path')
+	if(path) {
+		filenm = "$path/$name"
+	} else {
+		filenm = name
+	}
+	
 	not( isFile(filenm) ) return print("include 오류 ($filenm 파일이 없습니다)")
 	map=object('map.include') 
 	modify=Baro.file().modifyDate(filenm)
 	not(checkRealod) {
-		tm=map.get(filenm)
+		tm=map.get(name)
 		if(tm==modify) {
 			print("include 경로 $name 이미 등록", tm, prevName)
 			Cf.rootNode('@funcInfo').set('includeFileName', prevName)
@@ -128,7 +134,7 @@ include(name, checkRealod) {
 	if( base.find('#')) {
 		split(base,'#').inject(base, subName)
 	}
-	map.set(filenm, modify)
+	map.set(name, modify)
 	src=fileRead(filenm)
 	parseSource(stripJsComment(src), base, subName)
 	Cf.rootNode('@funcInfo').set('includeFileName', prevName)

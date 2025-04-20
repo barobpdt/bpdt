@@ -11,7 +11,7 @@ const pageInfo = {
     , wsStatus:''
     , wsType:''
     , wsVersion:'1.0'
-    , wsMode: ''
+    , wsMode: 'close'
 	, maxRetries: 3 // 최대 재시도 횟수
 	, retryInterval: 2000 // 재시도 간격 (밀리초)
 	, wsCallback: null
@@ -49,9 +49,8 @@ function websocketConnect(url) {
             return
         }
         const size = stringByteLength(message)
-		console.log('@@ == websocket send message == ', message, size)
         const data = '@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+pageInfo.wsVersion+'\r\n\r\n'+message
-        console.log('@@ send\r\n[['+data+']]')
+        console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+pageInfo.wsVersion)
         ws.send(data)
     }    
     function connectWebSocket() {
@@ -76,14 +75,14 @@ function websocketConnect(url) {
             ws.onmessage = function(event) {
                 try {
                     const pos = event.data.indexOf('\r\n\r\n')
-                    console.log('@@ 서버로부터 메시지 수신:', event.data);
+                    console.log('@@ 서버로부터 메시지 수신: pos == '+pos);
                     if(pos!=-1) {
                         const header = event.data.substr(0,pos)
                         const message = event.data.substr(pos+4)
                         // const node = JSON.parse(message);
                         // 메시지 타입에 따른 처리
                         if( typeof(pageInfo.wsCallback)=='function' ) pageInfo.wsCallback(header, message);
-                    }                    
+                    }
                 } catch (error) {
                     console.error('메시지 파싱 오류:', error);
                 }

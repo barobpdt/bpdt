@@ -1,13 +1,23 @@
 document.addEventListener('DOMContentLoaded', function() {
-	// Ace 에디터 초기화
-	const editor = ace.edit("editor");
-	editor.setTheme("ace/theme/monokai");
-	editor.session.setMode("ace/mode/python");
-	editor.setFontSize(14);
-	editor.setOptions({
+	// Ace Editor 모듈화 설정
+	const editor = ace.require("ace/editor").Editor;
+	const EditSession = ace.require("ace/edit_session").EditSession;
+	const UndoManager = ace.require("ace/undomanager").UndoManager;
+	const Mode = ace.require("ace/mode/javascript").Mode;
+	const PythonMode = ace.require("ace/mode/python").Mode;
+	const Theme = ace.require("ace/theme/monokai").Theme;
+
+	// 에디터 초기화
+	const editorInstance = ace.edit("editor");
+
+	// 기본 설정
+	editorInstance.setTheme("ace/theme/monokai");
+	editorInstance.session.setMode("ace/mode/javascript");
+	editorInstance.setOptions({
 		enableBasicAutocompletion: true,
 		enableLiveAutocompletion: true,
 		enableSnippets: true,
+		fontSize: "14px",
 		showPrintMargin: false,
 		showGutter: true,
 		highlightActiveLine: true,
@@ -15,6 +25,37 @@ document.addEventListener('DOMContentLoaded', function() {
 		useSoftTabs: true,
 		tabSize: 4
 	});
+
+	// 붙여넣기 이벤트 처리 및 자동 선택 기능
+	let pasteStartPosition = null;
+	
+	// 붙여넣기 시작 위치 저장
+	editorInstance.on('beforepaste', function(e) {
+		pasteStartPosition = editorInstance.getCursorPosition();
+	});
+	
+	// 붙여넣기 후 자동 선택 적용
+	editorInstance.on('paste', function(e) {
+		if (pasteStartPosition) {
+			setTimeout(function() {
+				// 현재 커서 위치 (붙여넣기 후 위치)
+				const currentPosition = editorInstance.getCursorPosition();
+				
+				// 선택 범위 설정 (붙여넣기 시작 위치에서 현재 위치까지)
+				editorInstance.selection.setRange({
+					start: pasteStartPosition,
+					end: currentPosition
+				});
+				
+				// 위치 초기화
+				pasteStartPosition = null;
+			}, 0);
+		}
+	});
+
+	// 자동 완성 설정
+	const langTools = ace.require("ace/ext/language_tools");
+	editorInstance.completers = [langTools.textCompleter];
 
 	// 기본 코드 템플릿
 	const defaultCode = {
@@ -28,38 +69,155 @@ function helloWorld() {
 	console.log("Hello, World!");
 }
 
-helloWorld();`,
-		html: `<!DOCTYPE html>
-<html>
-<head>
-	<title>HTML 예제</title>
-</head>
-<body>
-	<h1>Hello, World!</h1>
-	<p>이것은 HTML 예제입니다.</p>
-</body>
-</html>`,
-		css: `/* CSS 예제 */
-body {
-	font-family: Arial, sans-serif;
-	margin: 0;
-	padding: 20px;
-	background-color: #f0f0f0;
-}
-
-h1 {
-	color: #333;
-	text-align: center;
-}
-
-p {
-	color: #666;
-	line-height: 1.6;
-}`
+helloWorld();`
 	};
 
 	// 초기 코드 설정
-	editor.setValue(defaultCode.python); 
+	editorInstance.setValue(defaultCode.javascript); 
+
+	// 언어 모드 전환 함수
+	function switchLanguageMode(language) {
+		if (language === 'python') {
+			editorInstance.session.setMode("ace/mode/python");
+			editorInstance.setValue(defaultCode.python);
+			setupPythonCompletions();
+		} else if (language === 'javascript') {
+			editorInstance.session.setMode("ace/mode/javascript");
+			editorInstance.setValue(defaultCode.javascript);
+			setupJavaScriptCompletions();
+		}
+	}
+
+	// Python 자동완성 설정
+	function setupPythonCompletions() {
+		const pythonCompleter = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
+				const wordList = [
+					"def", "class", "if", "else", "elif", "for", "while", "try", "except", "finally",
+					"import", "from", "as", "return", "break", "continue", "pass", "raise", "with",
+					"True", "False", "None", "and", "or", "not", "is", "in", "lambda", "global",
+					"print", "len", "range", "list", "dict", "set", "tuple", "str", "int", "float"
+				];
+				
+				const completions = wordList.map(word => ({
+					value: word,
+					meta: "python"
+				}));
+				
+				callback(null, completions);
+			}
+		};
+		
+		editorInstance.completers = [pythonCompleter, langTools.textCompleter];
+	}
+
+	// JavaScript 자동완성 설정
+	function setupJavaScriptCompletions() {
+		editorInstance.completers = [langTools.textCompleter];
+	}
+
+	// 언어 전환 버튼 추가
+	const languageButtons = document.createElement('div');
+	languageButtons.style.position = 'absolute';
+	languageButtons.style.top = '10px';
+	languageButtons.style.right = '10px';
+	languageButtons.style.zIndex = '1000';
+
+	const jsButton = document.createElement('button');
+	jsButton.textContent = 'JavaScript';
+	jsButton.onclick = () => switchLanguageMode('javascript');
+	jsButton.style.marginRight = '5px';
+
+	const pythonButton = document.createElement('button');
+	pythonButton.textContent = 'Python';
+	pythonButton.onclick = () => switchLanguageMode('python');
+
+	languageButtons.appendChild(jsButton);
+	languageButtons.appendChild(pythonButton);
+	document.body.appendChild(languageButtons);
+
+	// 자동완성 항목 추가 함수
+	window.appendAutocomplete = function(items, language = null) {
+		// 현재 언어 모드 확인
+		const currentMode = editorInstance.session.getMode().$id;
+		const currentLanguage = currentMode.split('/').pop();
+		
+		// 언어가 지정되지 않았거나 현재 언어와 일치하는 경우에만 추가
+		if (!language || language === currentLanguage) {
+			// 현재 자동완성 설정 가져오기
+			const currentCompleters = editorInstance.completers || [];
+			
+			// 새로운 자동완성 설정 생성
+			const customCompleter = {
+				getCompletions: function(editor, session, pos, prefix, callback) {
+					// 기존 자동완성 항목 가져오기
+					const existingCompletions = [];
+					
+					// 기존 자동완성 설정에서 항목 가져오기
+					currentCompleters.forEach(completer => {
+						if (completer.getCompletions) {
+							completer.getCompletions(editor, session, pos, prefix, (err, results) => {
+								if (!err && results) {
+									existingCompletions.push(...results);
+								}
+							});
+						}
+					});
+					
+					// 새로운 자동완성 항목 추가
+					const newCompletions = items.map(item => {
+						// 문자열인 경우 객체로 변환
+						if (typeof item === 'string') {
+							return {
+								value: item,
+								meta: currentLanguage
+							};
+						}
+						return item;
+					});
+					
+					// 모든 자동완성 항목 합치기
+					const allCompletions = [...existingCompletions, ...newCompletions];
+					
+					// 중복 제거 (value 기준)
+					const uniqueCompletions = [];
+					const seen = new Set();
+					
+					allCompletions.forEach(item => {
+						if (!seen.has(item.value)) {
+							seen.add(item.value);
+							uniqueCompletions.push(item);
+						}
+					});
+					
+					callback(null, uniqueCompletions);
+				}
+			};
+			
+			// 자동완성 설정 업데이트
+			editorInstance.completers = [customCompleter];
+			
+			console.log(`Added ${items.length} autocomplete items for ${currentLanguage}`);
+		}
+	};
+	
+	// 예시: 자동완성 항목 추가 버튼
+	const addAutocompleteButton = document.createElement('button');
+	addAutocompleteButton.textContent = 'Add Autocomplete';
+	addAutocompleteButton.onclick = function() {
+		// 예시 자동완성 항목 추가
+		const customItems = [
+			{ value: 'customFunction', meta: 'function', doc: 'A custom function' },
+			{ value: 'customVariable', meta: 'variable', doc: 'A custom variable' },
+			'customString', // 문자열로도 추가 가능
+			{ value: 'customObject', meta: 'object', doc: 'A custom object' }
+		];
+		
+		appendAutocomplete(customItems);
+		alert('Custom autocomplete items added!');
+	};
+	addAutocompleteButton.style.marginRight = '5px';
+	languageButtons.appendChild(addAutocompleteButton);
 
 	// 파일 확장자 가져오기 함수
 	function getFileExtension(language) {

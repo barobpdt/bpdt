@@ -3,53 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>웹소켓 테스트</title> 
-    <link rel="stylesheet" href="styles.css">
-    <!-- Ace Editor CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ace.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-html.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-monokai.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-github.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-twilight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-tomorrow_night.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-solarized_dark.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-solarized_light.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-kuroir.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-textmate.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-tomorrow.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-xcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-terminal.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-ambiance.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-chaos.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-clouds.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-clouds_midnight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-cobalt.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-crimson_editor.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-dawn.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-dreamweaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-eclipse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-idle_fingers.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-kr_theme.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-merbivore.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-merbivore_soft.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-mono_industrial.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-nord_dark.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-pastel_on_dark.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-sqlserver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-sunburst.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-tomorrow_night_blue.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-tomorrow_night_bright.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-tomorrow_night_eighties.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/theme-vibrant_ink.min.js"></script>    
+    <title>메인페이지</title> 
+    <link rel="stylesheet" href="/themes/proton/style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <style>
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #tree {
+            width: 300px;
+            height: 400px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 기본 노드 스타일 */
+        .jstree-default .jstree-node {
+            margin-left: 20px;
+        }
+
+        /* 노드 텍스트 스타일 */
+        .jstree-default .jstree-anchor {
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* 호버 효과 */
+        .jstree-default .jstree-anchor:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* 선택된 노드 스타일 */
+        .jstree-default .jstree-clicked {
+            background-color: #e3f2fd !important;
+            box-shadow: none;
+        }
+
+ 
+        /* 폴더 아이콘 */
+        .jstree-proton-small .jstree-icon.folder {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>');
+            
+        }
+
+        /* 파일 아이콘 */
+        .jstree-proton-small .jstree-themeicon.file {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>');
+           
+        }
+ 
+        /* 컨텍스트 메뉴 스타일 */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 5px 0;
+            z-index: 1000;
+        }
+
+        .context-menu-item {
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .context-menu-item.disabled {
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .context-menu-item.disabled:hover {
+            background-color: transparent;
+        }
+
+        /* 버튼 스타일 */
+        .tree-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tree-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tree-button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .tree-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
-<body style="padding:0;margin:0">
-    <div style="width:100%; height:100vh">        
-        <div id="editor" style="width: 100%;height:100%;"></div>
-        
+<body style="padding:0;margin:0;display: flex; justify-content: center; align-items: center;">
+    <div class="tree-container">
+        <div id="tree"></div>
+        <div class="tree-buttons">
+            <button class="tree-button" id="addNode">자식 추가</button>
+            <button class="tree-button" id="deleteNode">삭제</button>
+        </div>
     </div>
-    <script src="/js/editor.js"></script>
+    <script>
+        $(document).ready(function() {
+           
+            // 드래그 앤 드롭 이벤트
+            $('#tree').on('move_node.jstree', function(e, data) {
+                console.log('Node moved:', data);
+                // 여기에 노드 이동 후 추가 로직을 구현할 수 있습니다
+            });
+
+            // 컨텍스트 메뉴 이벤트
+            $('#tree').on('contextmenu', '.jstree-anchor', function(e) {
+                e.preventDefault();
+                const node = $(this);
+                const nodeId = node.attr('id');
+                const isLeaf = node.parent().hasClass('jstree-leaf');
+                
+                // 컨텍스트 메뉴 생성
+                const menu = $('<div class="context-menu"></div>');
+                menu.append('<div class="context-menu-item" data-action="add-child">자식 추가</div>');
+                menu.append('<div class="context-menu-item" data-action="add-sibling">형제 추가</div>');
+                
+                // 삭제 메뉴 항목 추가 (자식이 없는 노드만 활성화)
+                const deleteItem = $('<div class="context-menu-item" data-action="delete">삭제</div>');
+                if (!isLeaf) {
+                    deleteItem.addClass('disabled');
+                }
+                menu.append(deleteItem);
+                
+                // 메뉴 위치 설정
+                menu.css({
+                    top: e.pageY,
+                    left: e.pageX
+                });
+                
+                // 메뉴 표시
+                $('body').append(menu);
+                
+                // 메뉴 항목 클릭 이벤트
+                menu.on('click', '.context-menu-item', function() {
+                    if ($(this).hasClass('disabled')) return;
+                    
+                    const action = $(this).data('action');
+                    const newNodeId = 'new_' + Date.now();
+                    
+                    switch(action) {
+                        case 'add-child':
+                            $('#tree').jstree('create_node', nodeId, 'last', {
+                                'id': newNodeId,
+                                'text': '새 폴더'
+                            });
+                            break;
+                        case 'add-sibling':
+                            $('#tree').jstree('create_node', $('#tree').jstree('get_parent', nodeId), 'last', {
+                                'id': newNodeId,
+                                'text': '새 폴더'
+                            });
+                            break;
+                        case 'delete':
+                            if (isLeaf) {
+                                $('#tree').jstree('delete_node', nodeId);
+                            }
+                            break;
+                    }
+                    
+                    // 메뉴 제거
+                    menu.remove();
+                });
+                
+                // 다른 곳 클릭시 메뉴 제거
+                $(document).one('click', function() {
+                    menu.remove();
+                });
+            });
+
+            // 버튼 이벤트
+            $('#addNode').on('click', function() {
+                const selectedNode = $('#tree').jstree('get_selected');
+                if (selectedNode.length > 0) {
+                    const newNodeId = 'new_' + Date.now();
+                    $('#tree').jstree('create_node', selectedNode[0], 'last', {
+                        'id': newNodeId,
+                        'text': '새 폴더'
+                    });
+                }
+            });
+
+            $('#deleteNode').on('click', function() {
+                const selectedNode = $('#tree').jstree('get_selected');
+                if (selectedNode.length > 0) {
+                    const node = $('#tree').jstree('get_node', selectedNode[0]);
+                    if (node.children.length === 0) {
+                        $('#tree').jstree('delete_node', selectedNode[0]);
+                    }
+                }
+            });
+
+            // 버튼 상태 업데이트
+            $('#tree').on('select_node.jstree', function() {
+                updateButtonStates();
+            });
+
+            $('#tree').on('deselect_node.jstree', function() {
+                updateButtonStates();
+            });
+
+            function updateButtonStates() {
+                const selectedNode = $('#tree').jstree('get_selected');
+                const hasSelection = selectedNode.length > 0;
+                const isLeaf = hasSelection && $('#tree').jstree('get_node', selectedNode[0]).children.length === 0;
+                
+                $('#addNode').prop('disabled', !hasSelection);
+                $('#deleteNode').prop('disabled', !hasSelection || !isLeaf);
+            }
+
+            // 초기 버튼 상태 설정
+            updateButtonStates();
+
+            // 트리 데이터 새로고침 함수들
+            function refreshTreeData(newData) {
+                $('#tree').jstree('destroy');
+                $('#tree').jstree({
+                    'core': {
+                        'data': newData,
+                        'check_callback': true,
+                        'themes': {
+                            'name': 'proton',
+                            'responsive': true,
+                            'variant': 'small',
+                            'stripes': false
+                        }
+                    },
+                    'plugins': ['dnd'],
+                });
+            }
+
+            // 특정 노드의 자식들만 새로고침
+            function refreshNodeChildren(nodeId, newChildren) {
+                $('#tree').jstree('delete_node', $('#tree').jstree('get_node', nodeId).children);
+                newChildren.forEach(child => {
+                    $('#tree').jstree('create_node', nodeId, 'last', child);
+                });
+            }
+
+            // 예시: 새로운 데이터로 트리 새로고침
+            function exampleRefresh() {
+                const newData = [
+                    { 'id': '1', 'parent': '#', 'text': 'New Folder 1', 'type': 'folder' },
+                    { 'id': '2', 'parent': '#', 'text': 'New Folder 2', 'type': 'folder' },
+                    { 'id': '3', 'parent': '1', 'text': 'New File 1.1', 'type': 'file' },
+                    { 'id': '4', 'parent': '1', 'text': 'New File 1.2', 'type': 'file' }
+                ];
+                refreshTreeData(newData);
+            }
+
+            // 예시: 특정 노드의 자식들만 새로고침
+            function exampleRefreshChildren() {
+                const nodeId = '1'; // 새로고침하려는 노드의 ID
+                const newChildren = [
+                    { 'id': '6', 'parent': nodeId, 'text': 'New Child 1', 'type': 'file' },
+                    { 'id': '7', 'parent': nodeId, 'text': 'New Child 2', 'type': 'file' }
+                ];
+                refreshNodeChildren(nodeId, newChildren);
+            }
+
+            exampleRefresh()
+        });
+    </script>
 </body>
 </html> 

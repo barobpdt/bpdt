@@ -162,7 +162,7 @@
         
         pageInfo.closeMode = 'close'
         pageInfo.wsCallback = function(header, data) {
-            console.log("@@ websocket callback => header=="+header, data )
+            console.log("@@ websocket callback => header=="+header )
             var pos = header.indexOf('\r\n')
             if( pos==-1) return console.log("@@ websocket 헤더 오류")
             if( header.charAt(0)!='@' ) return console.log("@@ websocket 헤더 타입 시작 오류")
@@ -172,7 +172,7 @@
             const b=info.split('::') // 데이터크기, 요청타입, 결과타입, 결과정보
             // ${size},${requestType},${resultType},${resultInfo}
             const type = a[0]
-			console.log('@@ web socket type=='+type)
+		console.log('@@ web socket type=='+type)
             if( type=='req_login' ) {
                 ws.sendData('req_login','',{id:'a',passwd:'b'})
             }

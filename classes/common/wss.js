@@ -1,3 +1,33 @@
+<script>
+	socketHandshake(client, &data) {	   
+	    header=data.findPos("\r\n\r\n");
+	    print("websocket handshake header==$header");
+	    while( header.valid(), n, 0 ) {
+			line=header.findPos("\r\n");
+			if( n.eq(0) ) {
+				client.set("reqInfo", line.trim() );
+			} else {
+				key=line.findPos(':').trim();
+				value=line.trim();
+				client.set(key, value);
+			}
+	    }
+	    rst='';
+	    key=client.get('Sec-WebSocket-Key');
+	    if( key ) {
+			key.add('258EAFA5-E914-47DA-95CA-C5AB0DC85B11');
+			accept=Cf.handshakeKey(key);
+			rst.add("HTTP/1.1 101 Switching Protocols\r\n");
+			rst.add("Upgrade: websocket\r\n");
+			rst.add("Connection: Upgrade\r\n");
+			rst.add("Sec-WebSocket-Accept: ${accept}\r\n");
+			// rst.add("Sec-WebSocket-Protocol: chat\r\n");
+			rst.add("\r\n");
+			print("@@ websocket responce==$rst, key=$key");
+			client.sendData(rst);
+	    }
+	}
+</script>
 <script module="@wss">	 
 	init(port) {
 		@server=Baro.server('websocket')
@@ -101,11 +131,28 @@
 	}
 	req_chunkFileUpload(client, requestType, &header, resultInfo, resultContentType, data, param) {
 		type='res_imageSend'
-		errorCode = 200
-		resultContentType='file'
-		responseData="data/clipboard_captures/$header"
+		code = 200
+		path=conf('temp.path')
+		header.split('|').inject(fieldId, name, size, currentIndex, currentChunk, totalChunks)
+		fo=Baro.file('upload')
+		fileName = "$path/upload/$fieldId--$name"
+		not(fo.open(fileName, "append")) {
+			code = 400
+			responseData = "$fileName 파일 열기 오류");
+			print("파일열기오류 (파일명: $fileName)")
+		}
+		if( code==200 ) {
+			saveData=data.decode('base64')
+			last = totalChunks - 1	
+			end = currentIndex.eq(last)
+			if(end) end =  size.eq(saveData.size() )
+			fo.append(saveData)
+			fo.close()
+			responseData= fileName
+		}
 		size=responseData.size();
-		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
+		resultContentType='text'
+		client.sendWs("@${type}::${code}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	}
 	
 	req_login(client, requestType, &header, resultInfo, resultContentType, data, param) {

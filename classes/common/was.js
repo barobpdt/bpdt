@@ -42,34 +42,7 @@
 		}
 		return true;
 	}
-	socketHandshake(client, &data) {	   
-	    header=data.findPos("\r\n\r\n");
-	    print("websocket handshake header==$header");
-	    while( header.valid(), n, 0 ) {
-			line=header.findPos("\r\n");
-			if( n.eq(0) ) {
-				client.set("reqInfo", line.trim() );
-			} else {
-				key=line.findPos(':').trim();
-				value=line.trim();
-				client.set(key, value);
-			}
-	    }
-	    rst='';
-	    key=client.get('Sec-WebSocket-Key');
-	    if( key ) {
-			key.add('258EAFA5-E914-47DA-95CA-C5AB0DC85B11');
-			accept=Cf.handshakeKey(key);
-			rst.add("HTTP/1.1 101 Switching Protocols\r\n");
-			rst.add("Upgrade: websocket\r\n");
-			rst.add("Connection: Upgrade\r\n");
-			rst.add("Sec-WebSocket-Accept: ${accept}\r\n");
-			// rst.add("Sec-WebSocket-Protocol: chat\r\n");
-			rst.add("\r\n");
-			print("@@ websocket responce==$rst, key=$key");
-			client.sendData(rst);
-	    }
-	}
+	
 </script>
 
 <script module="@was">	

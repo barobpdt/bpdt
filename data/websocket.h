@@ -1275,7 +1275,8 @@ inline bool wsSendClientMessage(MessageClient* client, unsigned char opcode, Str
     StrVar* data=cf->GetVar("sendData");
     for (int i = 0; i <=frameCount; i++) {
         if( i!=frameCount ) {
-            op = i==0 ? opcode: WS_OPCODE_CONTINUATION;
+            // op = i==0 ? opcode: WS_OPCODE_CONTINUATION;
+            op = WS_OPCODE_CONTINUATION;
             bufferLength = bufferSize;
             fin=0;
         } else {
@@ -1284,7 +1285,7 @@ inline bool wsSendClientMessage(MessageClient* client, unsigned char opcode, Str
             fin=WS_FIN;
         }
         data->reuse();
-        // qDebug(">> fin:%d opcode:%d (n:%d, frameCount:%d lastFrameBufferLength:%d)", fin, op, i, frameCount, lastFrameBufferLength);
+        // qDebug("@@# fin:%d opcode:%d (n:%d, frameCount:%d lastFrameBufferLength:%d)", fin, op, i, frameCount, lastFrameBufferLength);
         // set payload length variables for frame
         if (bufferLength < 126) {
             data->add((char)(fin | op));
@@ -1317,7 +1318,7 @@ inline bool wsSendClientMessage(MessageClient* client, unsigned char opcode, Str
         // send frame
         int left = data->length();
         char *buf = data->get();        
-        qDebug(">> websocket send %d", left);
+        qDebug("@@# websocket send %d", left);
         do {
             int sent = sock->write(buf, left);
             if (sent == -1)
@@ -1378,9 +1379,8 @@ inline bool wsBuildClientFrame(MessageClient* client, StrVar* tmp, bool remainCh
     int frameLength = cf->getInt("FramePayloadDataLength") + headerLength;
     int tmpLength = tmp->length();
     if ( tmpLength >= frameLength){
-        if( tmpLength == frameLength ) {
-            qDebug("websocket recv frameLength:%d bufferLength:%d [%s]",
-                   frameLength, tmpLength, remainCheck?"append":"new" );
+        if( remainCheck && tmpLength == frameLength ) {
+            qDebug("@@> websocket recv frameLength:%d bufferLength:%d [%s]", frameLength, tmpLength, remainCheck?"append":"new" );
         }
         // check if too many bytes have been read for the frame (they are part of the next frame)
         int nextFrameBytesLength = tmpLength - frameLength;
@@ -1394,6 +1394,7 @@ inline bool wsBuildClientFrame(MessageClient* client, StrVar* tmp, bool remainCh
         //unsigned char mask = octet1 & WS_MASK;
         if (octet1 < 128) {
             cf->set("errorCode","901");
+            qDebug("@@> websocket recv octet1 error (%d)", octet1);
             return false;
         }
         // fetch byte position where the mask key starts
@@ -1423,8 +1424,7 @@ inline bool wsBuildClientFrame(MessageClient* client, StrVar* tmp, bool remainCh
                 tmp->add(buf[n]);
             }
         }
-        qDebug("## attach buffer nextLen: %d, attachLen: %d (%d, %d)",
-               nextFrameBytesLength, tmp->length(), frameLength, tmpLength);
+        // qDebug("## attach buffer nextLen: %d, attachLen: %d (%d, %d)", nextFrameBytesLength, tmp->length(), frameLength, tmpLength);
         // finished
         if (fin == WS_FIN ) {
             /*
@@ -1708,10 +1708,10 @@ bool callMessageClientFunc(StrVar* me, XFunc* fc, LPCC funcName, PARR arrs, Tree
             }
             if( wsBuildClientFrame(conn, tmp, false) ) {
                 StrVar* sv=cf->GetVar("recvData");
-                qDebug("websocket recv ok size: %d", sv->length());
+                // qDebug("websocket recv ok size: %d", sv->length());
                 rst->setVar('s',0,(LPVOID)sv).addInt(0).addInt(sv->length()).addInt(0).addInt(sv->length() );
             } else {
-                // qDebug("read skip recvData size: %d", tmp->length() );
+                qDebug("@@> read skip recvData size: %d", tmp->length() );
                 rst->reuse();
             }
         } else {
