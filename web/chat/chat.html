@@ -139,7 +139,7 @@
     <script src="/js/chat.js"></script>
    
     <script>
-		const ws=websocketConnect('ws://localhost:8092/chat')
+		const ws=websocketConnect()
 		const upload=wsChunkUploadFiles(ws)
 		
 		$(document).ready(function() {
@@ -149,6 +149,8 @@
 			$('.toolbar-button.upload-clip').on('click', ()=>togglePage('upload'))
 			$('#cancleButton').on('click', ()=>togglePage('chat'))
 			$('#uploadButton').on('click', ()=>uploadStart())
+			// 웹소켓 연결시작
+			ws.connect()
 			
 		})
 		const togglePage = (name) => {

@@ -30,8 +30,8 @@ args = parser.parse_args()
 
         
 try:
-	fpIn=open(args.log, 'r')
-	fpOut=open(args.out, 'a')
+	fpIn=open(args.log, 'r', encoding='utf8')
+	fpOut=open(args.out, 'a', encoding='utf8')
 	lastPos=fpIn.seek(0, os.SEEK_END)
 	tm=time.time()
 	def log (msg):

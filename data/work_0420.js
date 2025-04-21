@@ -1,4 +1,93 @@
+## 파이션 실행하기
+	c=cmd()
+	in = logWriter('runcmd')
+	out = logReader('runcmd-out')
+
+	p=conf('python.path')
+	p.add('/python.exe')
+
+	py = conf('include.path')
+	py.add('/classes/pyapps')
+
+	cmd=fv('#{p} "run_cmd.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
+	pip=fv('#{p} -m pip install zipfile')
+
+
+	c.run(pip)
+	c.run(cmd)
+
+	in.write('##>quit:')
+
+## 파이션 동적 소스 실행로그
+	src = #[
+	import zipfile
+	with zipfile.ZipFile('${path}') as zip:
+		arr = zip.infolist()
+		for cur in arr:
+			cur.filename = cur.filename.encode('cp437').decode('euc-kr')
+		log(arr)
+
+	]
+	ss=fv('##> exec:#{src}')
+	in.write(ss)
+
+
+## 파이션 실행로그 보기
+~~
+<widgets>
+	<page id="logViewer">
+		<editor id="e">
+		<hbox>
+			<button id="clear" text="clear">
+			<space>
+		</hbox>
+	</page>
+</widgets>
+
+~~
+p=page('test:logViewer')
+e=widget(p,'e')
+p[
+	init() {
+		@out = logReader('runcmd-out')
+		@e=widget('e')
+		setEvent(widget('clear'), 'onClick', this.clickClear, this)
+		this.timer(200)
+		this.open()
+	}
+	onTimer() {
+		s=out.timeout()
+		if(s) {
+			e.append(s)
+		}
+	}
+	clickClear() {
+		e.value('')
+	}
+]
+p.init()
+~~
+
+
+## 클립보드 캡쳐하기
+root=Cf.rootNode()
+System.watcherClipboard(@test.clipZipFileCopy)
+
+~~
+<func>
+	@test.clipZipFileCopy(a,b,c) {
+		not(a.eq('text')) return;
+		not(b.start('file:///')) return;
+		path = b.value(8)
+		ext=right(path,'.').lower()
+		print("copy file =>", path, ext)
+		not(ext.eq('zip')) return;
+	}
+</func>
+
+
 ## zip 파일 읽어서 트리만들기
+
 <widgets>
 	<page id="p1">
 		<tree id="tree">

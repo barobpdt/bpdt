@@ -1,0 +1,376 @@
+{
+  "database": "config.db",
+  "tables": {
+    "db_info": {
+      "schema": "CREATE TABLE db_info( dsn text, driver text, server text, dbnm text, uid text, pwd text, port text)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "dsn",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 1,
+          "name": "driver",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 2,
+          "name": "server",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 3,
+          "name": "dbnm",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 4,
+          "name": "uid",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 5,
+          "name": "pwd",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 6,
+          "name": "port",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    "global_define": {
+      "schema": "CREATE TABLE [global_define] (\r\n[type] text, \r\n[def] text, \r\n[value] INTEGER, \r\n[tm] integer, \r\n[comment] TEXT)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "type",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 1,
+          "name": "def",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 2,
+          "name": "value",
+          "type": "INTEGER",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 3,
+          "name": "tm",
+          "type": "INTEGER",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 4,
+          "name": "comment",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    "keymap_info_temp": {
+      "schema": "CREATE TABLE keymap_info_temp (\n    \tkey\tvarchar(64),\n      targetId\tvarchar(64),\n    \tdata\t,\n    \tnote\t,\n    \ttm\tinteger DEFAULT 0,\n    \tuseYn\tchar(1) DEFAULT 'Y',\n    \tregdt\tdatetime DEFAULT (datetime('now', 'localtime')),\n    \tPRIMARY KEY(key)\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "key",
+          "type": "varchar(64)",
+          "notnull": false,
+          "default_value": null,
+          "pk": true
+        },
+        {
+          "cid": 1,
+          "name": "targetId",
+          "type": "varchar(64)",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 2,
+          "name": "data",
+          "type": "",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 3,
+          "name": "note",
+          "type": "",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 4,
+          "name": "tm",
+          "type": "INTEGER",
+          "notnull": false,
+          "default_value": "0",
+          "pk": false
+        },
+        {
+          "cid": 5,
+          "name": "useYn",
+          "type": "char(1)",
+          "notnull": false,
+          "default_value": "'Y'",
+          "pk": false
+        },
+        {
+          "cid": 6,
+          "name": "regdt",
+          "type": "datetime",
+          "notnull": false,
+          "default_value": "datetime('now', 'localtime')",
+          "pk": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "sqlite_autoindex_keymap_info_temp_1",
+          "unique": true,
+          "columns": [
+            "key"
+          ]
+        }
+      ]
+    },
+    "keymap_info": {
+      "schema": "CREATE TABLE keymap_info (\n    \tkey\tvarchar(64),\n      targetId\tvarchar(64),\n    \tdata\t,\n    \tnote\t,\n      type\tchar(1) DEFAULT '0',\n      kind\tchar(1) DEFAULT '0',\n    \ttm\tinteger DEFAULT 0,\n    \tuseYn\tchar(1) DEFAULT 'Y',\n    \tregdt\tdatetime DEFAULT (datetime('now', 'localtime')),\n    \tPRIMARY KEY(key)\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "key",
+          "type": "varchar(64)",
+          "notnull": false,
+          "default_value": null,
+          "pk": true
+        },
+        {
+          "cid": 1,
+          "name": "targetId",
+          "type": "varchar(64)",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 2,
+          "name": "data",
+          "type": "",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 3,
+          "name": "note",
+          "type": "",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 4,
+          "name": "type",
+          "type": "char(1)",
+          "notnull": false,
+          "default_value": "'0'",
+          "pk": false
+        },
+        {
+          "cid": 5,
+          "name": "kind",
+          "type": "char(1)",
+          "notnull": false,
+          "default_value": "'0'",
+          "pk": false
+        },
+        {
+          "cid": 6,
+          "name": "tm",
+          "type": "INTEGER",
+          "notnull": false,
+          "default_value": "0",
+          "pk": false
+        },
+        {
+          "cid": 7,
+          "name": "useYn",
+          "type": "char(1)",
+          "notnull": false,
+          "default_value": "'Y'",
+          "pk": false
+        },
+        {
+          "cid": 8,
+          "name": "regdt",
+          "type": "datetime",
+          "notnull": false,
+          "default_value": "datetime('now', 'localtime')",
+          "pk": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "sqlite_autoindex_keymap_info_1",
+          "unique": true,
+          "columns": [
+            "key"
+          ]
+        }
+      ]
+    },
+    "conf_info": {
+      "schema": "CREATE TABLE [conf_info](\r\n  [conf_group] text, \r\n  [conf_group_dtl] text, \r\n  [conf_code] text, \r\n  [conf_code_dtl] text, \r\n  [grp] text, \r\n  [cd] text, \r\n  [data] text, \r\n  [note] text, \r\n  [lang] text, \r\n  [use_yn] CHAR(1) DEFAULT 'Y', \r\n  [tm] int64 DEFAULT '0', \r\n  [regdt] datetime DEFAULT (DATETIME ('now', 'localtime')))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "conf_group",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 1,
+          "name": "conf_group_dtl",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 2,
+          "name": "conf_code",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 3,
+          "name": "conf_code_dtl",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 4,
+          "name": "grp",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 5,
+          "name": "cd",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 6,
+          "name": "data",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 7,
+          "name": "note",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 8,
+          "name": "lang",
+          "type": "TEXT",
+          "notnull": false,
+          "default_value": null,
+          "pk": false
+        },
+        {
+          "cid": 9,
+          "name": "use_yn",
+          "type": "CHAR(1)",
+          "notnull": false,
+          "default_value": "'Y'",
+          "pk": false
+        },
+        {
+          "cid": 10,
+          "name": "tm",
+          "type": "int64",
+          "notnull": false,
+          "default_value": "'0'",
+          "pk": false
+        },
+        {
+          "cid": 11,
+          "name": "regdt",
+          "type": "datetime",
+          "notnull": false,
+          "default_value": "DATETIME ('now', 'localtime')",
+          "pk": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": []
+    }
+  }
+}

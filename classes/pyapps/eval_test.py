@@ -20,8 +20,8 @@ parser.add_argument('--log', action=CustomAction, nargs='+', required=True, help
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
 try:
-	fpLog=open(args.log, 'r')
-	fpOut=open(args.output, 'a')
+	fpLog=open(args.log, 'r', encoding='utf8')
+	fpOut=open(args.output, 'a', encoding='utf8')
 	lastPos=fpLog.seek(0, os.SEEK_END)
 	tm=time.time()
 	def log (msg):

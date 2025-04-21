@@ -1,34 +1,45 @@
+/* 
+페이지 공통설정 
+*/
+
 const pageInfo = {
-	url: 'ws://localhost:8080' // 웹소켓 서버 URL (필요에 따라 변경)
-	, maxRetries: 3              // 최대 재시도 횟수
-	, retryInterval: 2000        // 재시도 간격 (밀리초)
-	, currentRetry: 0             // 현재 재시도 횟수
-	, editor: null
-	, chunkSize: 64 * 1024 // 64KB 청크 크기
-	, serverUrl: 'http://localhost:8080/upload' // 파일 업로드 서버 URL
+	editor: null
+	/* 웹소켓 설정 */
     , websocket: null
-    , wsUrl:''
-    , wsStatus:''
+    , wsUrl:'ws://localhost:8092/chat'
+ 	, wsCallback: null
+	, wsStatus:''
     , wsType:''
+    , wsMode: ''
     , wsVersion:'1.0'
-    , wsMode: 'close'
-	, maxRetries: 3 // 최대 재시도 횟수
+	, currentRetry: 0             // 현재 재시도 횟수
+	, maxRetries: 0 // 최대 재시도 횟수
 	, retryInterval: 2000 // 재시도 간격 (밀리초)
-	, wsCallback: null
+	/* 기타 공통 설정 */
+	, dumyDiv: document.createElement('div')
 };
+
 const stringByteLength = (s,b,i,c) => {
     for(b=i=0;c=s.charCodeAt(i++);b+=c>>11?3:c>>7?2:1);
     return b
+}
+function qa(s) {
+	const a = document.querySelectorAll(s)
+	return a||[]
+}
+function qs(s) {
+	const a = document.querySelector(s)
+	return a||pageInfo.dumyDiv
 }
 function appendParam() {
 	let s=''
 	Array.from(arguments).map((c,n)=>s+=(n>0?'|':'')+c)
 	return s
 }
-function websocketConnect(url) {
+
+function websocketConnect() {
     // 웹소켓 연결 함수
     let ws = null
-    if( url ) pageInfo.wsUrl = url
     const isConnect = () => ws!=null
     function sendData(type, header, param) {
         let message='', contentType=''
@@ -53,11 +64,15 @@ function websocketConnect(url) {
         console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+pageInfo.wsVersion)
         ws.send(data)
     }    
-    function connectWebSocket() {
+    function connect(url) {
+		if( url ) {
+			pageInfo.wsUrl = url
+		} else {
+			url = pageInfo.wsUrl
+		}
         try {
-            console.log(`웹소켓 연결 시도 중... (시도 ${pageInfo.currentRetry + 1}/${pageInfo.maxRetries})`);            
             // 웹소켓 객체 생성
-            pageInfo.websocket = new WebSocket(pageInfo.wsUrl);
+            pageInfo.websocket = new WebSocket(url);
             // 연결 성공 이벤트
             ws=pageInfo.websocket
             ws.onopen = function() {
@@ -90,15 +105,14 @@ function websocketConnect(url) {
             
             // 연결 종료 이벤트
             ws.onclose = function(event) {
-                ws = null
                 console.log('웹소켓 연결 종료:', event.code, event.reason);
+                ws = null
                 updateConnectionStatus('연결 끊김', 'error');
-                if( pageInfo.wsMode=='close' ) return
                 // 정상 종료가 아닌 경우 재연결 시도
-                if (!event.wasClean && pageInfo.currentRetry < pageInfo.maxRetries) {
+                if (!event.wasClean && pageInfo.maxRetries && pageInfo.currentRetry < pageInfo.maxRetries) {
                     pageInfo.currentRetry++;
-                    console.log(`${pageInfo.retryInterval/1000}초 후 재연결 시도...`);
-                    setTimeout(connectWebSocket, pageInfo.retryInterval);
+                    console.log(`${pageInfo.retryInterval/1000} 초 후 재연결 시도...`);
+                    setTimeout(connect, pageInfo.retryInterval);
                 } else if (pageInfo.currentRetry >= pageInfo.maxRetries) {
                     console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
                     updateConnectionStatus('연결 실패', 'error');
@@ -117,18 +131,17 @@ function websocketConnect(url) {
             console.error('웹소켓 연결 중 오류 발생:', error);
             if( pageInfo.wsMode=='close' ) return
             // 오류 발생 시 재연결 시도
-            if (pageInfo.currentRetry < pageInfo.maxRetries) {
+            if ( pageInfo.maxRetries && pageInfo.currentRetry < pageInfo.maxRetries) {
                 pageInfo.currentRetry++;
                 console.log(`${pageInfo.retryInterval/1000}초 후 재연결 시도...`);
                 
-                setTimeout(connectWebSocket, pageInfo.retryInterval);
+                setTimeout(connect, pageInfo.retryInterval);
             } else {
                 console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
                 updateConnectionStatus('연결 실패', 'error');
             }
         }
     }   
-   
     
     // 연결 상태 표시 함수
     function updateConnectionStatus(status, type) {
@@ -136,10 +149,7 @@ function websocketConnect(url) {
         pageInfo.wsType = type
     }
     
-    // 초기 웹소켓 연결
-    connectWebSocket();
-    
-    return { connectWebSocket, isConnect, sendData }
+    return { connect, isConnect, sendData }
 }
 
 

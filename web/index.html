@@ -4,135 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>메인페이지</title> 
-    <link rel="stylesheet" href="/themes/proton/style.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <link rel="stylesheet" href="/themes/jstree/proton/style.css" />
+    <link rel="stylesheet" href="/styles_tree.css" />
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jstree.js"></script>
+    <script src="/js/common.js"></script>
+	
+	<script src="/js/slick/jquery.event.drag-2.2.js"></script>
+	<script src="/js/slick/slick.core.js"></script>
+	<script src="/js/slick/slick.grid.js"></script>
+	<link rel="stylesheet" href="/js/slick/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+	<link rel="stylesheet" href="/js/slick/slick.grid.css" type="text/css"/>
     <style>
-        .tree-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #tree {
-            width: 300px;
-            height: 400px;
-            overflow: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 기본 노드 스타일 */
-        .jstree-default .jstree-node {
-            margin-left: 20px;
-        }
-
-        /* 노드 텍스트 스타일 */
-        .jstree-default .jstree-anchor {
-            color: #333;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        /* 호버 효과 */
-        .jstree-default .jstree-anchor:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* 선택된 노드 스타일 */
-        .jstree-default .jstree-clicked {
-            background-color: #e3f2fd !important;
-            box-shadow: none;
-        }
-
- 
-        /* 폴더 아이콘 */
-        .jstree-proton-small .jstree-icon.folder {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>');
-            
-        }
-
-        /* 파일 아이콘 */
-        .jstree-proton-small .jstree-themeicon.file {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>');
-           
-        }
- 
-        /* 컨텍스트 메뉴 스타일 */
-        .context-menu {
-            position: absolute;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 5px 0;
-            z-index: 1000;
-        }
-
-        .context-menu-item {
-            padding: 5px 15px;
-            cursor: pointer;
-        }
-
-        .context-menu-item:hover {
-            background-color: #f5f5f5;
-        }
-
-        .context-menu-item.disabled {
-            color: #999;
-            cursor: not-allowed;
-        }
-
-        .context-menu-item.disabled:hover {
-            background-color: transparent;
-        }
-
-        /* 버튼 스타일 */
-        .tree-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .tree-button {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #fff;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tree-button:hover {
-            background-color: #f5f5f5;
-        }
-
-        .tree-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        
     </style>
 </head>
 <body style="padding:0;margin:0;display: flex; justify-content: center; align-items: center;">
-    <div class="tree-container">
-        <div id="tree"></div>
-        <div class="tree-buttons">
-            <button class="tree-button" id="addNode">자식 추가</button>
-            <button class="tree-button" id="deleteNode">삭제</button>
-        </div>
-    </div>
+	<div class="container">	
+		<div class="tree-panel">
+			<div id="tree"></div>
+			<div class="tree-buttons">
+				<button class="tree-button" id="addNode">자식 추가</button>
+				<button class="tree-button" id="deleteNode">삭제</button>
+			</div>
+		</div>
+		<div class="grid-panel">
+			<div id="myGrid" style="width:600px;height:500px;"></div>
+		</div>
+	</div>
     <script>
-        $(document).ready(function() {
-           
+		let tree = null
+		let grid = null;
+		function setGridData() {
+			var columns = [
+				{id: "title", name: "Title", field: "title"},
+				{id: "duration", name: "Duration", field: "duration"},
+				{id: "%", name: "% Complete", field: "percentComplete"},
+				{id: "start", name: "Start", field: "start"},
+				{id: "finish", name: "Finish", field: "finish"},
+				{id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
+			];
+			var options = {
+				enableCellNavigation: true,
+				enableColumnReorder: false
+			};    
+			var data = [];
+			for (var i = 0; i < 500; i++) {
+			  data[i] = {
+				title: "Task " + i,
+				duration: "5 days",
+				percentComplete: Math.round(Math.random() * 100),
+				start: "01/01/2009",
+				finish: "01/05/2009",
+				effortDriven: (i % 5 == 0)
+			  };
+			}
+			grid = new Slick.Grid("#myGrid", data, columns, options);
+		}
+		function setTreeData(data) {
+			if( tree) tree.destroy();
+			$('#tree').jstree({
+				'core': {
+					'data': data,
+					'check_callback': true,
+					'themes': {
+						'name': 'proton',
+						'responsive': false,
+						'variant': 'small',
+						'stripes': false
+					}
+				},
+				'plugins': ['dnd','checkbox'],
+			})
+			tree = $('#tree').jstree()
+			console.log('tree create ', tree)
+		}
+		
+		function setTreeIcon(tid, cur) {
+			if(!cur) cur = tree.get_node(tid)
+			const icon = qs('#'+tid+' .jstree-themeicon')
+			console.log('icon=>',tid, cur, icon )
+		}
+	    $(document).ready(function() {
+			setGridData()
+			setTreeData()
+			// select_node.jstree 이벤트 핸들링
+            $('#tree').on('select_node.jstree', function (e, data) {
+                console.log('노드가 선택되었습니다:', data.node.text);
+            });			
             // 드래그 앤 드롭 이벤트
             $('#tree').on('move_node.jstree', function(e, data) {
                 console.log('Node moved:', data);
                 // 여기에 노드 이동 후 추가 로직을 구현할 수 있습니다
+				const parent = tree.get_node(data.parent)
+				tree.open_node(parent)
             });
+			
+			// 이벤트 open_node
+			$('#tree').on('open_node.jstree', (e,d)=>{
+				if( !d.node.checkIcons) {
+					d.node.children.forEach(k=>setTreeIcon(k))
+					d.node.checkIcons = true
+				}
+			})
+			
 
             // 컨텍스트 메뉴 이벤트
             $('#tree').on('contextmenu', '.jstree-anchor', function(e) {
@@ -201,23 +176,21 @@
 
             // 버튼 이벤트
             $('#addNode').on('click', function() {
-                const selectedNode = $('#tree').jstree('get_selected');
-                if (selectedNode.length > 0) {
-                    const newNodeId = 'new_' + Date.now();
-                    $('#tree').jstree('create_node', selectedNode[0], 'last', {
-                        'id': newNodeId,
-                        'text': '새 폴더'
-                    });
+                const a = tree.get_selected()
+                if ( a.length > 0) { 
+					tree.create_node(a[0]
+						, {type:'file', text:'새파일'}, 'last'
+						, cur => $.jstree.reference(cur).edit(cur) 
+					)
                 }
             });
 
             $('#deleteNode').on('click', function() {
-                const selectedNode = $('#tree').jstree('get_selected');
-                if (selectedNode.length > 0) {
-                    const node = $('#tree').jstree('get_node', selectedNode[0]);
-                    if (node.children.length === 0) {
-                        $('#tree').jstree('delete_node', selectedNode[0]);
-                    }
+                const a = tree.get_selected()
+                if ( a.length > 0) {
+                    const node = tree.get_node(a[0])
+                    if ( node.children.length === 0 && !confirm()) return;
+					tree.delete_node(a[0])
                 }
             });
 
@@ -231,9 +204,9 @@
             });
 
             function updateButtonStates() {
-                const selectedNode = $('#tree').jstree('get_selected');
-                const hasSelection = selectedNode.length > 0;
-                const isLeaf = hasSelection && $('#tree').jstree('get_node', selectedNode[0]).children.length === 0;
+                const a = tree ? tree.get_selected():[]
+                const hasSelection = a.length > 0;
+                const isLeaf = hasSelection && tree.get_node(a[0]).children.length === 0;
                 
                 $('#addNode').prop('disabled', !hasSelection);
                 $('#deleteNode').prop('disabled', !hasSelection || !isLeaf);
@@ -241,55 +214,26 @@
 
             // 초기 버튼 상태 설정
             updateButtonStates();
-
-            // 트리 데이터 새로고침 함수들
-            function refreshTreeData(newData) {
-                $('#tree').jstree('destroy');
-                $('#tree').jstree({
-                    'core': {
-                        'data': newData,
-                        'check_callback': true,
-                        'themes': {
-                            'name': 'proton',
-                            'responsive': true,
-                            'variant': 'small',
-                            'stripes': false
-                        }
-                    },
-                    'plugins': ['dnd'],
-                });
-            }
-
+			
             // 특정 노드의 자식들만 새로고침
-            function refreshNodeChildren(nodeId, newChildren) {
-                $('#tree').jstree('delete_node', $('#tree').jstree('get_node', nodeId).children);
-                newChildren.forEach(child => {
-                    $('#tree').jstree('create_node', nodeId, 'last', child);
-                });
+            function refreshNodeChildren(nodeId, newData) {
+				const parent = tree.get_node(nodeId)
+                tree.delete_node( parent.children )
+                newData.forEach( cur => tree.create_node(nodeId, cur, 'last') )
             }
-
-            // 예시: 새로운 데이터로 트리 새로고침
-            function exampleRefresh() {
-                const newData = [
-                    { 'id': '1', 'parent': '#', 'text': 'New Folder 1', 'type': 'folder' },
-                    { 'id': '2', 'parent': '#', 'text': 'New Folder 2', 'type': 'folder' },
-                    { 'id': '3', 'parent': '1', 'text': 'New File 1.1', 'type': 'file' },
-                    { 'id': '4', 'parent': '1', 'text': 'New File 1.2', 'type': 'file' }
-                ];
-                refreshTreeData(newData);
-            }
-
-            // 예시: 특정 노드의 자식들만 새로고침
-            function exampleRefreshChildren() {
-                const nodeId = '1'; // 새로고침하려는 노드의 ID
-                const newChildren = [
-                    { 'id': '6', 'parent': nodeId, 'text': 'New Child 1', 'type': 'file' },
-                    { 'id': '7', 'parent': nodeId, 'text': 'New Child 2', 'type': 'file' }
-                ];
-                refreshNodeChildren(nodeId, newChildren);
-            }
-
-            exampleRefresh()
+			
+			const newData = [
+				{ 'id': 't1', 'parent': '#', 'text': 'New Folder 1', 'type': 'folder' },
+				{ 'id': 't2', 'parent': '#', 'text': 'New Folder 2', 'type': 'folder' },
+				{ 'id': 't3', 'parent': 't1', 'text': 'New File 1.1', 'type': 'file' },
+				{ 'id': 't4', 'parent': 't1', 'text': 'New File 1.2', 'type': 'file' }
+			];
+			setTreeData(newData)
+			setTimeout(()=>{
+				newData.filter(c=>c.type=='file' && c.parent=='#').forEach(c=>setTreeIcon(c.id,c))
+			},250)
+			pageInfo.data= newData
+			
         });
     </script>
 </body>
