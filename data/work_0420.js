@@ -1,6 +1,6 @@
 ## 파이션 실행하기
 	c=cmd()
-	in = logWriter('runcmd')
+	in = logWriter('runcmd-in')
 	out = logReader('runcmd-out')
 
 	p=conf('python.path')

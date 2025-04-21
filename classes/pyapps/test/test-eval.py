@@ -1,14 +1,6 @@
-import sys
-import os
-# 현재 스크립트의 상위 디렉토리를 Python path에 추가
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# 또는 pyapps 폴더의 절대 경로를 직접 지정
-# sys.path.append("C:/path/to/your/project")
-
 import argparse
+import os
 import time 
-from pyapps import check_file_exists, file_to_base64, change_extension, save_file, list_zip_contents
 
 def print_key_event(e):
 	print(f"Key {e.name} was {e.event_type}")
@@ -25,27 +17,25 @@ parser = argparse.ArgumentParser(description='프로그램 확장기능 처리')
 
 # 입력받을 인자값 등록
 parser.add_argument('--log', action=CustomAction, nargs='+', required=True, help='로그파일')
-parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
+parser.add_argument('--output', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
-
-        
 try:
-	fpIn=open(args.log, 'r', encoding='utf8')
-	fpOut=open(args.out, 'a', encoding='utf8')
-	lastPos=fpIn.seek(0, os.SEEK_END)
+	fpLog=open(args.log, 'r')
+	fpOut=open(args.output, 'a')
+	lastPos=fpLog.seek(0, os.SEEK_END)
 	tm=time.time()
 	def log (msg):
 		fpOut.write(f"##> {msg}\n")
 		fpOut.flush()
 
+	def keyMap (trigger, hotkey):
+		log(f"{trigger}: {hotkey}")
 
-	log(f"파이션 실행툴 시작 {tm}")
-    
 	while True:
 		dist=time.time()-tm
 		fsize=os.stat(args.log).st_size
 		if fsize>lastPos :
-			line=fpIn.read().strip()
+			line=fpLog.read().strip()
 			pos=line.find("##>") 
 			ftype='undefined'
 			data=''
@@ -55,39 +45,29 @@ try:
 					ftype=line[pos+3:end].strip()
 					data=line[end+1:]
 			# pos
-			log(f"type={ftype}, data={data}")
+			print(f"type={ftype}, data={data}")
 			if ftype=='quit': 
 				break
-			elif ftype=='zipinfo': 
-				try:
-					sucess, json = list_zip_contents(data)
-					log(f"zipinfo:{sucess}@{json}")
-				except Exception as ee:
-					log(f"zipfile:false@{ee}")
 			elif ftype=='eval': 
 				try:
 					result=eval(data)
 					log(f"eval:{result}")
 				except Exception as ee:
 					log(f"evalException:{ee}")
+			elif ftype=='exec': 
+				try:
+					result=exec(data)
+				except Exception as ee:
+					log(f"execException:{ee}")
 			elif ftype=='echo':
 				params=[v.strip() for v in data.split(',')]
 				log(f"echo:params={params}")
-			elif ftype=='save_base64':
-				path = data
-				if not check_file_exists(path):
-					log(f"error:file not exists {path}")
-					continue
-				save_path = change_extension(path, 'base64')
-				base64_data = file_to_base64(path)
-				ret = save_file(save_path, base64_data)
-				log(f"save_base64:path={save_path}, ret={ret}")	
 			else:
 				log(f"errorType:ftype={ftype} not defined")
 			lastPos=fsize
 		time.sleep(0.2)
 	log(f"close test python [filepath:{args.output}]")
 	fpOut.close()
-	fpIn.close()	
+	fpLog.close()	
 except Exception as e:
 	print(f" error: {e}")

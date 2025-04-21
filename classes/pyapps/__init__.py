@@ -9,23 +9,40 @@ from .file_utils import (
     check_path_exists,
     change_extension,
     file_to_base64,
-    save_file
+    save_file,
+    list_zip_contents,
+    extract_zip_to_directory
 )
 
+""" @ppt_use 
 from .ppt_utils import (
     json_to_pptx,
     json_to_table_pptx,
-    create_table_slide
+    json_to_image_pptx,
+    extract_tables_from_pptx,
+    extract_all_tables_from_pptx
 )
+"""
+
+from .icon_utils import IconManager
+from .button_icons import ButtonIconManager
 
 __all__ = [
+""" @ppt_use 
+    'json_to_pptx',
+    'json_to_table_pptx',
+    'json_to_image_pptx',
+"""
     'check_file_exists',
     'check_folder_exists',
     'check_path_exists',
     'change_extension',
     'file_to_base64',
     'save_file',
-    'json_to_pptx',
-    'json_to_table_pptx',
-    'create_table_slide'
+    'list_zip_contents',
+    'extract_zip_to_directory',
+    'extract_tables_from_pptx',
+    'extract_all_tables_from_pptx',
+    'IconManager',
+    'ButtonIconManager'
 ] 

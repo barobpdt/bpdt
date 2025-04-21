@@ -4,6 +4,9 @@ import json
 import csv
 from pathlib import Path
 from typing import Union, Optional, Any, Dict, List
+import zipfile
+import io
+from datetime import datetime
 
 def file_to_base64(file_path):
     """
@@ -167,9 +170,162 @@ def save_file(file_path: Union[str, Path], data: Any, file_format: str = 'text',
     except Exception as e:
         return False, f"파일 저장 중 오류 발생: {str(e)}"
 
+def list_zip_contents(zip_file: Union[str, Path, bytes]) -> tuple[bool, str]:
+    """
+    압축 파일의 내용을 JSON 형태로 출력하는 함수
+    
+    Args:
+        zip_file (Union[str, Path, bytes]): 압축 파일 경로 또는 바이트 데이터
+        output_file (Optional[Union[str, Path]]): 출력 JSON 파일 경로 (기본값: None, 콘솔에 출력)
+        
+    Returns:
+        tuple[bool, str]: (성공 여부, 메시지)
+    """
+    try:
+        # 압축 파일 데이터 준비
+        if isinstance(zip_file, (str, Path)):
+            zip_path = Path(zip_file) if isinstance(zip_file, str) else zip_file
+            
+            # 파일이 존재하는지 확인
+            if not zip_path.exists():
+                return False, f"압축 파일이 존재하지 않습니다: {zip_path}"
+            
+            # 압축 파일 열기
+            zip_data = zipfile.ZipFile(zip_path)
+        elif isinstance(zip_file, bytes):
+            # 바이트 데이터에서 압축 파일 열기
+            zip_data = zipfile.ZipFile(io.BytesIO(zip_file))
+        else:
+            return False, f"지원하지 않는 압축 파일 형식입니다: {type(zip_file)}"
+        
+        # 압축 파일 정보 수집
+        zip_info = {
+            "filename": zip_data.filename if hasattr(zip_data, 'filename') else "memory_zip",
+            "file_count": len(zip_data.namelist()),
+            "total_size": sum(info.file_size for info in zip_data.filelist),
+            "compressed_size": sum(info.compress_size for info in zip_data.filelist),
+            "compression_ratio": round((1 - sum(info.compress_size for info in zip_data.filelist) / 
+                                      sum(info.file_size for info in zip_data.filelist)) * 100, 2) if zip_data.filelist else 0,
+            "files": []
+        }
+        
+        # 각 파일 정보 수집
+        for file_info in zip_data.filelist:
+            file_data = {
+                "name": file_info.filename,
+                "size": file_info.file_size,
+                "compressed_size": file_info.compress_size,
+                "date_time": datetime(*file_info.date_time).isoformat() if file_info.date_time else None,
+                "is_dir": file_info.is_dir(),
+                "is_file": not file_info.is_dir(),
+                "compression_method": file_info.compress_type,
+                "compression_name": {
+                    zipfile.ZIP_STORED: "저장됨 (압축 없음)",
+                    zipfile.ZIP_DEFLATED: "Deflate",
+                    zipfile.ZIP_BZIP2: "BZIP2",
+                    zipfile.ZIP_LZMA: "LZMA"
+                }.get(file_info.compress_type, "알 수 없음")
+            }
+            
+            # 파일 확장자 추출
+            if file_data["is_file"]:
+                file_path = Path(file_data["name"])
+                file_data["extension"] = file_path.suffix.lower() if file_path.suffix else None
+                
+                # 파일 유형 분류
+                if file_data["extension"] in [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"]:
+                    file_data["type"] = "이미지"
+                elif file_data["extension"] in [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf"]:
+                    file_data["type"] = "문서"
+                elif file_data["extension"] in [".mp3", ".wav", ".ogg", ".flac", ".aac"]:
+                    file_data["type"] = "오디오"
+                elif file_data["extension"] in [".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv"]:
+                    file_data["type"] = "비디오"
+                elif file_data["extension"] in [".zip", ".rar", ".7z", ".tar", ".gz"]:
+                    file_data["type"] = "압축 파일"
+                elif file_data["extension"] in [".exe", ".msi", ".bat", ".sh", ".py", ".js", ".html", ".css", ".php"]:
+                    file_data["type"] = "실행 파일/스크립트"
+                else:
+                    file_data["type"] = "기타"
+            else:
+                file_data["extension"] = None
+                file_data["type"] = "디렉토리"
+            
+            zip_info["files"].append(file_data)
+        
+        # 파일 유형별 통계 추가
+        type_stats = {}
+        for file_data in zip_info["files"]:
+            file_type = file_data.get("type", "기타")
+            if file_type not in type_stats:
+                type_stats[file_type] = {"count": 0, "total_size": 0}
+            type_stats[file_type]["count"] += 1
+            type_stats[file_type]["total_size"] += file_data["size"]
+        
+        zip_info["type_statistics"] = type_stats
+         
+        # 출력 파일이 지정된 경우 파일로 저장
+        return True, json.dumps(zip_info, ensure_ascii=False, indent=2)
+    
+    except Exception as e:
+        return False, f"압축 파일 내용 출력 중 오류 발생: {str(e)}"
+
+def extract_zip_to_directory(zip_file: Union[str, Path, bytes], output_dir: Optional[Union[str, Path]] = None) -> tuple[bool, str]:
+    """
+    압축 파일을 지정된 디렉토리에 압축 해제하는 함수
+    
+    Args:
+        zip_file (Union[str, Path, bytes]): 압축 파일 경로 또는 바이트 데이터
+        output_dir (Optional[Union[str, Path]]): 출력 디렉토리 경로 (기본값: 압축 파일과 같은 이름의 디렉토리)
+        
+    Returns:
+        tuple[bool, str]: (성공 여부, 메시지)
+    """
+    try:
+        # 압축 파일 데이터 준비
+        if isinstance(zip_file, (str, Path)):
+            zip_path = Path(zip_file) if isinstance(zip_file, str) else zip_file
+            
+            # 파일이 존재하는지 확인
+            if not zip_path.exists():
+                return False, f"압축 파일이 존재하지 않습니다: {zip_path}"
+            
+            # 압축 파일 열기
+            zip_data = zipfile.ZipFile(zip_path)
+            
+            # 출력 디렉토리 설정
+            if output_dir is None:
+                output_dir = zip_path.parent / zip_path.stem
+        elif isinstance(zip_file, bytes):
+            # 바이트 데이터에서 압축 파일 열기
+            zip_data = zipfile.ZipFile(io.BytesIO(zip_file))
+            
+            # 출력 디렉토리 설정
+            if output_dir is None:
+                output_dir = Path("extracted_files")
+        else:
+            return False, f"지원하지 않는 압축 파일 형식입니다: {type(zip_file)}"
+        
+        # 출력 디렉토리 생성
+        output_path = Path(output_dir) if isinstance(output_dir, str) else output_dir
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        # 압축 해제
+        zip_data.extractall(output_path)
+        
+        # 압축 파일 닫기
+        zip_data.close()
+        
+        return True, f"압축 파일이 성공적으로 압축 해제되었습니다: {output_path}"
+    
+    except Exception as e:
+        return False, f"압축 해제 중 오류 발생: {str(e)}"
+
 # 사용 예시
 if __name__ == "__main__":
+    print("file utils start")
     # 파일 체크 예시
+    '''
     test_file = "test.txt"
     exists, message = check_file_exists(test_file)
     print(f"파일 체크 결과: {message}")
@@ -202,4 +358,24 @@ if __name__ == "__main__":
     # CSV 파일 저장
     data = [["Name", "Age", "City"], ["John", 30, "New York"], ["Jane", 25, "Los Angeles"]]
     success, msg = save_file("example/data.csv", data, file_format="csv")
-    print(f"CSV 파일 저장: {msg}") 
+    print(f"CSV 파일 저장: {msg}")
+ 
+    # 압축 파일 예시
+    # 샘플 ZIP 파일 생성
+    with zipfile.ZipFile("example/sample.zip", "w") as zipf:
+        # 텍스트 파일 추가
+        with zipf.open("readme.txt", "w") as f:
+            f.write(b"This is a sample ZIP file for testing.")
+        
+        # JSON 파일 추가
+        with zipf.open("data.json", "w") as f:
+            f.write(json.dumps({"test": "data"}).encode('utf-8'))
+    
+    # 압축 파일 내용 출력
+    success, msg = list_zip_contents("example/sample.zip")
+    print(f"압축 파일 내용 출력: {msg}")
+
+    # 압축 파일 압축 해제
+    success, msg = extract_zip_to_directory("example/sample.zip", "example/extracted")
+    print(f"압축 파일 압축 해제: {msg}") 
+    '''
