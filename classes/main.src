@@ -1,21 +1,28 @@
-<call>  
+<call>
+	path = conf("include.path") not(path) path=System.path()
+	startName = "classes/start.js"
+	startPath = "$path/$startName"
+	
 	file=Baro.file()
-	startName='classes/start.js'
-	src=file.readAll(startName)
-	Cf.rootNode('@funcInfo').set('includeFileName', startName)
+	src=file.readAll(startPath)
+	Cf.rootNode("@funcInfo").set("includeFileName", startName)
 	call(src)
-	include('classes/common/base.js')
-	include('classes/common/string.js')
-	include('classes/common/utils.js')
-	include('classes/common/page.js')
-	include('classes/common/draw.js')
-	include('classes/common/etc.js')
-	include('classes/common/process.js')
+	include("classes/common/base.js")
+	include("classes/common/string.js")
+	include("classes/common/utils.js")
+	include("classes/common/page.js")
+	include("classes/common/draw.js")
+	include("classes/common/etc.js")
+	include("classes/common/process.js")
 	
 	Cf.debug(true, "data/logs")
-	include('classes/apps/sourceRun.html')
-	page = page('sourceRun:main')
+	include("classes/apps/sourceRun.html")
+	page = page("sourceRun:main")
 	page.open()
+	
+	was = was()
+	was.start(80,"$path/web")
+	wss()
 	
 	/*	
 	pageLoad("apps/sourceEditor").open()

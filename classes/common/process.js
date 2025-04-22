@@ -196,85 +196,77 @@
 
 
 <script module="@webDownload">
-	downloadAdd(url, savePath, fileName) {
-		idx=Cf.rootNode().incrNum("webdownload_index");
-		not(savePath) {
-			savePath=conf('path.webDownloadPath');
-			not(savePath) savePath='data/download';
-		}
-		not(fileName) fileName=rightVal(url,'/');
-		n=idx%5;
-		web=Baro.web("down-$n");
-		web.addNode().with(url, savePath, downState:1);
+	init(savePath) {
+		not(savePath) savePath = Cf.val(System.path(),'/data/download')
+		not(isFolder(savePath)) Baro.file().mkdir(savePath, true)
+		@savePath = savePath
+		@maxDownloadCount = 5
 	}
 	downloadStart() {
-		while(n=0, n<5, n++ ) {
-			web=Baro.web("down-$n")
-			downloadFile(web);
+		while(n=0, n<maxDownloadCount, n++ ) { 
+			this.downloadNext(Baro.web("down-$n"));
 		}
+	}
+	downloadAdd(node) {
+		node.inject(url, fileName, savePath)
+		not(url) return print("download URL 미정의 [노드: $node]")
+		
+		idx=this.incrNum("webdownload_index") 
+		not(savePath) {
+			savePath = this.member(savePath)
+		}
+		not(fileName) fileName=right(url,'/');
+		n=idx%maxDownloadCount;
+		web=Baro.web("down-$n");
+		cur=web.addNode()
+		cur.url = url
+		cur.savePath = savePath
+		cur.fileName = fileName
+		cur.downState=0
+		print("@@ download ADD cur==>$cur")
 	}
 	downloadClear() {
-		arr=[];
-		while(n=0, n<5, n++ ) {
+		while(n=0, n<maxDownloadCount, n++ ) {
 			web=Baro.web("down-$n");
-			arr.reuse();
-			while(cur, web) {
-				if(cur.downState) arr.add(cur);
-			}
-			while(cur, arr.reverse()) {
-				web.remove(cur, true);
-			}
+			web.removeAll()
 		}
 	}
-	downloadEndCheck() {
-		while(n=0, n<5,  n++ ) {
-			web=Baro.web("down-$n")
-			if(web.isRun()) {
-				if(web.downloadTick ) {
-					dist=System.tick()-web.downloadTick;
-					if(dist>5000) {
-						print("web downlad stop URL:${web.url} dist:$dist");
-						web.stop();
-					}
-				}
-				return false;
-			}
-			while(cur, web) {
-				if(cur.downState.eq(1,2) ) return true;
-			}
+	downloadInfo() {
+		while(n=0, n<maxDownloadCount, n++ ) {
+			web=Baro.web("down-$n");
+			print("n => ", web.childCount())
 		}
-		return true;
 	}
-	downloadFile(web) {
-		node=null;
+	downloadNext(web) {
 		while(cur, web) {
-			if(cur.downState==1 ) {
-				node=cur;
-				cur.downState=2;
-				break;
-			}
+			if( cur.downState.eq(1,2,3,9) ) continue;
+			return this.downloadFile(web, cur);
 		}
-		not(node) return;
-		node.inject(url, savePath, fileName);
-		not(fileName) {
-			node.downState=9;
-			return downloadFile(web);
-		}
-		web.currentNode=node;
-		web.download(url, "$savePath/$fileName", "GET", downloadProcess );
+		return false;
+	}
+	downloadFile(web, cur) { 
+		not(cur) return;
+		cur.inject(url, fileName, savePath)
+		not(url) return print("@@ downloadFile URL 미정의")
+		not(fileName) return print("@@ downloadFile 파일명 미정의")
+		not(savePath) return print("@@ downloadFile 파일경로 미정의")
+		cur.downState=1
+		web.currentNode=cur;
+		web.download(cur.url, "$savePath/${fileName}", "GET", this, this.downloadProcess );
 	}
 	downloadProcess(type,data) {
 		if(type=='process') {
 			return;
 		}
-		node=this.currentNode;
+		web=sendor
+		cur=web.currentNode;
 		if(type=='finish') {
-			node.downState=3;
-			return downloadFile(this);
+			cur.downState=3;
+			return this.downloadNext(web);
 		}
 		if(type=='error') {
-			node.downState=9;
-			return print("다운로드오류: ${node}");
+			cur.downState=9;
+			return print("다운로드오류: ${cur}");
 		}
 	}
 </script>
