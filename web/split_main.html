@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Panel Layout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+        
+        .left-panel {
+            width: 300px;
+            height: 100%;
+            background-color: #f5f5f5;
+            border-right: 1px solid #ddd;
+            transition: transform 0.5s ease;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .left-panel.collapsed {
+            transform: translateX(-300px);
+        }
+        
+        .left-panel.collapsed .drag-handle {
+            transform: translateX(300px);
+            border-left: 1px solid #ddd;
+        }
+        
+        .left-panel.collapsed .toggle-panel-button {
+            transform: translateX(300px);
+            border: 1px solid #ddd;
+            background-color: #f5f5f5;
+        }
+        
+        .left-panel-content {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .right-panel {
+            flex: 1;
+            height: 100%;
+            background-color: #fff;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .drag-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background-color: #ddd;
+            cursor: ew-resize;
+            z-index: 20;
+            transition: transform 0.45s ease, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+			cursor: col-resize;
+        }
+        
+        .drag-handle:hover {
+            background-color: #aaa;
+        }
+        
+        .drag-handle-button {
+			position: absolute;
+			width: 16px;
+			height: 40px;
+			background-color: #fff;
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: background-color 0.2s;
+			z-index: 21;
+		}
+		
+        .drag-handle-button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .drag-handle-button i {
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.3s ease;
+        }
+        
+        .left-panel.collapsed .drag-handle-button i {
+            transform: rotate(180deg);
+        }
+        
+        .left-panel.collapsed {
+            transform: translateX(-300px);
+        }
+        
+        .left-panel.collapsed .drag-handle {
+            transform: translateX(300px);
+            border-left: 1px solid #ddd;
+            cursor: pointer;
+        }
+        
+        /* 드래그 중일 때 적용할 스타일 */
+        .dragging .drag-handle {
+            background-color: #4a90e2;
+        }
+        
+        .dragging .drag-handle-button {
+            opacity: 0;
+        }
+         
+        
+        .toggle-button {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+        
+        .toggle-button:hover {
+            background-color: #aaa;
+        }
+        
+        /* 햄버거 아이콘 애니메이션 */
+        .toggle-button i {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .toggle-button .fa-bars {
+            opacity: 1;
+        }
+        
+        .toggle-button .fa-times {
+            opacity: 0;
+            position: absolute;
+        }
+        
+        .toggle-button.active .fa-bars {
+            opacity: 0;
+            transform: rotate(180deg);
+        }
+        
+        .toggle-button.active .fa-times {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .menu-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #e9e9e9;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .menu-item:hover {
+            background-color: #d0d0d0;
+        }
+        
+        /* 트레이 아이콘 및 팝업 메뉴 스타일 */
+        .tray-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #4a90e2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            transition: transform 0.2s ease;
+        }
+        
+        .tray-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .tray-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .popup-menu {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 99;
+            transform-origin: bottom right;
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+        }
+        
+        .popup-menu.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .popup-menu-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .popup-menu-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .popup-menu-item i {
+            margin-right: 10px;
+            color: #4a90e2;
+        }
+        
+        /* 설정 메뉴 항목에 클릭 가능한 표시 추가 */
+        .popup-menu-item.has-submenu {
+            position: relative;
+        }
+        
+        .popup-menu-item.has-submenu::after {
+            content: '\f054'; /* Font Awesome 화살표 아이콘 */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 15px;
+            color: #aaa;
+            transition: transform 0.3s ease;
+        }
+        
+        .popup-menu-item.has-submenu:hover::after {
+            transform: translateX(3px);
+            color: #4a90e2;
+        }
+        
+        .popup-menu-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 5px 0;
+        }
+        
+        /* 서브 메뉴 스타일 */
+        .submenu {
+            position: absolute;
+            left: -200px;
+            top: 0;
+            width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 98;
+            transform-origin: right center;
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .submenu.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .submenu-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .submenu-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .submenu-item i {
+            margin-right: 10px;
+            color: #4a90e2;
+        }
+        
+        .submenu-header {
+            padding: 12px 15px;
+            background-color: #f5f5f5;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .submenu-header i {
+            margin-right: 10px;
+            color: #4a90e2;
+        }
+        
+        .back-button {
+            margin-left: auto;
+            cursor: pointer;
+            color: #4a90e2;
+        }
+        
+        /* 햄버거 메뉴 팝업 스타일 */
+        .hamburger-menu {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            transform-origin: top right;
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .hamburger-menu.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .hamburger-menu-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .hamburger-menu-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .hamburger-menu-item i {
+            margin-right: 10px;
+            color: #4a90e2;
+        }
+        
+        .hamburger-menu-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 5px 0;
+        }
+    </style>
+    <!-- Font Awesome 아이콘 라이브러리 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel" id="leftPanel">
+            <div class="left-panel-content">
+                <h2>메뉴</h2>
+                <div class="menu-item">홈</div>
+                <div class="menu-item">대시보드</div>
+                <div class="menu-item">프로필</div>
+                <div class="menu-item">설정</div>
+                <div class="menu-item">도움말</div>
+                <div class="menu-item">로그아웃</div>
+            </div>
+            <div class="drag-handle" id="dragHandle">
+                <button class="drag-handle-button" id="dragHandleButton">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </div>
+        <div class="right-panel">
+            <button class="toggle-button" id="toggleButton">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-times"></i>
+            </button>
+            <h1>메인 콘텐츠</h1>
+            <p>이 페이지는 가로로 분할된 패널 레이아웃을 보여줍니다. 왼쪽 패널은 드래그하여 크기를 조절할 수 있으며, 150px 이상 드래그하면 자동으로 접히는 애니메이션이 적용됩니다.</p>
+            <p>왼쪽 패널의 오른쪽 가장자리를 드래그하거나 상단의 토글 버튼을 클릭하여 패널을 접고 펼칠 수 있습니다.</p>
+            <p>이 레이아웃은 반응형으로 설계되어 있어 다양한 화면 크기에 맞게 조정됩니다.</p>
+            <p>왼쪽 패널에는 메뉴 항목이 포함되어 있으며, 오른쪽 패널에는 메인 콘텐츠가 표시됩니다.</p>
+            <p>이 레이아웃은 웹 애플리케이션, 대시보드, 관리 패널 등 다양한 용도로 활용할 수 있습니다.</p>
+        </div>
+    </div>
+    
+    <!-- 트레이 아이콘 및 팝업 메뉴 -->
+    <div class="tray-icon" id="trayIcon">
+        <i class="fas fa-cog"></i>
+    </div>
+    
+    <div class="popup-menu" id="popupMenu">
+        <div class="popup-menu-item" id="menuItem1">
+            <i class="fas fa-home"></i>
+            <span>홈으로 이동</span>
+        </div>
+        <div class="popup-menu-item" id="menuItem2">
+            <i class="fas fa-user"></i>
+            <span>프로필 보기</span>
+        </div>
+        <div class="popup-menu-item has-submenu" id="menuItem3">
+            <i class="fas fa-cog"></i>
+            <span>설정</span>
+        </div>
+        <div class="popup-menu-item" id="menuItem4">
+            <i class="fas fa-question-circle"></i>
+            <span>도움말</span>
+        </div>
+        <div class="popup-menu-item" id="menuItem5">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>로그아웃</span>
+        </div>
+        
+        <!-- 설정 서브 메뉴 -->
+        <div class="submenu" id="settingsSubmenu">
+            <div class="submenu-header">
+                <i class="fas fa-cog"></i>
+                <span>설정</span>
+                <i class="fas fa-arrow-left back-button" id="backButton"></i>
+            </div>
+            <div class="submenu-item" id="submenuItem1">
+                <i class="fas fa-palette"></i>
+                <span>테마 설정</span>
+            </div>
+            <div class="submenu-item" id="submenuItem2">
+                <i class="fas fa-bell"></i>
+                <span>알림 설정</span>
+            </div>
+            <div class="submenu-item" id="submenuItem3">
+                <i class="fas fa-lock"></i>
+                <span>보안 설정</span>
+            </div>
+            <div class="submenu-item" id="submenuItem4">
+                <i class="fas fa-language"></i>
+                <span>언어 설정</span>
+            </div>
+            <div class="submenu-item" id="submenuItem5">
+                <i class="fas fa-database"></i>
+                <span>데이터 관리</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 햄버거 메뉴 팝업 -->
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <div class="hamburger-menu-item" id="hamburgerItem1">
+            <i class="fas fa-home"></i>
+            <span>홈으로 이동</span>
+        </div>
+        <div class="hamburger-menu-item" id="hamburgerItem2">
+            <i class="fas fa-user"></i>
+            <span>프로필 보기</span>
+        </div>
+        <div class="hamburger-menu-item" id="hamburgerItem3">
+            <i class="fas fa-cog"></i>
+            <span>설정</span>
+        </div>
+        <div class="hamburger-menu-divider"></div>
+        <div class="hamburger-menu-item" id="hamburgerItem4">
+            <i class="fas fa-question-circle"></i>
+            <span>도움말</span>
+        </div>
+        <div class="hamburger-menu-item" id="hamburgerItem5">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>로그아웃</span>
+        </div>
+    </div>
+
+    <script>
+		const pageInfo = { leftPanelWidth: 300 }
+        document.addEventListener('DOMContentLoaded', function() {
+            const leftPanel = document.getElementById('leftPanel');
+            const dragHandle = document.getElementById('dragHandle');
+            const dragHandleButton = document.getElementById('dragHandleButton');
+            const container = document.querySelector('.container');
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            
+            let isDragging = false;
+            let startX;
+            let startWidth;
+            let isCollapsed = false;
+            let isHamburgerMenuVisible = false; 
+			 
+            // 패널 접기 함수
+            function collapsePanel() {
+                leftPanel.classList.add('collapsed');
+                isCollapsed = true;
+				leftPanel.style.width = '10px'				
+                // drag bar 위치 초기화
+            }
+            
+            // 패널 펼치기 함수
+            function expandPanel() {
+                isCollapsed = false;
+				leftPanel.classList.remove('collapsed')
+				leftPanel.style.width = '300px' 
+            }
+			
+            
+            // 드래그 핸들 버튼 클릭 이벤트
+            dragHandleButton.addEventListener('click', function(e) {
+                // e.stopPropagation();
+                if ( isCollapsed ) {
+                    expandPanel();
+                } else {
+					collapsePanel()
+				}
+				e.preventDefault();
+            });
+            
+            // 드래그 시작
+            dragHandle.addEventListener('mousedown', function(e) {
+                if (!isCollapsed) {  // 패널이 펼쳐져 있을 때만 드래그 가능
+                    isDragging = true;
+                    startX = e.clientX;
+                    startWidth = leftPanel.offsetWidth;
+                    document.body.classList.add('dragging');
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                }
+                e.preventDefault();
+            });
+            
+            // 마우스 이동 처리
+            function handleMouseMove(e) {
+                if (!isDragging) return;
+                const width = startWidth + (e.clientX - startX);
+                leftPanel.style.width = width + 'px';
+                
+				if( width < 150 ) {
+					handleMouseUp()
+                    collapsePanel()
+                }
+            }
+            
+            // 마우스 업 처리
+            function handleMouseUp() {
+				isDragging = false;
+				document.body.classList.remove('dragging');
+				document.removeEventListener('mousemove', handleMouseMove);
+				document.removeEventListener('mouseup', handleMouseUp);
+				pageInfo.leftPanelWidth = leftPanel.style.width
+				
+				console.log('mouse up ', pageInfo.leftPanelWidth )
+            }
+           
+            
+            // 토글 버튼 이벤트 리스너
+            const toggleButton = document.getElementById('toggleButton');
+            toggleButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleHamburgerMenu();
+            });
+            
+            // 햄버거 메뉴 토글 함수
+            function toggleHamburgerMenu() {
+                isHamburgerMenuVisible = !isHamburgerMenuVisible;
+                hamburgerMenu.classList.toggle('active');
+                toggleButton.classList.toggle('active');
+            }
+            
+            // 문서 클릭 시 햄버거 메뉴 닫기
+            document.addEventListener('click', function(e) {
+                if (isHamburgerMenuVisible && 
+                    !hamburgerMenu.contains(e.target) && 
+                    !toggleButton.contains(e.target)) {
+                    closeHamburgerMenu();
+                }
+            });
+            
+            // 햄버거 메뉴 닫기 함수
+            function closeHamburgerMenu() {
+                isHamburgerMenuVisible = false;
+                hamburgerMenu.classList.remove('active');
+                toggleButton.classList.remove('active');
+            }
+            
+            // 햄버거 메뉴 아이템 클릭 이벤트
+            const hamburgerItems = document.querySelectorAll('.hamburger-menu-item');
+            hamburgerItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const action = this.querySelector('span').textContent;
+                    console.log(`선택된 햄버거 메뉴: ${action}`);
+                    closeHamburgerMenu();
+                });
+            });
+            
+            // 햄버거 메뉴 자체에 클릭 이벤트 리스너 추가
+            hamburgerMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // 트레이 아이콘 및 팝업 메뉴 기능
+            const trayIcon = document.getElementById('trayIcon');
+            const popupMenu = document.getElementById('popupMenu');
+            let isPopupVisible = false;
+            
+            // 트레이 아이콘 클릭 이벤트
+            trayIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                togglePopupMenu();
+            });
+            
+            // 팝업 메뉴 토글 함수
+            function togglePopupMenu() {
+                isPopupVisible = !isPopupVisible;
+                popupMenu.classList.toggle('active');
+                
+                // 팝업 메뉴가 열릴 때 트레이 아이콘 회전 애니메이션
+                if (isPopupVisible) {
+                    trayIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    trayIcon.style.transform = 'rotate(0deg)';
+                }
+            }
+            
+            // 문서 클릭 시 팝업 메뉴 닫기
+            document.addEventListener('click', function(e) {
+                if (isPopupVisible && !popupMenu.contains(e.target) && e.target !== trayIcon) {
+                    togglePopupMenu();
+                }
+            });
+            
+            // 팝업 메뉴 아이템 클릭 이벤트
+            const menuItems = document.querySelectorAll('.popup-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const action = this.querySelector('span').textContent;
+                    console.log(`선택된 메뉴: ${action}`);
+                    
+                    // 설정 메뉴 클릭 시 서브 메뉴 표시
+                    if (action === '설정') {
+                        const settingsSubmenu = document.getElementById('settingsSubmenu');
+                        
+                        // 서브 메뉴가 이미 활성화되어 있으면 닫기
+                        if (settingsSubmenu.classList.contains('active')) {
+                            settingsSubmenu.classList.remove('active');
+                        } else {
+                            // 서브 메뉴 활성화
+                            settingsSubmenu.classList.add('active');
+                            
+                            // 서브 메뉴가 화면 밖으로 나가지 않도록 위치 조정
+                            const submenuRect = settingsSubmenu.getBoundingClientRect();
+                            const viewportWidth = window.innerWidth;
+                            
+                            // 항상 왼쪽에 표시하도록 설정
+                            settingsSubmenu.style.left = '-200px';
+                        }
+                        return; // 팝업 메뉴를 닫지 않음
+                    }
+                    
+                    // 메뉴 클릭 후 팝업 닫기
+                    togglePopupMenu();
+                });
+            });
+            
+            // 서브 메뉴 뒤로 가기 버튼 이벤트
+            const backButton = document.getElementById('backButton');
+            backButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const settingsSubmenu = document.getElementById('settingsSubmenu');
+                settingsSubmenu.classList.remove('active');
+            });
+            
+            // 서브 메뉴 아이템 클릭 이벤트
+            const submenuItems = document.querySelectorAll('.submenu-item');
+            submenuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const action = this.querySelector('span').textContent;
+                    console.log(`선택된 서브 메뉴: ${action}`);
+                    
+                    // 서브 메뉴 아이템 클릭 후 모든 메뉴 닫기
+                    const settingsSubmenu = document.getElementById('settingsSubmenu');
+                    settingsSubmenu.classList.remove('active');
+                    togglePopupMenu();
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

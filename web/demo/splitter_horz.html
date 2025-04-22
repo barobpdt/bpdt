@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html xmlns="https://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>jQuery Splitter Demo</title>
+    <meta name="Description" content="jQuery Splitter Demo"/>
+    <link rel="shortcut icon" href=""/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn3.devexpress.com/jslib/24.2.6/js/dx.all.js"></script> 
+	
+	
+
+<style>
+body {
+  background: #FEFEFE;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.content {
+  width: 100%;
+  height: 100vh;  
+  margin: 0;
+  padding: 0;  
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;  
+  -ms-flex-direction: column;
+  flex-direction: column;
+  background: #D7DDE6;   
+}
+
+.up-panel,
+.bottom-panel {
+  min-height: 150px;    
+  overflow-y: auto;
+}
+
+.up-panel {
+  height: 150px;  
+  flex-shrink: 0;  
+  -webkit-flex-shrink: 0; 
+  max-height: calc(100% - 150px - 20px - 4px); /* 100% - min-height - padding-bottom - splitter*/
+}
+
+.bottom-panel {  
+  flex-grow: 1;
+  -webkit-flex-grow: 1;
+}
+
+.splitter {
+  height: 4px;
+  margin: 10px 0;  
+  flex-shrink: 0;
+  -webkit-flex-shrink: 0; 
+  background: #F1F5FA; 
+  cursor: row-resize;
+}
+
+.mover {
+  width: 50px;
+  height: 4px;
+  margin: 0 auto;
+  background: #4975B2; 
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none; 
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; 
+}
+</style>
+</head>
+<body style="margin:0;padding:0">
+<div class="content" id="container">  
+  <div class="up-panel" id="upPanel">
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ac gravida purus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Duis pellentesque faucibus turpis, et semper dui. Maecenas porta pharetra felis, at fermentum quam iaculis non. Aliquam erat volutpat. Fusce lobortis lacus diam. Etiam pretium lorem blandit justo aliquet venenatis. Proin quis sapien et risus feugiat hendrerit sollicitudin sed quam. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam tincidunt molestie diam quis consectetur. Mauris semper at enim sed vulputate. Phasellus egestas justo magna, in accumsan mi facilisis elementum. Ut quis lobortis massa, nec blandit justo. Nullam vehicula velit sit amet sagittis ultrices.
+
+    Nulla facilisi. Donec ultrices lectus metus, rhoncus cursus quam tristique a. Aliquam non ante eget risus pharetra suscipit. Aliquam justo nisi, eleifend at congue nec, venenatis non dolor. Praesent lacinia turpis ac pellentesque sagittis. Etiam tempor lobortis efficitur. Pellentesque vestibulum erat sit amet arcu dapibus, ut iaculis risus ultrices.
+
+    Donec condimentum leo tortor, ut vulputate dui venenatis et. Nulla malesuada tristique libero nec lacinia. Nulla ornare purus non elit accumsan, a suscipit dui dignissim. Nulla dignissim elit sit amet tortor lacinia, in feugiat ex dignissim. Morbi diam ex, luctus vitae justo ac, dapibus facilisis ex. Nam tristique dui sed felis vehicula, sed euismod eros pellentesque. Nullam nisi ex, porttitor ut eros placerat, efficitur porttitor odio. Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque vehicula sem at est imperdiet vehicula. Aenean placerat massa vitae ante viverra, nec convallis diam vehicula. Curabitur iaculis hendrerit vehicula.
+  </div>
+  <div class="splitter" id="splitter">
+    <div class="mover"></div>
+  </div>
+  <div class="bottom-panel" id="bottomPanel">
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ac gravida purus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Duis pellentesque faucibus turpis, et semper dui. Maecenas porta pharetra felis, at fermentum quam iaculis non. Aliquam erat volutpat. Fusce lobortis lacus diam. Etiam pretium lorem blandit justo aliquet venenatis. Proin quis sapien et risus feugiat hendrerit sollicitudin sed quam. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam tincidunt molestie diam quis consectetur. Mauris semper at enim sed vulputate. Phasellus egestas justo magna, in accumsan mi facilisis elementum. Ut quis lobortis massa, nec blandit justo. Nullam vehicula velit sit amet sagittis ultrices.
+
+    Nulla facilisi. Donec ultrices lectus metus, rhoncus cursus quam tristique a. Aliquam non ante eget risus pharetra suscipit. Aliquam justo nisi, eleifend at congue nec, venenatis non dolor. Praesent lacinia turpis ac pellentesque sagittis. Etiam tempor lobortis efficitur. Pellentesque vestibulum erat sit amet arcu dapibus, ut iaculis risus ultrices.
+
+    Donec condimentum leo tortor, ut vulputate dui venenatis et. Nulla malesuada tristique libero nec lacinia. Nulla ornare purus non elit accumsan, a suscipit dui dignissim. Nulla dignissim elit sit amet tortor lacinia, in feugiat ex dignissim. Morbi diam ex, luctus vitae justo ac, dapibus facilisis ex. Nam tristique dui sed felis vehicula, sed euismod eros pellentesque. Nullam nisi ex, porttitor ut eros placerat, efficitur porttitor odio. Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque vehicula sem at est imperdiet vehicula. Aenean placerat massa vitae ante viverra, nec convallis diam vehicula. Curabitur iaculis hendrerit vehicula.
+
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ullamcorper velit vel dolor molestie auctor. Proin eu massa elementum erat viverra malesuada in sit amet ex. Quisque molestie ac ante dignissim rutrum. Sed pellentesque eu quam vitae pulvinar. Aenean placerat purus vel turpis semper, facilisis gravida ipsum maximus. Aliquam placerat vulputate congue. Aliquam molestie, neque vitae semper consectetur, elit augue interdum urna, sit amet tristique tellus quam sed enim. Vivamus id nunc et tortor pellentesque pharetra sit amet vitae nibh. Ut tempor mauris nec ante rhoncus, vitae pellentesque leo semper. Curabitur vitae condimentum nunc. Nam egestas sapien a erat tristique, dictum finibus ipsum consequat.
+
+    Vestibulum iaculis diam erat, vel fringilla nisi molestie vitae. Nullam laoreet ultricies ornare. Vivamus sit amet erat at ante sollicitudin convallis. Phasellus sagittis arcu quis mi consectetur cursus. Curabitur dapibus ex libero, et congue neque fermentum et. Sed eleifend risus justo, at convallis quam vestibulum at. Duis mattis quam vitae nibh porta malesuada.
+  </div>
+</div>
+<script>
+(function() {
+  var $upPanel = $("#upPanel");
+  var $bottomPanel = $("#bottomPanel");
+  var $splitter = $("#splitter");
+  var $container = $("#container");
+  var $document = $(document);
+  
+  $splitter.on("mousedown", function(e) {    
+    toggleNoSelect();
+    $document.on("mousemove", onMousemove);
+    $document.on("mouseup", onMouseup);    
+  });
+
+  function onMousemove(e) {    
+    var delta = e.pageY - $splitter.offset().top;
+    var upHeight = $upPanel.height();
+    $upPanel.height(upHeight + delta);    
+  }
+
+  function onMouseup() {    
+    $document.off("mousemove", onMousemove);
+    $document.off("mouseup", onMouseup);
+    toggleNoSelect();
+  }
+  
+  function toggleNoSelect() {
+    $container.toggleClass("noselect");
+  }
+})();
+
+</script>	
+</body>
+</html>
