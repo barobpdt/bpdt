@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>SlickGrid example 7: Events</title>
+  <link rel="stylesheet" href="../dist/styles/css/slick-icons.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+  <style>
+    .cell-title {
+      font-weight: bold;
+    }
+
+    #contextMenu {
+      background: #f8f8f8;
+      border: 1px solid #babfc7;
+      padding: 8px;
+      display: inline-block;
+      min-width: 100px;
+      z-index: 99999;
+    }
+
+    #contextMenu li {
+      padding: 4px 4px 4px 4px;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    #contextMenu li:hover {
+      background-color: #e2eef8;
+    }
+    .context-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .rotate-270 {
+      transform: rotate(220deg);
+    }
+  </style>
+</head>
+<body>
+<h2 class="title">Example 7 - Events & Context Menu</h2>
+<table width="100%">
+  <tr>
+    <td valign="top" width="50%">
+      <div id="myGrid" class="slick-container" style="width:600px;height:500px;"></div>
+    </td>
+    <td valign="top">
+      <h2>
+        <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+        Demonstrates:
+      </h2>
+      <ul>
+        <li>handling events from the grid:</li>
+        <li>Right-click the row to open the context menu</li>
+        <li>Click the priority cell to toggle values</li>
+      </ul>
+        <h2>View Source:</h2>
+        <ul>
+            <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example7-events.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+        </ul>
+    </td>
+  </tr>
+</table>
+<ul id="contextMenu" style="display:none;position:absolute">
+  <div class="context-header">Set priority:</div>
+  <li data="Low">- Low</li>
+  <li data="Medium">- Medium</li>
+  <li data="High">- High</li>
+</ul>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+<script src="sortable-cdn-fallback.js"></script>
+
+<!-- <script src="../dist/browser/slick.core.js"></script> -->
+<!-- <script src="../dist/browser/slick.interactions.js"></script> -->
+<script src="../dist/browser/slick.core.js"></script>
+<script src="../dist/browser/slick.interactions.js"></script>
+<script src="../dist/browser/slick.grid.js"></script>
+<script src="../dist/browser/slick.editors.js"></script>
+
+<script>
+  function priorityFormatter(row, cell, value, columnDef, dataContext) {
+      const count = value === 'Low' ? 1 : value === 'Medium' ? 2 : 3;
+      let icon = '';
+      for (let i = 0; i < count; i++) {
+        icon += '<span class="sgi sgi-star-outline"></span>';
+      }
+      return icon;
+  }
+
+  var grid;
+  var data = [];
+  var columns = [
+    {id: "title", name: "Title", field: "title", width: 200, cssClass: "cell-title", editor: Slick.Editors.Text},
+    {id: "priority", name: "Priority", field: "priority", width: 80, selectable: false, resizable: false},
+    {id: "priority", name: "Priority", field: "priority", width: 80, selectable: false, resizable: false, formatter: priorityFormatter }
+  ];
+
+  var options = {
+    editable: true,
+    enableAddRow: false,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    rowHeight: 30
+  };
+
+  document.addEventListener("DOMContentLoaded", function() {
+    for (var i = 0; i < 100; i++) {
+      var d = (data[i] = {});
+      d["title"] = "Task " + i;
+      d["priority"] = "Medium";
+    }
+
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+
+    grid.onContextMenu.subscribe(function (e) {
+      e.preventDefault();
+      var cell = grid.getCellFromEvent(e);
+      const contextMenuElm = document.querySelector('#contextMenu');
+      contextMenuElm.dataset.row = cell.row;
+      contextMenuElm.style.top = `${e.pageY}px`;
+      contextMenuElm.style.left = `${e.pageX}px`;
+      contextMenuElm.style.display = 'block';
+
+      document.body.addEventListener('click',  () => {
+        contextMenuElm.style.display = 'none';
+      });
+    });
+
+    grid.onClick.subscribe(function (e) {
+      var cell = grid.getCellFromEvent(e);
+      if (grid.getColumns()[cell.cell].id == "priority") {
+        if (!grid.getEditorLock().commitCurrentEdit()) {
+          return;
+        }
+
+        var states = { "Low": "Medium", "Medium": "High", "High": "Low" };
+        data[cell.row].priority = states[data[cell.row].priority];
+        grid.updateRow(cell.row);
+        e.stopPropagation();
+      }
+    });
+  });
+
+  document.querySelector("#contextMenu").addEventListener('click',  (e)=> {
+    if (e.target.nodeName.toLowerCase() !== "li") {
+      return;
+    }
+    if (!grid.getEditorLock().commitCurrentEdit()) {
+      return;
+    }
+    const row = e.target.parentNode.dataset.row;
+    data[row].priority = e.target.getAttribute('data');
+    grid.updateRow(row);
+  });
+</script>
+</body>
+</html>

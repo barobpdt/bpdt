@@ -1,0 +1,105 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>SlickGrid example: Two Basic grids on page</title>
+  <link rel="stylesheet" href="../dist/styles/css/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick.gridmenu.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-icons.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+  <style>
+  #myGrid01, #myGrid02 {
+	background: white;
+	outline: 0;
+	border: 1px solid gray;
+  }
+  </style>
+</head>
+<body>
+<h2 class="title">Example - Multiple Grids Basic</h2>
+<table width="100%">
+  <tr>
+    <td valign="top" width="50%">
+      <div id="myGrid01" class="slick-container" style="width:600px;height:300px;"></div>
+	  <br/>
+      <div id="myGrid02" class="slick-container" style="width:600px;height:300px;"></div>
+	  </td>
+    <td valign="top">
+      <h2>
+        <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+        Demonstrates:
+      </h2>
+      <ul>
+        <li>Two basic Grids with minimal configuration</li>
+        <li>Each Grids has separate Column Picker & Grid Menu</li>
+      </ul>
+        <h2>View Source:</h2>
+        <ul>
+            <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example-multi-grid-basic.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+        </ul>
+    </td>
+  </tr>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+
+<script src="../dist/browser/slick.core.js"></script>
+<script src="../dist/browser/slick.interactions.js"></script>
+<script src="../dist/browser/slick.grid.js"></script>
+<script src="../dist/browser/controls/slick.columnpicker.js"></script>
+<script src="../dist/browser/controls/slick.gridmenu.js"></script>
+
+<script>
+  var grid01, grid02;
+  var columns = [
+    {id: "title", name: "Title", field: "title"},
+    {id: "duration", name: "Duration", field: "duration"},
+    {id: "%", name: "% Complete", field: "percentComplete", width: 95},
+    {id: "start", name: "Start", field: "start"},
+    {id: "finish", name: "Finish", field: "finish"},
+    {id: "effort-driven", name: "Effort Driven", field: "effortDriven", width: 95}
+  ];
+
+  var options = {
+    enableCellNavigation: true,
+    enableColumnReorder: false,
+    gridMenu: {
+      iconCssClass: 'sgi sgi-menu'
+    }
+  };
+
+  function CreateData() {
+    var data = [];
+    for (var i = 0; i < 500; i++) {
+      data[i] = {
+        title: "Task " + i,
+        duration: "5 days",
+        percentComplete: Math.round(Math.random() * 100),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 == 0)
+      };
+    }
+	return data;
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Create 1st Grid with its own ColumnPicker/GridMenu
+    var data01 = CreateData();
+    grid01 = new Slick.Grid("#myGrid01", data01, columns, options);
+    new Slick.Controls.ColumnPicker(columns, grid01, options);
+    new Slick.Controls.GridMenu(columns, grid01, options);
+
+    // Create 2nd Grid with its own ColumnPicker/GridMenu
+    var data02 = CreateData();
+    var columns02 = columns.slice(0);
+    var options02 = Slick.Utils.extend({}, options);
+    grid02 = new Slick.Grid("#myGrid02", data02, columns02, options02);
+    new Slick.Controls.ColumnPicker(columns02, grid02, options02);
+    new Slick.Controls.GridMenu(columns02, grid02, options02);
+  });
+</script>
+</body>
+</html>

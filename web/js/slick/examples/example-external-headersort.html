@@ -1,0 +1,109 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>External Header Sort</title>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+</head>
+<body>
+<h2 class="title">Example - External Header Sorting</h2>
+<table width="100%">
+  <tr>
+    <td valign="top" width="50%">
+      <div id="myGrid" style="width:700px;height:500px;"></div>
+    </td>
+    <td valign="top">
+      <div class="options-panel" style="margin: 10px 0 0 35px">
+        <h2>
+          <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+          Demonstrates:
+        </h2>
+        <ul>
+          <li>external column sort initialisation</li>
+        </ul>
+        <p>- uses the options hook of passing a function (rather than true/false/undefined) as the <code>enableColumnReorder</code> option. This function will
+        be used to set up the column reordering.</p>
+        <p>- the function prototype is: <code>function(grid, headers, headerColumnWidthDiff, setColumns, setupColumnResize, columns, getColumnIndex, uid, trigger)</code></p>
+      </div>
+     </td>
+  </tr>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+
+<script src="../dist/browser/slick.core.js"></script>
+<script src="../dist/browser/slick.interactions.js"></script>
+<script src="../dist/browser/slick.grid.js"></script>
+
+<script>
+  var grid;
+  var data = [];
+  var columns = [
+    {id: "title", name: "Title", field: "title", width: 130, cssClass: "cell-title"},
+    {id: "duration", name: "Duration", field: "duration"},
+    {id: "%", name: "% Complete", field: "percentComplete", width: 95, resizable: false},
+    {id: "status", name: "Status", field: "percentComplete", width: 50, resizable: false},
+    {id: "start", name: "Start", field: "start", minWidth: 60},
+    {id: "finish", name: "Finish", field: "finish", minWidth: 60},
+    {id: "effort-driven", name: "Effort Driven", sortable: false, width: 95, minWidth: 20, maxWidth: 95, cssClass: "cell-effort-driven", field: "effortDriven"}
+  ];
+  var sortableInstance;
+
+  function setupColumnReorder(grid, headers, headerColumnWidthDiff, setColumns, setupColumnResize, columns, getColumnIndex, uid, trigger) {
+    var sortableOptions = {
+      animation: 50,
+      direction: 'horizontal',
+      chosenClass: 'slick-header-column-active',
+      ghostClass: 'slick-sortable-placeholder',
+      draggable: '.slick-header-column',
+      dragoverBubble: false,
+      revertClone: true,
+      onStart: function (e) {
+      },
+      onEnd: function (e) {
+        if (!grid.getEditorLock().commitCurrentEdit()) {
+          return;
+        }
+
+        var reorderedIds = sortableInstance.toArray();
+        var reorderedColumns = [];
+        for (var i = 0; i < reorderedIds.length; i++) {
+          reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
+        }
+        setColumns(reorderedColumns);
+
+        trigger(grid.onColumnsReordered, {grid: grid});
+        e.stopPropagation();
+        setupColumnResize();
+      }
+    };
+
+    sortableInstance = Sortable.create(headers[0], sortableOptions);
+  }
+
+  var options = {
+    editable: false,
+    enableAddRow: false,
+    enableCellNavigation: true,
+    enableColumnReorder: setupColumnReorder
+  };
+
+  document.addEventListener("DOMContentLoaded", function() {
+    for (var i = 0; i < 5; i++) {
+      var d = (data[i] = {});
+
+      d["title"] = "<a href='#' tabindex='0'>Task</a> " + i;
+      d["duration"] = "5 days";
+      d["percentComplete"] = Math.min(100, Math.round(Math.random() * 110));
+      d["start"] = "01/01/2009";
+      d["finish"] = "01/05/2009";
+      d["effortDriven"] = (i % 5 == 0);
+    }
+
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <link rel="stylesheet" href="../dist/styles/css/slick.headermenu.css" type="text/css" />
+  <link rel="stylesheet" href="../dist/styles/css/slick.columnpicker.css" type="text/css" />
+  <link rel="stylesheet" href="../dist/styles/css/slick-icons.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+  <style>
+    .blue {
+      color: rgb(73, 73, 255);
+    }
+    .bold {
+      font-weight: bold;
+    }
+    .italic {
+      font-style: italic;
+    }
+
+    .slick-header-menubutton {
+      border: 1px solid #dedede;
+      border-width: 0 1px 0 1px;
+    }
+    .slick-header-menubutton span {
+      margin-top: 40%;
+    }
+    /**
+     * Style the drop-down menu here since the plugin stylesheet mostly contains structural CSS.
+     */
+    .slick-header-menuitem {
+      padding: 2px;
+      border: 1px solid transparent;
+      border-radius: 3px;
+    }
+
+    .slick-header-menuitem:hover {
+      border-color: silver;
+      background: white;
+    }
+
+    .slick-header-menuitem-disabled {
+      border-color: transparent !important;
+      background: inherit !important;
+    }
+    .slick-header-menuitem-hidden {
+      display: none;
+    }
+    .slick-header-menu.slick-submenu {
+      background-color: #fbfbfb;
+      /* border-width: 2px; */
+      box-shadow: 0 2px 4px 2px rgba(146, 152, 163, 0.4);
+      min-width: 150px;
+    }
+  </style>
+
+</head>
+
+<body>
+  <h2 class="title">Example - Header Menu Plugin</h2>
+  <div style="position:relative">
+    <div style="width:575px;">
+      <div id="myGrid" class="slick-container" style="width:100%;height:500px;"></div>
+    </div>
+
+    <div class="options-panel">
+      <h2>
+        <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+        Demonstrates:
+      </h2>
+
+      <p>
+        This example demonstrates using the <b>Slick.Plugins.HeaderMenu</b> plugin to add drop-down menus to column
+        headers. (Hover over the headers.)
+      </p>
+      <hr>
+      <h3>Auto-align option</h3>
+      <p>
+        Auto-align (defaults to True), will calculate whether it has enough space to show the drop menu to the right.
+        If it calculates that the drop menu is to fall outside of the viewport, it will automatically align the drop
+        menu to the left.
+      </p>
+      <hr>
+      <h3>Auto-Align Header Menu Drop</h3>
+      <button onclick="autoAlignMenu(true)">ON</button>
+      <button onclick="autoAlignMenu(false)">OFF</button>
+      <h2>View Source:</h2>
+      <ul>
+        <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example-plugin-headermenu.html"
+            target="_sourcewindow"> View the source for this example on Github</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+
+  <script src="../dist/browser/slick.core.js"></script>
+  <script src="../dist/browser/slick.interactions.js"></script>
+  <script src="../dist/browser/slick.grid.js"></script>
+  <script src="../dist/browser/plugins/slick.headermenu.js"></script>
+  <script src="../dist/browser/controls/slick.columnpicker.js"></script>
+
+  <script>
+    var data = [];
+    var grid;
+    var headerMenuPlugin;
+    var columns = [
+      { id: "title", name: "Title", field: "title", width: 90 },
+      { id: "duration", name: "Duration", field: "duration", sortable: true, width: 90 },
+      { id: "percentComplete", name: "% Complete", field: "percentComplete", sortable: true, width: 95 },
+      { id: "start", name: "Start", field: "start", sortable: true },
+      { id: "finish", name: "Finish", field: "finish", sortable: true },
+      { id: "effort-driven", name: "Effort Driven", field: "effortDriven", width: 100 }
+
+    ];
+
+    for (var i = 0; i < columns.length; i++) {
+      columns[i].header = {
+        menu: {
+          commandItems: [
+            {
+              iconCssClass: 'sgi sgi-caret sgi-flip-v',
+              title: "Sort Ascending",
+              disabled: !columns[i].sortable,
+              // hidden: !columns[i].sortable, // you could disable or hide the command completely
+              command: "sort-asc"
+            },
+            {
+              iconCssClass: 'sgi sgi-caret',
+              title: "Sort Descending",
+              disabled: !columns[i].sortable,
+              // hidden: !columns[i].sortable, // you could disable or hide the command completely
+              cssClass: !columns[i].sortable ? 'italic' : '',
+              command: "sort-desc"
+            },
+            {
+              title: "Hide Column",
+              command: "hide",
+              tooltip: "Can't hide this column",
+              itemUsabilityOverride: function (args) {
+                // for example we want to disable the "Hide Column" over the "Duration" column
+                return args.column.id === "Duration";
+              },
+            },
+            {
+              iconCssClass: 'sgi sgi-help-circle-outline sgi-14px',
+              title: "Help",
+              command: "help",
+              cssClass: 'bold',     // container css class
+              textCssClass: 'blue', // just the text css class
+              itemVisibilityOverride: function (args) {
+                // for example don't show Help on column "% Complete"
+                return (args.column.id !== "percentComplete");
+              },
+              action: function (e, args) {
+                // you can use the "action" callback and/or subscribe to the "onCallback" event, they both have the same arguments
+                console.log('execute an action on Help', args);
+              }
+            },
+            // you can pass divider as a string or an object with a boolean
+            // "divider",
+            { divider: true },
+            {
+              // we can also have multiple nested sub-menus
+              command: 'freezing', title: 'Freeze/Pinning',
+              commandItems: [
+                { command: "freeze-columns", title: "Freeze Columns" },
+                { command: "unfreeze-columns", title: "Unfreeze all Columns" },
+              ]
+            },
+            {
+              // we can also have multiple nested sub-menus
+              command: 'feedback', title: 'Feedback',
+              commandItems: [
+                { command: "column-love", title: "Column is great", iconCssClass: "sgi sgi-star", tooltip: "this will automatically send us an email about this new column detail" },
+                { command: "column-hate", title: "Column is not useful", iconCssClass: "sgi sgi-information-outline", tooltip: "this will automatically send us an email about this new column detail" },
+                "divider",
+                {
+                  command: 'sub-menu', title: 'Contact Us', iconCssClass: "sgi sgi-user", subMenuTitle: "contact us...", subMenuTitleCssClass: "italic",
+                  commandItems: [
+                    { command: "contact-email", title: "Email us", iconCssClass: "sgi sgi-pencil-outline" },
+                    { command: "contact-chat", title: "Chat with us", iconCssClass: "sgi sgi-message-outline" },
+                    { command: "contact-meeting", title: "Book an appointment", iconCssClass: "sgi sgi-coffee-outline" },
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      };
+    }
+
+    // keep a copy of all column for the array of visible columns
+    var visibleColumns = columns;
+
+    var options = {
+      columnPicker: {
+        columnTitle: "Columns"
+      },
+      enableColumnReorder: false,
+      multiColumnSort: true
+    };
+
+    var executeSort = function (sortCols) {
+      // firstly add column reference and remove any sort columns that are no longer visible
+      sortCols = sortCols.filter(function (el, i) {
+        for (var i = 0; i < visibleColumns.length; i++) {
+          if (visibleColumns[i].id === el.columnId) {
+            el.sortCol = visibleColumns[i];
+            return true;
+          }
+        }
+        return false;
+      });
+      grid.setSortColumns(sortCols);
+
+      data.sort(function (dataRow1, dataRow2) {
+        for (var i = 0, l = sortCols.length; i < l; i++) {
+          var field = sortCols[i].sortCol.field;
+          var sign = sortCols[i].sortAsc ? 1 : -1;
+          var value1 = dataRow1[field], value2 = dataRow2[field];
+          var result = (value1 == value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
+          if (result != 0) {
+            return result;
+          }
+        }
+        return 0;
+      });
+      grid.invalidate();
+      grid.render();
+    };
+
+    var removeColumnById = function (array, idVal) {
+      return array.filter(function (el, i) {
+        return el.id !== idVal;
+      });
+    };
+
+    var removeSortColumnById = function (array, idVal) {
+      return array.filter(function (el, i) {
+        return el.columnId !== idVal;
+      });
+    };
+
+    function autoAlignMenu(isEnabled) {
+      headerMenuPlugin.setOptions({ autoAlign: isEnabled });
+    }
+
+    function formattedRandomNum(maxVal) {
+      var numDigits = ('' + maxVal).length;
+      return ('0000' + (Math.floor(Math.random() * maxVal) + 1)).slice(-numDigits)
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      data = [];
+      for (var i = 0; i < 500; i++) {
+        data[i] = {
+          title: "Task " + i,
+          duration: Math.floor(Math.random() * 25) + " days",
+          percentComplete: Math.floor(Math.random() * 100),
+          start: "" + formattedRandomNum(28) + "/03/2009",
+          finish: "" + formattedRandomNum(28) + "/05/2011",
+          effortDriven: (i % 5 == 0)
+        };
+      }
+
+      grid = new Slick.Grid("#myGrid", data, columns, options);
+      var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
+      headerMenuPlugin = new Slick.Plugins.HeaderMenu({ buttonCssClass: 'sgi sgi-caret', subItemChevronClass: 'sgi sgi-chevron-right' });
+
+      grid.onSort.subscribe(function (e, args) {
+        executeSort(args.sortCols);
+      });
+
+      headerMenuPlugin.onBeforeMenuShow.subscribe(function(e, args) {
+        console.log('Before the Header Menu is shown');
+      });
+      headerMenuPlugin.onAfterMenuShow.subscribe(function(e, args) {
+        console.log('After the Header Menu is shown');
+      });
+
+      headerMenuPlugin.onCommand.subscribe(function (e, args) {
+        // e.preventDefault(); // you could do if you wish to keep the menu open
+
+        if (args.command === "hide") {
+          // hide column
+          visibleColumns = removeColumnById(visibleColumns, args.column.id);
+          grid.setColumns(visibleColumns);
+          executeSort(grid.getSortColumns());
+        } else if (args.command === "sort-asc" || args.command === "sort-desc") {
+          // sort column asc or desc
+          var isSortedAsc = (args.command === "sort-asc");
+
+          var sortCols = removeSortColumnById(grid.getSortColumns(), args.column.id);
+          sortCols.push({ sortAsc: isSortedAsc, columnId: args.column.id });
+
+          grid.setSortColumns(sortCols);
+          executeSort(sortCols);
+        } else {
+          alert("Command: " + args.command);
+        }
+      });
+
+      grid.registerPlugin(headerMenuPlugin);
+    });
+  </script>
+</body>
+
+</html>

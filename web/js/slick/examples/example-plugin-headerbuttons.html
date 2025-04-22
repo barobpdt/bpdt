@@ -1,0 +1,203 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <link rel="stylesheet" href="../dist/styles/css/slick-icons.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick.headerbuttons.css" type="text/css" />
+  <style>
+    .icon-highlight-off {
+      opacity: 0.2;
+    }
+
+    .negative-highlight {
+      background: red;
+    }
+    .slick-header-columns .slick-header-column {
+      display: inline-block;
+    }
+    .color-orange {
+      color: orange;
+    }
+    .color-red {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <h2 class="title">Example - Header Buttons Plugin</h2>
+  <div style="position:relative">
+    <div style="width:600px;">
+      <div id="myGrid" class="slick-container" style="width:100%;height:500px;"></div>
+    </div>
+
+    <div class="options-panel">
+      <h2>
+        <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+        Demonstrates:
+      </h2>
+
+      <p>
+        This example demonstrates using the <b>Slick.Plugins.HeaderButtons</b> plugin to easily add buttons to column
+        headers. These buttons can be specified directly in the column definition, and are very easy to configure and
+        use.
+      </p>
+      <h2>View Source:</h2>
+      <ul>
+        <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example-plugin-headerbuttons.html"
+            target="_sourcewindow"> View the source for this example on Github</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+
+  <script src="../dist/browser/slick.core.js"></script>
+<script src="../dist/browser/slick.interactions.js"></script>
+<script src="../dist/browser/slick.grid.js"></script>
+  <script src="../dist/browser/plugins/slick.headerbuttons.js"></script>
+
+  <script>
+    var grid;
+    var data = [];
+    var options = {
+      enableCellNavigation: true
+    };
+    var columns = [];
+    var columnsWithHighlightingById = {};
+
+
+    // Set up some test columns.
+    for (var i = 0; i < 10; i++) {
+      columns.push({
+        id: i,
+        name: String.fromCharCode("A".charCodeAt(0) + i),
+        field: i,
+        width: 90,
+        sortable: true,
+        formatter: highlightingFormatter,
+        header: {
+          buttons: [
+            {
+              // cssClass: "icon-highlight-off",
+              cssClass: "sgi sgi-lightbulb color-orange sgi-14px",
+              command: "toggle-highlight",
+              tooltip: "Highlight negative numbers.",
+              itemVisibilityOverride: function (args) {
+                // for example don't show the header button on column "E"
+                return args.column.name !== "E";
+              },
+              itemUsabilityOverride: function (args) {
+                // for example the button usable everywhere except on last column "J"
+                return args.column.name !== "J";
+              },
+              action: function (e, args) {
+                // you can use the "action" callback and/or subscribe to the "onCallback" event, they both have the same arguments
+                // do something
+                console.log('execute a callback action to "' + args.command + '" on column ' + args.column.name);
+              }
+            }
+          ]
+        }
+      });
+    }
+
+    // Set multiple buttons on the first column to demonstrate overflow.
+    columns[0].name = "Resize me!";
+    columns[0].header = {
+      buttons: [
+        {
+          cssClass: 'sgi sgi-tag-outline sgi-14px',
+          command: "Red Tag Day",
+          action: function (e, args) {
+            alert("command: " + args.command);
+          }
+        },
+        {
+          cssClass: 'sgi sgi-message-outline sgi-14px',
+          action: function (e, args) {
+            // do something
+            console.log(e, args);
+            alert("Write a comment!");
+          }
+        },
+        {
+          cssClass: 'sgi sgi-information-outline sgi-14px',
+        },
+        {
+          cssClass: 'sgi sgi-help-circle-outline sgi-14px',
+        }
+      ]
+    };
+
+    // Set a button on the second column to demonstrate hover.
+    columns[1].name = "Hover me!";
+    columns[1].header = {
+      buttons: [
+        {
+          cssClass: 'sgi sgi-information-outline sgi-14px',
+          showOnHover: true,
+          tooltip: "This button only appears on hover.",
+          handler: function (e) {
+            alert("Help");
+          }
+        }
+      ]
+    };
+
+
+
+    // Set up some test data.
+    for (var i = 0; i < 100; i++) {
+      var d = (data[i] = {});
+      d["id"] = i;
+      for (var j = 0; j < columns.length; j++) {
+        d[j] = Math.round(Math.random() * 10) - 5;
+      }
+    }
+
+
+    function highlightingFormatter(row, cell, value, columnDef, dataContext) {
+      if (columnsWithHighlightingById[columnDef.id] && value < 0) {
+        return '<div style="color:red; font-weight:bold;">' + value + '</div>';
+      } else {
+        return value;
+      }
+    }
+
+
+
+  document.addEventListener("DOMContentLoaded", function() {
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+
+    var headerButtonsPlugin = new Slick.Plugins.HeaderButtons();
+
+    headerButtonsPlugin.onCommand.subscribe(function (e, args) {
+      var column = args.column;
+      var button = args.button;
+      var command = args.command;
+
+      if (command == "toggle-highlight") {
+        if (button.cssClass == "sgi sgi-lightbulb color-red sgi-14px") {
+          delete columnsWithHighlightingById[column.id];
+          button.cssClass = "sgi sgi-lightbulb color-orange sgi-14px";
+          button.tooltip = "Highlight negative numbers."
+        } else {
+          columnsWithHighlightingById[column.id] = true;
+          button.cssClass = "sgi sgi-lightbulb color-red sgi-14px";
+          button.tooltip = "Remove highlight."
+        }
+
+        grid.invalidate();
+      }
+    });
+
+    grid.registerPlugin(headerButtonsPlugin);
+  });
+  </script>
+</body>
+
+</html>

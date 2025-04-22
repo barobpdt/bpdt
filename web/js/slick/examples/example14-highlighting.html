@@ -1,0 +1,187 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>SlickGrid example 14: Highlighting and Flashing cells</title>
+  <link rel="stylesheet" href="../dist/styles/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="../dist/styles/css/slick-alpine-theme.css" type="text/css"/>
+  <style>
+    @keyframes fade {
+      0%, 100% { background: none }
+      50% { background: #e8f8d0 }
+    }
+
+    .load-medium {
+      color: orange;
+      font-weight: bold;
+    }
+
+    .load-hi {
+      color: red;
+      font-weight: bold;
+    }
+
+    .changed {
+      background: mistyrose;
+      box-shadow: inset 0 0 0 1px lightcoral;
+    }
+
+    .current-server {
+      background: moccasin;
+      box-shadow: inset 0 0 0 1px darksalmon;
+    }
+
+    .slick-row.highlighting-animation {
+      background: #e8f8d0 !important;
+      animation: fade 1.5s linear;
+    }
+  </style>
+</head>
+<body>
+<h2 class="title">Example 14 - Highlighting / Flashing Cells</h2>
+<div style="position:relative">
+  <div style="width:520px;">
+    <div id="myGrid" class="slick-container" style="width:100%;height:500px;"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>
+      <a href="/examples/index.html" style="text-decoration: none; font-size: 22px">&#x2302;</a>
+      Demonstrates:
+    </h2>
+    This example simulates a real-time display of CPU utilization in a web farm.
+    Data is updated in real-time, and cells with changed data are highlighted.
+    You can also click "Find current server" to scroll the row displaying data for the current
+    server into view and flash it.
+    <h2>Demonstrates</h2>
+    <ul>
+      <li>setHighlightedCells()</li>
+      <li>flashCell()</li>
+    </ul>
+    <h2>Controls</h2>
+    <button onclick="simulateRealTimeUpdates()">Start simulation</button>
+    <button onclick="stopSimulation()">Stop simulation</button>
+    <button onclick="findCurrentServer()">Find current server</button>
+    <section style="margin-top: 5px">
+      <button onclick="highlightSecondRow()">Highlight 2nd Row (500ms)</button>
+    </section>
+      <h2>View Source:</h2>
+      <ul>
+          <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example14-highlighting.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+      </ul>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs/Sortable.min.js"></script>
+<script src="sortable-cdn-fallback.js"></script>
+
+<script src="../dist/browser/slick.core.js"></script>
+<script src="../dist/browser/slick.interactions.js"></script>
+<script src="../dist/browser/slick.grid.js"></script>
+<script src="../dist/browser/plugins/slick.cellselectionmodel.js"></script>
+<script src="../dist/browser/plugins/slick.rowmovemanager.js"></script>
+
+<script>
+  var timer;
+  var grid;
+  var data = [];
+  var columns = [
+    {id: "server", name: "Server", field: "server", width: 180}
+  ];
+
+  function cpuUtilizationFormatter(row, cell, value, columnDef, dataContext) {
+    if (value > 90) {
+      return "<span class='load-hi'>" + value + "%</span>";
+    }
+    else if (value > 70) {
+      return "<span class='load-medium'>" + value + "%</span>";
+    }
+    else {
+      return value + "%";
+    }
+  }
+
+  for (var i = 0; i < 4; i++) {
+    columns.push({
+      id: "cpu" + i,
+      name: "CPU" + i,
+      field: i,
+      width: 80,
+      formatter: cpuUtilizationFormatter
+    });
+  }
+
+  var options = {
+    editable: false,
+    enableAddRow: false,
+    enableCellNavigation: true,
+    cellHighlightCssClass: "changed",
+    cellFlashingCssClass: "current-server"
+  };
+
+
+  document.addEventListener("DOMContentLoaded", function() {
+    for (var i = 0; i < 500; i++) {
+      var d = (data[i] = {});
+      d.server = "Server " + i;
+      for (var j = 0; j < columns.length; j++) {
+        d[j] = Math.round(Math.random() * 100);
+      }
+    }
+
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+  });
+
+
+  function simulateRealTimeUpdates() {
+    var changes = {};
+    var numberOfUpdates = Math.round(Math.random() * (data.length / 10));
+    for (var i = 0; i < numberOfUpdates; i++) {
+      var server = Math.round(Math.random() * (data.length - 1));
+      var cpu = Math.round(Math.random() * (columns.length - 1));
+      var delta = Math.round(Math.random() * 50) - 25;
+      var col = grid.getColumnIndex("cpu" + cpu);
+      var val = data[server][col] + delta;
+      val = Math.max(0, val);
+      val = Math.min(100, val);
+
+      data[server][col] = val;
+
+      if (!changes[server]) {
+        changes[server] = {};
+      }
+
+      changes[server]["cpu" + cpu] = "changed";
+
+      grid.invalidateRow(server);
+    }
+
+    grid.setCellCssStyles("highlight", changes);
+    grid.render();
+
+    timer = window.setTimeout(simulateRealTimeUpdates, 500);
+  }
+
+  function stopSimulation() {
+    changes = {}; // clear changes
+    grid.setCellCssStyles("highlight", changes);
+    grid.render();
+    window.clearTimeout(timer);
+  }
+
+  function findCurrentServer() {
+    let currentServer = Math.round(Math.random() * (data.length - 1));
+    grid.scrollRowIntoView(currentServer);
+    grid.flashCell(currentServer, grid.getColumnIndex("server"), 100);
+  }
+
+  function highlightSecondRow() {
+    // default is: { rowHighlightCssClass: 'highlight-animate' }
+    grid.navigateTop();
+    grid.setOptions({ rowHighlightCssClass: 'highlighting-animation' });
+    grid.highlightRow(1, 500);
+  }
+</script>
+</body>
+</html>

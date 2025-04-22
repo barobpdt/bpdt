@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>File Explorer</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="/js/jquery.js"></script>
+	<script src="/js/common.js"></script>
+	
+	<script src="/js/slick/jquery.event.drag-2.3.0.js"></script>
+	<script src="/js/slick/slick.core.js"></script>
+	<script src="/js/slick/slick.grid.js"></script>
+	<script src="/js/slick/slick.dataview.js"></script>
+	<link rel="stylesheet" href="/js/slick/slick-default-theme.css" type="text/css"/>
+	<link rel="stylesheet" href="/js/slick/slick.grid.css" type="text/css"/>
+<style>
+		/* 전체 페이지 레이아웃 */
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		
+		/* 메인 컨테이너 */
+		.main-container {
+			display: flex;
+			flex-direction: column;
+			height: 100vh;
+			width: 100%;
+		}
+		
+		/* 툴바 영역 */
+		.toolbar {
+			padding: 10px;
+			background: #f8f9fa;
+			border-bottom: 1px solid #ddd;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		
+		.toolbar button {
+			margin-right: 5px;
+			padding: 5px 10px;
+		}
+
+		.filter-input {
+			padding: 5px 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 12px;
+			width: 200px;
+			margin-left: auto;
+		}
+
+		.filter-input:focus {
+			outline: none;
+			border-color: #80bdff;
+			box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+		}
+		
+		/* 경로 표시 영역 */
+		.path-breadcrumb {
+			padding: 10px;
+			background: #fff;
+			border-bottom: 1px solid #ddd;
+			flex-shrink: 0;
+			overflow-x: auto;
+			white-space: nowrap;
+		}
+		
+		/* 그리드 컨테이너 */
+		.grid-container {
+			flex: 1;
+			position: relative;
+			overflow: hidden;
+			font-size: 12px;
+			min-height: 0; /* Flexbox 내에서 오버플로우가 작동하도록 설정 */
+		}
+		
+		/* 그리드 헤더 스타일 */
+		.slick-header-column {
+			background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+			border-right: 1px solid #dee2e6;
+			border-bottom: 1px solid #dee2e6;
+			padding: 8px 12px;
+			font-weight: 600;
+			color: #495057;
+			text-align: left;
+			font-size: 13px;
+			transition: background-color 0.2s ease;
+			position: relative;
+		}
+
+		.slick-sortable:hover {
+			background: linear-gradient(to bottom, #e9ecef, #dee2e6);
+		}
+
+		.slick-header-column-sorted {
+			font-style: normal;
+			cursor: pointer;
+		}
+
+		.slick-header-column-sorted.slick-sortable:active {
+			background: linear-gradient(to bottom, #dee2e6, #ced4da);
+		}
+
+		/* 정렬 아이콘 스타일 */
+		.slick-sort-indicator {
+			display: inline-block;
+			width: 0;
+			height: 0;
+			margin: 5px;
+			vertical-align: middle;
+			border-left: 4px solid transparent;
+			border-right: 4px solid transparent;
+		}
+
+		.slick-sort-indicator-asc {
+			border-bottom: 4px solid #6c757d;
+		}
+
+		.slick-sort-indicator-desc {
+			border-top: 4px solid #6c757d;
+		}
+
+		/* 컬럼 리사이즈 핸들 스타일 */
+		.slick-resizable-handle {
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			width: 5px;
+			cursor: col-resize;
+			background: transparent;
+		}
+
+		.slick-resizable-handle:hover {
+			background: rgba(0, 0, 0, 0.1);
+		}
+		
+		.slick-row {
+			border-bottom: 1px solid #eee;
+		}
+		
+		.slick-row:hover {
+			background-color: #f0f0f0;
+		}
+		
+		.file-icon {
+			width: 16px;
+			height: 16px;
+			margin-right: 5px;
+			vertical-align: middle;
+		}
+		
+		.folder-icon {
+			color: #ffd700;
+		}
+		
+		.file-icon {
+			color: #666;
+		}
+		
+		/* 반응형 설정 */
+		@media (max-width: 768px) {
+			.toolbar button {
+				padding: 8px 12px;
+				margin-bottom: 5px;
+			}
+			
+			.path-breadcrumb {
+				font-size: 14px;
+			}
+		}
+
+		.context-menu {
+			position: fixed;
+			background: white;
+			border: 1px solid #e0e0e0;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+			padding: 8px 0;
+			z-index: 1000;
+			min-width: 180px;
+			font-size: 13px;
+		}
+
+		.context-menu-item {
+			padding: 8px 16px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			color: #333;
+			transition: all 0.2s ease;
+		}
+
+		.context-menu-item:hover {
+			background-color: #f5f5f5;
+			color: #1976d2;
+		}
+
+		.context-menu-item:active {
+			background-color: #e3f2fd;
+		}
+
+		.context-menu-separator {
+			height: 1px;
+			background-color: #e0e0e0;
+			margin: 8px 0;
+		}
+
+		.context-menu-item[data-action="open"]::before {
+			content: "📂";
+			margin-right: 8px;
+		}
+
+		.context-menu-item[data-action="rename"]::before {
+			content: "✏️";
+			margin-right: 8px;
+		}
+
+		.context-menu-item[data-action="delete"]::before {
+			content: "🗑️";
+			margin-right: 8px;
+		}
+
+		/* 선택된 행 스타일 */
+		.slick-row.selected {
+			background-color: #e3f2fd !important;
+		}
+		
+		.slick-row.selected:hover {
+			background-color: #bbdefb !important;
+		}
+	</style>
+</head>
+<body>
+	<div class="main-container">
+		<div class="toolbar">
+			<button onclick="navigateUp()">Up</button>
+			<button onclick="refreshGrid()">Refresh</button>
+			<button onclick="createNewFolder()">New Folder</button>
+			<input type="text" class="filter-input" placeholder="Filter..." id="gridFilter">
+		</div>
+		<div class="path-breadcrumb" id="pathBreadcrumb">
+			/root
+		</div>
+		<div id="grid" class="grid-container"></div>
+	</div>
+	
+	<script>
+		// 전역 변수 선언
+		let currentPath = '/root';
+		let grid;
+		let dataView;
+		let data = [];
+
+		// 컬럼 정의
+		const columns = [
+			{ id: "name", name: "Name", field: "name", sortable: true, width: 300, resizable: true,
+			  formatter: function(row, cell, value, columnDef, node) {
+				  const icon = node.type === 'folder' ? '📁' : '📄';
+				  return '<span class="'+node.type+'-icon">'+icon+'</span> '+value;
+			  }
+			},
+			{ id: "size", name: "Size", field: "size", cssClass: "text_center", sortable: true, width: 100, resizable: true },
+			{ id: "modified", name: "Modified", field: "modified", cssClass: "text_center", sortable: true, width: 150, resizable: true },
+			{ id: "type", name: "Type", field: "type", cssClass: "text_center", sortable: true, width: 100, resizable: true }
+		];
+
+		// 그리드 옵션
+		const options = {
+			enableCellNavigation: true,
+			enableColumnReorder: false,
+			multiColumnSort: false,
+			rowHeight: 30,
+			headerRowHeight: 30,
+			forceFitColumns: true,
+			syncColumnCellResize: true,
+			enableTextSelectionOnCells: false,
+			enableColumnResize: true,
+			enableRowSelection: true
+		};
+
+		// 그리드 초기화 함수
+		function initGrid() {
+			try {
+				// 초기 데이터 설정
+				data = [
+					{ id:"k1", name: "Documents", type: "folder", size: "-", modified: "2024-04-22 10:00" },
+					{ id:"k2", name: "Pictures", type: "folder", size: "-", modified: "2024-04-22 09:30" },
+					{ id:"k3", name: "report.pdf", type: "file", size: "1.2MB", modified: "2024-04-21 15:45" },
+					{ id:"k4", name: "data.xlsx", type: "file", size: "2.5MB", modified: "2024-04-20 11:20" }
+				];
+				
+				// Slick 객체가 정의되었는지 확인
+				if (typeof Slick === 'undefined') {
+					throw new Error("SlickGrid library not loaded properly");
+				}
+				
+				// DataView 초기화
+				dataView = new Slick.Data.DataView({
+					groupItemMetadataProvider: null,
+					inlineFilters: true
+				});
+				dataView.setItems(data);
+				
+				// 필터 함수 설정
+				dataView.setFilter(function(item) {
+					const filterText = $("#gridFilter").val().toLowerCase();
+					if (!filterText) return true;
+					
+					return (
+						item.name.toLowerCase().includes(filterText) ||
+						item.type.toLowerCase().includes(filterText) ||
+						item.size.toLowerCase().includes(filterText) ||
+						item.modified.toLowerCase().includes(filterText)
+					);
+				});
+				
+				// 그리드 초기화
+				grid = new Slick.Grid("#grid", dataView, columns, options);
+				
+				// 행 선택 이벤트 핸들러
+				grid.onClick.subscribe(function(e, args) {
+					if (args.row >= 0) {
+						// 모든 행의 선택 상태 초기화
+						$('.slick-row').removeClass('selected');
+						
+						// 클릭한 행 선택
+						$(e.target).closest('.slick-row').addClass('selected');
+					}
+				});
+				
+				// 컨텍스트 메뉴 이벤트 핸들러
+				grid.onContextMenu.subscribe(function(e, args) {
+					e.preventDefault();
+					const item = dataView.getItem(args.row);
+					
+					// 기존 컨텍스트 메뉴 제거
+					$('.context-menu').remove();
+					
+					// 컨텍스트 메뉴 생성
+					const menu = $('<div class="context-menu"></div>');
+					
+					// 메뉴 항목 추가
+					menu.append('<div class="context-menu-item" data-action="open">열기</div>');
+					menu.append('<div class="context-menu-item" data-action="rename">이름 변경</div>');
+					menu.append('<div class="context-menu-separator"></div>');
+					menu.append('<div class="context-menu-item" data-action="delete">삭제</div>');
+					
+					// 메뉴 위치 설정
+					menu.css({
+						top: e.pageY,
+						left: e.pageX
+					});
+					
+					// 메뉴 표시
+					$('body').append(menu);
+					
+					// 메뉴 항목 클릭 이벤트
+					menu.on('click', '.context-menu-item', function() {
+						const action = $(this).data('action');
+						switch(action) {
+							case 'open':
+								if (item.type === 'folder') {
+									navigateToFolder(item.name);
+								}
+								break;
+							case 'rename':
+								const newName = prompt('새 이름을 입력하세요:', item.name);
+								if (newName) {
+									item.name = newName;
+									dataView.updateItem(item.id, item);
+									grid.render();
+								}
+								break;
+							case 'delete':
+								if (confirm('정말 삭제하시겠습니까?')) {
+									dataView.deleteItem(item.id);
+									grid.render();
+								}
+								break;
+						}
+						menu.remove();
+					});
+					
+					// 다른 곳 클릭시 메뉴 제거
+					$(document).one('click', function() {
+						menu.remove();
+					});
+				});
+				
+				// 필터 입력 이벤트 핸들러
+				$("#gridFilter").on("input", function() {
+					dataView.refresh();
+					grid.render();
+				});
+				
+				// 정렬 이벤트 핸들러
+				grid.onSort.subscribe(function(e, args) { 
+					const field = args.sortCol.field;
+					dataView.sort(function(a, b) {
+						const sign = args.sortAsc ? 1 : -1;
+						const valueA = a[field];
+						const valueB = b[field];
+						const result = (valueA < valueB ? -1 : (valueA > valueB ? 1 : 0)) * sign;
+						if (result !== 0) {
+							return result;
+						}
+					}) 
+					grid.invalidate();
+					grid.render();
+				});
+				
+				// 이벤트 핸들러 등록
+				grid.onDblClick.subscribe(function(e, args) {
+					if (args.row >= 0 && args.row < dataView.getLength()) {
+						const item = dataView.getItem(args.row);
+						if (item && item.type === 'folder') {
+							navigateToFolder(item.name);
+						}
+					}
+				});
+				
+				// 그리드 렌더링
+				grid.render();
+				
+				// 컬럼 자동 조정
+				grid.autosizeColumns();
+				$('.slick-viewport').css('overflow-x', 'hidden');
+				
+				console.log("Grid initialized successfully");
+			} catch (error) {
+				console.error("Error initializing grid:", error);
+				alert("Error initializing grid: " + error.message);
+			}
+		}
+
+		// 데이터 로드 함수
+		function loadData(path) {
+			try {
+				return;
+				// This is where you would typically make an API call to get the folder contents
+				// For demo purposes, we'll use sample data
+				data = [
+					{ id:"k1", name: "Documents", type: "folder", size: "-", modified: "2024-04-22 10:00" },
+					{ id:"k2", name: "Pictures", type: "folder", size: "-", modified: "2024-04-22 09:30" },
+					{ id:"k3", name: "report.pdf", type: "file", size: "1.2MB", modified: "2024-04-21 15:45" },
+					{ id:"k4", name: "data.xlsx", type: "file", size: "2.5MB", modified: "2024-04-20 11:20" }
+				];
+				
+				if (dataView) {
+					dataView.setItems(data);
+					updateBreadcrumb();
+				} else {
+					console.error("DataView not initialized");
+				}
+			} catch (error) {
+				console.error("Error loading data:", error);
+				alert("Error loading data: " + error.message);
+			}
+		}
+
+		// 폴더 탐색 함수
+		function navigateToFolder(folderName) {
+			currentPath = currentPath + '/' + folderName;
+			loadData(currentPath);
+		}
+
+		// 상위 폴더로 이동 함수
+		function navigateUp() {
+			if (currentPath !== '/root') {
+				currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+				loadData(currentPath);
+			}
+		}
+
+		// 그리드 새로고침 함수
+		function refreshGrid() {
+			loadData(currentPath);
+		}
+
+		// 새 폴더 생성 함수
+		function createNewFolder() {
+			const folderName = prompt("Enter folder name:");
+			if (folderName) {
+				// Here you would typically make an API call to create the folder
+				alert(`Folder "${folderName}" would be created here`);
+			}
+		}
+
+		// 경로 표시 업데이트 함수
+		function updateBreadcrumb() {
+			const parts = currentPath.split('/').filter(p => p);
+			let html = '<span style="cursor: pointer" onclick="navigateToRoot()">/root</span>';
+			let path = '';
+			
+			parts.forEach(part => {
+				path += '/' + part;
+				html += ` / <span style="cursor: pointer" onclick="navigateToPath('${path}')">${part}</span>`;
+			});
+			
+			document.getElementById('pathBreadcrumb').innerHTML = html;
+		}
+
+		// 루트 폴더로 이동 함수
+		function navigateToRoot() {
+			currentPath = '/root';
+			loadData(currentPath);
+		}
+
+		// 특정 경로로 이동 함수
+		function navigateToPath(path) {
+			currentPath = path;
+			loadData(currentPath);
+		}
+
+		// 페이지 로드 시 초기화
+		$(document).ready(function() {
+			try {
+				// SlickGrid 라이브러리가 로드되었는지 확인
+				if (typeof Slick === 'undefined') {
+					console.error("SlickGrid library not loaded. Waiting for it to load...");
+					// 라이브러리가 로드될 때까지 대기
+					setTimeout(function() {
+						if (typeof Slick !== 'undefined') {
+							initGrid();
+							// loadData(currentPath);
+						} else {
+							alert("Failed to load SlickGrid library. Please check your internet connection and try again.");
+						}
+					}, 1000);
+				} else {
+					initGrid();
+					// loadData(currentPath);
+				}
+			} catch (error) {
+				console.error("Error during initialization:", error);
+				alert("Error during initialization: " + error.message);
+			}
+		});
+	</script>
+</body>
+</html> 
