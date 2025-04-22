@@ -235,6 +235,80 @@
 		.slick-row.selected:hover {
 			background-color: #bbdefb !important;
 		}
+
+		/* 슬라이더 스타일 */
+		.slider-container {
+			width: 100%;
+			height: 400px;
+			position: relative;
+			overflow: hidden;
+			margin: 2px 0;
+			background: #f8f9fa;
+			border-radius: 12px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		}
+
+		.slide {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 24px;
+			color: white;
+			opacity: 0;
+			transition: all 0.5s ease;
+		}
+
+		.slide.active {
+			opacity: 1;
+		}
+
+		/* 각 슬라이드별 배경색 */
+		.slide:nth-child(1) { background: linear-gradient(45deg, #FF6B6B, #4ECDC4); }
+		.slide:nth-child(2) { background: linear-gradient(45deg, #A8E6CF, #3498DB); }
+		.slide:nth-child(3) { background: linear-gradient(45deg, #FFD93D, #FF6B6B); }
+		.slide:nth-child(4) { background: linear-gradient(45deg, #6C5CE7, #A8E6CF); }
+		.slide:nth-child(5) { background: linear-gradient(45deg, #FF8B94, #6C5CE7); }
+
+		/* 슬라이더 네비게이션 */
+		.slider-nav {
+			position: absolute;
+			bottom: 20px;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			gap: 10px;
+			z-index: 10;
+		}
+
+		.slider-nav-item {
+			width: 12px;
+			height: 12px;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, 0.5);
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+
+		.slider-nav-item.active {
+			background: white;
+			transform: scale(1.2);
+		}
+
+		/* 전환 효과 클래스 */
+		.slide.fade { transition: opacity 0.5s ease; }
+		.slide.slide-left { transform: translateX(-100%); transition: transform 0.5s ease; }
+		.slide.slide-right { transform: translateX(100%); transition: transform 0.5s ease; }
+		.slide.zoom { transform: scale(0.5); transition: transform 0.5s ease; }
+		.slide.flip { transform: rotateY(90deg); transition: transform 0.5s ease; }
+
+		.slide.active.fade { opacity: 1; }
+		.slide.active.slide-left { transform: translateX(0); }
+		.slide.active.slide-right { transform: translateX(0); }
+		.slide.active.zoom { transform: scale(1); }
+		.slide.active.flip { transform: rotateY(0); }
 	</style>
 </head>
 <body>
@@ -249,6 +323,16 @@
 			/root
 		</div>
 		<div id="grid" class="grid-container"></div>
+
+		<!-- 슬라이더 섹션 추가 -->
+		<div class="slider-container">
+			<div class="slide fade active" data-index="0">Slide 1 - Fade Effect</div>
+			<div class="slide slide-left" data-index="1">Slide 2 - Slide Left Effect</div>
+			<div class="slide slide-right" data-index="2">Slide 3 - Slide Right Effect</div>
+			<div class="slide zoom" data-index="3">Slide 4 - Zoom Effect</div>
+			<div class="slide flip" data-index="4">Slide 5 - Flip Effect</div>
+			<div class="slider-nav"></div>
+		</div>
 	</div>
 	
 	<script>
@@ -538,11 +622,48 @@
 					initGrid();
 					// loadData(currentPath);
 				}
+
+				// 슬라이더 초기화
+				initSlider();
 			} catch (error) {
 				console.error("Error during initialization:", error);
 				alert("Error during initialization: " + error.message);
 			}
 		});
+
+		// 슬라이더 초기화 함수
+		function initSlider() {
+			const slides = $('.slide');
+			const nav = $('.slider-nav');
+			let currentSlide = 0;
+
+			// 네비게이션 점 생성
+			slides.each((index) => {
+				nav.append(`<div class="slider-nav-item${index === 0 ? ' active' : ''}" data-index="${index}"></div>`);
+			});
+
+			// 네비게이션 클릭 이벤트
+			$('.slider-nav-item').click(function() {
+				const index = $(this).data('index');
+				showSlide(index);
+			});
+
+			// 슬라이드 표시 함수
+			function showSlide(index) {
+				slides.removeClass('active');
+				$('.slider-nav-item').removeClass('active');
+				
+				slides.eq(index).addClass('active');
+				$('.slider-nav-item').eq(index).addClass('active');
+				currentSlide = index;
+			}
+
+			// 자동 슬라이드
+			setInterval(() => {
+				const nextSlide = (currentSlide + 1) % slides.length;
+				showSlide(nextSlide);
+			}, 5000);
+		}
 	</script>
 </body>
 </html> 
