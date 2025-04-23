@@ -3,15 +3,16 @@
 	in = logWriter('runcmd-in')
 	out = logReader('runcmd-out')
 
-	p=conf('python.path')
-	p.add('/python.exe')
+	pythonPath=conf('python.path')
+	pythonPath.add('/python.exe')
 
-	py = conf('include.path')
-	py.add('/classes/pyapps')
+	sourcePath = conf('include.path')
+	sourcePath.add('/classes/pyapps')
 
-	cmd=fv('#{p} "run_cmd.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
-	pip=fv('#{p} -m pip install zipfile')
-
+	cmd=fv('#{pythonPath} "#{sourcePath}/run_cmd.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
+	
+	pip=fv('#{pythonPath} -m pip install zipfile')
+	pip=fv('#{pythonPath} -m pip install pywin32==306')
 
 	c.run(pip)
 	c.run(cmd)
@@ -31,6 +32,10 @@
 	ss=fv('##> exec:#{src}')
 	in.write(ss)
 
+##
+		if isinstance(parent, int):	
+            QDialog.__init__(self, None)
+            win32gui.SetParent(self.winId(), parent) #<-this set the parent window
 
 ## 파이션 실행로그 보기
 ~~

@@ -20,10 +20,41 @@ parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help
 args = parser.parse_args()
 
 
-class CustomWebEnginePage(QWebEnginePage):
-	""" Custom WebEnginePage to customize how we handle link navigation """
+class MyWebView(QWebEngineView):
 	# Store external windows.
 	external_windows = []
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.acceptDrops = True
+		try:
+			self.fp=open(args.log, 'r')
+			self.fa=open(args.out, 'a')
+			self.lastPos=self.fp.seek(0, os.SEEK_END)
+			self.tm=time.time()
+            self.setGeometry(0, 0, 350, 250)    
+            self.timer = QTimer(self)
+            self.timer.setInterval(100)
+            self.timer.timeout.connect(self.timeout)
+            self.timer.start()
+            # self.setWindowFlags(Qt.SplashScreen)
+            self.loadUrl('http://localhost')
+            self.hide()
+		except Exception as e:
+			print(f" error: {e}")
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        files = [u.toLocalFile() for u in event.mimeData().urls()]
+        for f in files:
+            print('Dropped file:', f)
+        event.accept()
+        
 
 	def acceptNavigationRequest(self, url,  _type, isMainFrame):
 		if _type == QWebEnginePage.NavigationTypeLinkClicked:
@@ -35,42 +66,7 @@ class CustomWebEnginePage(QWebEnginePage):
 			self.external_windows.append(w)
 			return False
 		return super().acceptNavigationRequest(url,  _type, isMainFrame)
-
-class Example(QWidget):
-	def __init__(self):
-		super().__init__()
-		print("init ", args.log)
-		
-		try:
-			self.fp=open(args.log, 'r')
-			self.fa=open(args.out, 'a')
-			self.lastPos=self.fp.seek(0, os.SEEK_END)
-			self.tm=time.time()
-		except Exception as e:
-			print(f" error: {e}")
-			
-		self.initUI()
-		
-	def initUI(self):
-		vbox = QVBoxLayout(self) 
-		self.webEngineView = QWebEngineView()
-		self.loadUrl('http://localhost')
-
-		vbox.addWidget(self.webEngineView)
-		# vbox.setMargin(0)
-		vbox.setContentsMargins(0, 0, 0, 0)
-		self.setLayout(vbox)
-
-		self.setGeometry(0, 0, 350, 250)
-		self.setWindowTitle('QWebEngineView')        
-		self.timer = QTimer(self)
-		self.timer.setInterval(100)
-		self.timer.timeout.connect(self.timeout)
-		self.timer.start()
-		
-		self.setWindowFlags(Qt.SplashScreen)
-		self.hide()
-	
+ 
 	def logAppend(self, msg):
 		self.fa.write(f"##> {msg}\n")
 		self.fa.flush()
@@ -134,7 +130,8 @@ class Example(QWidget):
 			
 def main():
 	app = QApplication(sys.argv)
-	ex = Example()
+	webview = MyWebView()
+    webview.show()
 	sys.exit(app.exec_())
 
 if __name__ == '__main__':

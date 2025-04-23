@@ -66,6 +66,20 @@
 		include('classes/common/json.js')
 		return addModule(obj, '@json')
 	}
+	webDownload(name, savePath, count) {
+		if(typeof(name,'func') ) {
+			callback=name
+			name=null
+		}
+		not(name) name='common'
+		obj = _node("webDownload.$name")
+		if(obj.var(useModule)) {
+			if(savePath) obj.member(savePath, savePath)
+			return obj;
+		}
+		include('classes/common/process.js')
+		return addModule(obj, '@webDownload', name, savePath, count)
+	}
 </script>
 
 <script>

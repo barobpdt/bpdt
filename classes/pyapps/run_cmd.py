@@ -70,6 +70,11 @@ try:
 					log(f"eval:{result}")
 				except Exception as ee:
 					log(f"evalException:{ee}")
+			elif ftype=='exec': 
+				try:
+					result=exec(data)
+				except Exception as ee:
+					log(f"execException:{ee}")                    
 			elif ftype=='echo':
 				params=[v.strip() for v in data.split(',')]
 				log(f"echo:params={params}")

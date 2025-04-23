@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Style Web Layout</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f0f0;
+	overflow: hidden;
+}
+
+.window-container {
+    width: 100%;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 메뉴바 스타일 */
+.menu-bar {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 5px;
+    display: flex;
+    gap: 10px;
+}
+
+.menu-item {
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    position: relative;
+}
+
+.menu-item:hover {
+    background-color: #e9ecef;
+}
+
+/* 서브메뉴 스타일 */
+.submenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    display: none;
+    z-index: 1000;
+}
+
+.menu-item.active .submenu {
+    display: block;
+}
+
+.submenu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    position: relative;
+}
+
+.submenu-item:hover {
+    background-color: #e9ecef;
+}
+
+.submenu-divider {
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 5px 0;
+}
+
+/* 서브-서브메뉴 스타일 */
+.sub-submenu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    display: none;
+    z-index: 1001;
+}
+
+.has-submenu {
+	display: flex;
+	align-items: center;
+}
+
+.has-submenu:hover .sub-submenu {
+    display: block;
+}
+
+/* 메인 컨텐츠 영역 */
+.main-content {
+    display: flex;
+    height: calc(100vh - 40px);
+}
+
+/* 사이드 패널 스타일 */
+.side-panel {
+    width: 280px;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-container {
+    display: flex;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tab {
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    background-color: #f8f9fa;
+}
+
+.tab.active {
+    background-color: white;
+    border-bottom: 1px solid white;
+    margin-bottom: -1px;
+}
+
+.tab-content {
+    padding: 15px;
+    flex-grow: 1;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* 컨텐츠 영역 스타일 */
+.content-area {
+    flex: 1;
+    padding: 0px;
+    background-color: white;
+}
+
+/* 서브메뉴 화살표 아이콘 */
+.submenu-arrow {
+    font-size: 10px;
+    margin-left: 5px;
+    color: #6c757d;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }    
+    .side-panel {
+        width: 100%;
+        height: auto;
+    }
+	.help-popup {
+        width: 100%;
+        right: -100%;
+    }
+} 
+
+.full {
+	width: 100%;
+    height: 100%;
+}
+
+.content-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.content-layout .up-panel {
+	overflow-y: auto;
+	/* max-height: calc(100% - 154px); 100% - min-height - padding-bottom - splitter*/
+	flex-shrink: 0;  
+	-webkit-flex-shrink: 0; 
+}
+ 
+.content-layout .splitter {
+	height: 4px;
+	margin: 10px 0;  
+	flex-shrink: 0;
+	-webkit-flex-shrink: 0; 
+	background: #F1F5FA; 
+	cursor: row-resize;
+}
+
+.content-layout .mover {
+	width: 50px;
+	height: 4px;
+	margin: 0 auto;
+	background: #4975B2;
+	cursor: pointer;
+}
+
+.noselect {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none; 
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none; 
+}
+
+/* 도움말 아이콘 스타일 */
+.help-icon {
+	position: absolute;
+    right: 0;
+    top: 8px;
+    width: 24px;
+    height: 24px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+}
+
+.help-icon:hover {
+    background-color: #0056b3;
+}
+
+
+/* 도움말 팝업 스타일 */
+.help-popup {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    transition: right 0.3s ease-in-out;
+}
+
+.help-popup.active {
+    right: 0;
+}
+
+.help-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.help-popup-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.close-button:hover {
+    color: #333;
+}
+
+.help-popup-content {
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+}
+
+.help-popup-content h4 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.help-popup-content p {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.help-popup-content ul {
+    margin-bottom: 15px;
+    padding-left: 20px;
+}
+
+.help-popup-content li {
+    margin-bottom: 5px;
+    line-height: 1.5;
+}
+
+/* 드래그 중일 때 적용할 스타일 */
+.dragging .drag-handle {
+	background-color: #4a90e2;
+}
+
+.dragging .drag-handle-button {
+	opacity: 0;
+}
+.drag-handle {
+	position: absolute;
+	left: 0;
+	width: 10px;
+	height: 100%;
+	background-color: #ddd;
+	cursor: ew-resize;
+	z-index: 20;
+	transition: transform 0.45s ease, background-color 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: col-resize;
+}
+
+.drag-handle:hover {
+	background-color: #aaa;
+}
+
+.drag-handle-button {
+	position: absolute;
+	width: 16px;
+	height: 40px;
+	background-color: #fff;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color 0.2s;
+	z-index: 21;
+}
+
+.drag-handle-button:hover {
+	background-color: #f0f0f0;
+}
+
+.drag-handle-button i {
+	font-size: 12px;
+	color: #666;
+	transition: transform 0.3s ease;
+}
+
+.side-panel.collapsed + .drag-handle i {
+	transform: rotate(180deg);
+}
+
+.side-panel.collapsed .drag-handle {
+	transform: translateX(300px);
+	border-left: 1px solid #ddd;
+	cursor: pointer;
+}
+
+	</style>
+	<script src="/js/jquery.js"></script>
+	<script src="/js/common.js"></script>
+</head>
+<body>
+    <div class="window-container">
+        <!-- 메뉴바 -->
+		<div class="menu-bar">
+			<div class="menu-item" data-menu="file">
+				<span>파일</span>
+				<div class="submenu">
+					<div class="submenu-item has-submenu">
+						<span style="flex:1;">새로 만들기</span>
+						<span class="submenu-arrow">▶</span>
+						<div class="sub-submenu">
+							<div class="submenu-item">소스</div>
+							<div class="submenu-item">스타일</div>
+							<div class="submenu-item">스크립트</div>
+						</div>
+					</div>
+					<div class="submenu-item">열기</div>
+					<div class="submenu-item">저장</div>
+					<div class="submenu-divider"></div>
+					<div class="submenu-item">종료</div>
+				</div>
+			</div>
+			<div class="menu-item" data-menu="edit">
+				<span>편집</span>
+				<div class="submenu">
+					<div class="submenu-item">실행 취소</div>
+					<div class="submenu-item">다시 실행</div>
+					<div class="submenu-divider"></div>
+					<div class="submenu-item">잘라내기</div>
+					<div class="submenu-item">복사</div>
+					<div class="submenu-item">붙여넣기</div>
+				</div>
+			</div>
+			<div class="menu-item" data-menu="view">
+				<span>보기</span>
+				<div class="submenu">
+					<div class="submenu-item">확대</div>
+					<div class="submenu-item">축소</div>
+					<div class="submenu-divider"></div>
+					<div class="submenu-item">전체 화면</div>
+				</div>
+			</div>
+			<div class="menu-item" data-menu="help">
+				<span>도움말</span>
+				<div class="submenu">
+					<div class="submenu-item">도움말 보기</div>
+					<div class="submenu-divider"></div>
+					<div class="submenu-item">정보</div>
+				</div>
+			</div>
+			<div class="help-icon" id="helpIcon">?</div>
+		</div>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <div class="main-content">
+            <!-- 왼쪽 사이드 패널 -->
+            <div class="side-panel">
+                <div class="tab-container">
+                    <div class="tab active" data-tab="tab1">탭 1</div>
+                    <div class="tab" data-tab="tab2">탭 2</div>
+                    <div class="tab" data-tab="tab3">탭 3</div>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab1">
+                        <h3>탭 1 내용</h3>
+                        <p>탭 1의 내용이 여기에 표시됩니다.</p>
+                    </div>
+                    <div class="tab-pane" id="tab2">
+                        <h3>탭 2 내용</h3>
+                        <p>탭 2의 내용이 여기에 표시됩니다.</p>
+                    </div>
+                    <div class="tab-pane" id="tab3">
+                        <h3>탭 3 내용</h3>
+                        <p>탭 3의 내용이 여기에 표시됩니다.</p>
+                    </div>
+                </div>
+            </div>
+			
+			<div class="drag-handle">
+                <button class="drag-handle-button">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <!-- 오른쪽 컨텐츠 영역 -->
+            <div class="content-area">
+                <div class="content-layout full">  
+					<div class="up-panel" style="flex:1">
+						1
+					</div>
+					<div class="splitter">
+						<div class="mover"></div>
+					</div>
+					<div class="bottom-panel">
+						2
+					</div>
+				</div>
+            </div>
+        </div>
+    </div>
+	<!-- 도움말 팝업 -->
+	<div class="help-popup" id="helpPopup">
+		<div class="help-popup-header">
+			<h3>도움말</h3>
+			<button class="close-button" id="closeHelpPopup">×</button>
+		</div>
+		<div class="help-popup-content">
+			<h4>사용 방법</h4>
+			<p>이 웹페이지는 윈도우스타일의 레이아웃을 가지고 있습니다.</p>
+			<ul>
+				<li>상단 메뉴바에서 다양한 기능을 사용할 수 있습니다.</li>
+				<li>왼쪽 사이드 패널의 탭을 클릭하여 다른 내용을 볼 수 있습니다.</li>
+				<li>오른쪽 컨텐츠 영역에 메인 내용이 표시됩니다.</li>
+			</ul>
+			<h4>단축키</h4>
+			<ul>
+				<li>Ctrl + N: 새로 만들기</li>
+				<li>Ctrl + O: 열기</li>
+				<li>Ctrl + S: 저장</li>
+				<li>Ctrl + Z: 실행 취소</li>
+				<li>Ctrl + Y: 다시 실행</li>
+			</ul>
+		</div>
+	</div>
+    <script>
+	document.addEventListener('DOMContentLoaded', function() {
+		initLayout()
+		initHelpIcon()
+		initContentSplitter()
+		initMainSplitter()
+	});
+	
+	function initLayout() {
+		// 탭 기능 구현
+		const tabs = document.querySelectorAll('.tab');
+		const tabPanes = document.querySelectorAll('.tab-pane');
+
+		tabs.forEach(tab => {
+			tab.addEventListener('click', () => {
+				// 모든 탭에서 active 클래스 제거
+				tabs.forEach(t => t.classList.remove('active'));
+				tabPanes.forEach(pane => pane.classList.remove('active'));
+
+				// 클릭된 탭과 해당 컨텐츠에 active 클래스 추가
+				tab.classList.add('active');
+				const tabId = tab.getAttribute('data-tab');
+				document.getElementById(tabId).classList.add('active');
+			});
+		});
+
+		// 메뉴 아이템 클릭 이벤트
+		const menuItems = document.querySelectorAll('.menu-item');
+		const submenuItems = document.querySelectorAll('.submenu-item');
+
+		menuItems.forEach(item => {
+			item.addEventListener('click', (e) => {
+				// 서브메뉴 아이템 클릭 시 이벤트 전파 중지
+				if (e.target.classList.contains('submenu-item')) {
+					e.stopPropagation();
+					return;
+				}
+				
+				// 메뉴 아이템 클릭 시 서브메뉴 토글
+				const submenu = item.querySelector('.submenu')
+				if (submenu) {
+					// 다른 모든 서브메뉴 닫기
+					document.querySelectorAll('.submenu').forEach(menu => {
+						if (menu !== submenu) {
+							menu.style.display = 'none';
+							menu.parentElement.classList.remove('active');
+						}
+					});
+					
+					// 클릭된 서브메뉴 토글
+					if (submenu.style.display === 'block') {
+						submenu.style.display = 'none';
+						submenu.classList.remove('active');
+					} else {
+						submenu.style.display = 'block';
+						submenu.classList.add('active');
+					}
+					e.stopPropagation();
+				}
+			});
+		});
+
+		// 서브메뉴 아이템 클릭 이벤트
+		submenuItems.forEach(item => {
+			item.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const action = item.textContent;
+				console.log(`선택된 메뉴: ${action}`);
+				// 여기에 각 메뉴 항목에 대한 동작을 추가할 수 있습니다.
+				
+				// 서브메뉴 닫기
+				const submenu = item.closest('.submenu');
+				if (submenu) {
+					submenu.style.display = 'none';
+					submenu.parentElement.classList.remove('active');
+				}
+			});
+		});
+
+		// 문서 클릭 시 모든 서브메뉴 닫기
+		document.addEventListener('click', () => {
+			document.querySelectorAll('.submenu').forEach(menu => {
+				menu.style.display = 'none';
+				menu.parentElement.classList.remove('active');
+			});
+		});
+	}
+	function initContentSplitter() { 
+		let prevSize = 0
+		let closeMode = true
+		$('.splitter').on('mousedown', e => {    
+			toggleNoSelect();
+			$(document).on('mousemove', onMousemove);
+			$(document).on('mouseup', onMouseup);
+		})
+		$('.content-layout .mover').on('click' , e => {		
+			const h = $('.content-layout').height()
+			if( closeMode ) {
+				closeMode = false
+				$('.up-panel').height(prevSize); 
+				$('.bottom-panel').height(h-prevSize);
+			} else {
+				closeMode = true
+				$('.up-panel').height(h-14); 
+				$('.bottom-panel').height(0);
+			}
+		})
+		function onMousemove(e) {    
+			const h = $('.content-layout').height()
+			const delta = e.pageY - $('.splitter').offset().top;
+			let upHeight = $('.up-panel').height() + delta;
+			if( upHeight <100 ) upHeight = 100
+			if( h-upHeight < 14 ) {
+				closeMode = true
+				upHeight = h - 150
+				$('.up-panel').height(h-14); 
+				$('.bottom-panel').height(0);
+			} else {
+				prevSize = upHeight
+				$('.up-panel').height(upHeight); 
+				$('.bottom-panel').height(h-upHeight);
+			}
+		}
+
+		function onMouseup() {    
+			$(document).off('mousemove', onMousemove);
+			$(document).off('mouseup', onMouseup);
+			toggleNoSelect();
+		}
+
+		function toggleNoSelect() {
+			$('.content-layout').toggleClass('noselect');
+		}
+		setTimeout(()=> {
+			const h = $('.content-layout').height()
+			prevSize = h - 150
+			$('.up-panel').css('flex','none')
+			$('.up-panel').height(h-14)
+			$('.bottom-panel').height(0)
+		},25)
+	}
+	function initHelpIcon() {
+		// 도움말 아이콘 클릭 이벤트
+		const helpIcon = document.getElementById('helpIcon');
+		const helpPopup = document.getElementById('helpPopup');
+		const closeHelpPopup = document.getElementById('closeHelpPopup');
+
+		helpIcon.addEventListener('click', () => {
+			helpPopup.classList.add('active');
+		});
+
+		closeHelpPopup.addEventListener('click', () => {
+			helpPopup.classList.remove('active');
+		});
+
+		// 도움말 팝업 외부 클릭 시 닫기
+		document.addEventListener('click', (e) => {
+			if (!helpPopup.contains(e.target) && e.target !== helpIcon) {
+				helpPopup.classList.remove('active');
+			}
+		});
+	}
+	
+	function initMainSplitter() {
+		const container = $('.main-content')
+		const left = $('.side-panel')
+		const right = $('.content-area')
+		const dragHandleSize = 10
+		let isDragging = false
+		let startX = 0
+		let startWidth = 0		
+		let prevSize = 0
+		let mousedownTick = 0
+		
+		function setLeftPanelPos(leftWidth) {
+			const cw = container.width()
+			left.width(leftWidth)
+			right.width(cw - leftWidth - dragHandleSize)
+			$('.drag-handle').css('left', leftWidth+'px')
+		
+		}
+		// 패널 접기 함수
+		function collapsePanel() {
+			left.addClass('collapsed')
+			setLeftPanelPos(0)
+		}
+		
+		// 패널 펼치기 함수
+		function expandPanel() {
+			left.removeClass('collapsed')
+			console.log('expand ', prevSize)
+			setLeftPanelPos(prevSize<200 ? 300: prevSize)
+		}
+		
+		
+		// 드래그 핸들 버튼 클릭 이벤트
+		$('.drag-handle-button').on('click', e => {
+			mousedownTick = 0
+			// e.stopPropagation();
+			if ( left.hasClass('collapsed') ) {
+				expandPanel();
+			} else {
+				collapsePanel()
+			}
+			e.preventDefault();
+		});
+		
+		// 드래그 시작
+		$('.drag-handle').on('mousedown', e => {
+			mousedownTick = new Date().getTime()
+			setTimeout(() => {
+				if( mousedownTick==0 ) {
+					return
+				}
+				if (!isDragging) {  // 패널이 펼쳐져 있을 때만 드래그 가능
+					isDragging = true;
+					container.addClass('dragging')
+					startX = e.clientX;
+					startWidth = left.width()
+					
+					document.addEventListener('mousemove', handleMouseMove);
+					document.addEventListener('mouseup', handleMouseUp);
+				}
+			}, 250)
+			e.preventDefault();
+		});
+		
+		// 마우스 이동 처리
+		function handleMouseMove(e) {
+			if (!isDragging) return
+			const width = startWidth + (e.clientX - startX)
+			setLeftPanelPos(width)
+			
+			if( width < 150 ) {
+				handleMouseUp()
+				collapsePanel()
+			}
+		}
+		
+		// 마우스 업 처리
+		function handleMouseUp() {
+			isDragging = false;
+			container.removeClass('dragging');
+			document.removeEventListener('mousemove', handleMouseMove)
+			document.removeEventListener('mouseup', handleMouseUp)
+			setDragPos()
+		}
+		function setDragPos() {			
+			if( right.css('flex')!=='none') {
+				right.css('flex','none')
+			}
+			const width = left.width()
+			setLeftPanelPos(width) 
+			prevSize = width
+			
+			console.log('@@ set pos ', width, right[0])
+		}
+		
+		setTimeout(setDragPos,50)
+	   
+	}
+	</script>
+</body>
+</html> 

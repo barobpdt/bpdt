@@ -105,8 +105,12 @@
 	}
 	parseResult() {
 		result = this.get('cmdResult')
-		print("cmd>> $result")
-		logWriter('cmd').appendLog(result)
+		if(typeof(this.onLogChange,'func')) {
+			this.onLogChange.callFuncSrc()
+		} else {
+			print("cmd>> $result")
+			logWriter('cmd').appendLog(result)
+		}
 	}
 </script>
 
@@ -196,11 +200,13 @@
 
 
 <script module="@webDownload">
-	init(savePath) {
+	init(name, savePath, count) {
 		not(savePath) savePath = Cf.val(System.path(),'/data/download')
 		not(isFolder(savePath)) Baro.file().mkdir(savePath, true)
+		not(count) count = 2
+		@serviceName = name
 		@savePath = savePath
-		@maxDownloadCount = 5
+		@maxDownloadCount = count
 	}
 	downloadStart() {
 		while(n=0, n<maxDownloadCount, n++ ) { 
@@ -217,7 +223,7 @@
 		}
 		not(fileName) fileName=right(url,'/');
 		n=idx%maxDownloadCount;
-		web=Baro.web("down-$n");
+		web=Baro.web("${serviceName}-$n")
 		cur=web.addNode()
 		cur.url = url
 		cur.savePath = savePath
@@ -227,13 +233,13 @@
 	}
 	downloadClear() {
 		while(n=0, n<maxDownloadCount, n++ ) {
-			web=Baro.web("down-$n");
+			web=Baro.web("${serviceName}-$n")
 			web.removeAll()
 		}
 	}
 	downloadInfo() {
 		while(n=0, n<maxDownloadCount, n++ ) {
-			web=Baro.web("down-$n");
+			web=Baro.web("${serviceName}-$n")
 			print("n => ", web.childCount())
 		}
 	}
