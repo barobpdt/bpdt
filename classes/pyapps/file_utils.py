@@ -170,7 +170,7 @@ def save_file(file_path: Union[str, Path], data: Any, file_format: str = 'text',
     except Exception as e:
         return False, f"파일 저장 중 오류 발생: {str(e)}"
 
-def list_zip_contents(zip_file: Union[str, Path, bytes]) -> tuple[bool, str]:
+def list_zip_contents(zip_file: Union[str, Path, bytes], encode:str='') -> tuple[bool, str]:
     """
     압축 파일의 내용을 JSON 형태로 출력하는 함수
     
@@ -211,11 +211,12 @@ def list_zip_contents(zip_file: Union[str, Path, bytes]) -> tuple[bool, str]:
         
         # 각 파일 정보 수집
         for file_info in zip_data.filelist:
+            name = file_info.filename
             file_data = {
-                "name": file_info.filename,
+                "name": name if encode=='' else name.encode('cp437').decode(encode),
                 "size": file_info.file_size,
                 "compressed_size": file_info.compress_size,
-                "date_time": datetime(*file_info.date_time).isoformat() if file_info.date_time else None,
+                "date_time": datetime(*file_info.date_time).isoformat(sep=' ') if file_info.date_time else None,
                 "is_dir": file_info.is_dir(),
                 "is_file": not file_info.is_dir(),
                 "compression_method": file_info.compress_type,
@@ -270,7 +271,7 @@ def list_zip_contents(zip_file: Union[str, Path, bytes]) -> tuple[bool, str]:
     except Exception as e:
         return False, f"압축 파일 내용 출력 중 오류 발생: {str(e)}"
 
-def extract_zip_to_directory(zip_file: Union[str, Path, bytes], output_dir: Optional[Union[str, Path]] = None) -> tuple[bool, str]:
+def extract_zip_to_directory(zip_file: Union[str, Path, bytes], output_dir:Union[str, Path]=None) -> tuple[bool, str]:
     """
     압축 파일을 지정된 디렉토리에 압축 해제하는 함수
     
@@ -320,6 +321,54 @@ def extract_zip_to_directory(zip_file: Union[str, Path, bytes], output_dir: Opti
     
     except Exception as e:
         return False, f"압축 해제 중 오류 발생: {str(e)}"
+
+def list_zip_info(zip_file: Union[str, Path, bytes], encode:str='') -> tuple[bool, str]:
+    try:
+        # 압축 파일 데이터 준비
+        if isinstance(zip_file, (str, Path)):
+            zip_path = Path(zip_file) if isinstance(zip_file, str) else zip_file
+            
+            # 파일이 존재하는지 확인
+            if not zip_path.exists():
+                return False, f"압축 파일이 존재하지 않습니다: {zip_path}"
+            
+            # 압축 파일 열기
+            zip_data = zipfile.ZipFile(zip_path)
+        else:
+            return False, f"지원하지 않는 압축 파일 형식입니다: {type(zip_file)}"
+        
+        # 압축 파일 정보 수집
+        zip_info = {
+            "filename": zip_data.filename if hasattr(zip_data, 'filename') else "memory_zip",
+            "file_count": len(zip_data.namelist()),
+            "total_size": sum(info.file_size for info in zip_data.filelist),
+            "compressed_size": sum(info.compress_size for info in zip_data.filelist),
+            "compression_ratio": round((1 - sum(info.compress_size for info in zip_data.filelist) / 
+                                      sum(info.file_size for info in zip_data.filelist)) * 100, 2) if zip_data.filelist else 0,
+            "files": []
+        }
+        
+        # 각 파일 정보 수집
+        for file_info in zip_data.filelist:
+            name = file_info.filename
+            file_data = {
+                "name": name if encode=='' else name.encode('cp437').decode(encode),
+                "size": file_info.file_size,
+                "date_time": datetime(*file_info.date_time).isoformat(sep=' ') if file_info.date_time else None,
+                "type": 'folder' if file_info.is_dir() else 'file'
+            }
+            
+            # 파일 확장자 추출
+            if file_data["type"]=='file':
+                file_path = Path(file_data["name"])
+                file_data["ext"] = file_path.suffix.lower() if file_path.suffix else None
+            zip_info["files"].append(file_data)
+        return True, json.dumps(zip_info, ensure_ascii=False, indent=2)
+    
+    except Exception as e:
+        return False, f"압축 파일 내용 출력 중 오류 발생: {str(e)}"
+
+
 
 # 사용 예시
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from .file_utils import (
     file_to_base64,
     save_file,
     list_zip_contents,
+    list_zip_info,
     extract_zip_to_directory
 )
 
@@ -24,14 +25,14 @@ from .ppt_utils import (
 )
 """
 
-from .icon_utils import IconManager
-from .button_icons import ButtonIconManager
 
 __all__ = [
 """ @ppt_use 
     'json_to_pptx',
     'json_to_table_pptx',
     'json_to_image_pptx',
+    'extract_all_tables_from_pptx',
+    'extract_tables_from_pptx',
 """
     'check_file_exists',
     'check_folder_exists',
@@ -40,9 +41,6 @@ __all__ = [
     'file_to_base64',
     'save_file',
     'list_zip_contents',
+    'list_zip_info',
     'extract_zip_to_directory',
-    'extract_tables_from_pptx',
-    'extract_all_tables_from_pptx',
-    'IconManager',
-    'ButtonIconManager'
 ] 

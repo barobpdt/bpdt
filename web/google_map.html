@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps Coordinate Marker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .control-panel {
+            width: 300px;
+            background: #f5f5f5;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        
+        .control-panel h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3367d6;
+        }
+        
+        button.secondary {
+            background: #f1f1f1;
+            color: #333;
+        }
+        
+        button.secondary:hover {
+            background: #e4e4e4;
+        }
+        
+        .marker-list {
+            margin-top: 20px;
+        }
+        
+        .marker-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .marker-info {
+            flex: 1;
+        }
+        
+        .marker-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .marker-coords {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .marker-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .marker-actions button {
+            padding: 5px;
+            font-size: 12px;
+        }
+        
+        .search-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .search-results {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-result-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-result-title {
+            font-weight: 500;
+        }
+        
+        .search-result-address {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .info-window {
+            padding: 10px;
+            max-width: 200px;
+        }
+        
+        .info-window h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        
+        .info-window p {
+            margin: 5px 0;
+        }
+        
+        .info-window-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .info-window-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="장소 검색...">
+                <div class="search-results" id="search-results"></div>
+            </div>
+        </div>
+        <div class="control-panel">
+            <h2>좌표 설정</h2>
+            <div class="input-group">
+                <label for="latitude">위도 (Latitude)</label>
+                <input type="text" id="latitude" placeholder="예: 37.5665">
+            </div>
+            <div class="input-group">
+                <label for="longitude">경도 (Longitude)</label>
+                <input type="text" id="longitude" placeholder="예: 126.9780">
+            </div>
+            <div class="input-group">
+                <label for="marker-title">마커 제목</label>
+                <input type="text" id="marker-title" placeholder="마커 제목 입력">
+            </div>
+            <div class="input-group">
+                <label for="marker-description">마커 설명</label>
+                <input type="text" id="marker-description" placeholder="마커 설명 입력">
+            </div>
+            <div class="button-group">
+                <button id="add-marker">마커 추가</button>
+                <button id="get-current-location" class="secondary">현재 위치</button>
+            </div>
+            <div class="button-group">
+                <button id="clear-markers" class="secondary">모든 마커 삭제</button>
+            </div>
+            <div class="marker-list" id="marker-list">
+                <h3>마커 목록</h3>
+                <!-- 마커 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 마커 데이터를 저장할 배열
+        let markers = [];
+        let map;
+        let geocoder;
+        let searchBox;
+        let searchResults;
+        
+        // 지도 초기화 함수
+        function initMap() {
+            // 서울 중심 좌표
+            const seoul = { lat: 37.5665, lng: 126.9780 };
+            
+            // 지도 생성
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: seoul,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
+            });
+            
+            // 지도 클릭 이벤트
+            map.addListener('click', function(event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                
+                // 입력 필드에 좌표 설정
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+                
+                // 클릭한 위치로 지도 이동
+                map.panTo(event.latLng);
+            });
+            
+            // Geocoder 초기화
+            geocoder = new google.maps.Geocoder();
+            
+            // 검색 관련 요소
+            searchBox = document.getElementById('search-input');
+            searchResults = document.getElementById('search-results');
+            
+            // 검색 입력 이벤트
+            searchBox.addEventListener('input', debounce(function() {
+                const query = searchBox.value.trim();
+                if (query.length > 1) {
+                    searchPlaces(query);
+                } else {
+                    searchResults.classList.remove('active');
+                }
+            }, 300));
+            
+            // 현재 위치 버튼 이벤트
+            document.getElementById('get-current-location').addEventListener('click', getCurrentLocation);
+            
+            // 마커 추가 버튼 이벤트
+            document.getElementById('add-marker').addEventListener('click', addMarker);
+            
+            // 모든 마커 삭제 버튼 이벤트
+            document.getElementById('clear-markers').addEventListener('click', clearAllMarkers);
+        }
+        
+        // 현재 위치 가져오기
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // 입력 필드에 좌표 설정
+                        document.getElementById('latitude').value = lat.toFixed(6);
+                        document.getElementById('longitude').value = lng.toFixed(6);
+                        
+                        // 현재 위치로 지도 이동
+                        const currentLocation = { lat: lat, lng: lng };
+                        map.panTo(currentLocation);
+                        map.setZoom(15);
+                    },
+                    function(error) {
+                        console.error('Error getting current location:', error);
+                        alert('현재 위치를 가져올 수 없습니다. 브라우저 설정을 확인해주세요.');
+                    }
+                );
+            } else {
+                alert('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+            }
+        }
+        
+        // 마커 추가 함수
+        function addMarker() {
+            const latInput = document.getElementById('latitude').value;
+            const lngInput = document.getElementById('longitude').value;
+            const titleInput = document.getElementById('marker-title').value;
+            const descriptionInput = document.getElementById('marker-description').value;
+            
+            // 입력값 검증
+            if (!latInput || !lngInput) {
+                alert('위도와 경도를 입력해주세요.');
+                return;
+            }
+            
+            const lat = parseFloat(latInput);
+            const lng = parseFloat(lngInput);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                alert('유효한 위도와 경도를 입력해주세요.');
+                return;
+            }
+            
+            // 마커 생성
+            const position = { lat: lat, lng: lng };
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: titleInput || '새 마커',
+                animation: google.maps.Animation.DROP
+            });
+            
+            // 정보창 내용
+            const content = `
+                <div class="info-window">
+                    <h3>${titleInput || '새 마커'}</h3>
+                    <p>${descriptionInput || '설명 없음'}</p>
+                    <p>위도: ${lat.toFixed(6)}</p>
+                    <p>경도: ${lng.toFixed(6)}</p>
+                    <div class="info-window-actions">
+                        <button onclick="deleteMarker(${markers.length})">삭제</button>
+                    </div>
+                </div>
+            `;
+            
+            // 정보창 생성
+            const infoWindow = new google.maps.InfoWindow({
+                content: content
+            });
+            
+            // 마커 클릭 이벤트
+            marker.addListener('click', function() {
+                // 다른 정보창 닫기
+                markers.forEach(m => {
+                    if (m.infoWindow) {
+                        m.infoWindow.close();
+                    }
+                });
+                
+                // 정보창 열기
+                infoWindow.open(map, marker);
+            });
+            
+            // 마커 데이터 저장
+            const markerData = {
+                marker: marker,
+                infoWindow: infoWindow,
+                position: position,
+                title: titleInput || '새 마커',
+                description: descriptionInput || '설명 없음'
+            };
+            
+            markers.push(markerData);
+            
+            // 마커 목록 업데이트
+            updateMarkerList();
+            
+            // 지도 이동
+            map.panTo(position);
+        }
+        
+        // 마커 삭제 함수
+        function deleteMarker(index) {
+            if (index >= 0 && index < markers.length) {
+                // 마커와 정보창 제거
+                markers[index].marker.setMap(null);
+                if (markers[index].infoWindow) {
+                    markers[index].infoWindow.close();
+                }
+                
+                // 배열에서 제거
+                markers.splice(index, 1);
+                
+                // 마커 목록 업데이트
+                updateMarkerList();
+            }
+        }
+        
+        // 모든 마커 삭제 함수
+        function clearAllMarkers() {
+            markers.forEach(markerData => {
+                markerData.marker.setMap(null);
+                if (markerData.infoWindow) {
+                    markerData.infoWindow.close();
+                }
+            });
+            
+            markers = [];
+            updateMarkerList();
+        }
+        
+        // 마커 목록 업데이트 함수
+        function updateMarkerList() {
+            const markerList = document.getElementById('marker-list');
+            
+            // 기존 목록 제거 (헤더 제외)
+            const header = markerList.querySelector('h3');
+            markerList.innerHTML = '';
+            markerList.appendChild(header);
+            
+            // 마커가 없는 경우 메시지 표시
+            if (markers.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = '마커가 없습니다.';
+                markerList.appendChild(emptyMessage);
+                return;
+            }
+            
+            // 마커 목록 생성
+            markers.forEach((markerData, index) => {
+                const markerItem = document.createElement('div');
+                markerItem.className = 'marker-item';
+                
+                const markerInfo = document.createElement('div');
+                markerInfo.className = 'marker-info';
+                
+                const markerTitle = document.createElement('div');
+                markerTitle.className = 'marker-title';
+                markerTitle.textContent = markerData.title;
+                
+                const markerCoords = document.createElement('div');
+                markerCoords.className = 'marker-coords';
+                markerCoords.textContent = `위도: ${markerData.position.lat.toFixed(6)}, 경도: ${markerData.position.lng.toFixed(6)}`;
+                
+                markerInfo.appendChild(markerTitle);
+                markerInfo.appendChild(markerCoords);
+                
+                const markerActions = document.createElement('div');
+                markerActions.className = 'marker-actions';
+                
+                const viewButton = document.createElement('button');
+                viewButton.textContent = '보기';
+                viewButton.addEventListener('click', function() {
+                    // 지도 이동
+                    map.panTo(markerData.position);
+                    map.setZoom(15);
+                    
+                    // 정보창 열기
+                    markerData.infoWindow.open(map, markerData.marker);
+                });
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '삭제';
+                deleteButton.addEventListener('click', function() {
+                    deleteMarker(index);
+                });
+                
+                markerActions.appendChild(viewButton);
+                markerActions.appendChild(deleteButton);
+                
+                markerItem.appendChild(markerInfo);
+                markerItem.appendChild(markerActions);
+                
+                markerList.appendChild(markerItem);
+            });
+        }
+        
+        // 장소 검색 함수
+        function searchPlaces(query) {
+            const service = new google.maps.places.PlacesService(map);
+            
+            const request = {
+                query: query,
+                fields: ['name', 'geometry', 'formatted_address']
+            };
+            
+            service.findPlaceFromQuery(request, function(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    displaySearchResults(results);
+                } else {
+                    searchResults.innerHTML = '<div class="search-result-item">검색 결과가 없습니다.</div>';
+                    searchResults.classList.add('active');
+                }
+            });
+        }
+        
+        // 검색 결과 표시 함수
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            
+            results.forEach(place => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item';
+                
+                const title = document.createElement('div');
+                title.className = 'search-result-title';
+                title.textContent = place.name;
+                
+                const address = document.createElement('div');
+                address.className = 'search-result-address';
+                address.textContent = place.formatted_address;
+                
+                resultItem.appendChild(title);
+                resultItem.appendChild(address);
+                
+                resultItem.addEventListener('click', function() {
+                    // 검색 결과 클릭 시 지도 이동
+                    const position = place.geometry.location;
+                    map.panTo(position);
+                    map.setZoom(15);
+                    
+                    // 입력 필드에 좌표 설정
+                    document.getElementById('latitude').value = position.lat().toFixed(6);
+                    document.getElementById('longitude').value = position.lng().toFixed(6);
+                    
+                    // 검색 결과 숨기기
+                    searchResults.classList.remove('active');
+                    searchBox.value = place.name;
+                });
+                
+                searchResults.appendChild(resultItem);
+            });
+            
+            searchResults.classList.add('active');
+        }
+        
+        // 디바운스 함수
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap">
+    </script>
+</body>
+</html> 

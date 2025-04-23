@@ -2,9 +2,11 @@ import sys
 import argparse
 import os
 import time
+import win32gui
 
 from PyQt5.QtWidgets import QWidget, QApplication, QVBoxLayout
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtCore import Qt, QTimer, QTime, QUrl
 
@@ -23,38 +25,37 @@ args = parser.parse_args()
 class MyWebView(QWebEngineView):
 	# Store external windows.
 	external_windows = []
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.acceptDrops = True
+	
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.acceptDrops = True
 		try:
-			self.fp=open(args.log, 'r')
-			self.fa=open(args.out, 'a')
+			self.fp=open(args.log, 'r', encoding='utf8')
+			self.fa=open(args.out, 'a', encoding='utf8')
 			self.lastPos=self.fp.seek(0, os.SEEK_END)
 			self.tm=time.time()
-            self.setGeometry(0, 0, 350, 250)    
-            self.timer = QTimer(self)
-            self.timer.setInterval(100)
-            self.timer.timeout.connect(self.timeout)
-            self.timer.start()
-            # self.setWindowFlags(Qt.SplashScreen)
-            self.loadUrl('http://localhost')
-            self.hide()
+			self.setGeometry(0, 0, 350, 250)    
+			self.timer = QTimer(self)
+			self.timer.setInterval(100)
+			self.timer.timeout.connect(self.timeout)
+			self.timer.start()
+			self.loadUrl('http://localhost/chat/chat.html')
+			# self.hide()
 		except Exception as e:
 			print(f" error: {e}")
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
+	def dragEnterEvent(self, event: QDragEnterEvent):
+		if event.mimeData().hasUrls():
+			event.acceptProposedAction()
+		else:
+			event.ignore()
 
-    def dropEvent(self, event: QDropEvent):
-        files = [u.toLocalFile() for u in event.mimeData().urls()]
-        for f in files:
-            print('Dropped file:', f)
-        event.accept()
-        
+	def dropEvent(self, event: QDropEvent):
+		files = [u.toLocalFile() for u in event.mimeData().urls()]
+		for f in files:
+			print('Dropped file:', f)
+		event.accept()
+		
 
 	def acceptNavigationRequest(self, url,  _type, isMainFrame):
 		if _type == QWebEnginePage.NavigationTypeLinkClicked:
@@ -66,18 +67,18 @@ class MyWebView(QWebEngineView):
 			self.external_windows.append(w)
 			return False
 		return super().acceptNavigationRequest(url,  _type, isMainFrame)
- 
+
 	def logAppend(self, msg):
 		self.fa.write(f"##> {msg}\n")
 		self.fa.flush()
 		
 	def loadUrl(self, url):
-		self.webEngineView.setUrl(QUrl(url))
+		self.setUrl(QUrl(url))
 		
 	def loadPage(self):
 		with open('src/test.html', 'r') as f:
 			html = f.read()
-			self.webEngineView.setHtml(html)
+			self.setHtml(html)
 			
 	def timeout(self):
 		sender = self.sender()
@@ -111,6 +112,9 @@ class MyWebView(QWebEngineView):
 					self.show()
 				elif ftype=='url':
 					self.loadUrl(val.strip())
+				elif ftype=='setParent':
+					self.setWindowFlags(Qt.SplashScreen)
+					win32gui.SetParent(self.winId(), int(params[0]))
 				elif ftype=='top':
 					self.setWindowFlags(Qt.WindowStaysOnTopHint|Qt.SplashScreen)
 					self.show()
@@ -131,7 +135,7 @@ class MyWebView(QWebEngineView):
 def main():
 	app = QApplication(sys.argv)
 	webview = MyWebView()
-    webview.show()
+	webview.show()
 	sys.exit(app.exec_())
 
 if __name__ == '__main__':

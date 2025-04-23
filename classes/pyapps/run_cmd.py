@@ -8,7 +8,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import time 
-from pyapps import check_file_exists, file_to_base64, change_extension, save_file, list_zip_contents
+from pyapps import check_file_exists, file_to_base64, change_extension, save_file, list_zip_contents, list_zip_info
+
 
 def print_key_event(e):
 	print(f"Key {e.name} was {e.event_type}")
@@ -58,23 +59,29 @@ try:
 			log(f"type={ftype}, data={data}")
 			if ftype=='quit': 
 				break
-			elif ftype=='zipinfo': 
+			elif ftype=='zipdetail': 
 				try:
 					sucess, json = list_zip_contents(data)
+					log(f"zipdetail:{sucess}@{json}")
+				except Exception as ex:
+					log(f"zipdetail:false@{ex}")
+			elif ftype=='zipinfo': 
+				try:
+					sucess, json = list_zip_info(data)
 					log(f"zipinfo:{sucess}@{json}")
-				except Exception as ee:
-					log(f"zipfile:false@{ee}")
+				except Exception as ex:
+					log(f"zipfile:false@{ex}")
 			elif ftype=='eval': 
 				try:
 					result=eval(data)
 					log(f"eval:{result}")
-				except Exception as ee:
-					log(f"evalException:{ee}")
+				except Exception as ex:
+					log(f"evalException:{ex}")
 			elif ftype=='exec': 
 				try:
 					result=exec(data)
-				except Exception as ee:
-					log(f"execException:{ee}")                    
+				except Exception as ex:
+					log(f"execException:{ex}")                    
 			elif ftype=='echo':
 				params=[v.strip() for v in data.split(',')]
 				log(f"echo:params={params}")
