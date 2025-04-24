@@ -44,12 +44,21 @@
 					val=node.get(key);
 					if(typeof(val,'null','func')) continue;
 					if( num ) rst.add(',');
+					chk=typeof(val,'num') || typeof(val,'bool') || val.eq('true','false')
+					if(chk) {
+						rst.add(Cf.jsValue(key), ':', val )
+						continue;
+					}
 					if(typeof(val,'node')) {
 						rst.add(Cf.jsValue(key), ':', this.nodeStr(val) );
 					} else if(typeof(val,'array')) {
 						rst.add(Cf.jsValue(key), ':', this.arrayStr(val) );
 					} else {
-						rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) );
+						if( typeof(val,'num') || val.eq('true','false') ) {
+							rst.add(Cf.jsValue(key), ':', val )
+						} else {
+							rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
+						}
 					}
 					num++;
 				}
@@ -92,12 +101,17 @@
 			while( key, fieldArray ) {
 				if( num ) rst.add(","); 
 				val=cur.get(key);
+				chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
+				if(chk) {
+					rst.add(Cf.jsValue(key), ':', val )
+					continue;
+				}
 				if(typeof(val,'node')) {
 					rst.add(Cf.jsValue(key), ':', this.nodeStr(val) );
 				} else if(typeof(val,'array')) {
 					rst.add(Cf.jsValue(key), ':', this.arrayStr(val) );
 				} else {
-					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) );
+					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 				}
 				num++;
 			}
@@ -116,6 +130,7 @@
 		}
 		return rst;
 	}
+	
 	nodeStr(node, depth) {
 		not(depth) depth=1;
 		if(node.cmp('tag','array')) return this.arrayStr(node, depth);
@@ -129,12 +144,17 @@
 			val=node.get(key);
 			if(typeof(val,'func')) continue;
 			if( num ) rst.add(',');
+			chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
+			if(chk) {
+				rst.add(Cf.jsValue(key), ':', val )
+				continue;
+			}
 			if(typeof(val,'node')) {
 				rst.add(Cf.jsValue(key), ':', this.nodeStr(val,depth) );
 			} else if(typeof(val,'array')) {
 				rst.add(Cf.jsValue(key), ':', this.arrayStr(val,depth) );
 			} else {
-				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) );
+				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 			}
 			num++; 
 		}
@@ -151,12 +171,17 @@
 			if( key.ch('@') ) continue; 
 			if(typeof(val,'func')) continue;
 			if( num ) rst.add(',');
+			chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
+			if(chk) {
+				rst.add( val )
+				continue;
+			}
 			if(typeof(val,'node')) {
 				rst.add( this.nodeStr(val,depth) );
 			} else if(typeof(val,'array')) {
 				rst.add(  this.arrayStr(val,depth) );
 			} else {
-				rst.add( Cf.jsValue(val) );
+				rst.add( Cf.jsValue(val) )
 			}
 			num++; 
 		}

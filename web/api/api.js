@@ -35,12 +35,14 @@
 		})
 		return root;
 	}
-	folderList(path, root, parentId, depth) {
+	folderList(path, root, parentId, depth, idxNum) {
 		not(root) root = _node('listFolder').removeAll();
 		not(depth) depth = 0;
+		not(idxNum) idxNum = 0
 		fo=Baro.file()
 		fo.var(sort,'name, case')
 		depth++;
+		idxNum++;
 		fo.list(path, func(info) {
 			while(info.next()) {
 				info.inject(type,name, fullPath)
@@ -54,8 +56,9 @@
 				cur.parent = parentId
 				cur.fullPath = fullPath
 				cur.depth = depth
-				if(depth<3) {
-					@api.folderList(fullPath, root, cur.id, depth)
+				if( idxNum<3 ) {
+					cur.childeSet=true
+					@api.folderList(fullPath, root, cur.id, depth, idxNum)
 				}
 			}
 		});
