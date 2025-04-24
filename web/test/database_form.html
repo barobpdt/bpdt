@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터베이스 필드 등록</title>
+    <link rel="stylesheet" href="database_form.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-header">
+            <h1>데이터베이스 필드 등록</h1>
+            <div class="table-info">
+                <label for="tableName">테이블 이름:</label>
+                <input type="text" id="tableName" placeholder="테이블 이름을 입력하세요">
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div class="field-form">
+                <h2>필드 정보</h2>
+                <div class="form-group">
+                    <label for="fieldName">필드 이름:</label>
+                    <input type="text" id="fieldName" placeholder="필드 이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="fieldType">필드 타입:</label>
+                    <select id="fieldType">
+                        <option value="varchar">VARCHAR</option>
+                        <option value="int">INT</option>
+                        <option value="float">FLOAT</option>
+                        <option value="double">DOUBLE</option>
+                        <option value="date">DATE</option>
+                        <option value="datetime">DATETIME</option>
+                        <option value="text">TEXT</option>
+                        <option value="boolean">BOOLEAN</option>
+                        <option value="blob">BLOB</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fieldLength">길이:</label>
+                    <input type="number" id="fieldLength" placeholder="필드 길이를 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="fieldDefault">기본값:</label>
+                    <input type="text" id="fieldDefault" placeholder="기본값을 입력하세요">
+                </div>
+                <div class="form-group checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="isPrimaryKey">
+                        <label for="isPrimaryKey">기본키</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="isNotNull">
+                        <label for="isNotNull">NOT NULL</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="isAutoIncrement">
+                        <label for="isAutoIncrement">자동 증가</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="isUnique">
+                        <label for="isUnique">UNIQUE</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fieldDescription">설명:</label>
+                    <textarea id="fieldDescription" placeholder="필드에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="button-group">
+                    <button id="addFieldBtn" class="btn primary">필드 추가</button>
+                    <button id="updateFieldBtn" class="btn secondary" disabled>필드 수정</button>
+                    <button id="clearFormBtn" class="btn">폼 초기화</button>
+                </div>
+            </div>
+
+            <div class="field-list">
+                <h2>등록된 필드 목록</h2>
+                <div class="table-container">
+                    <table id="fieldTable">
+                        <thead>
+                            <tr>
+                                <th>필드 이름</th>
+                                <th>타입</th>
+                                <th>길이</th>
+                                <th>제약 조건</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fieldTableBody">
+                            <!-- 필드 목록이 여기에 동적으로 추가됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="button-group">
+                    <button id="saveTableBtn" class="btn primary">테이블 저장</button>
+                    <button id="cancelBtn" class="btn">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="database_form.js"></script>
+</body>
+</html> 

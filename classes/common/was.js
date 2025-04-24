@@ -109,10 +109,11 @@
 		serviceNode=Cf.getObject("api", objectId, true);	
 		modifyTm=fo.modifyDate(fullPath);
 		not(modifyTm.eq(serviceNode.lastModifyTm)) { 
+			not(serviceNode.var(tag)) serviceNode.var(tag, objectId)
 			was.addServiceFunc(serviceNode, fileRead(fullPath));
 			serviceNode.lastModifyTm=modifyTm;
 		}
-		fc=serviceNode[$name];
+		fc=serviceNode.get(name)
 		if(typeof(fc,'func')) {
 			return fc(req, param, vars, buffer)
 		} else {
@@ -132,7 +133,12 @@
 		}
 		if(src) serviceNode[$src]
 		if(ss.trim()) {
-			Cf.sourceApply(ss)
+			tag = serviceNode.var(tag)
+			if( tag ) {
+				Cf.rootNode('@funcInfo').set('refName', tag)
+				Cf.sourceApply(ss)
+				Cf.rootNode('@funcInfo').set('refName', '')
+			}
 		}
 	} 
 	parseReqParam( req, param, bound ) {

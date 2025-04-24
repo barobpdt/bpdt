@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width,height=device-height" />
-    <title>Ace Kitchen Sink</title>
+    <title>require test</title>
     <meta name="author" content="Fabian Jakobs">
     <link rel="stylesheet" href="/ace/kitchen-sink/styles.css" type="text/css" media="screen" charset="utf-8">
 
@@ -25,37 +25,14 @@
 <div id="editor-container"></div>
 
 <!--DEVEL-->
-  <script type="text/javascript">
-    var os = /os=(\w+)|$/.exec(location.search)[1];
-    if (os) Object.defineProperty(navigator, "platform", {configurable:true, value: os});
-  </script>
+  
   <script src="/js/require.js" type="text/javascript"></script>
   <script>
 	var paths = {
-		ace: "src",
-		demo: "kitchen-sink",
-		"ace/worker/worker_client": "lib/ace/worker/worker_client_v2",
-		"ace/worker": "lib/ace/worker",
+		apps: "/apps" 
 	};
-    
-	[
-		"jsoniq",
-		"json/json_parse",
-		"json_worker",
-		"javascript/jshint",
-		"javascript_worker",
-		"html_worker",
-		"html/saxparser",
-		"xml_worker",
-		"xml/sax",
-		"xml/dom-parser",
-		"xml/dom",
-		"css/csslint",
-		"css_worker",
-	].forEach( m => paths["ace/mode/" + m] = "lib/ace/mode/" + m )
-    
-    require.config({baseUrl:'/ace', paths: paths });
-    require(["ace/ace"], ace=>require(["demo/demo"], demo => console.log('ace load ok'))) 
+    require.config({baseUrl:'', paths });
+    require(["apps/chat"], demo => console.log('test load ok'))
   </script>
 </body>
 </html>
