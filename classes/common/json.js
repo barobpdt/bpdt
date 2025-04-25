@@ -1,4 +1,10 @@
 <script module="@json">
+	checkVal( val ) {
+		chk = typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') 
+		if(chk) return chk;
+		if(typeof(val,'string') && val.eq('true','false') ) return true;
+		return false;
+	}
 	listData(node, fields, listCode, skip) {
 		/*
 			checkField => 첫번째 자식노드 필드정보 : 자식노드 각각 필드정보
@@ -43,9 +49,8 @@
 					if( key.ch('@') ) continue;
 					val=node.get(key);
 					if(typeof(val,'null','func')) continue;
-					if( num ) rst.add(',');
-					chk=typeof(val,'num') || typeof(val,'bool') || val.eq('true','false')
-					if(chk) {
+					if( num++ ) rst.add(',');
+					if( @json.checkVal(val) ) {
 						rst.add(Cf.jsValue(key), ':', val )
 						continue;
 					}
@@ -60,7 +65,6 @@
 							rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 						}
 					}
-					num++;
 				}
 				if( typeof(fa,'array') ) {
 					if( num ) rst.add(',');
@@ -97,12 +101,10 @@
 					if(checkField) fa=fieldArray;
 				}
 			}
-			num=0;
-			while( key, fieldArray ) {
+			while( key, fieldArray, num ) {
 				if( num ) rst.add(","); 
 				val=cur.get(key);
-				chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
-				if(chk) {
+				if( @json.checkVal(val) ) {
 					rst.add(Cf.jsValue(key), ':', val )
 					continue;
 				}
@@ -113,7 +115,6 @@
 				} else {
 					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 				}
-				num++;
 			}
 			if( cur.childCount() ) { 
 				not(propCheck ) {
@@ -143,9 +144,8 @@
 			if( key.eq('children') ) continue;
 			val=node.get(key);
 			if(typeof(val,'func')) continue;
-			if( num ) rst.add(',');
-			chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
-			if(chk) {
+			if( num++ ) rst.add(','); 
+			if( @json.checkVal(val) ) {
 				rst.add(Cf.jsValue(key), ':', val )
 				continue;
 			}
@@ -156,7 +156,6 @@
 			} else {
 				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 			}
-			num++; 
 		}
 		rst.add("}");
 		return rst;
@@ -170,9 +169,8 @@
 		while( val, arr ) {	
 			if( key.ch('@') ) continue; 
 			if(typeof(val,'func')) continue;
-			if( num ) rst.add(',');
-			chk=typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') || val.eq('true','false')
-			if(chk) {
+			if( num++ ) rst.add(','); 
+			if( @json.checkVal(val) ) {
 				rst.add( val )
 				continue;
 			}

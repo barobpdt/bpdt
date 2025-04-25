@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>폴더 선택</title>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jstree.js"></script>
+    <script src="/js/common.js?id=1"></script>
+	
     <link rel="stylesheet" href="folder_select.css">
+    <link rel="stylesheet" href="/themes/jstree/proton/style.css" />
+    <link rel="stylesheet" href="/styles_tree.css" />
+
 </head>
 <body>
     <div class="folder-select-container">
@@ -15,7 +22,7 @@
             <div class="control-group">
                 <label for="driveSelect">드라이브:</label>
 				<div style="display:flex; align-items:center;">
-					<select id="driveSelect" style="width:90px"></select>
+					<select id="driveSelect" style="width:150px"></select>
 					<span style="flex:1"></span>
 				</div>
             </div>
@@ -37,5 +44,12 @@
         </div>
     </div>
     <script src="folder_select.js"></script>
+	
+	<style>
+	.jstree-proton-small .jstree-anchor {
+		padding: 0;
+		border-radius: 0;
+	}
+	</style>
 </body>
 </html> 

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlickGrid Tree Example</title>
+    
+	<link rel="stylesheet" href="/js/slick/css/slick-icons.css" type="text/css"/> 
+	<link rel="stylesheet" href="/js/slick/css/slick-alpine-theme.css" type="text/css"/> 
+	<link rel="stylesheet" href="/js/slick/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+    <!-- SlickGrid 
+	
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@2.4.45/slick.grid.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@2.4.45/slick-default-theme.css">
+    -->
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #7c7474;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            height: 100vh;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .grid-container {
+            flex: 1;
+            min-height: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+         
+        .button-bar {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button-bar button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+        }
+        .btn-add {
+            background-color: #4CAF50;
+        }
+        .btn-add:hover {
+            background-color: #45a049;
+        }
+        .btn-delete {
+            background-color: #f44336;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .btn-save {
+            background-color: #2196F3;
+        }
+        .btn-save:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SlickGrid TEST</h1>
+        <div class="grid-container">
+            <div id="myGrid"></div>
+        </div>
+        <div class="button-bar">
+            <button class="btn-add" id="btnAdd">추가</button>
+            <button class="btn-delete" id="btnDelete">삭제</button>
+            <button class="btn-save" id="btnSave">저장</button>
+        </div>
+    </div>
+ 
+    <script src="/js/jquery.js"></script>
+	<script src="/js/jstree.js"></script>
+	<script src="/js/common.js"></script>
+	<script src="/js/slick/jquery.event.drag-2.3.0.js"></script>
+
+	<script src="/js/sortable.js"></script>
+	<script src="/js/flatpickr.js"></script>
+	<script src="/js/slick/script/slick.core.js"></script>
+	<script src="/js/slick/script/slick.interactions.js"></script>
+	<script src="/js/slick/script/slick.grid.js"></script>
+	<script src="/js/slick/script/slick.formatters.js"></script>
+	<script src="/js/slick/script/slick.editors.js"></script>
+	<script src="/js/slick/script/slick.dataview.js"></script>
+	 
+	<script src="/js/slick/script/plugins/slick.checkboxselectcolumn.js"></script>
+	<script src="/js/slick/script/plugins/slick.rowselectionmodel.js"></script>
+     
+    <script>
+$(function () {
+    // 데이터 준비
+    var data = [
+        { id: 1, title: "부서 1", level: 0, expanded: true, parent: null },
+        { id: 2, title: "팀 1-1", level: 1, parent: 1 },
+        { id: 3, title: "직원 1-1-1", level: 2, parent: 2 },
+        { id: 4, title: "직원 1-1-2", level: 2, parent: 2 },
+        { id: 5, title: "팀 1-2", level: 1, parent: 1 },
+        { id: 6, title: "직원 1-2-1", level: 2, parent: 5 },
+        { id: 7, title: "부서 2", level: 0, expanded: true, parent: null },
+        { id: 8, title: "팀 2-1", level: 1, parent: 7 },
+        { id: 9, title: "직원 2-1-1", level: 2, parent: 8 }
+    ];
+
+    // DataView 설정
+    var dataView = new Slick.Data.DataView();
+
+    // 필터 함수
+    function myFilter(item) {
+        if (item.parent != null) {
+            var parent = dataView.getItemById(item.parent);
+            while (parent) {
+                if (!parent.expanded) {
+                    return false;
+                }
+                parent = dataView.getItemById(parent.parent);
+            }
+        }
+        return true;
+    }
+
+    // 트리 컬럼 포매터
+    function treeFormatter(row, cell, value, columnDef, dataContext) {
+        var spacer = "<span style='display:inline-block;height:1px;width:" + (15 * dataContext.level) + "px'></span>";
+        var idx = dataView.getIdxById(dataContext.id);
+        var toggleClass = '';
+        
+        if (data[idx + 1] && data[idx + 1].parent === dataContext.id) {
+            if (dataContext.expanded) {
+                toggleClass = 'collapse';
+            } else {
+                toggleClass = 'expand';
+            }
+        }
+        
+        return spacer + (toggleClass ? "<span class='toggle " + toggleClass + "'></span>" : "") + value;
+    }
+
+    // 컬럼 정의
+    var columns = [
+        {
+            id: "title",
+            name: "이름",
+            field: "title",
+            width: 220,
+            formatter: treeFormatter,
+            sortable: true
+        },
+        {
+            id: "level",
+            name: "레벨",
+            field: "level",
+            width: 80,
+            sortable: true
+        }
+    ];
+
+    // 그리드 옵션
+    var options = { 
+        enableCellNavigation: false,
+        enableColumnReorder: false,
+        enableRowSelection: true,
+        multiSelect: false,
+        rowHeight: 30,
+        forceFitColumns: true,
+        explicitInitialization: true,
+        // showHeaderRow: true,
+        headerRowHeight: 50,
+        enableTextSelectionOnCells: false,
+		enableAddRow: true, 
+    };
+
+    // 그리드 생성
+    var grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+    // 행 선택 모델 설정
+	
+	let selectActiveRow =  false;
+	let selectedRows = [];
+	
+    grid.setSelectionModel(new Slick.RowSelectionModel({ selectActiveRow: false}) )
+	grid.onClick.subscribe(function (e,args) {
+        // debugger;
+        if(selectActiveRow){
+			if($.inArray(args.row, selectedRows) === -1){
+				selectedRows = [];
+				selectedRows.push(args.row)
+			}else{
+				selectedRows = []; 
+			}
+        } else {
+			($.inArray(args.row, selectedRows) === -1) ? 
+				selectedRows.push(args.row) : 
+				selectedRows.splice(selectedRows.indexOf(args.row), 1);
+		}
+        grid.setSelectedRows(selectedRows);
+          
+    });
+    
+    $( "#single" ).click(function() {
+        selectActiveRow = true;
+		grid.setSelectionModel(new Slick.RowSelectionModel({
+            selectActiveRow: true
+        }));
+    });
+    
+    $( "#multiple" ).click(function() {
+        selectActiveRow = false;
+      grid.setSelectionModel(new Slick.RowSelectionModel({
+            selectActiveRow: false
+        }));
+    });
+    
+    $( "#getRows" ).click(function() {
+        var str = '\n';
+        for(var i=0; i<grid.getSelectedRows().length; i++){
+            str+=grid.getSelectedRows()[i]+"\n";
+        }
+        $('#result').html('selected record ids are : \n'+str);
+    });
+	
+	
+	
+	
+	
+	
+	// grid.registerPlugin(checkboxSelector2);
+
+	grid.onSelectedRowsChanged.subscribe(function (e, args) {
+		var rtn = args.grid.getActiveCell();
+		var x = args.rows;
+		console.log('onrow change =>', rtn, x)
+	});
+	
+    // DataView 이벤트 설정
+    dataView.onRowCountChanged.subscribe(function (e, args) {
+        grid.updateRowCount();
+        grid.render();
+    });
+
+    dataView.onRowsChanged.subscribe(function (e, args) {
+        grid.invalidateRows(args.rows);
+        grid.render();
+    });
+
+    // 데이터 초기화
+    dataView.beginUpdate();
+    dataView.setItems(data);
+    dataView.setFilter(myFilter);
+    dataView.endUpdate();
+
+    // 그리드 초기화
+    grid.init();
+
+    // 헤더 스타일 설정
+    $('.slick-header-column').css({
+        'background': '#f5f5f5',
+        'border-right': '1px solid #ddd',
+        'border-bottom': '1px solid #ddd',
+        'padding': '5px'
+    });
+
+    // 이벤트 처리
+    grid.onClick.subscribe(function (e, args) {
+        if ($(e.target).hasClass("toggle")) {
+            var item = dataView.getItem(args.row);
+            if (item) {
+                if (item.expanded) {
+                    item.expanded = false;
+                } else {
+                    item.expanded = true;
+                }
+                dataView.updateItem(item.id, item);
+            }
+            e.stopImmediatePropagation();
+        }
+    });
+
+    // 버튼 이벤트 처리
+    $("#btnAdd").click(function() {
+        var selectedRow = grid.getSelectedRows()[0];
+        var item = selectedRow !== undefined ? dataView.getItem(selectedRow) : null;
+        
+        var newId = data.length + 1;
+        var newItem;
+        
+        if (item) {
+            newItem = {
+                id: newId,
+                title: "새 항목 " + newId,
+                level: item.level + 1,
+                parent: item.id,
+                expanded: true
+            };
+        } else {
+            newItem = {
+                id: newId,
+                title: "새 부서 " + newId,
+                level: 0,
+                parent: null,
+                expanded: true
+            };
+        }
+        
+        data.push(newItem);
+        dataView.refresh();
+        grid.invalidate();
+    });
+
+    $("#btnDelete").click(function() {
+        var selectedRow = grid.getSelectedRows()[0];
+        if (selectedRow === undefined) {
+            alert("삭제할 항목을 선택해주세요.");
+            return;
+        }
+
+        var item = dataView.getItem(selectedRow);
+        
+        var hasChildren = data.some(function(d) {
+            return d.parent === item.id;
+        });
+        
+        if (hasChildren) {
+            if (!confirm("선택한 항목의 하위 항목도 모두 삭제됩니다. 계속하시겠습니까?")) {
+                return;
+            }
+            data = data.filter(function(d) {
+                return !isChildOf(d, item.id);
+            });
+        }
+        
+        data = data.filter(function(d) {
+            return d.id !== item.id;
+        });
+        
+        dataView.refresh();
+        grid.invalidate();
+    });
+
+    $("#btnSave").click(function() {
+        console.log("저장된 데이터:", data);
+        alert("저장되었습니다.");
+    });
+
+    function isChildOf(item, parentId) {
+        if (item.parent === parentId) return true;
+        var parent = data.find(d => d.id === item.parent);
+        if (!parent) return false;
+        return isChildOf(parent, parentId);
+    }
+
+    // 윈도우 리사이즈 이벤트 처리
+    $(window).resize(function() {
+        grid.resizeCanvas();
+    });
+});
+
+	</script>
+</body>
+</html>

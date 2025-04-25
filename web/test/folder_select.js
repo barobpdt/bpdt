@@ -1,7 +1,10 @@
+let pageModule = null
+
 document.addEventListener('DOMContentLoaded', () => {
-    // 초기화
-	const treeModule = initTree('#folderTree')
-    initData(treeModule)
+    // 초기화	
+    pageModule = initTree('#folderTree')
+	initData()
+	console.log('page module => ', pageModule)
 }); 
 
 function initData(treeModule) {
@@ -44,26 +47,68 @@ function initData(treeModule) {
 		}
         try {
             const response = await fetch('/api/folders?path='+encodeURIComponent(path))
-            const node = await response.json();
-			treeModule.initTree(node.children)
+            const node = await response.json()
+			pageModule.rootNode = node
+			pageModule.initTreeData(node.children)
              
         } catch (error) {
             console.error('폴더 트리 로드 실패:', error);
         }
     }
-
+	initDrives()
+	return impl(pageModule, {initDrives, loadTree})
 }
-
+ 
 function initTree(treeId) {
+	const cf = {}
 	const tree = $(treeId)
 	const btnAdd = $('#addNode')
 	const btnDelete = $('#deleteNode')
+	let jstree = null
 	
-	function treeInit(data) {
-		if(tree.jstree ) tree.jstree('destroy')
+	function treeEvent() {
+		tree.on('select_node.jstree', (e, d) => cf.treeChangeNode(d.node) )		
+		// 드래그 앤 드롭 이벤트
+		tree.on('move_node.jstree', (e, d) => cf.treeMoveNode(e,d) )		
+		// 이벤트 open_node
+		tree.on('open_node.jstree', (e,d)=> cf.treeOpen(d.node, d.node.original) )
+		
+		// 컨텍스트 메뉴 이벤트
+		tree.on('contextmenu', '.jstree-anchor', function(e) {
+			e.preventDefault();
+			// 컨텍스트 메뉴 생성
+			const menu = cf.makeMenu($(this))
+			// 메뉴 위치 설정
+			menu.css({top: e.pageY, left: e.pageX})
+			
+			// 메뉴 표시
+			$('body').append(menu)			
+			// 메뉴 항목 클릭 이벤트
+			menu.on('click', '.context-menu-item', function() {
+				if ($(this).hasClass('disabled')) return;				
+				const action = $(this).data('action');
+				cf.menuAction(action)
+				// 메뉴 제거
+				menu.remove();
+			});			
+			// 다른 곳 클릭시 메뉴 제거
+			$(document).one('click', e=>menu.remove())
+		});
+
+		// 버튼 이벤트
+		btnAdd.on('click',() => cf.treeAddChild() )
+		btnDelete.on('click', () => cf.treeDelete() )
+
+		// 버튼 상태 업데이트
+		tree.on('select_node.jstree', () => cf.updateButtonStates() )
+		tree.on('deselect_node.jstree', () => cf.updateButtonStates() )
+	}
+
+	cf.initTreeData = function(data) {
+		const newData = data||[]
 		tree.jstree({
 			'core': {
-				'data': data||[],
+				'data': newData,
 				'check_callback': true,
 				'themes': {
 					'name': 'proton',
@@ -72,157 +117,169 @@ function initTree(treeId) {
 					'stripes': false
 				}
 			},
-			'plugins': ['dnd','checkbox'],
+			'plugins': ['dnd'],
 		})
-		console.log('tree create ', tree)
+		jstree = tree.jstree()
+		treeEvent()
+		cf.updateButtonStates();
+		cf.jstree = jstree
+		if( newData.length ) { 
+			setTimeout(()=>jstree.open_node(newData[0].id), 250 )
+		}
+	}
+
+	cf.refreshTreeData = function(data) {
+		if( jstree ) {
+			// tree.jstree('destroy')
+			const a = tree.jstree(true)
+			console.log('@@ jstree destory => ',a)
+			a.settings.core.data = data
+			console.log('@@ jstree data => ', jstree)
+			a.refresh()
+			console.log('@@ jstree refresh => ' )
+			return;
+		}
 	}
 	
-	function treeEvent(tree) {
-		tree.on('select_node.jstree', function (e, data) {
-			console.log('노드가 선택되었습니다:', data.node.text);
-		});			
-		// 드래그 앤 드롭 이벤트
-		tree.on('move_node.jstree', function(e, data) {
-			console.log('Node moved:', data);
-			// 여기에 노드 이동 후 추가 로직을 구현할 수 있습니다
-			const parent = tree.get_node(data.parent)
-			tree.open_node(parent)
-		});
-		
-		// 이벤트 open_node
-		tree.on('open_node.jstree', (e,d)=>{
-			if( !d.node.checkIcons) {
-				d.node.children.forEach(k=>treeIcon(k))
-				d.node.checkIcons = true
+	cf.setTreeChild = function(node) {
+		const rootNode = pageModule.rootNode
+		const params={
+			idx:rootNode.idx,
+			children:[]
+		}
+		node.children.forEach(pid=>{
+			const {id,fullPath,checkChild} = jstree.get_node(pid).original
+			if( !checkChild ) {
+				params.children.push({id,pid,fullPath})
 			}
 		})
-		
-
-		// 컨텍스트 메뉴 이벤트
-		tree.on('contextmenu', '.jstree-anchor', function(e) {
-			e.preventDefault();
-			const node = $(this);
-			const nodeId = node.attr('id');
-			const isLeaf = node.parent().hasClass('jstree-leaf');
-			
-			// 컨텍스트 메뉴 생성
-			const menu = $('<div class="context-menu"></div>');
-			menu.append('<div class="context-menu-item" data-action="add-child">자식 추가</div>');
-			menu.append('<div class="context-menu-item" data-action="add-sibling">형제 추가</div>');
-			
-			// 삭제 메뉴 항목 추가 (자식이 없는 노드만 활성화)
-			const deleteItem = $('<div class="context-menu-item" data-action="delete">삭제</div>');
-			if (!isLeaf) {
-				deleteItem.addClass('disabled');
-			}
-			menu.append(deleteItem);
-			
-			// 메뉴 위치 설정
-			menu.css({
-				top: e.pageY,
-				left: e.pageX
-			});
-			
-			// 메뉴 표시
-			$('body').append(menu);
-			
-			// 메뉴 항목 클릭 이벤트
-			menu.on('click', '.context-menu-item', function() {
-				if ($(this).hasClass('disabled')) return;
-				
-				const action = $(this).data('action');
-				const newNodeId = 'new_' + Date.now();
-				
-				switch(action) {
-					case 'add-child':
-						tree.jstree('create_node', nodeId, 'last', {
-							'id': newNodeId,
-							'text': '새 폴더'
-						});
-						break;
-					case 'add-sibling':
-						tree.jstree('create_node', tree.jstree('get_parent', nodeId), 'last', {
-							'id': newNodeId,
-							'text': '새 폴더'
-						});
-						break;
-					case 'delete':
-						if (isLeaf) {
-							tree.jstree('delete_node', nodeId);
-						}
-						break;
+		console.log('@@ setTreeChild => ', params)
+		if( params.children.length ) {
+			fetch('/api/fetchTreeChild', {method:'POST',body:JSON.stringify(params)}).then(res=>res.json()).then(result=> {
+				if( !Array.isArray(result.children) ) {
+					console.log('@@ setTreeChild fetch result 유효하지 않습니다 => ', result)
+					return;
 				}
-				
-				// 메뉴 제거
-				menu.remove();
+				result.children.forEach(cur=>{					
+					if( cur.children) {
+						const nodeId = cur.pid
+						console.log('@@ setTreeChild 부모 노드:'+nodeId+' 자식추가=>', cur)						
+						cur.children.forEach( sub => {
+							sub.id = 'K'+rootNode.idx++
+							sub.parent = nodeId
+							jstree.create_node(nodeId, sub)
+							console.log('sub=>', sub)
+						})
+					}
+				})
+			})
+		}
+	}
+	
+	cf.makeMenu = function(node) {
+		const menu = $('<div class="context-menu"></div>');
+		const nodeId = node.attr('id');
+		const isLeaf = node.parent().hasClass('jstree-leaf');
+		menu.append('<div class="context-menu-item" data-action="add-child">자식 추가</div>');
+		menu.append('<div class="context-menu-item" data-action="add-sibling">형제 추가</div>');
+
+		// 삭제 메뉴 항목 추가 (자식이 없는 노드만 활성화)
+		const deleteItem = $('<div class="context-menu-item" data-action="delete">삭제</div>');
+		if (!isLeaf) {
+			deleteItem.addClass('disabled')
+		}
+		menu.append(deleteItem)
+		return menu
+	}
+	
+	cf.menuAction = function(action) {
+		const newNodeId = 'new_' + Date.now();				
+		switch(action) {
+		case 'add-child':
+			tree.jstree('create_node', nodeId, 'last', {
+				'id': newNodeId,
+				'text': '새 폴더'
 			});
-			
-			// 다른 곳 클릭시 메뉴 제거
-			$(document).one('click', function() {
-				menu.remove();
+			break;
+		case 'add-sibling':
+			tree.jstree('create_node', tree.jstree('get_parent', nodeId), 'last', {
+				'id': newNodeId,
+				'text': '새 폴더'
 			});
-		});
-
-		// 버튼 이벤트
-		btnAdd.on('click', function() {
-			const a = tree.get_selected()
-			if ( a.length > 0) { 
-				tree.create_node(a[0]
-					, {type:'file', text:'새파일'}, 'last'
-					, cur => $.jstree.reference(cur).edit(cur) 
-				)
+			break;
+		case 'delete':
+			if (isLeaf) {
+				tree.jstree('delete_node', nodeId);
 			}
-		});
-
-		btnDelete.on('click', function() {
-			const a = tree.get_selected()
-			if ( a.length > 0) {
-				const node = tree.get_node(a[0])
-				if ( node.children.length === 0 && !confirm()) return;
-				tree.delete_node(a[0])
-			}
-		});
-
-		// 버튼 상태 업데이트
-		tree.on('select_node.jstree', function() {
-			updateButtonStates();
-		});
-
-		tree.on('deselect_node.jstree', function() {
-			updateButtonStates();
-		});
+			break;
+		default:
+			break;
+		}
+	}
+	
+	cf.treeOpen = function(node, cur) {
+		if( !cur.checkIcons) {
+			node.children.forEach(tid=>cf.treeIcon(tid))
+			cur.checkIcons = true
+		}
+		if( !cur.checkTree) {
+			cf.setTreeChild(node)
+			cur.checkTree = true
+		}
+	}
+	cf.treeAddChild = function(tid, node) { 		
+		if( !tid ) {
+			const a = jstree.get_selected()
+			if( a.length==0 ) return console.log('자식추가 오류 부모노드 미정의')
+			tid = a[0]
+		}
+		if( !node ) {
+			node={type:'file', text:'새파일'}
+		}
+		jstree.create_node(tid, node , 'last', cur => $.jstree.reference(cur).edit(cur) )
+	}
+	cf.treeDelete = function(tid) { 	
+		if( !tid ) {
+			const a = jstree.get_selected()
+			if( a.length==0 ) return console.log('삭제 노드 미정의')
+			tid = a[0]
+		}
+		const node = jstree.get_node(tid)
+		if ( node.children.length || !confirm('선택된 노드를 삭제하시겠습니까?') ) return;
+		tree.delete_node(tid)
+	}
+	cf.treeChangeNode = function(node) { 	
+		console.log('노드가 선택되었습니다:', node);
+	}
+	cf.treeMoveNode = function(e,d) {
+		const parent = tree.get_node(d.parent)
+		tree.open_node(parent)
+		console.log('노드가 선택되었습니다:', node);
+	}
 		
-	}
-	
-	function treeIcon(tid, cur) {
-		if(!cur) cur = tree.get_node(tid)
+	cf.treeIcon = function(tid, cur) {
+		if(!cur) cur = jstree.get_node(tid)
 		const icon = qs('#'+tid+' .jstree-themeicon')
-		console.log('icon=>',tid, cur, icon )
+		// console.log('icon=>',tid, cur, icon )
 	}
 	
-
-	function updateButtonStates() {
-		const a = tree ? tree.get_selected():[]
+	cf.updateButtonStates = function() {
+		const a = jstree.get_selected()
 		const hasSelection = a.length > 0;
-		const isLeaf = hasSelection && tree.get_node(a[0]).children.length === 0;
+		const isLeaf = hasSelection && jstree.get_node(a[0]).children.length === 0;
 		
 		btnAdd.prop('disabled', !hasSelection);
 		btnDelete.prop('disabled', !hasSelection || !isLeaf);
 	}
 	
 	// 특정 노드의 자식들만 새로고침
-	function treeLoad(nodeId, newData) {
-		const parent = tree.get_node(nodeId)
-		tree.delete_node( parent.children )
-		newData.forEach( cur => tree.create_node(nodeId, cur, 'last') )
+	cf.treeRender = function(tid, newData) {
+		const node = jstree.get_node(tid)
+		jstree.delete_node( node.children )
+		newData.forEach( cur => jstree.create_node(tid, cur, 'last') )
 	}
 	
-	// 초기 트리 설정
-	treeInit()
-	treeEvent()
-	updateButtonStates();
-
-	return {tree, treeData, treeEvent, treeIcon, treeLoad, updateButtonStates }	
+	return cf
 }
 
 function useTreeHtml() {
