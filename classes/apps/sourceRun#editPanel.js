@@ -64,26 +64,34 @@ runScript(key) {
 			sp=0, ep-=2;
 			val=editor.text(sp,ep);
 		}
-		editor.pos(pos);
-		not(val) return print("run postion error", sp, ep, pos);
-	} else { 
+		editor.pos(pos)
+		val.ref();
+		if( val.find("~~",1) ) {
+			src=val.findLast("~~",1).right();
+			src.findPos("\n");
+			print("src==$src");
+		} else {
+			src=val;
+		} 
+	} 
+	else if(key.eq(KEY.S)) {
+		this.sourcerRunRange().inject(sp,ep)
+		src=editor.text(sp,ep)
+		src.ref()
+		src.findPos("\n")
+	} 
+	else { 
 		if(sel) {
 			val=editor.text("select");
 		} else {
 			val=editor.value();
 		}
+		src=val.ref()
 	}
-	val.ref();
-	if(val.find("~~",1) ) {
-		src=val.findLast("~~",1).right();
-		src.findPos("\n");
-		print("src==$src");
-	} else {
-		src=val;
-	} 
-	not(src) this.alert("실행할 소스가 없습니다");
+	c=src.ch()
+	not(c) this.alert("실행할 소스가 없습니다");
 	Cf.error(true);
-	if( src.ch('<') ) {
+	if( c.eq('<') ) {
 		Cf.sourceApply(src);  
 	} else {
 		Cf.sourceCall(src, true); 
@@ -139,3 +147,35 @@ searchText() {
 keymapInfo() {
 	
 }
+sourcerRunRange(sp) {
+	editor.timeVal(changeTick, true)
+	not(sp) sp=editor.pos()
+	cp=sp
+	range('##>', cp).inject(sp,ep)
+	if( sp<ep) {
+		return range('~~',cp,sp,ep) 
+	}
+	
+	range = func(str, sp) {
+		asize = args().size()
+		if( asize.eq(4) ) {
+			args(2,start, end)
+			editor.findAll(str, start, end)
+		} else {
+			start=0, end=editor.pos('end')
+			editor.findAll(str)
+		}
+		arr=editor.var(finds)
+		not(arr.size()) return point(start, end)
+		sa=start, ea=end
+		while(pos,arr) {
+			pos.inject(x,y)
+			if(sp.lt(x)) {
+				ea = x
+				break
+			}
+			sa=y
+		}
+		return point(sa, ea)
+	};
+}	
