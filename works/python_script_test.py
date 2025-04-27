@@ -15,7 +15,7 @@
 	pip=fv('#{pythonPath} -m pip install zipfile')
 	pip=fv('#{pythonPath} -m pip install pywin32==306')
     cmdInstall = fv('#{pythonPath} "#{conf("python.path")}/Scripts/pywin32_postinstall.py" -install')
-
+~~
 	c.run(pip)
 	c.run(cmd)
 
@@ -35,9 +35,19 @@ with zipfile.ZipFile('${path}') as zip:
 ss=fv('##> exec:#{src}')
 in.write(ss)    
     
-    
-##> 웹브라우저 실행
 
+##> 웹브라우저 실행 mywebview
+
+c=cmd('web')
+in = logWriter('webcmd-in')
+out = logReader('webcmd-out')
+cmd=fv('#{pythonPath} "#{sourcePath}/mywebview.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
+~~
+c.run(cmd)
+
+in.write('##>quit:')
+    
+##> 웹브라우저 실행 webview
     c=cmd('web')
  	cmd=fv('#{pythonPath} "#{sourcePath}/webview.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
     c.run(cmd)
