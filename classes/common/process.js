@@ -41,6 +41,9 @@
 	isRun() {
 		return proc.run();
 	}
+	isStart() {
+		return status.eq('start');
+	}
 	start(prog) {
 		if( proc.run() ) {
 			proc.close()
