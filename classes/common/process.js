@@ -26,11 +26,14 @@
 </script>
 
 <script module="@cmd">
-	init(name) {
+	init(name, program) {
+		not(program) program = 'cmd'
 		@proc=Baro.process(name)
 		@cmdList=this.addArray("cmd.list");
-		@status = 'stay'
-		@currentProgram = 'cmd'
+		@paddingList=this.addArray("padding.list");
+		@status = 'first'
+		@currentProgram = program
+		@currentNode = null
 		this.runStartTick = System.localtime()
 		setCallback(proc, this.cmdProc, this)
 		this.start()
@@ -39,12 +42,10 @@
 		return proc.run();
 	}
 	start(prog) {
-		@status = 'stay'
 		if( proc.run() ) {
 			proc.close()
-		} else {
-			this.var(firstCall, true)
 		}
+		@status = 'first'
 		if(prog) {
 			@currentProgram = prog
 		} else {
@@ -53,18 +54,20 @@
 		proc.run(prog, 0x400)
 		this.run('chcp 65001')
 	}
-	startPowershell() {
-		this.start("powershell")
-	}
+	
 	stop() {
+		@status = 'stop'
 		if( proc.run() ) {
 			proc.kill()
-			@status = 'stay'
 		} else {
 			print("cmd 가 실행중이 아닙니다")
 		}
 	}
 	close() {
+		while(cur, cmdList ) {
+			paddingList.add(cur)
+		}
+		cmdList.reuse()
 		this.stop()
 	}
 	run(cmd) {
@@ -74,7 +77,18 @@
 		not(status.eq("stay")) {
 			return print("cmd 프로세스가 실행중입니다");
 		}
-		not(cmd) cmd=cmdList.pop()
+		if(status.eq('first')) {
+			return cmdAdd(cmd)
+		}
+		not(cmd) {
+			node=cmdList.pop()
+			if(typeof(node,'node')) {
+				cmd = node.cmd
+				this.member(currentNode, node)
+			} else {
+				this.member(currentNode, null)
+			}
+		}
 		if(cmd) {
 			@status = 'start'
 			this.runStartTick = System.localtime()
@@ -88,13 +102,24 @@
 			}
 		}
 	}
+	cmdCallback(cmd, callback, target) {
+		node=this.addNode().with(cmd, callback, target)
+		cmdList.add(node)
+		if( status.eq('first','stay')) {
+			this.run()
+		}
+	}
 	cmdProc(type,data) {
 		if(type=='read') {
 			this.appendText('cmdResult', data);
 			c=data.ch(-1,true);
 			if(c=='>') {
+				if(status.eq('first')) {
+					print("@@ ${program} ${status} 실행")
+				} else {
+					this.parseResult()
+				}
 				@status = 'stay'
-				this.parseResult();
 				this.run()
 			}
 		}
@@ -104,12 +129,28 @@
 		if(run) this.run()
 	}
 	parseResult() {
+		// result = this.ref(cmdResult)
 		result = this.get('cmdResult')
-		if(typeof(this.onLogChange,'func')) {
-			this.onLogChange.callFuncSrc()
+		print("current node=> ", currentNode)
+		if(currentNode) {
+			fc=currentNode.callback
+			target = currentNode.target not(target) target=this
+			if( typeof(fc,'function')) {
+				call(fc, target, result)
+			}
+			if( this.find(currentNode) ) {
+				this.remove(currentNode, true)
+			}
+			this.member(currentNode, null)
 		} else {
-			print("cmd>> $result")
-			logWriter('cmd').appendLog(result)
+			fn = this.onLogChange
+			if(typeof(fn,'func')) {
+				fn.callFuncParams(result)
+				fn.callFuncSrc()
+			} else {
+				print("cmd>> $result")
+				logWriter('cmd').appendLog(result)
+			}
 		}
 	}
 </script>
