@@ -113,13 +113,16 @@
 		print("@@ 웹소켓 메시지처리 정보", type, requestType, fc )	
 		if(typeof(fc,'func')) {
 			arr = args().reuse()
-			arr.add(client, requestType, header, resultInfo, resultContentType, data, param )
+			arr.add(client, param, requestType, header, resultInfo, resultContentType, data )
 			return call(fc, this, arr)
 		}
 		errorCode = 200
 		responseData = ''
 		if(type=='connection') {
 			type = 'req_login' 
+		} else if(type=='activePage') {
+			page=page('test:logViewer')
+			page.active()
 		} else {
 			errorCode = 400
 			resultType = contentType
@@ -129,7 +132,34 @@
 		size=responseData.size();
 		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	}
-	req_chunkFileUpload(client, requestType, &header, resultInfo, resultContentType, data, param) {
+	req_pageMove(client, param, requestType, &header, resultInfo, resultContentType, data) {
+		page=global('webviewParent').pageNode()
+		if(page) {
+			if( param.move) {
+				not(page.moveTick) return;
+				d=System.tick()-page.moveTick;
+				if(d>25000) return;
+				page.geo().inject(x,y)
+				dx=page.px - param.sx;
+				dy=page.py - param.sy;
+				print("==>$x, $y ",dx, dy, x, y)
+				x-=dx;
+				y-=dx;
+				page.px = param.sx;
+				page.py = param.sy;
+			}
+			if( param.start ) {
+				page.moveTick = System.tick()
+				page.px = param.sx;
+				page.py = param.sy;
+			} else {
+				page.px = 0;
+				page.py = 0;
+				page.moveTick = 0;
+			} 
+		}
+	}
+	req_chunkFileUpload(client, param, requestType, &header, resultInfo, resultContentType, data ) {
 		type='res_imageSend'
 		code = 200
 		path=conf('temp.path')
@@ -155,14 +185,14 @@
 		client.sendWs("@${type}::${code}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
 	}
 	
-	req_login(client, requestType, &header, resultInfo, resultContentType, data, param) {
+	req_login(client, param, requestType, &header, resultInfo, resultContentType, data) {
 		type='res_login'
 		resultContentType='text'
 		responseData='login ok'
 		size=responseData.size();
 		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")		
 	}
-	req_api(client, requestType, &header, resultInfo, resultContentType, data, param) {
+	req_api(client, param, requestType, &header, resultInfo, resultContentType, data) {
 		type='res_api'
 		service=header.findPos("/").trim()
 		uri=header.trim()

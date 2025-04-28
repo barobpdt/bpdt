@@ -118,11 +118,12 @@ function initChat() {
     
     // 메시지 전송 함수
     function sendMessage() {
-        const messageText = messageInput.value.trim();
+        let messageText = messageInput.value.trim();
         
         // 메시지가 비어있고 파일도 없는 경우 전송하지 않음
         if (messageText === '' && selectedFiles.length === 0) {
-            return;
+            messageText = '내용을 입력하세요' 
+            // return;
         }
         
         // 현재 시간
@@ -218,6 +219,7 @@ function initChat() {
     
     // 드래그 앤 드롭 파일 업로드
     chatMessages.addEventListener('dragover', function(e) {
+        $('#uploadProgress').html('dragover ==>')
         e.preventDefault();
         e.stopPropagation();
         this.classList.add('drag-over');
@@ -230,6 +232,7 @@ function initChat() {
     });
     
     chatMessages.addEventListener('drop', function(e) {
+        $('#uploadProgress').html('drop ==>')
         e.preventDefault();
         e.stopPropagation();
         this.classList.remove('drag-over');
@@ -252,8 +255,10 @@ function initChat() {
             });
         }
     });
-	
+
+    return { sendMessage, autoReply }	
 }
+
 function initUpload() {
 	// DOM 요소
 	const uploadArea = document.getElementById('uploadArea');

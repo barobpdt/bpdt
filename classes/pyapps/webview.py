@@ -6,7 +6,9 @@ import time
 from PyQt5.QtWidgets import QWidget, QApplication, QVBoxLayout
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from PyQt5.QtCore import Qt, QTimer, QTime, QUrl
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+from PyQt5.QtCore import Qt, QTimer, QTime, QUrl, QEvent
+import win32.win32gui as win32gui
 
 parser = argparse.ArgumentParser(description='프로그램 확장기능 처리')
 
@@ -20,10 +22,29 @@ parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help
 args = parser.parse_args()
 
 
-class CustomWebEnginePage(QWebEnginePage):
-	""" Custom WebEnginePage to customize how we handle link navigation """
+class MyWebView(QWebEngineView):
 	# Store external windows.
 	external_windows = []
+	
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.acceptDrops = True
+		try:
+			self.setBackgroundColor(QtCore.Qt.transparent)
+			self.setAcceptDrops(True)
+		except Exception as e:
+			print(f" error: {e}")
+	
+	def dragEnterEvent(self, event: QDragEnterEvent):
+		if event.mimeData().hasUrls():
+			event.acceptProposedAction()
+		else:
+			event.ignore()
+
+	def dropEvent(self, event: QDropEvent):
+		files = [u.toLocalFile() for u in event.mimeData().urls()]
+		event.accept()
+		
 
 	def acceptNavigationRequest(self, url,  _type, isMainFrame):
 		if _type == QWebEnginePage.NavigationTypeLinkClicked:
@@ -36,7 +57,7 @@ class CustomWebEnginePage(QWebEnginePage):
 			return False
 		return super().acceptNavigationRequest(url,  _type, isMainFrame)
 
-class Example(QWidget):
+class WebWidget(QWidget):
 	def __init__(self):
 		super().__init__()
 		print("init ", args.log)
@@ -52,10 +73,11 @@ class Example(QWidget):
 		self.initUI()
 		
 	def initUI(self):
-		vbox = QVBoxLayout(self) 
-		self.webEngineView = QWebEngineView()
-		self.loadUrl('http://localhost')
+		self._glwidget = None
+		self.webEngineView = MyWebView(self)
+		self.loadUrl('http://localhost/chat/chat.html')
 
+		vbox = QVBoxLayout(self) 
 		vbox.addWidget(self.webEngineView)
 		# vbox.setMargin(0)
 		vbox.setContentsMargins(0, 0, 0, 0)
@@ -68,9 +90,23 @@ class Example(QWidget):
 		self.timer.timeout.connect(self.timeout)
 		self.timer.start()
 		
-		self.setWindowFlags(Qt.SplashScreen)
-		self.hide()
-	
+		# self.setWindowFlags(Qt.SplashScreen)
+		# self.hide()
+		self.webEngineView.installEventFilter(self)
+
+	def eventFilter(self, source, event):
+		# self.logAppend(f'web-view event filter: {event.type()}')
+		if (event.type() == QEvent.ChildAdded and
+			source is self.webEngineView and
+			event.child().isWidgetType()):
+			self._glwidget = event.child()
+			self._glwidget.installEventFilter(self)
+		elif event.type() == QEvent.MouseButtonPress:
+			self.logAppend(f'##>mousePress: {event.pos()}')
+		elif event.type() == QEvent.MouseMove:
+			self.logAppend(f'##>mouseMove: {event.pos()}')
+		return super().eventFilter(source, event)
+
 	def logAppend(self, msg):
 		self.fa.write(f"##> {msg}\n")
 		self.fa.flush()
@@ -78,7 +114,7 @@ class Example(QWidget):
 	def loadUrl(self, url):
 		self.webEngineView.setUrl(QUrl(url))
 		
-	def loadPage(self):
+	def loadFile(self):
 		with open('src/test.html', 'r') as f:
 			html = f.read()
 			self.webEngineView.setHtml(html)
@@ -109,6 +145,12 @@ class Example(QWidget):
 					sys.exit()
 				elif ftype=='echo':
 					self.logAppend(f"echo = {params}")
+				elif ftype=='setParent':
+					self.setWindowFlag(Qt.WindowStaysOnTopHint)
+					win32gui.SetParent(self.winId(), int(params[0]))
+					self.setWindowFlag(Qt.FramelessWindowHint)
+					self.setAttribute(Qt.WA_TranslucentBackground)
+					self.show()
 				elif ftype=='hide':
 					self.hide()
 				elif ftype=='show': 
@@ -134,7 +176,7 @@ class Example(QWidget):
 			
 def main():
 	app = QApplication(sys.argv)
-	ex = Example()
+	ex = WebWidget()
 	sys.exit(app.exec_())
 
 if __name__ == '__main__':

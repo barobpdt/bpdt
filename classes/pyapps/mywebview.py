@@ -2,7 +2,7 @@ import sys
 import argparse
 import os
 import time
-import win32gui
+import win32.win32gui as win32gui
 
 from PyQt5.QtWidgets import QWidget, QApplication, QVBoxLayout
 from PyQt5.QtWidgets import QApplication
@@ -40,10 +40,18 @@ class MyWebView(QWebEngineView):
 			self.timer.timeout.connect(self.timeout)
 			self.timer.start()
 			self.loadUrl('http://localhost/chat/chat.html')
-			# self.hide()
+			self.setBackgroundColor(QtCore.Qt.transparent)
+			self.setAcceptDrops(True)
+			self.focusProxy().installEventFilter(self)
+			self.hide()
 		except Exception as e:
 			print(f" error: {e}")
 
+	def eventFilter(self, source, event):
+		if (self.focusProxy() is source and event.type() == QtCore.QEvent.MouseButtonPress ):
+			self.logAppend("mouse press ok")
+		return super().eventFilter(source, event)
+	
 	def dragEnterEvent(self, event: QDragEnterEvent):
 		if event.mimeData().hasUrls():
 			event.acceptProposedAction()
@@ -51,9 +59,8 @@ class MyWebView(QWebEngineView):
 			event.ignore()
 
 	def dropEvent(self, event: QDropEvent):
-		files = [u.toLocalFile() for u in event.mimeData().urls()]
-		for f in files:
-			print('Dropped file:', f)
+		files = [u.toLocalFile() for u in event.mimeData().urls()]		
+		self.logAppend(f'Dropped file: {files}')
 		event.accept()
 		
 
@@ -113,17 +120,16 @@ class MyWebView(QWebEngineView):
 				elif ftype=='url':
 					self.loadUrl(val.strip())
 				elif ftype=='setParent':
-					self.setWindowFlags(Qt.SplashScreen)
+					self.setWindowFlag(Qt.WindowStaysOnTopHint)
 					win32gui.SetParent(self.winId(), int(params[0]))
+					self.setWindowFlag(Qt.FramelessWindowHint)
+					self.setAttribute(Qt.WA_TranslucentBackground)
+					self.show()
 				elif ftype=='top':
 					self.setWindowFlags(Qt.WindowStaysOnTopHint|Qt.SplashScreen)
 					self.show()
 				elif ftype=='geo':
 					self.setGeometry(int(params[0]), int(params[1]), int(params[2]), int(params[3]))
-					self.setWindowFlags(Qt.SplashScreen)
-					self.show()
-				elif ftype=='setParent':
-					self.setWindowFlags(Qt.WindowStaysOnTopHint|Qt.SplashScreen)
 					self.show()
 				else:
 					self.logAppend(f"{ftype} not defined")

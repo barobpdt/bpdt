@@ -85,4 +85,20 @@ Cf.sourceApply(#[
     ]
     p.init()
 
+##> 클립보드 캡쳐
+root=Cf.rootNode()
+System.watcherClipboard(@test.clipZipFileCopy)
+~~
+<func>
+	@test.clipZipFileCopy(a,b,c) {
+		not(a.eq('text')) return;
+		not(b.start('file:///')) return;
+		path = b.value(8)
+		ext=right(path,'.').lower()
+		print("copy file =>", path, ext)
+		not(ext.eq('zip')) return;
+	}
+</func>
+
+
 ##> 

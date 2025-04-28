@@ -16,7 +16,7 @@ def print_key_event(e):
 
 # keyboard.hook(print_key_event)
 
-    
+	
 class CustomAction(argparse.Action):
 	def __call__(self, parser, namespace, values, option_string=None):
 		setattr(namespace, self.dest, " ".join(values))
@@ -29,7 +29,7 @@ parser.add_argument('--log', action=CustomAction, nargs='+', required=True, help
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
 
-        
+		
 try:
 	fpIn=open(args.log, 'r', encoding='utf8')
 	fpOut=open(args.out, 'a', encoding='utf8')
@@ -41,7 +41,7 @@ try:
 
 
 	log(f"파이션 실행툴 시작 {tm}")
-    
+	
 	while True:
 		dist=time.time()-tm
 		fsize=os.stat(args.log).st_size
@@ -67,7 +67,14 @@ try:
 					log(f"zipdetail:false@{ex}")
 			elif ftype=='zipinfo': 
 				try:
-					sucess, json = list_zip_info(data)
+					pos=data.find("<>")
+					if pos>0:
+						path = data[0:pos].strip()
+						encode = data[pos+2].trim()
+					else:
+						path = data.strip()
+						encode = 'euc-kr'
+					sucess, json = list_zip_info(path,encode)
 					log(f"zipinfo:{sucess}@{json}")
 				except Exception as ex:
 					log(f"zipfile:false@{ex}")
