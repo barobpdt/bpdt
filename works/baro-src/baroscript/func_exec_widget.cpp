@@ -998,6 +998,7 @@ bool callWidgetFunc(TreeNode* cf, XFunc* fc, QWidget* w, PARR arrs, XFuncNode* f
         WId wid=w->winId();
         HWND hwnd = (HWND)wid; //reinterpret_cast<long>();
         rst->setVar('1',0).addUL64((UL64)hwnd);
+
     } break;
     case 48: {	// fireEvent
         if( cnt==1 ) {

@@ -1626,6 +1626,14 @@ bool callExecNodeFunc(TreeNode* node, XFunc* fc, PARR arrs, XFuncNode* fn, StrVa
                     }
                     check=true;
                 }
+            } else if( SVCHK('3',1) ) {
+                if( node->isNodeFlag(FLAG_NEW) ) {
+                    qDebug("remove self node ok ~~~");
+                    SAFE_DELETE(node);
+                    rst->setVar('3',1);
+                } else {
+                    rst->setVar('3',1);
+                }
             }
         }
         rst->setVar('3', check? 1: 0);

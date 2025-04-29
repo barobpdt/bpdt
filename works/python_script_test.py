@@ -87,7 +87,8 @@ Cf.sourceApply(#[
 
 ##> 클립보드 캡쳐
 root=Cf.rootNode()
-System.watcherClipboard(@test.clipZipFileCopy)
+System.watcherClipboard(
+setEvent(root, 'onChanageClipboard', @test.clipZipFileCopy)
 ~~
 <func>
 	@test.clipZipFileCopy(a,b,c) {

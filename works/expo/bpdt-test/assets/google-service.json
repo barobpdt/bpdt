@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "413558879897",
+    "project_id": "bpdt-de20b",
+    "storage_bucket": "bpdt-de20b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413558879897:android:d12a6f4aba50f7668d6a08",
+        "android_client_info": {
+          "package_name": "com.baropage.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPJ0_e_B5yONjS3L_JJ9klbf0NBtBGhFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

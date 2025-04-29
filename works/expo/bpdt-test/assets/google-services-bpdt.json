@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "108149939140",
+    "project_id": "jkjapp-b27d7",
+    "storage_bucket": "jkjapp-b27d7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:108149939140:android:78919625fe63bbb9a22291",
+        "android_client_info": {
+          "package_name": "com.bpdt.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJebWQypVy5jFIGeQR2nl-RCqjEiMuig4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

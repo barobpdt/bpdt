@@ -434,10 +434,6 @@ void UserObjectManager::onChanageClipboard() {
             arrs->add()->set("html");
             arrs->add()->set(Q2A(mimeData->html()));
             arrs->add()->set(Q2A(mimeData->text()));
-        } else if (mimeData->hasText()) {
-            arrs->add()->set("text");
-            arrs->add()->set(Q2A(mimeData->text()));
-            // qDebug()<<"clipboardChanged === hasText";
         } else if (mimeData->hasUrls()) {
             arrs->add()->set("urls");
             StrVar* var=arrs->add();
@@ -445,11 +441,15 @@ void UserObjectManager::onChanageClipboard() {
                 if( var->length() ) var->add("\n");
                 var->add(Q2A(mimeData->urls().at(n).toString()));
             }
+        } else if (mimeData->hasText()) {
+            arrs->add()->set("text");
+            arrs->add()->set(Q2A(mimeData->text()));
+            // qDebug()<<"clipboardChanged === hasText";
         } else {
             qDebug()<<"clipboardChanged === non display";
             // setText(tr("Cannot display data"));
         }
-		qDebug("clip board change param size: %d ", arrs->size() );
+        // qDebug("clip board change param size: %d ", arrs->size() );
         if( arrs->size() ) {
             setFuncNodeParams(fn, arrs);
             fn->call();

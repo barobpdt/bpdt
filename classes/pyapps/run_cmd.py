@@ -34,6 +34,7 @@ try:
 	fpIn=open(args.log, 'r', encoding='utf8')
 	fpOut=open(args.out, 'a', encoding='utf8')
 	lastPos=fpIn.seek(0, os.SEEK_END)
+	nextCommand = ''
 	tm=time.time()
 	def log (msg):
 		fpOut.write(f"##> {msg}\n")
@@ -45,18 +46,33 @@ try:
 	while True:
 		dist=time.time()-tm
 		fsize=os.stat(args.log).st_size
-		if fsize>lastPos :
-			line=fpIn.read().strip()
-			pos=line.find("##>") 
+
+		checkCommand = True
+		if nextCommand:
+			commands = nextCommand
+		elif fsize > lastPos :
+			commands=fpIn.read().strip()
+		else:
+			checkCommand = False
+
+		if checkCommand:			
+			pos=commands.find("##>")
 			ftype='undefined'
 			data=''
 			if pos!=-1 :
+				ep = commands.find("##>", pos+3)
+				if ep!=-1 :
+					line = commands[pos+3: ep]
+					nextCommand = commands[ep]
+				else :
+					line = commands[pos+3:]
+					nextCommand = ''
 				end=line.find(":", pos+3)
 				if end!=-1 :
 					ftype=line[pos+3:end].strip()
-					data=line[end+1:]
+					data=line[end+1:].strip()
 			# pos
-			log(f"type={ftype}, data={data}")
+			#log(f"type={ftype}, data={data}")
 			if ftype=='quit': 
 				break
 			elif ftype=='zipdetail': 
@@ -87,8 +103,9 @@ try:
 			elif ftype=='exec': 
 				try:
 					result=exec(data)
+					log(f"exec:{result}")
 				except Exception as ex:
-					log(f"execException:{ex}")                    
+					log(f"execException:{ex}")
 			elif ftype=='echo':
 				params=[v.strip() for v in data.split(',')]
 				log(f"echo:params={params}")
@@ -104,6 +121,7 @@ try:
 			else:
 				log(f"errorType:ftype={ftype} not defined")
 			lastPos=fsize
+			log(f"result:{ftype}<next>{nextCommand}")
 		time.sleep(0.2)
 	log(f"close test python [filepath:{args.output}]")
 	fpOut.close()

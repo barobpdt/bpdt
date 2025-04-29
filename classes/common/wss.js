@@ -69,7 +69,10 @@
 			client.close();
 		}
 	}
-	
+	sendOk(type, resultType, data) {
+		size = data.size()
+		client.sendWs("@${type}::200\r\n${size}::callback::${resultType}::1.0\r\n\r\n${data}")
+	}
 	socketMessageProc(client, &data) {
 		config=client.config()
 		line0=data.findPos("\r\n");
@@ -120,9 +123,6 @@
 		responseData = ''
 		if(type=='connection') {
 			type = 'req_login' 
-		} else if(type=='activePage') {
-			page=page('test:logViewer')
-			page.active()
 		} else {
 			errorCode = 400
 			resultType = contentType
@@ -131,6 +131,17 @@
 		not(type) return;
 		size=responseData.size();
 		client.sendWs("@${type}::${errorCode}\r\n${size}::${requestType}::${resultContentType}::${resultInfo}\r\n\r\n${responseData}")
+	}
+	req_pageActive(client, param, requestType, &header, resultInfo, resultContentType, data) {
+		param.inject(pageId, logId)
+		if( pageId) {
+			page = page(pageId)
+			if( typeof(page,'widget')) {
+				not(logId ) logId='webview-in'
+				not(page.is('active')) logWriter(logId).write("##>activePage:")
+				this.sendOk(requestType, resultContentType, data)
+			}
+		}
 	}
 	req_pageMove(client, param, requestType, &header, resultInfo, resultContentType, data) {
 		page=global('webviewParent').pageNode()

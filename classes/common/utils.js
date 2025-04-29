@@ -127,6 +127,18 @@
 			setEvent(target, eventName, fc)
 		}
 	}
+	arrayDeleteChild(arr) {
+		not(typeof(arr,'array')) return;
+		while(cur, arr) {
+			if(typeof(cur,'node')) {
+				cur.remove(true)
+			}
+			if(typeof(cur,'array')) {
+				cur.remove(true)
+			}
+		}
+		arr.reuse()
+	}
 </script>
 
 /* 

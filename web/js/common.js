@@ -13,7 +13,7 @@ const pageInfo = {
     , wsMode: ''
     , wsVersion:'1.0'
 	, currentRetry: 0             // 현재 재시도 횟수
-	, maxRetries: 0 // 최대 재시도 횟수
+	, maxRetries: 5 // 최대 재시도 횟수
 	, retryInterval: 2000 // 재시도 간격 (밀리초)
 	/* 기타 공통 설정 */
 	, dumyDiv: document.createElement('div')
@@ -115,6 +115,7 @@ function websocketConnect() {
                 console.log('웹소켓 연결 종료:', event.code, event.reason);
                 ws = null
                 updateConnectionStatus('연결 끊김', 'error');
+				if( pageInfo.wsMode=='close' ) return
                 // 정상 종료가 아닌 경우 재연결 시도
                 if (!event.wasClean && pageInfo.maxRetries && pageInfo.currentRetry < pageInfo.maxRetries) {
                     pageInfo.currentRetry++;

@@ -751,6 +751,22 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                 } else {
                    qDebug("addFuncSrc error [function list not defined]");
                 }
+            } else if( ccmp(fnm,"callFuncParams") ) {
+                XListArr* parr = NULL;
+                sv=fnCur->gv("@params");
+                if(SVCHK('a',0)) {
+                    parr = (XListArr*)SVO;
+                } else {
+                    parr = new XListArr(true);
+                    fnCur->GetVar("@params")->setVar('a',0,(LPVOID)parr);
+                }
+                parr->reuse();
+                if( arrs ) {
+                    for(int n=0; n<arrs->size(); n++) {
+                        parr->add()->add(arrs->get(n));
+                    }
+                }
+                rst->setVar('a',0,(LPVOID)parr);
             } else if( ccmp(fnm,"callFuncSrc") ) {
                 sv=fnCur->gv("@eventFuncList");
                 // qDebug("@@ callFuncSrc start");
@@ -1766,8 +1782,24 @@ bool execArrayFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* sv, StrVar* rst)
     } break;
     case 21: { // remove
         if( cnt==0 ) {
-            // a->reuse();
-            rst->setVar('a',0,(LPVOID)a);
+            if( a->isNodeFlag(FLAG_NEW) ) {
+                // SAFE_DELETE(a)
+                rst->setVar('3',1);
+            } else {
+                rst->setVar('3',0);
+            }
+            return true;
+        }
+        sv=arrs->get(0);
+        if( SVCHK('3',1)) {
+            if( a->isNodeFlag(FLAG_NEW) ) {
+                SAFE_DELETE(a)
+                rst->setVar('3',1);
+            } else {
+                rst->setVar('3',0);
+                qDebug("@@ array remove error new instance check false !!!");
+            }
+            // rst->setVar('a',0,(LPVOID)a);
             return true;
         }
         // version 1.0.3
@@ -3497,7 +3529,7 @@ bool execSystemFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
     } break;
     case 53: { // globalTimer
         if( cnt==0 ) {
-            uom.startTimer();
+            rst->setVar('3',uom.xtimer.isActive()?1:0);
         } else {
             StrVar* sv=arrs->get(0);
             if(SVCHK('3',1)) {
@@ -3618,13 +3650,16 @@ bool execSystemFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
     } break;
 	case 56: { // watcherClipboard
         if( cnt==0 ) {
-            StrVar* sv=uom.getInfo()->gv("onChanageClipboard");
-            rst->setVar('3', SVCHK('f',0)? 1 : 0);
-			return true;
-		}
-		StrVar* sv=arrs->get(0);
+            uom.connect( QApplication::clipboard(), SIGNAL(dataChanged()), &uom, SLOT(onChanageClipboard()) );
+            return true;
+        }
+        StrVar* sv=arrs->get(0);
         if( SVCHK('3',1) || SVCHK('3',0) ) {
-			uom.disconnect( QApplication::clipboard(), SIGNAL(dataChanged()), 0, 0 );
+            if( SVCHK('3',1)) {
+                uom.connect( QApplication::clipboard(), SIGNAL(dataChanged()), &uom, SLOT(onChanageClipboard()) );
+            } else {
+                uom.disconnect( QApplication::clipboard(), SIGNAL(dataChanged()), 0, 0 );
+            }
             return true;
         }
         XFuncNode* pfn=NULL;
@@ -3634,16 +3669,14 @@ bool execSystemFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
             sv = arrs->get(1);
         }
         if( SVCHK('f',1) ) {
-			XFuncSrc* fsrc=(XFuncSrc*)SVO;
-			pfn=setCallbackFunction(fsrc, fn, NULL, NULL, uom.getInfo()->GetVar("onChanageClipboard") );
-			if( pfn ) {
-                if(thisNode) {                    
-                    pfn->GetVar("@this")->setVar('n',0,(LPVOID)thisNode);
-                }
-				uom.connect( QApplication::clipboard(), SIGNAL(dataChanged()), &uom, SLOT(onChanageClipboard()) );
-			}
-		}
-		rst->setVar('3', pfn?1:0 );
+            XFuncSrc* fsrc=(XFuncSrc*)SVO;
+            pfn=setCallbackFunction(fsrc, fn, NULL, NULL, uom.getInfo()->GetVar("onChanageClipboard") );
+            if( pfn ) {
+                if(thisNode) pfn->GetVar("@this")->setVar('n',0,(LPVOID)thisNode);
+                uom.connect( QApplication::clipboard(), SIGNAL(dataChanged()), &uom, SLOT(onChanageClipboard()) );
+            }
+        }
+        rst->setVar('3', pfn?1:0 );
 	} break;
     default: break;
     }
@@ -3862,6 +3895,7 @@ bool execConfigFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
         getSystemEnv(rst, type, name, overwrite);
     } break;
     case 13: { // newNode
+        /*
         TreeNode* root=uom.getInfo()->addNode("@newNode");
         LPCC code=NULL;
         int hashNum=2;
@@ -3892,8 +3926,12 @@ bool execConfigFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
         if(node) {
             rst->setVar('n',0,(LPVOID)node);
         }
+        */
+        TreeNode* node = new TreeNode(2, true);
+        rst->setVar('n',0,(LPVOID)node);
     } break;
     case 20: { // newArray
+        /*
         TreeNode* root=uom.getInfo()->addNode("@newArray");
         LPCC code=NULL;
         if( arrs) {
@@ -3908,6 +3946,9 @@ bool execConfigFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
         if(arr) {
             rst->setVar('a',0,(LPVOID)arr);
         }
+        */
+        XListArr* arr = new XListArr(true);
+        rst->setVar('a',0,(LPVOID)arr);
     } break;
     case 21: { // destoryNewObject
         if(cnt==0) {

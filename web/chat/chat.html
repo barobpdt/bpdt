@@ -7,7 +7,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link rel="stylesheet" href="chat.css">
 	<link href="https://emoji-css.afeld.me/emoji.css" rel="stylesheet">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="/js/jquery.js"></script>
 	<script src="/js/common.js"></script>
 </head>
 <body>
@@ -166,9 +166,9 @@
 			ws.connect()
 		})
 		$(document).on('click', e=>{
-		sendText()
-		ws.sendData('pageActive','',{id:'a',passwd:'b'})
+			ws.sendData('pageActive','',{pageId:'test:webviewLog',logId:'webview-in'})
 		})
+		/*
 		$(document).on('mousemove', e=> {
 			if(dragMode ) {
 				ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY, move:true})
@@ -182,6 +182,7 @@
 			ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY,start:false})
 			dragMode = false 
 		})
+		*/
 		const togglePage = (name) => {
 			$('.container').find('.page').each((n,el) => $(el).hide())
 			$('.container').find('.'+name+'-container').show()
@@ -209,6 +210,9 @@
 			}
 			if(type=='res_login' ) {
 				ws.sendData('req_rommInfo','',{id:'a',passwd:'b'})
+			}
+			if(type=='req_pageActive') {
+				setTimeoug(()=>$('#message-input').focus(), 100)
 			}
 		}
 	</script>

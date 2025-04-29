@@ -1,0 +1,200 @@
+아이콘 추가후 반영방법
+  npx expo prebuild
+
+
+Google Maps API 키 발급 방법
+
+1. Google Cloud Console 접속
+   - https://console.cloud.google.com 접속
+   - Google 계정으로 로그인
+
+2. 새 프로젝트 생성
+   - 상단의 프로젝트 선택 드롭다운 메뉴 클릭
+   - "새 프로젝트" 클릭
+   - 프로젝트 이름 입력 후 "만들기" 클릭
+
+3. API 활성화
+   - 왼쪽 메뉴에서 "API 및 서비스" > "라이브러리" 선택
+   - 검색창에 "Maps SDK for Android" 입력
+   - "Maps SDK for Android" 선택 후 "사용 설정" 클릭
+   - 같은 방법으로 "Maps SDK for iOS"도 활성화
+
+4. API 키 생성
+   - 왼쪽 메뉴에서 "API 및 서비스" > "자격 증명" 선택
+   - 상단의 "자격 증명 만들기" > "API 키" 클릭
+   - 생성된 API 키 복사
+
+5. API 키 제한 설정 (보안을 위해 권장)
+   - 생성된 API 키의 "편집" 버튼 클릭
+   - "애플리케이션 제한"에서 "Android 앱" 선택
+   - "패키지 이름"에 앱의 패키지 이름 입력 (예: com.baropage.app)
+   - SHA-1 인증서 지문 추가 (안드로이드 스튜디오에서 확인 가능)
+   - "API 제한"에서 "Maps SDK for Android"와 "Maps SDK for iOS" 선택
+   - "저장" 클릭
+
+6. API 키 사용
+   - 생성된 API 키를 app.json의 android.config.googleMaps.apiKey에 입력
+
+react-native-maps 사용 가이드
+
+1. 기본 설정
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+
+2. 기본 MapView 사용법
+<MapView
+  style={{ flex: 1 }}
+  provider={PROVIDER_GOOGLE} // iOS에서는 기본값이 Apple Maps이므로 Google Maps를 사용하려면 명시
+  initialRegion={{
+    latitude: 37.5665, // 서울 위도
+    longitude: 126.9780, // 서울 경도
+    latitudeDelta: 0.0922, // 줌 레벨 (작을수록 더 확대)
+    longitudeDelta: 0.0421, // 줌 레벨
+  }}
+  showsUserLocation={true} // 사용자 위치 표시
+  showsMyLocationButton={true} // 내 위치로 이동하는 버튼 표시
+  showsCompass={true} // 나침반 표시
+  showsScale={true} // 축척 표시
+/>
+
+3. 마커 추가하기
+<MapView
+  style={{ flex: 1 }}
+  initialRegion={{
+    latitude: 37.5665,
+    longitude: 126.9780,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  }}
+>
+  <Marker
+    coordinate={{
+      latitude: 37.5665,
+      longitude: 126.9780,
+    }}
+    title="서울시청"
+    description="서울특별시 중구 세종대로 110"
+  />
+</MapView>
+
+4. 사용자 위치 추적
+import { useState, useEffect } from 'react';
+import * as Location from 'expo-location';
+
+const MapScreen = () => {
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('위치 권한이 거부되었습니다.');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
+
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      region={{
+        latitude: location?.coords.latitude || 37.5665,
+        longitude: location?.coords.longitude || 126.9780,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      }}
+      showsUserLocation={true}
+    />
+  );
+};
+
+5. 지도 스타일 커스터마이징
+<MapView
+  style={{ flex: 1 }}
+  customMapStyle={[
+    {
+      "featureType": "poi",
+      "elementType": "labels",
+      "stylers": [
+        {
+          "visibility": "off"
+        }
+      ]
+    }
+  ]}
+/>
+
+6. 지도 이벤트 처리
+<MapView
+  style={{ flex: 1 }}
+  onRegionChange={(region) => {
+    console.log('지도 영역이 변경되었습니다:', region);
+  }}
+  onPress={(e) => {
+    console.log('지도가 터치되었습니다:', e.nativeEvent.coordinate);
+  }}
+/>
+
+7. 지도 컨트롤 추가
+import { View } from 'react-native';
+
+const MapScreen = () => {
+  const mapRef = useRef(null);
+
+  const goToUserLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === 'granted') {
+      const location = await Location.getCurrentPositionAsync({});
+      mapRef.current.animateToRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 1000);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <MapView
+        ref={mapRef}
+        style={{ flex: 1 }}
+      />
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          backgroundColor: 'white',
+          padding: 10,
+          borderRadius: 5,
+        }}
+        onPress={goToUserLocation}
+      >
+        <Text>내 위치로 이동</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+주의사항:
+1. Google Maps API 키는 Google Cloud Console에서 발급받아야 합니다.
+2. iOS에서는 별도의 API 키 설정이 필요하지 않습니다.
+3. 위치 권한은 앱 실행 시 사용자에게 요청됩니다.
+4. 지도 성능을 위해 initialRegion 대신 region을 사용할 때는 상태 관리를 통해 업데이트해야 합니다.
+
+app.json 설정:
+{
+  "expo": {
+    "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    }
+  }
+} 

@@ -54,8 +54,8 @@
 		} else {
 			prog=this.member(currentProgram)
 		}
-		proc.run(prog, 0x400)
 		this.run('chcp 65001')
+		proc.run(prog, 0x400)
 	}
 	
 	stop() {
@@ -78,10 +78,8 @@
 			this.start()
 		}
 		not(status.eq("stay")) {
+			if(cmd) this.cmdAdd(cmd)
 			return print("cmd 프로세스가 실행중입니다");
-		}
-		if(status.eq('first')) {
-			return cmdAdd(cmd)
 		}
 		not(cmd) {
 			node=cmdList.pop()
@@ -93,6 +91,9 @@
 			}
 		}
 		if(cmd) {
+			if(status.eq('first')) {
+				return this.cmdAdd(cmd)
+			}
 			@status = 'start'
 			this.runStartTick = System.localtime()
 			this.set('cmdResult','')
