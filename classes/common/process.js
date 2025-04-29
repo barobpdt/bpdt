@@ -34,8 +34,8 @@
 		@status = 'first'
 		@currentProgram = program
 		@currentNode = null
-		this.runStartTick = System.localtime()
 		setCallback(proc, this.cmdProc, this)
+		this.runStartTick = System.localtime()
 		this.start()
 	}
 	isRun() {
@@ -54,7 +54,7 @@
 		} else {
 			prog=this.member(currentProgram)
 		}
-		this.run('chcp 65001')
+		this.cmdAdd('chcp 65001')
 		proc.run(prog, 0x400)
 	}
 	
@@ -74,26 +74,23 @@
 		this.stop()
 	}
 	run(cmd) {
-		not( proc.run() ) {
-			this.start()
+		if(status.eq('first')) {
+			return this.cmdAdd(cmd)
 		}
-		not(status.eq("stay")) {
-			if(cmd) this.cmdAdd(cmd)
-			return print("cmd 프로세스가 실행중입니다");
+		not( proc.run() ) {
+			return this.start()
 		}
 		not(cmd) {
-			node=cmdList.pop()
+			node = cmdList.pop()
 			if(typeof(node,'node')) {
 				cmd = node.cmd
 				this.member(currentNode, node)
 			} else {
+				cmd = node
 				this.member(currentNode, null)
 			}
 		}
 		if(cmd) {
-			if(status.eq('first')) {
-				return this.cmdAdd(cmd)
-			}
 			@status = 'start'
 			this.runStartTick = System.localtime()
 			this.set('cmdResult','')

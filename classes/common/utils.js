@@ -51,8 +51,8 @@
 		if(arr.find(fc)) {
 			print("@@ setEvent ${target.tag} 이미 추가된 콜백함수")
 		} else {
-			print("@@ setEvent ${target.tag} 콜백함수 추가")
 			fn.addFuncSrc(fc)
+			print("@@ setEvent ${target.tag} 콜백함수 추가")
 		}
 		return fn;		
 	}

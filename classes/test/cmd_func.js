@@ -1,36 +1,24 @@
 <script>
 	@timer.globalTimer(fc, addCheck, delay) {
+		not( typeof(fc,'function')) return print("globalTimer 전역타이머가 등록오류 (실행함수 미정의)")
 		root = Cf.rootNode()
 		fn = root.onTimeout
-		if( typeof(addCheck,'bool')) {
-			not( typeof(fc,'function')) return print("globalTimer 전역타이머가 실행 함수")
-			not(System.globalTimer()) {
-				if( typeof(fn,'func')) {
-					System.globalTimer(true)
-					find = arrayFind(fn.eventFuncList(), fc)
-					not(find) fn.addFuncSrc(fc)
-				} else {
-					not(typeof(delay,'num')) delay = 80
-					System.globalTimer(delay)
-					setEvent(root,'onTimeout',fc)
-				}
-			}
-			return root;
+		not(typeof(fn,'func')) {
+			not(typeof(delay,'num')) delay = 80
+			System.globalTimer(delay)
+			fn=setEvent(root,'onTimeout', fc)
 		}
-		not(typeof(fc,'function')) fc = @timer.idle
-		if( typeof(fn,'func')) {
-			find = arrayFind(fn.eventFuncList(), fc)
-			not( find ) fn.addFuncSrc(fc)
+		not( typeof(addCheck,'bool')) addCheck = true
+		if(addCheck) {
+			fn.addFuncSrc(fc)
 		} else {
-			System.globalTimer(80)
-			setEvent(root,'onTimeout', fc)
+			fn.removeFuncSrc(fc)
 		}
 		return root;
 	}
-	
 	@timer.idle() {
-		n=this.incrNum('globaltimer.idx)
-		m=n%200 
+		n=this.incrNum('globaltimer.idx')
+		m=n%200;
 		if( m==0) print('global timer idle...')
 	}
 
@@ -44,13 +32,17 @@
 			arr.add(command)
 		}
 	} 
-	@webview.commandTimeout() {		
+	@webview.commandTimeout() {	
+		if(this.webviewStartTick ) {
+			d = System.tick() - this.webviewStartTick
+			if( d<1000) return;
+		}
 		c=cmd('webview')
 		not( c.isRun() && c.isStart() ) {
 			if( this.webviewQuit ) return;
 			print("webview not start 실행 리스트 초기화: ", this.webviewCommandList)
 			arrayDeleteChild(this.webviewCommandList)
-			return @webview.run()
+			return @webview.startWeb()
 		}
 		if( this.webviewCommandCallTick ) {
 			s=logReader('webview-out').timeout()
@@ -89,7 +81,9 @@
 			return false;
 		}
 	}
-	@webview.run() {
+	@webview.startWeb() {
+		root=Cf.rootNode()
+		root.webviewStartTick = System.tick()
 		c=cmd('webview')
 		in = logWriter('webview-in')
 		out = logReader('webview-out')
@@ -192,7 +186,9 @@
 		}
 	}
 	
-	@python.commadStart() {
+	@python.startCommand() {
+		root=Cf.rootNode()
+		root.pythonStartTick = System.tick()
 		c=cmd('python')
 		in = logWriter('pythoncmd-in')
 		out = logReader('pythoncmd-out')
@@ -210,25 +206,22 @@
 		return in;
 	}
 	
-	@python.commad(command, callback, target) {
+	@python.command(command, callback, target) {
 		c=cmd('python')
 		not( c.isRun() ) {
-			@python.commadStart()
+			@python.startCommand()
 		}
 		root=Cf.rootNode()
-		in = logWriter('python-in')
+		in = logWriter('pythoncmd-in')
 		if( command.eq('zipinfo','zipinfo_kr') ) {
-			fullPath = global('cm.zipFilePath')
-			if( fullPath ) {
-				root.zipinfoTick = System.tick()
-				in.write("##>zipinfo:${fullPath}<>euc-kr")
-				global('cm.zipFilePath', null)
-			}
+			fullPath = global('clipManager.zipFilePath', null)
+			not( fullPath ) return print("파이션 커멘드 오류 압축파일 경로가 없습니다");
+			command = "##>zipinfo:${fullPath}<>euc-kr"
 		}
 		arr=root.addArray('pythonCommandList')
+		print("파이션 실행 커멘드 추가 (명령어:$command)")
 		if(typeof(callback,'function')) {
-			node=Cf.newNode('pythonCommandNode')
-			param = node.addNode().with(command, callback, target)
+			param = Cf.newNode().with(command, callback, target)
 			arr.add(param)
 		} else if(command) {
 			arr.add(command)
@@ -239,13 +232,19 @@
 		fn = Cf.rootNode().get('onTimeout') not(typeof(fn,'func')) return false;
 		return arrayFind(fn.eventFuncList(), @python.commandTimeout);
 	}
-	@python.commadTimeout() {
+	@python.commandTimeout() {
+		if( this.pythonStartTick ) {
+			d=System.tick() - this.pythonStartTick
+			if(d<1000) {
+				return;
+			}
+		}
 		c=cmd('python')
 		not( c.isRun() && c.isStart() ) {
-			if( this.webviewQuit ) return;
+			if( this.pythonQuit ) return;
 			print("webview not start 실행 리스트 초기화: ", this.pythonCommandList)
 			arrayDeleteChild(this.pythonCommandList)
-			return @python.commandStart()
+			return @python.startCommand()
 		}
 		if( this.zipinfoTick ) {
 			out = logReader('runcmd-out').timeout()
@@ -253,17 +252,34 @@
 				
 			}
 		} 
+		if( this.pythonCommandCallTick ) {
+			s=logReader('pythoncmd-out').timeout()
+			print("python cmd timeout => $s")
+			if( checkEnd(s) ) {
+				cur = this.pythonCurrentNode not(typeof(cur,'node')) return;
+				fc = cur.callback
+				target = cur.target not(target) target = this
+				if(typeof(callback,'function')) {
+					call(fc, target, this.webviewResult)
+				}
+				this.webviewCurrentNode = null
+				this.webviewCommandCallTick = 0
+				cur.remove(true)
+			}
+			return;
+		}
+		
 		cmdList =  this.pythonCommandList not(typeof(cmdList,'array')) return;
 		param = cmdList.pop() not(param) return;
-		print("webview command : $param")
-		logReader('python-out').timeout()
+		print("python command : $param")
+		logReader('pythoncmd-out').timeout()
 		if( typeof(param,'node') ) {
 			this.pythonResult = ''
 			this.pythonCurrentNode = param
 			this.pythonCommandCallTick = System.tick()
-			logWriter('python-in').write(param.command)
+			logWriter('pythoncmd-in').write(param.command)
 		} else {			
-			logWriter('python-in').write(param)
+			logWriter('pythoncmd-in').write(param)
 		}
 		checkEnd = func(&s) {
 			not(s) return true;
@@ -293,9 +309,9 @@
 		if(typeof(fc,'function')) {
 			not(typeof(addCheck,'bool')) addCheck = true
 			if( addCheck ) {
-				fn.removeFuncSrc(fc)
-			} else {
 				fn.addFuncSrc(fc)
+			} else {
+				fn.removeFuncSrc(fc)
 			}
 		}
 	}
@@ -309,8 +325,7 @@
 		path = b.value(8)
 		ext=right(path,'.').lower()
 		not(ext.eq('zip')) return;
-		global('cm.zipFilePath', path)
+		global('clipManager.zipFilePath', path)
 		
-	}
-</func>
+	} 
 </script>

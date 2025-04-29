@@ -2,7 +2,7 @@ _arr(code, reuse) {
 	not( code ) {
 		return Cf.array();
 	}
-	arr=Cf.newArray(code);
+	arr=Cf.rootNode().addArray("_arr.$code");
 	if( typeof(reuse,"bool") && reuse ) arr.reuse();
 	return arr;
 }
@@ -10,13 +10,14 @@ _node(code, reuse) {
 	not( code ) {
 		return Cf.node();
 	}
-	node=Cf.newNode(code)
+	node=Cf.rootNode().addNode("_node.$code")
 	not(node.var(tag)) node.var(tag, code)
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
 global(code) {
 	root=Cf.rootNode().addNode("@global");
+	result = ''
 	switch(args().size()) {
 	case 0:
 		return root;
@@ -24,10 +25,16 @@ global(code) {
 		return root.get(code)
 	case 2:
 		args(code,value)
-		root.set(code, value);
+		if( typeof(value,'null')) {
+			result = root.get(code)
+			root.set(code, '')
+		} else {
+			result = value
+			root.set(code, value)
+		}
 	default:
 	}
-	return root;
+	return result;
 }
 object(code, newCheck) {
 	not( code.find('.') ) return Cf.rootNode().addNode(code);
