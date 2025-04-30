@@ -53,6 +53,7 @@ try:
 		elif fsize > lastPos :
 			commands=fpIn.read().strip()
 		else:
+			commands = ''
 			checkCommand = False
 
 		if checkCommand:			
@@ -62,17 +63,17 @@ try:
 			if pos!=-1 :
 				ep = commands.find("##>", pos+3)
 				if ep!=-1 :
-					line = commands[pos+3: ep]
-					nextCommand = commands[ep]
+					line = commands[pos: ep]
+					nextCommand = data[ep:].strip()
 				else :
-					line = commands[pos+3:]
+					line = commands[pos:]
 					nextCommand = ''
-				end=line.find(":", pos+3)
+				end=line.find(":")
 				if end!=-1 :
 					ftype=line[pos+3:end].strip()
 					data=line[end+1:].strip()
 			# pos
-			#log(f"type={ftype}, data={data}")
+			
 			if ftype=='quit': 
 				break
 			elif ftype=='zipdetail': 
@@ -86,14 +87,15 @@ try:
 					pos=data.find("<>")
 					if pos>0:
 						path = data[0:pos].strip()
-						encode = data[pos+2].trim()
+						encode = data[pos+2:].strip()
 					else:
 						path = data.strip()
 						encode = 'euc-kr'
+					log(f"@@ pos={pos}, path={path}, encode={encode}")
 					sucess, json = list_zip_info(path,encode)
 					log(f"zipinfo:{sucess}@{json}")
 				except Exception as ex:
-					log(f"zipfile:false@{ex}")
+					log(f"zipinfo:false@{ex}")
 			elif ftype=='eval': 
 				try:
 					result=eval(data)

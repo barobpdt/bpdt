@@ -107,17 +107,21 @@ function initTree(treeId) {
 	cf.initTreeData = function(data) {
 		const newData = data||[]
 		tree.jstree({
-			'core': {
-				'data': newData,
-				'check_callback': true,
-				'themes': {
+			core: {
+				data: newData,
+				check_callback: true,
+				dblclick_toggle: false,
+				themes: {
 					'name': 'proton',
 					'responsive': false,
 					'variant': 'small',
 					'stripes': false
 				}
 			},
-			'plugins': ['dnd'],
+			plugins: ['dnd','checkbox','types','search','changed'],
+			types: {
+				default: {icon:'fa fa-folder'}
+			}
 		})
 		jstree = tree.jstree()
 		treeEvent()

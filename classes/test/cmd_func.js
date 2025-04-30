@@ -24,7 +24,7 @@
 
 	@webview.command(command, callback, target) {
 		root=Cf.rootNode()
-		arr=root.addArray('pythonCommandList')
+		arr=root.webviewCommandList
 		if(typeof(callback,'function')) {
 			param = Cf.newNode().with(command, callback, target)
 			arr.add(param)
@@ -48,14 +48,12 @@
 			s=logReader('webview-out').timeout()
 			print("webview timeout => $s")
 			if( checkEnd(s) ) {
-				cur = this.webviewCurrentNode not(typeof(cur,'node')) return;
-				fc = cur.callback
-				target = cur.target not(target) target = this
-				if(typeof(callback,'function')) {
-					call(fc, target, this.webviewResult)
-				}
-				this.webviewCurrentNode = null
 				this.webviewCommandCallTick = 0
+				cur = global('webviewCurrentNode',null) not(typeof(cur,'node')) return;
+				cur.inject(callback, target) not(target) target = this
+				if(typeof(callback,'function')) {
+					call(callback, target, this.webviewResult)
+				}
 				cur.remove(true)
 			}
 			return;
@@ -67,11 +65,11 @@
 		logReader('webview-out').timeout()
 		if( typeof(param,'node') ) {
 			this.webviewResult = ''
-			this.webviewCurrentNode = param
 			this.webviewCommandCallTick = System.tick()
-			logWriter('webview-in').write(param.command)
+			logWriter('webview-in').append(param.command)
+			global('webviewCurrentNode', param)
 		} else {			
-			logWriter('webview-in').write(param)
+			logWriter('webview-in').append(param)
 		}
 		checkEnd = func(&s) {
 			not(s) return true;
@@ -84,6 +82,7 @@
 	@webview.startWeb() {
 		root=Cf.rootNode()
 		root.webviewStartTick = System.tick()
+		root.addArray('webviewCommandList').reuse()
 		c=cmd('webview')
 		in = logWriter('webview-in')
 		out = logReader('webview-out')
@@ -110,7 +109,7 @@
 		not( c.isRun() && c.isStart() ) return print("웹뷰 종료오류 [웹뷰 미실행중]")
 		root = Cf.rootNode()
 		root.webviewQuit = true
-		logWriter('webview-in').write("##> quit:")
+		logWriter('webview-in').append("##> quit:")
 	}
 	@webview.isGlobalTimer() {
 		not(System.globalTimer()) return false;
@@ -189,6 +188,7 @@
 	@python.startCommand() {
 		root=Cf.rootNode()
 		root.pythonStartTick = System.tick()
+		root.addArray('pythonCommandList').reuse()
 		c=cmd('python')
 		in = logWriter('pythoncmd-in')
 		out = logReader('pythoncmd-out')
@@ -199,6 +199,7 @@
 		sourcePath.add('/classes/pyapps')
 
 		cmd=fv('#{pythonPath} "#{sourcePath}/run_cmd.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
+		print("@@ python start : $cmd")
 		c.run(cmd)
 		
 		@clipManager.watcher(@clipManager.zipFileCopy, true)
@@ -217,9 +218,12 @@
 			fullPath = global('clipManager.zipFilePath', null)
 			not( fullPath ) return print("파이션 커멘드 오류 압축파일 경로가 없습니다");
 			command = "##>zipinfo:${fullPath}<>euc-kr"
+		} else if( command.eq('exit')) {
+			root.pythonExit = true
+			command = 'quit'
 		}
-		arr=root.addArray('pythonCommandList')
-		print("파이션 실행 커멘드 추가 (명령어:$command)")
+		arr=root.pythonCommandList
+		print("@@ 파이션 실행 커멘드 추가 (명령어:$command)")
 		if(typeof(callback,'function')) {
 			param = Cf.newNode().with(command, callback, target)
 			arr.add(param)
@@ -233,6 +237,29 @@
 		return arrayFind(fn.eventFuncList(), @python.commandTimeout);
 	}
 	@python.commandTimeout() {
+		checkEnd = func(&s) {
+			not(s) return true;
+			this.appendText('pythonResult', s)
+			s.findPos('<next>')
+			not(s.trim() ) return true
+			return false;
+		};
+		
+		if( this.pythonCommandCallTick ) {
+			s=logReader('pythoncmd-out').timeout()
+			print("python cmd timeout => $s")
+			if( checkEnd(s) ) {
+				this.pythonCommandCallTick = 0
+				cur = global('pythonCurrentNode', null) not(typeof(cur,'node')) return;
+				cur.inject(callback, target) not(target) target = this
+				if(typeof(callback,'function')) {
+					call(callback, target, this.pythonResult )
+				}
+				cur.remove(true)
+			}
+			return;
+		}
+		
 		if( this.pythonStartTick ) {
 			d=System.tick() - this.pythonStartTick
 			if(d<1000) {
@@ -241,32 +268,10 @@
 		}
 		c=cmd('python')
 		not( c.isRun() && c.isStart() ) {
-			if( this.pythonQuit ) return;
-			print("webview not start 실행 리스트 초기화: ", this.pythonCommandList)
+			if( this.pythonExit ) return;
+			print("python not start 실행 리스트 초기화: ", this.pythonCommandList)
 			arrayDeleteChild(this.pythonCommandList)
 			return @python.startCommand()
-		}
-		if( this.zipinfoTick ) {
-			out = logReader('runcmd-out').timeout()
-			if( out ) {
-				
-			}
-		} 
-		if( this.pythonCommandCallTick ) {
-			s=logReader('pythoncmd-out').timeout()
-			print("python cmd timeout => $s")
-			if( checkEnd(s) ) {
-				cur = this.pythonCurrentNode not(typeof(cur,'node')) return;
-				fc = cur.callback
-				target = cur.target not(target) target = this
-				if(typeof(callback,'function')) {
-					call(fc, target, this.webviewResult)
-				}
-				this.webviewCurrentNode = null
-				this.webviewCommandCallTick = 0
-				cur.remove(true)
-			}
-			return;
 		}
 		
 		cmdList =  this.pythonCommandList not(typeof(cmdList,'array')) return;
@@ -275,19 +280,13 @@
 		logReader('pythoncmd-out').timeout()
 		if( typeof(param,'node') ) {
 			this.pythonResult = ''
-			this.pythonCurrentNode = param
 			this.pythonCommandCallTick = System.tick()
-			logWriter('pythoncmd-in').write(param.command)
+			logWriter('pythoncmd-in').append(param.command)
+			global('pythonCurrentNode', param)
 		} else {			
-			logWriter('pythoncmd-in').write(param)
+			logWriter('pythoncmd-in').append(param)
 		}
-		checkEnd = func(&s) {
-			not(s) return true;
-			this.appendText('webviewResult', s)
-			s.findPos('<next>')
-			not(s.trim() ) return true
-			return false;
-		}
+		
 	} 
 	
 	@cmd.command(command, callback, target) {		
@@ -315,17 +314,32 @@
 			}
 		}
 	}
+	@clipManager.init() {
+		@python.startCommand()
+		@clipManager.callbackDefault() 
+	}
 	@clipManager.watcherDefault(a,b,c) {
 		root=Cf.rootNode()
 		root.clipboardWatcherTick = System.tick()
 	}
+	@clipManager.callbackDefault() {
+		root = Cf.rootNode()
+		not(root.zipinfo_callback) root.zipinfo_callback = @clipManager.zipinfo_callback
+	}
+	@clipManager.zipinfo_callback(s) {
+		print("@@ clipManager.zipinfo_callback : $s")
+	}
+	
 	@clipManager.zipFileCopy(a,b,c) {
-		not(a.eq('url')) return;
+		not(a.eq('urls')) return;
 		not(b.start('file:///')) return;
 		path = b.value(8)
 		ext=right(path,'.').lower()
 		not(ext.eq('zip')) return;
-		global('clipManager.zipFilePath', path)
-		
+		Cf.rootNode().inject(zipinfo_callback, zipinfo_target)
+		if( typeof(zipinfo_callback,'function') ) {			
+			global('clipManager.zipFilePath', path)
+			@python.command('zipinfo_kr', zipinfo_callback, zipinfo_target)
+		} 
 	} 
 </script>
