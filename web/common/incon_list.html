@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+#{set[
+	title:아이콘 선택,
+	prefix:icon, margin:5, minWidth:50, itemtag:svg
+]}
+#{eval[
+	db=Baro.db('config')
+	node=db.fetchAll("select cd, data from conf_info where grp='svg')
+	while(cur, node) {
+		cur.inject(cd, &data)
+		cur.name = cd
+		cur.props = data.findPos("\n")
+		cur.svg = data 
+	}
+]}
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#{title}</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Ace Editor CDN -->
+	<style>
+		#{style}
+		#{css.item_grid_containe}
+	</style>
+</head>
+<body>
+#{container[
+	<div class="#{prefix}-container">
+		#{each(item, icons) 
+			<div class="#{prefix}-item">
+				<svg #{item.props}>#{item.svg}</svg>
+				<div>#{item.name}</div>
+			</div>
+		}
+	</div>
+]}
+	
+	
+#{script?
+	<script>
+		#{script}
+	</script>
+}	
+</body>
+</html> 
