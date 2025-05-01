@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+#{set[
+	title:아이콘 선택,
+	margin:16, minWidth:60, itemtag:svg
+]}
+#{eval[
+	db=Baro.db('config')
+	node=db.fetchAll("select cd, data from conf_info where grp='svg' limit 0,10")
+	while(cur, node) {
+		cur.inject(cd, data) data.ref()
+		cur.name = cd
+		cur.props = data.findPos("\n")
+		cur.svg = data
+	}
+	this.set('icons', node)
+]}
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#{title}</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Ace Editor CDN -->
+	<style>
+	#{css[
+		.icon-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: #{margin}px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(#{minWidth}px, 1fr));
+            gap: #{margin}px;
+            padding: #{margin}px;
+        }
+        .icon-item {
+		    display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+		.icon-item svg {
+            width: 24px;
+        }
+        .icon-item:hover {
+            transform: translateY(-5px);
+        }
+		.icon-name {
+			position: absolute;
+			top: 2px;
+			font-size: 10px;
+			overflow: hidden;
+		}
+	]}
+	</style>
+</head>
+<body>
+#{icons? <div>#{icons}</div> }
+#{container[
+	<div class="icon-container">
+		#{each(item, icons) 
+			<div class="icon-item">
+				<svg #{item.props}><path fill="#ccc" d="#{item.svg}"/></svg>
+				<div class="icon-name">#{item.name}</div>
+			</div>
+		}
+	</div>
+]}
+	
+	
+#{script?
+	<script>
+		#{script}
+	</script>
+}	
+</body>
+</html> 

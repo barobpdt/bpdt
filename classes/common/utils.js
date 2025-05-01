@@ -56,7 +56,36 @@
 		}
 		return fn;		
 	}
-	
+	getFuncKeys(fn) {
+		a=_arr()
+		s=fn.get() s.ref()
+		while(s.valid()) {
+			line = s.findPos("\n")
+			not(line.ch()) break
+			key = line.findPos('=').trim()
+			a.add(key)
+		}
+		return a;
+	}
+	getAsyncFunc(fc, param) {
+		fn=Cf.funcNode()
+		if(typeof(param,'node')) {
+			param.set('@checkSend', true)
+			fnParent = Cf.funcNode('parent')
+			while(key, getFuncKeys(fnParent)) {
+				fn.set(key, fnParent.get(key))
+			}
+		}		
+		fn.setPersist()
+		fn.addFuncSrc(fc)
+		return fn;
+	}
+	callAsyncFunc(fn, data) {
+		fn.callFuncParams(data)
+		fn.callFuncSrc()
+		arr=fn.get('@params') if(typeof(arr,'array')) arr.remove(true)
+		fn.delete()
+	}
 	setEvent() {
 		arr=null
 		obj = null

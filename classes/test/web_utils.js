@@ -47,7 +47,7 @@
 		not(s.find('#{')) return s;
 	 	not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
 	 	not(param) param=fn.get('param')
-	 	if(typeof(param,'node')) param = null
+	 	not(typeof(param,'node')) param = null
 	 	ss=''
 	 	while(s.valid()) {
 	 		left = s.findPos('#{')
@@ -61,28 +61,35 @@
 	 	return ss;
 	}
 	@web.parseControl(&s,fn,param) {
-		type= s.findPos('(',1,1)
-		param = s.match()
-		not(s.ch('<')) return print("$type 시작문자 오류", s)
+		ftype= s.findPos('(',1,1)
+		fparam = s.match()
+		not(s.ch('<')) return print("$ftype 시작문자 오류", s)
 		sp= s.cur()
 		c=s.incr().ch()
 		if(c.eq('>')) {
 			s.pos(sp)
 			src = s.match('<>','<>')
+			if(typeof(src,'bool')) return print("$s 시작태그 오류")
 		} else {
 			tag = s.move()
 			s.pos(sp)
-			src = s.match("<$tag","</$tag>")
+			match = s.match("<$tag","</$tag>")
+			if(typeof(match,'bool')) return print("$tag 태그매치 오류")
+			src = s.value(sp, s.cur())
 		}
-		if(typeof(src,'bool')) return print("$s 태그매치 오류")
 		result = ''
-		if(type.eq('each')) {
-			param.split(',').inject(a,b)
+		if(ftype.eq('each')) {
+			fparam.split(',').inject(a,b)
 			node = fn.get(b) not(node) node=param.get(b)
-			while(cur, node) {
-				fn.set(a,cur)
-				result.add(@web.parseTemplate(src,fn,param))
+			if(typeof(node,'node')) {
+				while(cur, node) {
+					fn.set(a,cur)
+					result.add(@web.parseTemplate(src,fn,param))
+				}
+			} else {
+				result = print("each( $a, $b ) 오브젝트 설정오류")
 			}
+			
 		}
 		return result;
 	}
@@ -118,10 +125,10 @@
 				}
 			}
 		}
+		else if( @src.isPrint(s) ) val = @web.parsePrint(s,fn,param)
 		else if( @src.isControl(s) ) val = @web.parseControl(s,fn,param)
 		else if( @src.isCase(s) ) val = @web.parseCase(s,fn,param)
 		else if( @src.isFunc(s) ) val = eval(s);
-		else if( @src.isPrint(s) ) val = @web.parsePrint(s,fn,param)
 		return val;
 	}
 	@web.parsePrint(&s,fn,param) {
@@ -157,56 +164,64 @@
 		}
 		return result;
 	}
-	@web.parseCase(&s,fn,param,skipCheck) {
+	@web.parseCase(&s,fn,param,skipCheck){
 		if(skipCheck) {
 			c=s.ch()
-		} else {
-			type = 'var'
+		} else { 
 			c=s.ch()
 			sp = s.cur()
-			if(c.eq('@')) c=s.incr().ch()
+			if(c.eq('@')) c=s.incr()
+			c=s.next().ch()
 			if(c.eq('.')) c=s.incr().next().ch()
+			ok=false
 			if(c.eq('(')) {
 				s.match()
-				c=s.ch()
-				type='func'
-			} else {
-				c=s.next().ch()
-			}
-			ok=false
-			if(c.ne('?')) return print("parseCase case 매칭오류", s.size())
-			if(type.eq('var')) {
-				name = s.trim(sp, s.cur())
-				if(fn.get(name)) ok=true;
-			} else {
 				src = s.trim(sp, s.cur())
-				if( eval(src,fn,param) ) ok=true;
+				if( eval(src) ) ok=true
+			} else {
+				name = s.trim(sp, s.cur())
+				if(fn.isset(name)) {
+					if(fn.get(name)) ok=true;	
+				} else if(param.isVar(name)) {
+					if(param.get(name)) ok=true;
+				}
 			}
+			c=s.ch()
+			not(c.eq('?')) return print("parseCase case 매칭오류", s.size())
 			c=s.incr().ch()
 		}
 		result=''
-		if(s.start('#{')) {
-			s.incr()
-			src=s.match()
-			result = @web.parseVar(src,fn,param)
-		} else if(c.eq('<')) {
+		if(c.eq('<')) {
 			sp=s.cur()
-			tag=s.incr().move()
-			s.pos(sp)
-			if( @src.isSingleTag(s) ) {
-				s.findPos("/>")
+			if(s.start('<>')) {
+				result = s.match('<>','<>')
 			} else {
-				s.match("<$tag","</tag>")
+				tag=s.incr().move()
+				s.pos(sp)
+				print("s===$s")
+				if( @src.isSingleTag(s) ) {
+					s.findPos("/>")
+				} else {
+					match=s.match("<$tag","</$tag>")
+					if(typeof(match,'bool')) return print("parseCase $tag 매칭오류 ")
+				}
+				ep = s.cur()
+				result = s.value(sp,ep,true)
 			}
-			result = s.value(sp,s.cur())
 		} else if(c.eq('(','[')) {
 			result = s.match()
 		} else if(c.eq()) {
 			result = s.match()
+		} else if(s.start('#{')) {
+			s.incr()
+			src=s.match()
+			result = @web.parseVar(src,fn,param)
 		} else {
 			result = s.findPos(':',1,1).trim()
 		}
-		if(ok) return @web.parseTemplate(result,fn,param);
+		if(ok) {
+			return @web.parseTemplate(result,fn,param);
+		}
 		c=s.ch()
 		if(c.eq(':')) {
 			s.incr()
@@ -231,7 +246,8 @@
 	}
 	@src.isPrint(&s) {
 		c=s.ch()
-		if(c.eq('@')) c=s.incr().ch()
+		if(c.eq('@')) c=s.incr()
+		c=s.next().ch()
 		if(c.eq('#')) c=s.incr().ch()
 		if(c.eq('.')) {
 			c=s.incr().next().ch()
@@ -242,7 +258,8 @@
 	}
 	@src.isFunc(&s) {
 		c=s.ch()
-		if(c.eq('@')) c=s.incr().ch()
+		if(c.eq('@')) c=s.incr()
+		c=s.next().ch()
 		if(c.eq('.')) c=s.incr().next().ch()
 		if(c.eq('(')) {
 			s.match()
@@ -252,7 +269,8 @@
 	}
 	@src.isCase(&s) {
 		c=s.ch()
-		if(c.eq('@')) c=s.incr().ch()
+		if(c.eq('@')) c=s.incr()
+		c=s.next().ch()	
 		if(c.eq('.')) c=s.incr().next().ch()
 		if(c.eq('(')) {
 			s.match()

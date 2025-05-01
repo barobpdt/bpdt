@@ -252,7 +252,10 @@
 				this.pythonCommandCallTick = 0
 				cur = global('pythonCurrentNode', null) not(typeof(cur,'node')) return;
 				cur.inject(callback, target) not(target) target = this
-				if(typeof(callback,'function')) {
+				ftype = typeof(callback)
+				if(ftype.eq('func')) {
+					callAsyncFunc(callback)
+				} else if(type.ew('funcRef') ) {
 					call(callback, target, this.pythonResult )
 				}
 				cur.remove(true)

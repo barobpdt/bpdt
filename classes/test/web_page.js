@@ -20,9 +20,18 @@
 		}
 		map.set(url, fc)
 	} 
-	@webpage.iconList() {
+	@webpage.pythonCall(req, param) {
+		fn = getAsyncFunc(@webpage.sendData, param)
+		@python.command('zipinfo', fn)
+	}
+	@webpage.iconList(req, param) {
 		@web.addUrl('/common/icon_list','iconList', true)
-		body = 
+		path = conf('web.rootPath')
+		src = fileRead("$path/common/icon_list.html")
+		req.send( @web.parseTemplate(src) )
 		
+	}
+	@webpage.sendData(data) {
+		req.send(data)
 	}
 </script>
