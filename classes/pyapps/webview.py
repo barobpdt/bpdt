@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QVBoxLayout
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from PyQt5.QtCore import Qt, QTimer, QTime, QUrl
+from PyQt5.QtCore import Qt, QTimer, QTime, QUrl, QEvent
 
 parser = argparse.ArgumentParser(description='프로그램 확장기능 처리')
 
@@ -39,6 +39,8 @@ class WebView(QWebEngineView):
 			self.timer.setInterval(100)
 			self.timer.timeout.connect(self.timeout)
 			self.timer.start()
+			self.logCount = 0
+			self.nextCommand = ''
 			self.loadUrl('http://localhost/chat/chat.html')
 			# self.setBackgroundColor(QtCore.Qt.transparent)
 			self.setAcceptDrops(True)
@@ -48,7 +50,7 @@ class WebView(QWebEngineView):
 			print(f" error: {e}")
 
 	def eventFilter(self, source, event):
-		if (self.focusProxy() is source and event.type() == QtCore.QEvent.MouseButtonPress ):
+		if (self.focusProxy() is source and event.type() == QEvent.MouseButtonPress ):
 			self.logAppend("mouse press ok")
 		return super().eventFilter(source, event)
 	
@@ -88,26 +90,45 @@ class WebView(QWebEngineView):
 			self.setHtml(html)
 			
 	def timeout(self):
-		sender = self.sender()
-		currentTime = QTime.currentTime().toString("hh:mm:ss")
-		dist=time.time()-self.tm
+		# sender = self.sender()
+		# currentTime = QTime.currentTime().toString("hh:mm:ss")
+		# dist=time.time()-self.tm
 		fsize=os.stat(args.log).st_size
-		if fsize>self.lastPos :
-			line=self.fp.read().strip()
-			pos=line.find("##>")
-			self.logAppend(f"line:{line} dist={dist}")
+		
+		if self.logCount==0:
+			self.logAppend(f"start:{args.log}")
+			self.logCount = self.logCount + 1
+
+		checkCommand = True
+		if self.nextCommand:
+			data = self.nextCommand
+		elif fsize>self.lastPos :
+			data = self.fp.read().strip()
+		else:
+			checkCommand = False
+
+		if checkCommand:
+			dist=time.time()-self.tm
+			pos=data.find("##>")
+			#self.logAppend(f"line:{data} dist={dist}")
 			params=None
 			val = ''
 			ftype = ''
 			if pos!=-1 :
-				end=line.find(":", pos+3)
+				ep=data.find("##>", pos+3)
+				if ep!=-1:
+					line = data[pos+3:ep]
+					self.nextCommand = data[ep:].strip()
+				else:
+					line = data[pos+3:]
+					self.nextCommand = ''
+				end=line.find(":", pos)
 				if end!=-1 :
-					ftype=line[pos+3:end].strip()
-					val=line[end+1:]
-					params=[v.strip() for v in val.split(',')]
-					#params=map(str.strip, val.split(','))
+					ftype = line[0:end].strip()
+					val = line[end+1:]
+					params = [v.strip() for v in val.split(',')]
 			# pos
-			self.logAppend(f">> {ftype} {params}")
+			# self.logAppend(f">> {ftype} {params}")
 			if params!=None :
 				if ftype=='quit': 
 					sys.exit()
@@ -135,8 +156,8 @@ class WebView(QWebEngineView):
 					self.logAppend(f"{ftype} not defined")
 			## if params
 			self.lastPos=fsize
+			self.logAppend(f"result:{ftype}<next>{self.nextCommand}")
 		# end if print(f"currentTime=={currentTime}")
-			
 			
 def main():
 	app = QApplication(sys.argv)

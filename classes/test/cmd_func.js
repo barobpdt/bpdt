@@ -79,7 +79,7 @@
 			return false;
 		}
 	}
-	@webview.startWeb() {
+	@webview.startWeb(traget) {
 		root=Cf.rootNode()
 		root.webviewStartTick = System.tick()
 		root.addArray('webviewCommandList').reuse()
@@ -95,7 +95,10 @@
 
 		cmd=fv('#{pythonPath} "#{sourcePath}/webview.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
 		c.run(cmd)
-		@timer.globalTimer(@webview.commandTimeout, true)
+		if(traget ) {
+			setEvent(c,'onLogChange', @webview.logChange, target)
+			@timer.globalTimer(@webview.commandTimeout, true)
+		}
 		return in;
 	}
 	@webview.close() {
@@ -115,6 +118,14 @@
 		not(System.globalTimer()) return false;
 		fn = Cf.rootNode().get('onTimeout') not(typeof(fn,'func')) return false;
 		return arrayFind(fn.eventFuncList(), @webview.commandTimeout);
+	}
+	@webview.logChange(&result ) {
+		if( typeof(this.logChange,'func') ) {
+			this.logChange(result)
+		} else {
+			print("webview 로그변경 logChange 함수 미정의 (대상:$this)")
+			print("결과: $result")
+		}
 	}
 	@webview.logPage() {
 		Cf.sourceApply(#[
@@ -136,6 +147,7 @@
 				setEvent(widget('clear'), 'onClick', this.clickClear, this)
 				this.timer(200)
 				this.open()
+				@webview.startWeb(this)
 			}
 			onResize() {
 				not(this.resizeTick) {
@@ -154,6 +166,9 @@
 				this.resizeTick = System.tick()
 				@webview.command("##>geo:1,1,$cw,$ch,0")
 			}
+			logChange(result) {
+				e.append(result)
+			}
 			onTimer() {
 				if( this.resizeTick) {
 					this.applyResize()
@@ -162,6 +177,10 @@
 				if( @webview.isGlobalTimer() ) return;
 				s=out.timeout()
 				if(s) {
+					if(s.find('##>start:')) {
+						winId = e.windId()
+						@webview.command("##>setParent:${winId}")
+					}
 					e.append(s)
 				}
 			}

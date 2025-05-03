@@ -133,11 +133,15 @@
 		// result = this.ref(cmdResult)
 		result = this.get('cmdResult')
 		print("current node=> ", currentNode)
-		if(currentNode) {
-			fc=currentNode.callback
-			target = currentNode.target not(target) target=this
-			if( typeof(fc,'function')) {
-				call(fc, target, result)
+		if( currentNode) {
+			ftype=typeof(currentNode.callback)
+			if(ftype.eq('funcRef')) {
+				target = currentNode.target not(target) target=this
+				call(currentNode.callback, target, result)
+			} else if(ftype.eq('func')) {
+				fn = currentNode.callback
+				fn.callFuncParams(result)
+				fn.callFuncSrc()
 			}
 			if( this.find(currentNode) ) {
 				this.remove(currentNode, true)

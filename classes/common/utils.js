@@ -72,9 +72,12 @@
 		if(typeof(param,'node')) {
 			param.set('@checkSend', true)
 			fnParent = Cf.funcNode('parent')
+			fn.setParent(fnParent)
+			/*
 			while(key, getFuncKeys(fnParent)) {
 				fn.set(key, fnParent.get(key))
 			}
+			*/
 		}		
 		fn.setPersist()
 		fn.addFuncSrc(fc)
@@ -97,7 +100,10 @@
 		}
 		not(obj) obj = this
 		not(typeof(obj,'node')) return print('setEvent 객체 오류', obj, fc) 
-		not(typeof(target,'node')) {
+		if(typeof(target,'node')) {
+			targetCheck = true
+		} else {
+			targetCheck = false
 			target = obj
 		}
 		fn=obj.get(eventName)
@@ -117,7 +123,11 @@
 			if(fc) print("setEvent 함수타입 오류 (타입:$fcType)")
 			return;
 		}
-		not( typeof(arr,'array') ) {
+		if( typeof(arr,'array') ) {
+			if( targetCheck ) {
+				fn.set('@this', target)
+			}
+		} else {
 			fn=Cf.funcNode(@event.eventChildFunc, target)
 			obj.set(eventName, fn)
 			if(obj!=target) {
