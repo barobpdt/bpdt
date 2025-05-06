@@ -256,7 +256,7 @@
 	}
 	downloadStart() {
 		while(n=0, n<maxDownloadCount, n++ ) { 
-			this.downloadNext(Baro.web("down-$n"));
+			this.downloadNext(Baro.web("${serviceName}-$n"));
 		}
 	}
 	downloadAdd(node) {

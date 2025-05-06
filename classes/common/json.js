@@ -5,6 +5,7 @@
 		if(typeof(val,'string') && val.eq('true','false') ) return true;
 		return false;
 	}
+	
 	listData(node, fields, listCode, skip) {
 		/*
 			checkField => 첫번째 자식노드 필드정보 : 자식노드 각각 필드정보

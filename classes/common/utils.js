@@ -89,6 +89,16 @@
 		arr=fn.get('@params') if(typeof(arr,'array')) arr.remove(true)
 		fn.delete()
 	}
+	setEventClear(obj, eventName) {
+		not(typeof(obj,'node')) return print('setEventClear 객체 오류', obj, eventName)
+		fn = obj.get(eventName)
+		ftype = typeof(fn)
+		not(ftype.eq('func')) return print('setEventClear $eventName 이벤트함수 미정의', obj)
+		arr = fn.eventFuncList()
+		not(typeof(arr,'array')) return print('setEventClear $eventName 이벤트함수 미등록', obj)
+		arr.reuse()
+		return arr;
+	}
 	setEvent() {
 		arr=null
 		obj = null
@@ -119,7 +129,7 @@
 			}
 			return arr;
 		}
-		not( fcType.eq('funcRef') ) {		
+		not( fcType.eq('func','funcRef') ) {		
 			if(fc) print("setEvent 함수타입 오류 (타입:$fcType)")
 			return;
 		}
@@ -139,7 +149,7 @@
 			return print('setEvent 등록오류 ', eventName)
 		}
 		
-		if(arr.find(fc)) {
+		if( arr && arr.find(fc)) {
 			print("@@ setEvent ${obj.tag} ${eventName} 이미 추가된 함수")
 		} else {
 			print("@@ setEvent ${obj.tag} ${eventName} 이벤트함수 추가")

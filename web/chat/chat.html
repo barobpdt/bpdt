@@ -166,6 +166,8 @@
 			ws.connect()
 		})
 		$(document).on('click', e=>{
+			console.log('click e=>',e)
+			if(e.target.id=='message-input') return;
 			ws.sendData('pageActive','',{pageId:'test:webviewLog',logId:'webview-in'})
 		})
 		/*
@@ -211,8 +213,9 @@
 			if(type=='res_login' ) {
 				ws.sendData('req_rommInfo','',{id:'a',passwd:'b'})
 			}
+			
 			if(type=='req_pageActive') {
-				setTimeoug(()=>$('#message-input').focus(), 100)
+				setTimeout(()=>$('#message-input').focus(), 100)
 			}
 		}
 	</script>

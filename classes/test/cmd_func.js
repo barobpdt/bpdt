@@ -96,7 +96,7 @@
 		cmd=fv('#{pythonPath} "#{sourcePath}/webview.py" --log "#{in.member(logFileName)}" --out "#{out.member(logFileName)}" ')
 		c.run(cmd)
 		if(traget ) {
-			setEvent(c,'onLogChange', @webview.logChange, target)
+			setEvent(c,'onLogChange', target.onLogChange)
 			@timer.globalTimer(@webview.commandTimeout, true)
 		}
 		return in;
@@ -119,14 +119,6 @@
 		fn = Cf.rootNode().get('onTimeout') not(typeof(fn,'func')) return false;
 		return arrayFind(fn.eventFuncList(), @webview.commandTimeout);
 	}
-	@webview.logChange(&result ) {
-		if( typeof(this.logChange,'func') ) {
-			this.logChange(result)
-		} else {
-			print("webview 로그변경 logChange 함수 미정의 (대상:$this)")
-			print("결과: $result")
-		}
-	}
 	@webview.logPage() {
 		Cf.sourceApply(#[
 			<widgets>
@@ -142,12 +134,12 @@
 		p=page('test:webviewLog')
 		p[
 			init() {
+				@webview.startWeb(this)
 				@out = logReader('webview-out')
 				@e=widget('e')
 				setEvent(widget('clear'), 'onClick', this.clickClear, this)
 				this.timer(200)
 				this.open()
-				@webview.startWeb(this)
 			}
 			onResize() {
 				not(this.resizeTick) {
@@ -166,7 +158,7 @@
 				this.resizeTick = System.tick()
 				@webview.command("##>geo:1,1,$cw,$ch,0")
 			}
-			logChange(result) {
+			onLogChange(result) {
 				e.append(result)
 			}
 			onTimer() {
@@ -174,12 +166,13 @@
 					this.applyResize()
 					this.resizeTick = 0
 				}
-				if( @webview.isGlobalTimer() ) return;
+				not( @webview.isGlobalTimer() ) return;
 				s=out.timeout()
 				if(s) {
-					if(s.find('##>start:')) {
-						winId = e.windId()
+					if(s.find('##> start:')) {
+						winId = e.winId()
 						@webview.command("##>setParent:${winId}")
+						this.applyResize()
 					}
 					e.append(s)
 				}
@@ -194,6 +187,9 @@
 	
 	@python.pip(command, callback) {
 		c=cmd('pip')
+		/*
+		@python.pip('install PyQtWebEngine', fn)
+		*/
 		pythonPath=conf('python.path')
 		pythonPath.add('/python.exe')
 		pip=fv('#{pythonPath} -m pip #{command}')
@@ -203,7 +199,24 @@
 			c.run(pip)
 		}
 	}
-	
+	@python.run(fileName) {
+		name = left(fileName,'.')
+		root=Cf.rootNode()
+		root.pythonStartTick = System.tick()
+		root.addArray('pythonCommandList').reuse()
+		c=cmd(name)
+		if(c.isStart()) return print("파이션 $name 프로그램이 이미 실행중입니다");
+		pythonPath=conf('python.path')
+		pythonPath.add('/python.exe')
+
+		sourcePath = conf('include.path')
+		sourcePath.add('/classes/pyapps')
+
+		cmd=fv('#{pythonPath} "#{sourcePath}/#{fileName}"')
+		print("@@ python $name start : $cmd")
+		c.run(cmd)
+	}
+
 	@python.startCommand() {
 		root=Cf.rootNode()
 		root.pythonStartTick = System.tick()

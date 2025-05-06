@@ -1,4 +1,26 @@
 <script>
+	@web.addUrl(url, fc, skip) {
+		if(typeof(fc,'string')) {
+			if(fc.find('.')) {
+				fc=call(fc)
+			} else {
+				fnm = Cf.val('webpage.',fc)
+				fc=call(fnm)
+			}
+		}
+		not(typeof(fc,'function')) {
+			if(skip) return;
+			return print("URL 등록오류 : $url 실행 함수 미정의");
+		}
+		map = Baro.was().uriMap()
+		prev = map.get(url)
+		if(typeof(prev,'function')) {
+			if(skip) return;
+			return print("이미등록된 URL 입니다 (경로:$url)");
+		}
+		map.set(url, fc)
+	} 
+
 	@web.mskeCssSvg(path) {
 		not(path) path='C:\WORK\baro\data\solid'
 		Baro.file().list(path, func(info) {
@@ -25,7 +47,114 @@
 		}
 		return rst;
 	}
+	@web.cssImgDownload(cssFileName, savePath, checkReplace) {
+		not(cssFileName) return print("css 파일 미정의")
+		if(cssFileName.find('\')) cssFileName = cssFileName.replace('\','/')
+		not(isFile(cssFileName)) return print("$cssFileName 파일이 없습니다");
+		path = cssFileName.findLast('/').value()
+		not(path) return print("css 이미지 저장경로 미정의")
+		relativePath='', wd=null
+		if(savePath) {
+			webPath = conf('web.rootPath')
+			if(savePath.start(webPath)) { 
+				relativePath = savePath.value(webPath.size())
+			}
+		} else {
+			relativePath = 'icons'
+			savePath = "${path}/icons"
+			not(isFolder(savePath)) Baro.file().mkdir(savePath,true)
+		}
+		if(relativePath) {
+			wd = webDownload('css', savePath, 3)
+		} else {
+			relativePath='icons'
+		}
+		s=fileRead(cssFileName) s.ref()
+		print("cssImgDownload web download => $cssFileName", s.size())
+		ss='', cnt=0
+		while(s.valid()) {
+			left = s.findPos('background-image:')
+			ss.add(left)
+			not(s.ch()) break;
+			ss.add('background-image:')
+			if( s.start('url(',true)) {
+				aa = s.findPos(')')
+				c=aa.ch()
+				if(c.eq()) url = aa.match().trim() else url = aa.trim();
+				name = right(url,'/')
+				if(wd ) wd.downloadAdd(url,name)
+				ss.add('url(',Cf.jsValue("$relativePath/$name"),')')
+				cnt++;
+			}
+		}
+		if(cnt) {
+			if(wd) wd.downloadStart()
+			if(checkReplace) fileWrite(cssFileName,ss)
+		}
+		return cnt;
+	}
+	@web.makeMetaData() {
+		// todo ....
+		sp = System.tick()
+		fo=Baro.file()
+		sa='', sb=''
+		ma='', mb=''
+		fo.list("$path/css/icons", func(info) {
+			while(info.next()) {
+				info.inject(name, fullPath, ext)
+				if(ext.eq('svg')) {
+					ps=sa.size()
+					sa.add(fileRead(fullPath))
+					pe=sa.size()
+					size = ep-sa;
+					ma.add("[$name,$ps,$size]")
+				}
+				if(ext.eq('png')) {
+					ps=sb.size()
+					sb.add(fileRead(fullPath))
+					size = sb.size() - ps;
+					mb.add("[$name,$ps,$size]")
+				}
+			}
+		})
+		fileWrite("$path/css/emoji-svg.data",sa)
+		fileWrite("$path/css/emoji-png.data",sb)
+		fileWrite("$path/css/emoji-svg.meta",ma)
+		fileWrite("$path/css/emoji-png.meta",mb)
+		d=System.tick() - sp;
+		print("x d==$d xx",sa.size(), sb.size())
+	}
+	@web.makeMetaMap(metaName, path) {
+		not(path) path=Cf.val(conf('web.rootPath'),"/css")
+		fileName = "$path/${metaName}.meta"
+		not(isFile(fileName)) return print("$fileName 파일 미정의");
+		s=fileRead(fileName)
+		s.ref()
+		map = @web.metaMap(metaName)
+		if(map) return map;
+		map = _node('metaNodes').addNode(metaName)
+		map.set("dataPath", "$path/${metaName}.data")
+		map.set("dataSource", fileRead("$path/${metaName}.data"))
+		while(s.valid()) {
+			ss=s.match() if(typeof(ss,'bool')) break;
+			ss.split(',').inject(name,offset,size)
+			map.addNode(name).with(name,offset,size)
+		}
+		print("@@ make metaMap >> ", metaName, map.childCount()) 
+		return map
+	}
+	@web.metaMap(metaName) { return _node('metaNodes').get(metaName) }
 	
+	@web.makeMetaBuffer(metaName, fileName) {
+		root = Cf.rootNode()
+		metas = root.addNode('_node.metaNodes')
+		map = metas.get(metaName) not(typeof(map,'node')) return print("$metaName 메타정보 미설정")
+		cur = map.get(fileName) not(typeof(cur,'node')) return print("$metaName $fileName 메타 파일정보 찾기오류")
+		buf = map.ref('dataSource')
+		cur.inject(offset, size)
+		end = offset + size;
+		return buf.value(offset,end);
+	}	
 	@web.init() {
 		map = Baro.was().uriMap()
 		map.set('/test', @web.test)
@@ -153,9 +282,10 @@
 					eval(src, fn, param)
 				} else if(type.eq('set')) {
 					param.parseJson(src)
+				} else if(type.eq('print')) {
+					result.add(@web.parseTemplate(src,fn,param))
 				} else {
 					param.set(type, @web.parseTemplate(src,fn,param))
-					result.add(param.get(type))
 				}
 			}
 			c=s.ch()

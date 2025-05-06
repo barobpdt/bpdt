@@ -41,6 +41,7 @@ class WebView(QWebEngineView):
 			self.timer.start()
 			self.logCount = 0
 			self.nextCommand = ''
+			self.parent_hwnd = None
 			self.loadUrl('http://localhost/chat/chat.html')
 			# self.setBackgroundColor(QtCore.Qt.transparent)
 			self.setAcceptDrops(True)
@@ -134,6 +135,11 @@ class WebView(QWebEngineView):
 					sys.exit()
 				elif ftype=='echo':
 					self.logAppend(f"echo = {params}")
+				elif ftype=='pageActive':
+					try:
+						win32gui.SetForegroundWindow(self.parent_hwnd)
+					except:
+						self.logAppend(f"pageActive:error {self.parent_hwnd}")
 				elif ftype=='hide':
 					self.hide()
 				elif ftype=='show': 
@@ -141,11 +147,17 @@ class WebView(QWebEngineView):
 				elif ftype=='url':
 					self.loadUrl(val.strip())
 				elif ftype=='setParent':
-					self.setWindowFlag(Qt.WindowStaysOnTopHint)
-					win32gui.SetParent(self.winId(), int(params[0]))
-					self.setWindowFlag(Qt.FramelessWindowHint)
-					self.setAttribute(Qt.WA_TranslucentBackground)
-					self.show()
+					try:
+						parent = int(params[0])
+						child_hwnd = self.winId()
+						win32gui.SetParent(child_hwnd, parent)
+						self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+						self.show()
+						# win32gui.ShowWindow(child_hwnd, win32con.SW_SHOW)
+						win32gui.SetForegroundWindow(parent)
+						self.parent_hwnd = parent
+					except Exception as ex:
+						self.logAppend(f"setParent:{ex}")
 				elif ftype=='top':
 					self.setWindowFlags(Qt.WindowStaysOnTopHint|Qt.SplashScreen)
 					self.show()

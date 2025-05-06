@@ -3,9 +3,9 @@
 	title:아이콘 선택,
 	margin:16, minWidth:60, itemtag:svg
 ]}
-#{eval[
+#{source[
 	db=Baro.db('config')
-	node=db.fetchAll("select cd, data from conf_info where grp='svg' limit 0,10")
+	node=db.fetchAll("select cd, data from conf_info where grp='svg' limit 0,100")
 	while(cur, node) {
 		cur.inject(cd, data) data.ref()
 		cur.name = cd
@@ -19,10 +19,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>#{title}</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/emoji-api.css">
+	<script src="/js/jquery.js"></script>
     <!-- Ace Editor CDN -->
 	<style>
-	#{css[
+	#{print[
 		.icon-container {
             width: 100%;
             max-width: 1200px;
@@ -58,26 +60,37 @@
 			overflow: hidden;
 		}
 	]}
+	
+	.ui-icon {
+		background-size: cover;
+		background-repeat: no-repeat; 
+		width: 70px;
+		height: 70px;
+	}
 	</style>
 </head>
 <body>
-#{icons? <div>#{icons}</div> }
-#{container[
-	<div class="icon-container">
-		#{each(item, icons) 
-			<div class="icon-item">
-				<svg #{item.props}><path fill="#ccc" d="#{item.svg}"/></svg>
-				<div class="icon-name">#{item.name}</div>
-			</div>
-		}
-	</div>
-]}
-	
-	
-#{script?
+	<div class="icon-container emoji-box"></div>
+	<div class="icon-container svg-box"></div>
+						
 	<script>
-		#{script}
+		const setEmojIcon = list => {
+			const el = $('.icon-container.emoji-box')
+			list.forEach((cur,idx)=>{
+				if(idx<200) $(`<div class="ui-icon ${cur.name}">${cur.name}</div>`).appendTo(el)
+			})
+		}
+		const setSvgIcon = list => list.forEach(item => $(`
+<div class="icon-item">
+	<svg ${item.props}><path fill="#ccc" d="${item.svg}"/></svg>
+	<div class="icon-name">${item.name}</div>
+</div>`).appendTo($('.icon-container.svg-box'))
+		)
+		$(document).ready(()=>{
+			fetch('/api/icons/emojiNames').then(res=>res.json()).then(data=>setEmojIcon(data.children))
+			fetch('/api/icons/iconList/0/50').then(res=>res.json()).then(data=>setSvgIcon(data.children))
+		})
 	</script>
-}	
+
 </body>
 </html> 

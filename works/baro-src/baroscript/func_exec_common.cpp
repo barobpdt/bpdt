@@ -712,10 +712,11 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
             } else if( ccmp(fnm,"addFuncSrc") ) {
                 if( cnt==0 ) return true;
                 XFuncSrc* fsrc=NULL;
+                XFuncNode* fnDest= NULL;
                 sv=arrs->get(0);
                 if(SVCHK('f',0)) {
-                    XFuncNode* fnDest=(XFuncNode*)SVO;
-                    fsrc=fnDest->getFuncSrc();
+                    fnDest=(XFuncNode*)SVO;
+                    // fsrc=fnDest->getFuncSrc();
                 } else if(SVCHK('f',1)) {
                     fsrc=(XFuncSrc*)SVO;
                 }
@@ -734,8 +735,7 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                         for(int n=0; n<size; n++) {
                             sv=list->get(n);
                             if(SVCHK('f',1)) {
-                                XFuncSrc* fsrcCur=(XFuncSrc*)SVO;
-                                if(fsrcCur==fsrc) {
+                                if(fsrc==(XFuncSrc*)SVO) {
                                     idx=n;
                                     break;
                                 }
@@ -745,6 +745,23 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                             list->add()->setVar('f',1,(LPVOID)fsrc);
                         } else {
                             qDebug("addFuncSrc error [already add function]");
+                        }
+                    }
+                    if(fnDest) {
+                        int size=list->size(), idx=-1;
+                        for(int n=0; n<size; n++) {
+                            sv=list->get(n);
+                            if(SVCHK('f',1)) {
+                                if(fnDest==(XFuncNode*)SVO) {
+                                    idx=n;
+                                    break;
+                                }
+                            }
+                        }
+                        if(idx==-1) {
+                            list->add()->setVar('f',0,(LPVOID)fnDest);
+                        } else {
+                            qDebug("addFuncSrc error [already add function callback]");
                         }
                     }
                     rst->setVar('a',0,(LPVOID)list);
@@ -792,7 +809,29 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                     // qDebug("@@ callFuncSrc size:%d",size);
                     for(int n=0; n<size; n++) {
                         sv=list->get(n);
-                        if(SVCHK('f',1)) {
+                        if(SVCHK('f',0)) {
+                            XFuncNode* fnThis = (XFuncNode*)SVO;
+                            XFuncSrc* fsrc = fnThis->getFuncSrc();
+                            sv=fnCur->gv("@params");
+                            if(SVCHK('a',0)) {
+                                XListArr* params=(XListArr*)SVO;
+                                XParseVar pv(&(fsrc->xparam));
+                                for(int p=0; pv.valid() && p<256; p++ ) {
+                                    LPCC code = pv.findEnd(",").v();
+                                    if( slen(code)==0 ) break;
+                                    fnThis->GetVar(code)->reuse()->add(params->get(p));
+                                }
+                            }
+                            if( fnThis->isNodeFlag(FLAG_CALL) ) {
+                                // qDebug("==> funcNode callFuncSrc already called");
+                                fnThis->clearNodeFlag(FLAG_CALL);
+                            }
+                            fnThis->call(NULL, rst->reuse());
+                            if( checkFuncObject(rst,'3',1) ||
+                                ccmp("ignore",rst->get()) ) {
+                                break;
+                            }
+                        } else if(SVCHK('f',1)) {
                             XFuncSrc* fsrc=(XFuncSrc*)SVO;
                             if(fsrcCur && fsrcCur!=fsrc ) {
                                 continue;
@@ -831,12 +870,10 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
             } else if( ccmp(fnm,"removeFuncSrc") ) {
                 if( cnt==0 ) return true;
                 XFuncSrc* fsrc=NULL;
+                XFuncNode* fnDest=NULL;
                 sv=arrs->get(0);
                 if(SVCHK('f',0)) {
-                    XFuncNode* fnDest=(XFuncNode*)SVO;
-                    if( fnDest->isNodeFlag(FLAG_PERSIST)) {
-                        fsrc=fnDest->getFuncSrc();
-                    }
+                    fnDest=(XFuncNode*)SVO;
                 } else if(SVCHK('f',1)) {
                     fsrc=(XFuncSrc*)SVO;
                 }
@@ -847,8 +884,12 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                     for(int n=0; n<size; n++) {
                         sv=list->get(n);
                         if(SVCHK('f',1)) {
-                            XFuncSrc* fsrcCur=(XFuncSrc*)SVO;
-                            if(fsrc==fsrcCur) {
+                            if(fsrc && fsrc==(XFuncSrc*)SVO ) {
+                                idx=n;
+                                break;
+                            }
+                        } else if(SVCHK('f',0)) {
+                            if(fnDest && fnDest==(XFuncNode*)SVO ) {
                                 idx=n;
                                 break;
                             }
@@ -870,7 +911,6 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                     rst->setVar('3',0);
                 }
             } else if( ccmp(fnm,"setEvent") ) {
-                 NULL;
                 bool checkSet = true;
                 sv= arrs ? arrs->get(0): NULL;
                 if(sv==NULL ) {
@@ -999,8 +1039,18 @@ bool execObjectFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* var, StrVar* rs
                     }
                 }
             } else if( ccmp(fnm,"parentFunc") ) {
-                XFuncNode* fnParent=fnCur->xparent;
-                if( fnParent ) rst->setVar('f', 0, (LPVOID)fnParent );
+                if( arrs ) {
+                    sv= arrs->get(0);
+                    if(SVCHK('f',0) ) {
+                        XFuncNode* fnParent = (XFuncNode*)SVO;
+                        if( fnParent!=fnCur ) {
+                            fnCur->xparent = fnParent;
+                        }
+                    }
+                } else {
+                    XFuncNode* fnParent=fnCur->xparent;
+                    if( fnParent ) rst->setVar('f', 0, (LPVOID)fnParent );
+                }
             } else {
                 qDebug("#0#[%s] not valid (name:%s Please funcNode inline function check)\n", getBaseFuncName(fn), fnm);
                 rtn=false;
@@ -1804,7 +1854,6 @@ bool execArrayFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* sv, StrVar* rst)
         }
         // version 1.0.3
         int rtn=0;
-        sv=arrs->get(0);
         if( isNumberVar(sv) ) {
             int sp=toInteger(sv), ep=-1;
             sv=arrs->get(1);
@@ -4481,9 +4530,14 @@ bool execConfigFunc(XFunc* fc, PARR arrs, XFuncNode* fn, StrVar* rst) {
             }
             if(SVCHK('n',0)) {
                 thisNode = (TreeNode*)SVO;
-                sv=thisNode->gv("onInit");
+                sv=arrs->get(2);
                 if( SVCHK('f',0) ) {
                     fnInit=(XFuncNode*)SVO;
+                } else {
+                    sv=thisNode->gv("onInit");
+                    if( SVCHK('f',0) ) {
+                        fnInit=(XFuncNode*)SVO;
+                    }
                 }
             }
             XFuncNode* fnCur=gfns.getFuncNode(fsrc->xfunc,fnInit);

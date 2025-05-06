@@ -138,7 +138,7 @@
 			page = page(pageId)
 			if( typeof(page,'widget')) {
 				not(logId ) logId='webview-in'
-				not(page.is('active')) logWriter(logId).write("##>activePage:")
+				not(page.is('active')) logWriter(logId).write("##>pageActive:")
 				this.sendOk(requestType, resultContentType, data)
 			}
 		}

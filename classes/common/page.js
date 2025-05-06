@@ -39,7 +39,7 @@ positionLoad(w,h) {
 	s=conf("pagePosition.${code}")
 	if(s) {
 		split(s).inject(x,y,w,h)
-		rc=rc(x,y,w,h)
+		rc=rc(x,y+30,w,h)
 		// 이전 저장 위치가 시스템 스크린 영역에 포함되는지 체크
 		while(n=0,System.info("screenCount")) {
 			rcScreen=System.info("screenRect",n);

@@ -1747,7 +1747,7 @@ bool setModifyClassFunc(TreeNode* node, StrVar* sv, int sp, int ep, XFuncNode* f
                     }
                     XFuncNode* fnCur=gfns.getFuncNode(fsrc->xfunc, fnParent);
                     fnCur->GetVar("@this")->setVar('n',0,(LPVOID)target);
-                    fnCur->setNode(FLAG_PERSIST);
+                    fnCur->setNodeFlag(FLAG_PERSIST);
                     target->GetVar(funcNm)->setVar('f',0,(LPVOID)fnCur );
                     if( ccmp(funcNm,"onInit") ) {
                         fnInit=fnCur;

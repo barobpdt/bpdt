@@ -434,7 +434,7 @@ addModule(obj, moduleName) {
 		args(moduleName)
 	}
 	if( moduleName.ch('@')) moduleName = moduleName.value(1)
-	print("addModule => ", moduleName, obj.id)
+	print("addModule => ", moduleName)
 	if( findObjectArrayVar(obj,'moduleList',moduleName) ) return obj;
 	// ex) editor#myedit
 	subName = ''

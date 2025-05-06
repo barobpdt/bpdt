@@ -1,6 +1,8 @@
 <script>
 	apiController(req, param, service, uri) {
-		was=was()
+		root = Cf.rootNode()
+		was=root.addNode("_node.was.object")
+		param.set('@uri', uri)
 		bound=req.getValue('boundary');
 		buffer=null;
 		if(bound) {
@@ -18,17 +20,50 @@
 				}
 			}
 		}
-		param.var(uri, uri);
-		Cf.error(true);
-		result=was.service(service, uri, param, buffer);
-		not(result) result=param;
-		err=Cf.error();
-		if(err) {
-			if(typeof(result,'node')) result.error=err;
+		data=''
+		uri=param.ref('@uri')
+		if(uri.find('/') ) {
+			name=uri.findPos('/').trim();
+			if(was.get("@api/$service/$name")) {
+				objectId = "$service/$name"
+				fileName = "api/$service/$name" 
+				name = uri.findPos('/').trim()
+			} else {
+				objectId = service
+				fileName = "api/$service"
+			}
+			data=uri.trim()
+		} else {
+			if(was.get("@api/$service")) {
+				objectId = service
+				fileName = "api/$service"
+			} else {
+				objectId = 'api'
+				fileName = 'api/api'
+			}
+			name=uri.trim()
+		} 
+		
+		serviceNode=Cf.getObject("api", objectId, true);
+		not( serviceNode.get('lastModifyTm') ) {
+			fo = Baro.file('api')
+			path = conf('web.rootPath')
+			fullPath="${path}/${fileName}.js"
+			print("service:$service [serviceNode=$serviceNode fullPath == $fullPath]")
+			serviceNode.set('lastModifyTm', fo.modifyDate(fullPath))
+			was.addServiceFunc(serviceNode, fileRead(fullPath))
 		}
+		Cf.error(true)
+		fc=serviceNode.get(name)
+		if(typeof(fc,'func')) {
+			result = fc(req, param, data, buffer)
+			not(result) result = param
+		} else {
+			result = "$objectId 서비스에 $name 함수미정의"
+		}
+		if( param.var(sendCheck)) return;
 		if( typeof(result,'node')) {
-			if(result.var(checkSend)) return;
-			req.send(json().listData(result) );
+			req.send(jsonData(result) );
 		} else {
 			req.send(result);
 		} 
@@ -41,6 +76,58 @@
 			req.send("webFileFilter page:${this}\nREQUEST: ${req.get()}\nPARAM: ${param}");
 		}
 		return true;
+	}
+	jsonData(node, fields, listCode) {
+		fa=null
+		not(listCode ) listCode='children'
+		not(fields) fields=node.var(fields)
+		if(fields) {
+			if( typeof(fields,'array') ) {
+				fa=fields;
+			} else {
+				fa=fields.split(',');
+			}
+		}
+		not(typeof(fa,'array')) {
+			cur = node.child(0)
+			if(cur) {
+				fa=_arr()
+				while(key, cur.keys()) {
+					if(key.ch('@')) continue;
+					fa.add(key)
+				}
+			}
+		}
+		num=0, rst='{'
+		while( key, node.keys() ) {
+			if( key.ch('@') ) continue;
+			val=node.get(key);
+			if(typeof(val,'node','array')) continue;
+			if( typeof(val,'num') || val.eq('true','false') ) {
+				rst.add(Cf.jsValue(key), ':', val )
+			} else {
+				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
+			}
+			num++;
+		}
+		if(num) rst.add(',')
+		rst.add(' "',listCode,'":[')
+		while( cur, node, idx ) {
+			if( idx ) rst.add(',')
+			rst.add("{")
+			while( key, fa, col ) {
+				if( col ) rst.add(",")
+				val = cur.get(key)
+				if( typeof(val,'num') || val.eq('true','false') ) {
+					rst.add(Cf.jsValue(key), ':', val )
+				} else {
+					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
+				}
+			}
+			rst.add("}")
+		}
+		rst.add("]}")
+		return rst;
 	}
 	
 </script>
@@ -84,14 +171,14 @@
 		return node;
 	}
 	service(service, &uri, param, buffer) {
-		was = was()		
+		path=conf('web.rootPath')
 		fo=Baro.file('api');
 		vars=null;
 		if(uri.find('/') ) {
 			objectId=service;
 			name=uri.findPos('/').trim();
 			fileName="api/${service}/${name}"
-			if(fo.isFile(fileName)) {
+			if(fo.isFile("${path}/${fileName}.js")) {
 				objectId="${service}/${name}"
 				name=uri.findPos('/').trim()
 			} else {
@@ -99,16 +186,20 @@
 			}
 			vars=uri.trim()
 		} else {
-			objectId='api'
-			fileName='api/api'
+			fileName="api/${service}"
+			if(fo.isFile("${path}/${fileName}.js")) {
+				objectId = service
+			} else {
+				objectId='api'
+				fileName='api/api'
+			}
 			name=uri.trim()
-		}
-		ext = 'js'
-		path=was.webRootPath()
-		fullPath="${path}/${fileName}.${ext}"
-		serviceNode=Cf.getObject("api", objectId, true);	
+		} 
+		fullPath="${path}/${fileName}.js"
+		serviceNode=Cf.getObject("api", objectId, true);
 		modifyTm=fo.modifyDate(fullPath);
-		not(modifyTm.eq(serviceNode.lastModifyTm)) { 
+		not(modifyTm.eq(serviceNode.lastModifyTm)) {
+			was = was()
 			not(serviceNode.var(tag)) serviceNode.var(tag, objectId)
 			was.addServiceFunc(serviceNode, fileRead(fullPath));
 			serviceNode.lastModifyTm=modifyTm;
@@ -117,7 +208,8 @@
 		if(typeof(fc,'func')) {
 			return fc(req, param, vars, buffer)
 		} else {
-			param.error="$fullPath 파일에 $name 함수미정의")
+			// param.error="$fullPath 파일에 $name 함수미정의"
+			print("$fullPath 파일에 $name 함수미정의")
 		}
 		return param;
 	}
