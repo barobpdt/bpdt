@@ -1,19 +1,28 @@
 <api>
-	emoji(req, param, &data) {
-		root = Cf.rootNode()
+	emoji(req, param, &data) { 		
 		name = data.findPos('/').trim()
-		ext=name.findLast('.').right().lower()
+		not(name) {
+			ss = param.ref('@uri')
+			ss.findPos('/')
+			name = ss.findPos('/').trim()
+			print("not name $name ======> $param")
+		}
+		ext = name.findLast('.').right().lower()
+		not( ext ) {
+			print("$name ext =>", ext, param)
+		}
 		metaName = "emoji-$ext"
-		metaNodes = root.get('_node.metaNodes')
-		map=metaNodes.get(metaName)
-		not(map) return print("$metaName 메타정보 미정의 (name:$name, $ext)", metaNodes);
-		mapTypes = root.get('@contentType')
-		type=mapTypes.get(ext)
+		root = Cf.rootNode()
+		metaNodes = root.val('_node.metaNodes')
+		mapTypes = root.val('@contentType')
+		map=metaNodes.val(metaName)
+		not(map) return print("$metaName 메타정보 미정의 (name:$name, $ext)", metaNodes, param);
+		type=mapTypes.val(ext)
 		if(type) {
 			req.setValue('@checkBlob', true)
 			req.setValue('@contentType', type)
 		}
-		cur = map.get(name) not(typeof(cur,'node')) return print("$metaName $name 메타 파일정보 찾기오류")
+		cur = map.val(name) not(typeof(cur,'node')) return print("$metaName $name 메타 파일정보 찾기오류")
 		cur.inject(offset, size)
 		end = offset + size;
 		buf = map.ref('dataSource')

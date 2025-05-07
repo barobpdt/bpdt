@@ -1,7 +1,7 @@
 <script>
 	apiController(req, param, service, uri) {
 		root = Cf.rootNode()
-		was=root.addNode("_node.was.object")
+		was=root.val("_node.was.object")
 		param.set('@uri', uri)
 		bound=req.getValue('boundary');
 		buffer=null;
@@ -22,7 +22,7 @@
 		}
 		data=''
 		uri=param.ref('@uri')
-		if(uri.find('/') ) {
+		if( uri.find('/') ) {
 			name=uri.findPos('/').trim();
 			if(was.get("@api/$service/$name")) {
 				objectId = "$service/$name"
@@ -42,19 +42,17 @@
 				fileName = 'api/api'
 			}
 			name=uri.trim()
-		} 
-		
-		serviceNode=Cf.getObject("api", objectId, true);
-		not( serviceNode.get('lastModifyTm') ) {
-			fo = Baro.file('api')
+		}
+		serviceNode=Cf.getObject("api", objectId, true)
+		not( serviceNode.isValid('lastModifyTm') ) { 
 			path = conf('web.rootPath')
 			fullPath="${path}/${fileName}.js"
 			print("service:$service [serviceNode=$serviceNode fullPath == $fullPath]")
-			serviceNode.set('lastModifyTm', fo.modifyDate(fullPath))
+			serviceNode.set('lastModifyTm', Baro.file('api').modifyDate(fullPath))
 			was.addServiceFunc(serviceNode, fileRead(fullPath))
 		}
 		Cf.error(true)
-		fc=serviceNode.get(name)
+		fc=serviceNode.val(name)
 		if(typeof(fc,'func')) {
 			result = fc(req, param, data, buffer)
 			not(result) result = param
@@ -142,6 +140,7 @@
 	start(port, path) {
 		not(port) port=80;
 		not(path) path=Cf.val(System.path(),"/web");
+		not(conf('web.rootPath')) conf('web.rootPath',path,true)
 		was.start(port,path);
 		@status = 'start'
 		return was;

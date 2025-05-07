@@ -169,35 +169,39 @@
 	workerId() {
 		return worker.id;
 	}
-	jobType() {
-		asize=args().size() not(asize) return this.member(type)
-		args(type, callback)
-		if(typeof(type,'func')) {
-			fcStart=this.jobCallback(type)
-			type = 'jobUser'
-		} else {
-			not(type) type = 'jobDefault'
-			fcStart = this.jobCallback(type)	
-			if(typeof(callback,'func')) worker.jobResultFunc = callback
-		}
-		@type = type
-		not(typeof(fcStart,'func')) return print("jobType 작업시작 함수 미정의", type)
-		worker.module = this
-		worker.start(fcStart)
+	jobType(type) {
+		not(args().size()) return this.member(type)
+		this.member(type, type)
 	}
-	
-	jobStart() {
+	jobCallback(fc) {
+		not(typeof(fc,'func')) fc= this.jobDefault
+		this.jobType('jobFunc')
+		setEvent(worker,'@callback', fc, this)
+	}
+	jobStart(fc) {
+		if( typeof(fc,'func') ) {
+			worker.stop()
+			if( worker.isValid('@callback')) {
+				arr = worker.val('@callback').eventFuncList()
+				if(arr.find(fc)) {
+					print('이미 추가된 작업함수입니다')
+				} else {
+					arr.add(fc)
+				}
+			} else {
+				this.jobCallback(fc)
+			}
+		}
 		if(worker.is()) {
 			print("작업이 이미 시작중입니다")
 			return;
 		}
-		worker.start()
-	}
+		worker.start(this)
+	}	
 	jobStop() {
 		worker.stope()
 	}
 	jobAdd(job) {
-		this.current
 		worker.push(job)
 	}
 	jobList() {
@@ -206,41 +210,23 @@
 	jobCount() {
 		return worker.list().size()
 	}
-	
-	jobCallback(fc) {
-		not(typeof(fc,'func')) fc=this.get(fc)
-		not(typeof(fc,'func')) return print("jobCallback 함수 등록 오류 (콜백함수 미정의)")
-		worker.callback(fc)
-		return fc;
-	}
-	jobWeb(node) {
-		not(node) return;
-		// node => url, postData, header 설정
-		callback = this.jobResultFunc
-		if( node.urlTemplate ) {
-			node.url = format(node.urlTemplate, node)
-		}
-		not(callback) return print("job 웹작업 callback 함수 미정의 (노드:$node)")
-		not(node.url) return print("job 웹작업 URL 미정의 (노드:$node)") 
-		web = web("worker_${this.id}", callback)
-		if(node.postData) {
-			web.setData(node.postData)
-		}
-		if(typeof(node.header,'node')) {
-			header = node.header
-			while(key, header.keys() ) {
-				web.setHeader(key, header.get(key))
-			}
-		}
-		web.currentWorker = this
-		web.call(node.url)
-	}
 	jobDefault(job) {
 		name = worker.id
 		not(job) {
-			print("worker $name 일괄 작업 종료")
+			print("worker $name 작업내용 모두처리")
 		}
-		print("worker $name 시작 [작업 노드:$job]")
+		print("worker $name 시작 [작업 타입: ${job.type}]")
+	}
+	removeFunc(fc) {
+		not(worker.is()) {
+			print("작업 시작중이 아닙니다")
+			return;
+		}
+		if( worker.isValid('@callback')) {
+			worker.stop()
+			worker.val('@callback').removeFuncSrc(fc)
+		}
+		this.jobStart()
 	}
 </script>
 
