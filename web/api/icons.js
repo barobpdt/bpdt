@@ -1,16 +1,7 @@
 <api>
 	emoji(req, param, &data) { 		
 		name = data.findPos('/').trim()
-		not(name) {
-			ss = param.ref('@uri')
-			ss.findPos('/')
-			name = ss.findPos('/').trim()
-			print("not name $name ======> $param")
-		}
 		ext = name.findLast('.').right().lower()
-		not( ext ) {
-			print("$name ext =>", ext, param)
-		}
 		metaName = "emoji-$ext"
 		root = Cf.rootNode()
 		metaNodes = root.val('_node.metaNodes')
@@ -53,6 +44,7 @@
 	}
 	
 	emojiNames(req, param) {
+		print("emoijNames => $param")
 		map = _node('emoji.names') if(map.childCount()) return map;		
 		path = conf('web.rootPath')
 		css = "$path/css/emoji-api.css"

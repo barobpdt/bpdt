@@ -5,6 +5,7 @@
 
 FMutex	gMutexPixMap;
 FMutex	gMutexStrVar;
+FMutex	gMutexTreeNode;
 
 StrVar gGlobalVar;
 WHash<QPixmap*> gPixmaps;
@@ -115,16 +116,15 @@ TreeNode* getTreeNode(LPCC code, LPCC name, bool newNode ) {
         name="main";
     }
     LPCC nodeId=FMT("%s.%s", code, name);
+	gMutexTreeNode.EnterMutex();
     TreeNode* node=gTreeNodeMap.getNode(nodeId);
-    if( newNode==false ) {
-        if( node==NULL ) return NULL;
-    }
-    if( node==NULL ) {
+    if( newNode && node==NULL ) {
         qDebug("#0#get object name %s\n", nodeId);
         node=gTreeNodeMap.setNode(nodeId);
         node->setNodeFlag(FLAG_PERSIST);
         node->xparent=NULL;
     }
+	gMutexTreeNode.LeaveMutex();
     return node;
 }
 

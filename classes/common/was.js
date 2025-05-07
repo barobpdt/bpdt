@@ -24,7 +24,7 @@
 		uri=param.ref('@uri')
 		if( uri.find('/') ) {
 			name=uri.findPos('/').trim();
-			if(was.get("@api/$service/$name")) {
+			if(was.val("@api/$service/$name")) {
 				objectId = "$service/$name"
 				fileName = "api/$service/$name" 
 				name = uri.findPos('/').trim()
@@ -34,7 +34,7 @@
 			}
 			data=uri.trim()
 		} else {
-			if(was.get("@api/$service")) {
+			if(was.val("@api/$service")) {
 				objectId = service
 				fileName = "api/$service"
 			} else {
@@ -48,7 +48,8 @@
 			path = conf('web.rootPath')
 			fullPath="${path}/${fileName}.js"
 			print("service:$service [serviceNode=$serviceNode fullPath == $fullPath]")
-			serviceNode.set('lastModifyTm', Baro.file('api').modifyDate(fullPath))
+			modifyTm = Baro.file('api').modifyDate(fullPath)
+			serviceNode.set('lastModifyTm', modifyTm)
 			was.addServiceFunc(serviceNode, fileRead(fullPath))
 		}
 		Cf.error(true)

@@ -3,6 +3,7 @@
 #include "../fobject/FMutex.h"
 
 FMutex gMutexStrVarGrow;
+FMutex gMutexStrVarAdd;
 
 ConstBuffer		gBuf;
 
@@ -140,8 +141,8 @@ bool ccmp(LPCC code, LPCC data ) {
 
 
 ConstBuffer::ConstBuffer(int s): buffer(NULL), position(NULL) {
-    if( s==0x2FFF ) s=0x2FFFF;
-    size=s;
+    // if( s==0x2FFF ) s=0x2FFFF;
+    size=0xFFFF;
     create();
 }
 
@@ -162,6 +163,7 @@ char* ConstBuffer::get()
 }
 void ConstBuffer::reuse()
 {
+    qDebug("@@ const buffer reuse :%d", this->length());
     position = buffer;
 }
 void ConstBuffer::create()
@@ -171,35 +173,42 @@ void ConstBuffer::create()
 }
 
 char* ConstBuffer::add(LPCC s, int sz) {
-    if( s==NULL || sz>=size ) return NULL;
+    if( s==NULL || sz>=(int)size ) return NULL;
+    gMutexStrVarAdd.EnterMutex();
     if( sz==0 ) sz = strlen(s);
-    if( length()+sz >= size ) reuse();
+    if( length()+sz >=(int)size ) reuse();
     char* str = position;
     memcpy(position,s,sz);
     position+=sz;
     *position++ = 0;
+    gMutexStrVarAdd.LeaveMutex();
     return str;
 }
 char* ConstBuffer::alloc(int sz)
 {
+    gMutexStrVarAdd.EnterMutex();
     int remain = size - (position-buffer);
     if( remain < sz )
         reuse();
+    gMutexStrVarAdd.LeaveMutex();
     return position;
 }
 
 char* ConstBuffer::get(int sz)
 {
+    gMutexStrVarAdd.EnterMutex();
     int remain = size - (position-buffer);
     if( remain < sz )
         reuse();
     char* str = position;
     position+=sz;
     *position++ = 0;
+    gMutexStrVarAdd.LeaveMutex();
     return str;
 }
 
 char* ConstBuffer::fmt(const char * fm, ... ) {
+    gMutexStrVarAdd.EnterMutex();
     int remain = size - (position-buffer);
     if( remain < 256 )
         reuse();
@@ -210,6 +219,7 @@ char* ConstBuffer::fmt(const char * fm, ... ) {
     va_end(ap);
     position += strlen(buf);
     *position++ = 0;
+    gMutexStrVarAdd.LeaveMutex();
     return buf;
 }
 
