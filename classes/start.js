@@ -10,13 +10,13 @@ _node(code, reuse) {
 	not( code ) {
 		return Cf.node();
 	}
-	node=Cf.rootNode().addNode("_node.$code")
+	node=Cf.rootNode("_node.$code", true)
 	not(node.var(tag)) node.var(tag, code)
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
 global(code) {
-	root=Cf.rootNode().addNode("@global");
+	root=Cf.rootNode("@global", true)
 	result = ''
 	switch(args().size()) {
 	case 0:
@@ -37,7 +37,7 @@ global(code) {
 	return result;
 }
 object(code, newCheck) {
-	not( code.find('.') ) return Cf.rootNode().addNode(code);
+	not( code.find('.') ) return Cf.rootNode(code,true)
 	code.split('.').inject(a,b);
 	return Cf.getObject(a,b,true);
 } 

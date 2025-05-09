@@ -3,6 +3,7 @@
 		@web = Baro.web(name)
 		@finishResultFunc = fc
 		setCallback(web, this.webProc, this)
+		setEvent('onResult', this.webResult)
 	}
 	call(url) {
 		this.set('resultData','')
@@ -19,10 +20,15 @@
 	webProc(type, data ) {
 		if(type.eq('read')) return this.appendText('resultData', data)
 		if(type.eq('finish')) {
-			fc = this.member(finishResultFunc)
-			if( fc ) call(fc, this, this.ref('resultData'))
+			fn = this.val('onResult')
+			fn.callFuncParams(this.ref('resultData'))
+			fn.callFuncSrc()
 		}
 	} 
+	webResult(data) {
+		ty = typeof(data)  
+		fileWrite("c:/temp/web_${System.localtime()}.html")
+	}
 </script>
 
 <script module="@cmd">
@@ -240,6 +246,9 @@
 		@savePath = savePath
 		@maxDownloadCount = count
 	}
+	setHeader(header) {
+		this.val('@header', header)
+	}
 	downloadStart() {
 		while(n=0, n<maxDownloadCount, n++ ) { 
 			this.downloadNext(Baro.web("${serviceName}-$n"));
@@ -288,6 +297,16 @@
 		not(url) return print("@@ downloadFile URL 미정의")
 		not(fileName) return print("@@ downloadFile 파일명 미정의")
 		not(savePath) return print("@@ downloadFile 파일경로 미정의")
+		s=this.ref('@header')
+		if(s) {
+			while(s.valid()) {
+				line = s.findPos("\n")
+				not(line.ch()) continue;
+				k=line.findPos(":").trim()
+				v=line.trim()
+				web.header(k,v)
+			}
+		}
 		cur.downState=1
 		web.currentNode=cur;
 		web.download(cur.url, "$savePath/${fileName}", "GET", this, this.downloadProcess );

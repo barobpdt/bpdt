@@ -1,0 +1,742 @@
+#{chat-container[
+	<div class="chat-header"></div>
+	<div class="chat-messages"></div>
+	<div class="chat-input-container">
+		<div class="chat-toolbar"></div>	
+		<div class="emoji-picker"></div>	
+		<div class="chat-input"></div>	
+		<div class="file-preview"></div>
+	</div>
+]}
+
+#{chat-header[
+	<h1>채팅 메시지</h1>
+	<div class="user-info">
+		<span class="user-name">#{userName:사용자}</span>
+		<span class="status online"></span>
+	</div>
+]}
+
+#{chat-recv[
+	<div class="message received">
+		<div class="message-content">
+			<p>#{msg}</p>
+			<span class="message-time">#{time}</span>
+		</div>
+	</div>
+]}
+
+#{chat-send[
+	<div class="message sent">
+		<div class="message-content">
+			<p>#{msg}</p>
+			<span class="message-time">#{time}</span>
+		</div>
+	</div>
+]}
+
+#{chat-toolbar[
+	<button id="emoji-button" class="toolbar-button">
+		<i class="far fa-smile"></i>
+	</button>
+	<label class="toolbar-button upload-clip">
+		<i class="fas fa-paperclip"></i>
+	</label>
+]}
+
+#{chat-emoji[
+	<div class="emoji-category">
+		<h4>표정</h4>
+		<div class="emoji-list">
+			<span class="emoji" data-emoji="😀">😀</span>
+		</div>
+	</div>
+]}
+
+#{chat-input[
+	<textarea id="message-input" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+	<button id="send-button">
+		<i class="fas fa-paper-plane"></i>
+	</button>
+]}
+
+#{css-chat[
+/* 기본 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+	width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 채팅 컨테이너 */
+.chat-container {
+    width: 100%;
+    max-width: 800px;
+    height: 90vh;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 채팅 헤더 */
+.chat-header {
+    background-color: #4a76a8;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-name {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status.online {
+    background-color: #4caf50;
+}
+
+/* 채팅 메시지 영역 */
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+}
+
+/* 메시지 스타일 */
+.message {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.message.received {
+    align-items: flex-start;
+}
+
+.message.sent {
+    align-items: flex-end;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 12px 15px;
+    border-radius: 18px;
+    position: relative;
+}
+
+.message.received .message-content {
+    background-color: #e9ecef;
+    color: #212529;
+    border-top-left-radius: 5px;
+}
+
+.message.sent .message-content {
+    background-color: #4a76a8;
+    color: white;
+    border-top-right-radius: 5px;
+}
+
+.message-content p {
+    margin-bottom: 5px;
+    word-wrap: break-word;
+}
+
+.message-time {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    display: block;
+    text-align: right;
+}
+
+/* 채팅 입력 영역 */
+.chat-input-container {
+    padding: 15px;
+    background-color: #fff;
+    border-top: 1px solid #e9ecef;
+}
+
+.chat-toolbar {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.toolbar-button {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: 15px;
+    transition: color 0.2s;
+}
+
+.toolbar-button:hover {
+    color: #4a76a8;
+}
+
+/* 이모지 선택기 */
+.emoji-picker {
+    display: none;
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.emoji-picker.active {
+    display: block;
+}
+
+.emoji-category {
+    margin-bottom: 15px;
+}
+
+.emoji-category h4 {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.emoji-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.emoji {
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.emoji:hover {
+    background-color: #f0f0f0;
+}
+
+/* 채팅 입력 필드 */
+.chat-input-wrapper {
+    display: flex;
+    align-items: flex-end;
+}
+
+#message-input {
+    flex: 1;
+    border: 1px solid #e9ecef;
+    border-radius: 20px;
+    padding: 12px 15px;
+    resize: none;
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#message-input:focus {
+    border-color: #4a76a8;
+}
+
+#send-button {
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+#send-button:hover {
+    background-color: #3a5a7a;
+}
+
+/* 파일 미리보기 */
+.file-preview {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+} 
+
+
+/* 업로드 스타일  */
+
+ .upload-container {
+    max-width: 800px;
+	margin: 2rem auto;
+	padding: 0 1rem;
+}
+
+.upload-area {
+	background-color: #fff;
+	border: 2px dashed #ccc;
+	border-radius: 8px;
+	padding: 2rem;
+	text-align: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+	border-color: #666;
+}
+
+.upload-area.dragover {
+	border-color: #2196F3;
+	background-color: rgba(33, 150, 243, 0.1);
+}
+
+.upload-icon {
+	font-size: 3rem;
+	color: #666;
+	margin-bottom: 1rem;
+}
+
+.upload-text {
+	color: #666;
+	margin-bottom: 1rem;
+}
+
+.file-input {
+	display: none;
+}
+
+.file-list {
+	margin-top: 2rem;
+	background-color: #fff;
+	border-radius: 8px;
+	padding: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-item {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem;
+	border-bottom: 1px solid #eee;
+}
+
+.file-item:last-child {
+	border-bottom: none;
+}
+
+.file-icon {
+	font-size: 1.5rem;
+	margin-right: 1rem;
+}
+
+.file-info {
+	flex-grow: 1;
+}
+
+.file-name {
+	font-weight: 500;
+}
+
+.file-size {
+	font-size: 0.875rem;
+	color: #666;
+}
+
+.remove-file {
+	color: #ff4444;
+	cursor: pointer;
+	font-size: 1.25rem;
+	padding: 0.25rem;
+}
+
+.remove-file:hover {
+	color: #cc0000;
+}
+
+.button-group {
+	display: flex;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.button {
+	padding: 0.5rem 1rem;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.3s ease;
+}
+
+.upload-button {
+	background-color: #2196F3;
+	color: #fff;
+}
+
+.upload-button:hover {
+	background-color: #1976D2;
+}
+
+.clear-button {
+	background-color: #f44336;
+	color: #fff;
+}
+
+.clear-button:hover {
+	background-color: #d32f2f;
+}
+
+.progress-container {
+	margin-top: 1rem;
+}
+
+.progress-item {
+	margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+	height: 4px;
+	background-color: #eee;
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	background-color: #2196F3;
+	width: 0;
+	transition: width 0.3s ease;
+}
+
+@media (max-width: 600px) {
+	.container {
+		margin: 1rem auto;
+	}
+
+	.button-group {
+		flex-direction: column;
+	}
+
+	.button {
+		width: 100%;
+	}
+}
+]}
+
+#{script[
+function initChat() {
+	const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const emojiButton = document.getElementById('emoji-button');
+    const emojiPicker = document.getElementById('emoji-picker');
+    const filePreview = document.getElementById('file-preview');
+    
+    // 선택된 파일 배열
+    let selectedFiles = [];
+    
+    // 이모지 선택기 토글
+    emojiButton.addEventListener('click', function() {
+        emojiPicker.classList.toggle('active');
+    });
+    
+    // 이모지 선택 이벤트
+    document.querySelectorAll('.emoji').forEach(emoji => {
+        emoji.addEventListener('click', function() {
+            const emojiChar = this.getAttribute('data-emoji');
+            insertEmoji(emojiChar);
+        });
+    });
+    
+    // 이모지 삽입 함수
+    function insertEmoji(emoji) {
+        const startPos = messageInput.selectionStart;
+        const endPos = messageInput.selectionEnd;
+        const textBefore = messageInput.value.substring(0, startPos);
+        const textAfter = messageInput.value.substring(endPos);
+        
+        messageInput.value = textBefore + emoji + textAfter;
+        messageInput.focus();
+        messageInput.selectionStart = startPos + emoji.length;
+        messageInput.selectionEnd = startPos + emoji.length;
+    }
+    
+    /* 파일 업로드 이벤트
+    const fileUpload = document.getElementById('file-upload');
+    fileUpload.addEventListener('change', function() {
+        const files = Array.from(this.files);
+        
+        if (files.length > 0) {
+            files.forEach(file => {
+                // 파일 크기 제한 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`파일 크기가 너무 큽니다: ${file.name}`);
+                    return;
+                }
+                
+                // 파일 추가
+                selectedFiles.push(file);
+                
+                // 파일 미리보기 추가
+                addFilePreview(file);
+            });
+            
+            // 파일 입력 초기화
+            this.value = '';
+        }
+    });
+    */
+	
+    // 파일 미리보기 추가 함수
+    function addFilePreview(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        // 파일 아이콘 결정
+        let fileIcon = 'fa-file';
+        if (file.type.startsWith('image/')) {
+            fileIcon = 'fa-file-image';
+        } else if (file.type.startsWith('video/')) {
+            fileIcon = 'fa-file-video';
+        } else if (file.type.startsWith('audio/')) {
+            fileIcon = 'fa-file-audio';
+        } else if (file.type.includes('pdf')) {
+            fileIcon = 'fa-file-pdf';
+        } else if (file.type.includes('word') || file.type.includes('doc')) {
+            fileIcon = 'fa-file-word';
+        } else if (file.type.includes('excel') || file.type.includes('sheet')) {
+            fileIcon = 'fa-file-excel';
+        } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+            fileIcon = 'fa-file-powerpoint';
+        }
+        
+        // 파일 아이템 HTML
+        fileItem.innerHTML = `
+            <i class="fas ${fileIcon} file-item-icon"></i>
+            <span class="file-item-name">${file.name}</span>
+            <i class="fas fa-times file-item-remove" data-filename="${file.name}"></i>
+        `;
+        
+        filePreview.appendChild(fileItem);
+        
+        // 파일 제거 이벤트
+        fileItem.querySelector('.file-item-remove').addEventListener('click', function() {
+            const filename = this.getAttribute('data-filename');
+            removeFile(filename);
+            fileItem.remove();
+        });
+    }
+    
+    // 파일 제거 함수
+    function removeFile(filename) {
+        selectedFiles = selectedFiles.filter(file => file.name !== filename);
+    }
+    
+    // 메시지 전송 이벤트
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // 메시지 전송 함수
+    function sendMessage() {
+        let messageText = messageInput.value.trim();
+        
+        // 메시지가 비어있고 파일도 없는 경우 전송하지 않음
+        if (messageText === '' && selectedFiles.length === 0) {
+            messageText = '내용을 입력하세요' 
+            // return;
+        }
+        
+        // 현재 시간
+        const now = new Date();
+        const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
+        
+        // 메시지 요소 생성
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message sent';
+        
+        let messageContent = `<div class="message-content">`;
+        
+        // 텍스트 메시지 추가
+        if (messageText !== '') {
+            messageContent += `<p>${messageText}</p>`;
+        }
+        
+        // 파일 메시지 추가
+        if (selectedFiles.length > 0) {
+            selectedFiles.forEach(file => {
+                messageContent += `
+                    <div class="file-message">
+                        <i class="fas fa-paperclip file-icon"></i>
+                        <span class="file-name">${file.name}</span>
+                    </div>
+                `;
+            });
+        }
+        
+        messageContent += `<span class="message-time">${timeString}</span></div>`;
+        messageElement.innerHTML = messageContent;
+        
+        // 메시지 추가
+        chatMessages.appendChild(messageElement);
+        
+        // 스크롤을 맨 아래로 이동
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // 입력 필드 초기화
+        messageInput.value = '';
+        
+        // 파일 초기화
+        selectedFiles = [];
+        filePreview.innerHTML = '';
+        
+        // 자동 응답 (데모용)
+        setTimeout(autoReply, 1000);
+    }
+    
+    // 자동 응답 함수 (데모용)
+    function autoReply() {
+        const now = new Date();
+        const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message received';
+        
+        const responses = [
+            '메시지를 받았습니다. 확인해 주셔서 감사합니다.',
+            '네, 알겠습니다. 도움이 필요하시면 언제든지 말씀해 주세요.',
+            '좋은 질문이네요! 잠시만 기다려주세요.',
+            '파일을 확인했습니다. 처리해 드리겠습니다.',
+            '이모티콘이 정말 귀엽네요! 😊'
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <p>${randomResponse}</p>
+                <span class="message-time">${timeString}</span>
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // 텍스트 영역 자동 높이 조절
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // 문서 클릭 시 이모지 선택기 닫기
+    document.addEventListener('click', function(e) {
+        if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.classList.remove('active');
+        }
+    });
+    
+    // 드래그 앤 드롭 파일 업로드
+    chatMessages.addEventListener('dragover', function(e) {
+        $('#uploadProgress').html('dragover ==>')
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    });
+    
+    chatMessages.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+    });
+    
+    chatMessages.addEventListener('drop', function(e) {
+        $('#uploadProgress').html('drop ==>')
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+        
+        const files = Array.from(e.dataTransfer.files);
+        
+        if (files.length > 0) {
+            files.forEach(file => {
+                // 파일 크기 제한 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`파일 크기가 너무 큽니다: ${file.name}`);
+                    return;
+                }
+                
+                // 파일 추가
+                selectedFiles.push(file);
+                
+                // 파일 미리보기 추가
+                addFilePreview(file);
+            });
+        }
+    });
+
+    return { sendMessage, autoReply }	
+}
+
+]}

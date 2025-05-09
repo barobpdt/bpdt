@@ -172,7 +172,7 @@
 		src = fileRead("$path/template/default.html")
 		req.send( @web.parseTemplate(src)) 
 	} 
-	@web.parseTemplate(&s, fn, param) {
+	@web.parseTemparseTemplate(&s, fn, param) {
 		not(s.find('#{')) return s;
 	 	not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
 	 	not(param) param=fn.get('param')
@@ -186,6 +186,26 @@
 	 		s.pos(sp) not(s.ch('{')) continue;
 	 		a=s.match() if(typeof(a,'bool')) continue;
 	 		ss.add(@web.parseVar(a,fn,param) )
+	 	}
+	 	return ss;
+	}
+	@web.parseConfValue(&s,fn,param) {
+		not(s.find('#{')) return;
+		node = param.val('@confValue', true)
+	 	while(s.valid()) {
+	 		left = s.findPos('#{')
+	 		not(s.ch()) break;
+	 		sp = s.cur() - 1;
+	 		s.pos(sp) not(s.ch('{')) continue;
+	 		ss=s.match() if(typeof(ss,'bool')) continue;
+			k=ss.findPos('[',0,1)
+			v=ss.match()
+			if(typeof(v,'bool')) break;
+			if(k.eq('script')) {
+				param.appendText('script', @web.parseTemplate(v,fn,param))
+			} else {
+				node.val(k, v)
+			}
 	 	}
 	 	return ss;
 	}
@@ -218,7 +238,6 @@
 			} else {
 				result = print("each( $a, $b ) 오브젝트 설정오류")
 			}
-			
 		}
 		return result;
 	}
@@ -232,7 +251,7 @@
 				cur=null
 				name = left(code,'.')
 				if(fn.isset(name)) {
-					cur=fn.get(name)
+					cur = fn.get(name)
 				} else if(param.isVar(name)) {
 					cur = param.get(name)
 				} 
@@ -260,19 +279,34 @@
 		else if( @src.isFunc(s) ) val = eval(s);
 		return val;
 	}
+	
 	@web.parsePrint(&s,fn,param) {
 		result = ''
 		while(s.valid()) {
 			line=s.findPos('[',1,1)
 			src=s.match()
+			if(typeof(src,'bool')) {
+				s.findPos(']')
+				continue;
+			}
+			not(line.ch()) break;
+			if(line.start('css-',true)) {
+				code= line.trim()
+				css = param.val('@cssInfo',true)
+				css.val(code, src)
+			}
 			if(line.find('.')) {
 				if(line.ch('@')) {
 					line.incr()
 					code = line.trim()
 					conf(code, src, true)
-				} else {
-					code = line.trim()
-					conf(code, src)					
+				} else {					
+					code = line.findPos('.').trim()
+					if(code.eq('conf')) {
+						node = param.val('@confValue', true)
+						code = line.trim()
+						node.val(code, src)
+					}
 				}
 			} else {
 				type = line.trim()
@@ -282,6 +316,15 @@
 					eval(src, fn, param)
 				} else if(type.eq('set')) {
 					param.parseJson(src)
+				} else if(type.eq('script')) {
+					param.appendText('script', @web.parseTemplate(src,fn,param))
+				} else if(type.eq('include')) {
+					path = param.val('webpageFileName').findLast('/').trim()
+					while(src.valid()) {
+						line = src.findPos("\n").trim()
+						not(line) continue;
+						@web.parseConfValue(fileRead("$path/$line"),fn,param)
+					}
 				} else if(type.eq('print')) {
 					result.add(@web.parseTemplate(src,fn,param))
 				} else {
@@ -378,10 +421,10 @@
 		c=s.ch()
 		if(c.eq('@')) c=s.incr()
 		c=s.next().ch()
-		if(c.eq('#')) c=s.incr().ch()
+		if(c.eq('#','-')) c=s.incr().ch()
 		if(c.eq('.')) {
 			c=s.incr().next().ch()
-			if(c.eq('#')) c=s.incr().ch()
+			if(c.eq('#','-')) c=s.incr().ch()
 		}
 		if(c.eq('[') ) return true;
 		return false;
