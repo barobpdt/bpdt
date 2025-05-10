@@ -18,6 +18,11 @@
 		src = fileRead(param.val('webpageFileName'))
 		req.send( @web.parseTemplate(src) )
 	}
+	@webpage.chatbot(req, param) { 
+		param.val('webpageFileName', "${conf:web.rootPath}/common/chatbot.html")
+		src = fileRead(param.val('webpageFileName'))
+		req.send( @web.parseTemplate(src) )
+	}
 	@webpage.sendData(data) {
 		req.send(data)
 	}

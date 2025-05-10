@@ -77,7 +77,7 @@
 		const setEmojIcon = list => {
 			const el = $('.icon-container.emoji-box')
 			list.forEach((cur,idx)=>{
-				if(idx<200) $(`<div class="ui-icon ${cur.name}">${cur.name}</div>`).appendTo(el)
+				$(`<div class="ui-icon ${cur.name}">${cur.name}</div>`).appendTo(el)
 			})
 		}
 		const setSvgIcon = list => list.forEach(item => $(`

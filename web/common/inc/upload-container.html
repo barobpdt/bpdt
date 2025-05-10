@@ -1,0 +1,72 @@
+#{upload-container[
+	<div class="upload-header"></div>
+	<div class="upload-messages"></div>
+	<div class="upload-input-container">
+		<div class="upload-toolbar"></div>	
+		<div class="emoji-picker"></div>	
+		<div class="upload-input"></div>	
+		<div class="file-preview"></div>
+	</div>
+]}
+
+#{upload-header[
+	<h1>채팅 메시지</h1>
+	<div class="user-info">
+		<span class="user-name">#{userName:사용자}</span>
+		<span class="status online"></span>
+	</div>
+]}
+
+#{upload-recv[
+	<div class="message received">
+		<div class="message-content">
+			<p>#{msg}</p>
+			<span class="message-time">#{time}</span>
+		</div>
+	</div>
+]}
+
+#{upload-send[
+	<div class="message sent">
+		<div class="message-content">
+			<p>#{msg}</p>
+			<span class="message-time">#{time}</span>
+		</div>
+	</div>
+]}
+
+#{upload-toolbar[
+	<button id="emoji-button" class="toolbar-button">
+		<i class="far fa-smile"></i>
+	</button>
+	<label class="toolbar-button upload-clip">
+		<i class="fas fa-paperclip"></i>
+	</label>
+]}
+
+#{upload-emoji[
+	<div class="emoji-category">
+		<h4>표정</h4>
+		<div class="emoji-list">
+			<span class="emoji" data-emoji="😀">😀</span>
+		</div>
+	</div>
+]}
+
+#{upload-input[
+	<textarea id="message-input" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+	<button id="send-button">
+		<i class="fas fa-paper-plane"></i>
+	</button>
+]}
+
+#{css-upload[
+	/* upload 기본 스타일 */
+	.upload-container {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+]}

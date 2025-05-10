@@ -1,0 +1,32 @@
+#{set[
+	title: 채팅 메시지
+]}
+#{include[
+	inc/chat-container.html
+	inc/upload-container.html
+]}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>#{title}</title>
+	<link rel="stylesheet" href="/css/styles.css">
+	<link rel="stylesheet" href="/css/emoji-api.css">
+	<script src="/js/jquery.js"></script>
+	<!-- Ace Editor CDN -->
+	<style>
+	 #{css}
+	</style>
+</head>
+<body>
+	<div class="chat-container page">#{chat-container}</div>
+	#{css-file}
+	<script>
+		$(document).ready(()=>{ 
+			#{script-ready} 
+		})
+		#{script}
+	</script>
+</body>
+</html>

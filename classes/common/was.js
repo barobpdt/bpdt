@@ -1,7 +1,6 @@
 <script>
 	apiController(req, param, service, uri) {
-		root = Cf.rootNode()
-		was=root.val("_node.was.object")
+		was=Cf.rootNode("_node.was.object")
 		param.set('@uri', uri)
 		bound=req.getValue('boundary');
 		buffer=null;
