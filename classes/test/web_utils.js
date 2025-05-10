@@ -192,6 +192,8 @@
 	 		src=s.match() if(typeof(src,'bool')) continue;
 	 		ss.add(@web.parseVar(src,fn,param) )
 	 	}
+		cf = param.val('@confValue')
+		print("xxxxxxx $param, $cf", cf.keys())
 		if(checkStart) {
 			data=param.val('script')
 			if(param.isVar('@jsInfo')) {

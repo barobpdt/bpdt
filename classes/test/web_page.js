@@ -5,6 +5,7 @@
 		was.set('@api/icons', true)
 		
 		@web.addUrl('/common/icon_list','iconList')
+		@web.addUrl('/common/chatbot','chatbot')
 		@web.makeMetaMap('emoji-png')
 		@web.makeMetaMap('emoji-svg')
 		return;

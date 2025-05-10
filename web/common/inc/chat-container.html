@@ -12,11 +12,13 @@
 #{chat-header[
 	<h1>채팅 메시지</h1>
 	<div class="user-info">
-		<span class="user-name">#{userName:사용자}</span>
+		<span class="user-name">사용자</span>
 		<span class="status online"></span>
 	</div>
 ]}
-
+#{script-ready[
+	$('.user-info .user-name').val('test')
+]}
 #{chat-recv[
 	<div class="message received">
 		<div class="message-content">
