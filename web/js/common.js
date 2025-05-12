@@ -1,7 +1,7 @@
 /* 
 페이지 공통설정 
 */
-
+const cf={}
 const pageInfo = {
 	editor: null
 	/* 웹소켓 설정 */

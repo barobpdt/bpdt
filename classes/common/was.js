@@ -23,7 +23,7 @@
 		uri=param.ref('@uri')
 		if( uri.find('/') ) {
 			name=uri.findPos('/').trim();
-			if(was.val("@api/$service/$name")) {
+			if(was.isValid("@api/$service/$name")) {
 				objectId = "$service/$name"
 				fileName = "api/$service/$name" 
 				name = uri.findPos('/').trim()
@@ -33,7 +33,7 @@
 			}
 			data=uri.trim()
 		} else {
-			if(was.val("@api/$service")) {
+			if(was.isValid("@api/$service")) {
 				objectId = service
 				fileName = "api/$service"
 			} else {
@@ -61,9 +61,13 @@
 		}
 		if( param.var(sendCheck)) return;
 		if( typeof(result,'node')) {
-			req.send(jsonData(result) );
+			if(result.isValid('@treeMode')) {
+				req.send(json().listData(result) )
+			} else {
+				req.send(jsonData(result) )
+			}
 		} else {
-			req.send(result);
+			req.send(result)
 		} 
 	}
 	webFileFilter(req, page) {

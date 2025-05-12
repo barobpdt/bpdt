@@ -173,7 +173,7 @@
 		req.send( @web.parseTemplate(src)) 
 	} 
 
-	@web.parseTemplate(&s, fn, param) {
+@web.parseTemplate(&s, fn, param) {
 		not(s.find('#{')) return s;
 		checkStart = false
 	 	not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
@@ -182,7 +182,7 @@
 			param=fn.get('param')
 		}
 	 	not(typeof(param,'node')) param = null
-	 	ss=''
+	 	ln ="\r\n", ss=''
 	 	while(s.valid()) {
 	 		left = s.findPos('#{')
 	 		ss.add(left)
@@ -192,21 +192,41 @@
 	 		src=s.match() if(typeof(src,'bool')) continue;
 	 		ss.add(@web.parseVar(src,fn,param) )
 	 	}
-		cf = param.val('@confValue')
-		print("xxxxxxx $param, $cf", cf.keys())
+		
+		data=''
 		if(checkStart) {
-			data=param.val('script')
+			cv = param.val('@confValue')
+			if(typeof(cv,'node')) {
+				karr = cv.keys()
+				data.add('function page_templateData() {',ln)
+				while(key, karr) {
+					src=@web.parseTemplate( cv.val(key), fn, param)
+					data.add("\tcf['${key}'] = `${src}`", ln)
+				}
+				data.add('}',ln)
+			}
+			data.add(param.val('script'))
 			if(param.isVar('@jsInfo')) {
 				node = param.val('@jsInfo')
 				while(key, node.keys()) {
-					src = node.val(key)
+					if(key.eq('init')) continue;
 					if(ss.find("{__script-${key}__}")) {
+						if(key.eq('ready') && typeof(cv,'node') ) {
+							src = Cf.val("\t\tpage_templateData()", ln)
+							if(node.isValid('init')) src.add(node.val('init'),ln)
+							src.add(node.val(key))
+							print("xxxxxxxxxxxxx init xxxxxxxxxxx", node, src)
+						} else {
+							src = node.val(key)
+						}
 						ss=_replace(ss,"{__script-${key}__}",@web.parseTemplate(src, fn, param))
 					} else {
+						src = node.val(key)
 						data.add(src)
 					}
 				}
 			}
+			
 			if(data && ss.find("{__script__}") ) {
 				ss=_replace(ss,"{__script__}",@web.parseTemplate(data, fn, param))
 			}
@@ -236,6 +256,7 @@
 	 		return ss;
 	 	};
 	}
+
 	@web.parseVar(&s,fn,param) { 
 		not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
 		val = ''
@@ -288,18 +309,22 @@
 		else if( @src.isFunc(s) ) val = eval(s);
 		return val;
 	}
+	
 	@web.parseConfValue(&s,fn,param) {
 		not(s.find('#{')) return;
 		node = param.addNode('@confValue')
+		jsinfo = param.addNode('@jsInfo')
 	 	while(s.valid()) {
 	 		left = s.findPos('#{')
+			if(left.ch()) jsinfo.appendText('init', left)
 	 		not(s.ch()) break;
 	 		sp = s.cur() - 1;
 	 		s.pos(sp) not(s.ch('{')) continue;
-	 		ss=s.match() if(typeof(ss,'bool')) continue;
+	 		ss=s.match() 
+			if(typeof(ss,'bool')) continue;
 			k=ss.findPos('[',0,1)
 			v=ss.match()
-			if(typeof(v,'bool')) break;
+			if(typeof(v,'bool')) continue;
 			if(k.start('css-',true)) {
 				code= k.trim()
 				cur = param.addNode('@cssInfo')
@@ -318,10 +343,43 @@
 			} else if(key.eq('css')) {
 				param.appendText('css', v)
 			} else {
-				node.val(key, v)
+				node.val(key, v) 
 			}
 	 	}
+	}	 
+	@web.parseControl(&s,fn,param) {
+		ftype= s.findPos('(',1,1)
+		fparam = s.match()
+		not(s.ch('<')) return print("$ftype 시작문자 오류", s)
+		sp= s.cur()
+		c=s.incr().ch()
+		if(c.eq('>')) {
+			s.pos(sp)
+			src = s.match('<>','<>')
+			if(typeof(src,'bool')) return print("$s 시작태그 오류")
+		} else {
+			tag = s.move()
+			s.pos(sp)
+			match = s.match("<$tag","</$tag>")
+			if(typeof(match,'bool')) return print("$tag 태그매치 오류")
+			src = s.value(sp, s.cur())
+		}
+		result = ''
+		if(ftype.eq('each')) {
+			fparam.split(',').inject(a,b)
+			node = fn.get(b) not(node) node=param.get(b)
+			if(typeof(node,'node')) {
+				while(cur, node) {
+					fn.set(a,cur)
+					result.add(@web.parseTemplate(src,fn,param))
+				}
+			} else {
+				result = print("each( $a, $b ) 오브젝트 설정오류")
+			}
+		}
+		return result;
 	}
+	 
 	@web.parsePrint(&s,fn,param) {
 		result = '' 
 		line=s.findPos('[',0,1) not(line.ch()) return;
@@ -378,98 +436,7 @@
 		} 
 		return result;
 	}
-	 
-	 
-	@web.parseControl(&s,fn,param) {
-		ftype= s.findPos('(',1,1)
-		fparam = s.match()
-		not(s.ch('<')) return print("$ftype 시작문자 오류", s)
-		sp= s.cur()
-		c=s.incr().ch()
-		if(c.eq('>')) {
-			s.pos(sp)
-			src = s.match('<>','<>')
-			if(typeof(src,'bool')) return print("$s 시작태그 오류")
-		} else {
-			tag = s.move()
-			s.pos(sp)
-			match = s.match("<$tag","</$tag>")
-			if(typeof(match,'bool')) return print("$tag 태그매치 오류")
-			src = s.value(sp, s.cur())
-		}
-		result = ''
-		if(ftype.eq('each')) {
-			fparam.split(',').inject(a,b)
-			node = fn.get(b) not(node) node=param.get(b)
-			if(typeof(node,'node')) {
-				while(cur, node) {
-					fn.set(a,cur)
-					result.add(@web.parseTemplate(src,fn,param))
-				}
-			} else {
-				result = print("each( $a, $b ) 오브젝트 설정오류")
-			}
-		}
-		return result;
-	}
-	 
-	@web.parsePrint(&s,fn,param) {
-		result = ''
-		while(s.valid()) {
-			line=s.findPos('[',1,1)
-			src=s.match()
-			if(typeof(src,'bool')) {
-				s.findPos(']')
-				continue;
-			}
-			not(line.ch()) break;
-			if(line.start('css-',true)) {
-				code= line.trim()
-				css = param.val('@cssInfo',true)
-				css.val(code, src)
-			}
-			if(line.find('.')) {
-				if(line.ch('@')) {
-					line.incr()
-					code = line.trim()
-					conf(code, src, true)
-				} else {					
-					code = line.findPos('.').trim()
-					if(code.eq('conf')) {
-						node = param.val('@confValue', true)
-						code = line.trim()
-						node.val(code, src)
-					}
-				}
-			} else {
-				type = line.trim()
-				if(type.eq('func','function')) {
-					@src.addFuncSource(src)
-				} else if(type.eq('eval')) {
-					eval(src, fn, param)
-				} else if(type.eq('set')) {
-					param.parseJson(src)
-				} else if(type.eq('script')) {
-					param.appendText('script', @web.parseTemplate(src,fn,param))
-				} else if(type.eq('include')) {
-					path = param.val('webpageFileName').findLast('/').trim()
-					while(src.valid()) {
-						line = src.findPos("\n").trim()
-						not(line) continue;
-						@web.parseConfValue(fileRead("$path/$line"),fn,param)
-					}
-				} else if(type.eq('print')) {
-					result.add(@web.parseTemplate(src,fn,param))
-				} else {
-					param.set(type, @web.parseTemplate(src,fn,param))
-				}
-			}
-			c=s.ch()
-			not(c) break;
-			if(c.eq(',',';')) s.incr()
-		}
-		return result;
-	}
+
 	@web.parseCase(&s,fn,param,skipCheck){
 		if(skipCheck) {
 			c=s.ch()
