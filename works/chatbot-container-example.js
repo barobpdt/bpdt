@@ -1,3 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>${title}</title>
+	<link rel="stylesheet" href="/css/styles.css">
+	<link rel="stylesheet" href="/css/emoji-api.css">
+	<script src="/js/common.js"></script>
+	<script src="/js/jquery.js"></script>
+	<!-- Ace Editor CDN -->
+</head>
+<body>
+	<div class="chat-container"></div>
+</body>
+</html>
+
+#{var[title: 채팅 메시지]}
+#{include[inc/chat-container.js]}
+#{include[inc/upload-container.js]}
+
 #{script[ready]
 	fetch() [result=>changeState('chat-list', result.children)]
 	fetch() [result=>changeState('emoji-list', result.chidren)]
