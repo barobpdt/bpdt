@@ -113,5 +113,120 @@
 	}
 
 }
- 
+
+
+
+include('classes/test/web_test')
+
+test()
+
+~~
+<func>
+	test() {
+		fn=Cf.funcNode()
+		s=fileRead('c:/temp/a.html')
+		param = _node('param')
+		ss = @web.parseTemplate(s,fn,param)
+		fileWrite('c:/temp/a_conv.html', ss)
+	}
+</func>
+
+~~
+<func>
+	printLine(n,&s) {
+		if(s.ch()) {
+			a=s.findPos("\n").trim()
+		} else {
+			a='no data'
+		}
+		print("$n>>$a")
+		return;
+	}
+	@web.parseTemplate(&s, fn, param) {
+		not(s.find('#{')) return s;
+		checkStart = false
+	 	not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
+	 	not(param) {
+			checkStart = true
+			param=fn.get('param')
+		}
+	 	not(typeof(param,'node')) param = null
+	 	ln ="\r\n", ss=''
+	 	while(s.valid()) {
+	 		left = s.findPos('#{')
+	 		ss.add(left)
+	 		not(s.ch()) break;
+	 		sp = s.cur() - 1;
+	 		s.pos(sp) not(s.ch('{')) continue;
+	 		src=s.match(1) if(typeof(src,'bool')) continue;
+	 		ss.add( @web.parseTemplateVar(src,fn,param) )
+	 	}
+	 	return ss; 
+	}
+	@web.isTemplateVar(&s) {
+		c=s.next().ch()
+		return c.eq('[')
+	}
+	@web.parseTemplateVar(&s,fn,param) {
+		not(@web.isTemplateVar(s)) return "#{$s}";
+		type=s.findPos('[',0,1).trim()
+		a=s.match(1).trim()
+		arr=@web.splitParam(a,[])
+		fc=call("websrc.tp_$type")
+		if(typeof(fc,'func')) {
+			return call(fc,param,s,arr,fn, param)
+		}
+		return "tp_$type 함수 미정의"
+	}
+	@web.parseInclude(&s,fn,param) {
+	
+	}
+	
+</func>
+~~
+test() 
+~~
+<func>
+	@websrc.tp_var(&src, arr, fn,param) {
+		arr.inject(&s)
+		not(s.ch()) s=src
+		param.parseJson(s)
+		a=s.move()
+		print("s->$s a:$a", src, fn, arr, param)
+		return;
+	}
+	@websrc.tp_include(&src, arr, fn,param) {
+		arr.inject(&s)
+		not(s.ch()) s=src
+		path = param.val('webpageFileName').findLast('/').trim()
+		while(src.valid()) {
+			line = src.findPos("\n").trim()
+			not(line) continue;
+			@web.parseInclude(fileRead("$path/$line"),fn,param)
+		}
+	}
+	@websrc.tp_script(&src, arr, fn,param) {
+		arr.inject(&s)
+		not(s.ch()) s=src
+		
+	}	
+</func>
+~~
+<func>
+	@web.splitParam(&s,arr) {
+		arr.reuse()
+		while(s.valid()) {
+			c=s.ch()
+			not(c) break;
+			if(c.eq()) {
+				v=s.match().trim()
+				c=s.ch() if(c.eq(',')) s.incr()
+			} else {
+				v=s.findPos(',').trim()
+			}
+			arr.add(v)
+		}
+		return arr;
+	}
+</func>
  
