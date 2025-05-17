@@ -114,11 +114,11 @@
 
 }
 
-
-
+##### source #####
 include('classes/test/web_test')
 
 test()
+
 
 ~~
 <func>
@@ -126,6 +126,7 @@ test()
 		fn=Cf.funcNode()
 		s=fileRead('c:/temp/a.html')
 		param = _node('param')
+		param.val('webpageFileName','c:/bpdt/web/common/a.html')
 		ss = @web.parseTemplate(s,fn,param)
 		fileWrite('c:/temp/a_conv.html', ss)
 	}
@@ -195,6 +196,18 @@ test()
 		print("s->$s a:$a", src, fn, arr, param)
 		return;
 	}
+	@websrc.tp_set(&src, arr, fn,param) {
+		k=arr.get(0)
+		node = param.addNode('@set')
+		node.set(k,src)
+		return;
+	}
+	@websrc.tp_html(&src, arr, fn,param) {
+		id=arr.get(0)
+		node = param.addNode('@set')
+		node.set(k,@web.parseHtml(src,fn,param))
+		return;
+	}
 	@websrc.tp_include(&src, arr, fn,param) {
 		arr.inject(&s)
 		not(s.ch()) s=src
@@ -202,6 +215,7 @@ test()
 		while(src.valid()) {
 			line = src.findPos("\n").trim()
 			not(line) continue;
+			param.set('@includeName', getFileName(line))
 			@web.parseInclude(fileRead("$path/$line"),fn,param)
 		}
 	}
@@ -213,6 +227,29 @@ test()
 </func>
 ~~
 <func>
+	
+</func>
+~~
+<func>
+	@web.parseInclude(&s, fn, param,name) {
+		not(s.find('#{')) return s;
+		not(name) name = param.val('@includeName')
+	 	ln ="\r\n", ss=''
+	 	while(s.valid()) {
+	 		left = s.findPos('#{')
+	 		ss.add(left,ln)
+	 		not(s.ch()) break;
+	 		sp = s.cur() - 1;
+	 		s.pos(sp) not(s.ch('{')) continue;
+	 		src=s.match()
+	 		if(typeof(src,'bool')) {
+	 			s.findPos('}')
+	 			continue;
+	 		}
+	 		@web.parseTemplateVar(src,fn,param)
+	 	}
+	 	if( ss) param.set('@script', ss)
+	}
 	@web.splitParam(&s,arr) {
 		arr.reuse()
 		while(s.valid()) {
@@ -228,5 +265,44 @@ test()
 		}
 		return arr;
 	}
+	@web.parseHtmlSrc(&s,fn,param, prop, depth) {
+		print("parse html src => $s", prop)
+	}
+	@web.parseHtml(&s,fn,param, prop, depth) {		
+		not(depth) depth=0
+		result=''
+		while(s.valid()) {
+			c=s.ch() not(c) break;
+			if(c.eq('<')) {
+				sp=s.cur()
+				tag = ''
+				if( s.start('<>')) {
+					ss=s.match('<>','</>')
+					if(typeof(ss,'bool')) ss=s.findPos('<>')
+					prop=''
+				} else {
+					c=s.incr().next().ch()
+					if(c.eq('.','-')) c=s.incr().next().ch()
+					tag = s.trim(sp+1,s.cur())
+					s.pos(sp)
+					ss=s.match("<$tag","</$tag>")
+					if(typeof(ss,'bool')) ss=s.findPos("</$tag>")
+					prop=ss.findPos('>')
+				}
+				if(typeof(ss,'bool')) break;
+				if(ss.ch('<')) {
+					src = @web.parseHtml(ss,fn,param,prop,depth)
+					if(tag) {
+						result.add("<$tag $prop>", src, "</$tag>")
+					} else {
+						result.add(src)
+					}
+				} 
+			} else {
+				result.add(@web.parseHtmlSrc(s,fn,param,prop))
+				break;
+			}
+		}
+		return result;
+	}
 </func>
- 
