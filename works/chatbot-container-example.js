@@ -116,8 +116,10 @@
 
 ##### source #####
 include('classes/test/web_test')
-
 test()
+
+
+x=object('@inc.userFunc').get('printLine')
 
 
 ~~
@@ -178,16 +180,7 @@ test()
 			return call(fc,param,s,arr,fn, param)
 		}
 		return "tp_$type 함수 미정의"
-	}
-	@web.parseInclude(&s,fn,param) {
-	
-	}
-	
-</func>
-~~
-test() 
-~~
-<func>
+	}	 
 	@websrc.tp_var(&src, arr, fn,param) {
 		arr.inject(&s)
 		not(s.ch()) s=src
@@ -224,11 +217,7 @@ test()
 		not(s.ch()) s=src
 		
 	}	
-</func>
-~~
-<func>
-	
-</func>
+</func> 
 ~~
 <func>
 	@web.parseInclude(&s, fn, param,name) {
