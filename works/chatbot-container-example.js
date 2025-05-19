@@ -117,10 +117,8 @@
 ##### source #####
 include('classes/test/web_test')
 test()
-
-
 x=object('@inc.userFunc').get('printLine')
-
+x=@websrc.isTemplateVar('aaa[bbb]')
 
 ~~
 <func>
@@ -166,9 +164,10 @@ x=object('@inc.userFunc').get('printLine')
 		type=s.findPos('[',0,1).trim()
 		a=s.match(1).trim()
 		arr=@websrc.splitParam(a,[])
+		if(type.eq('innerHtml')) type='innerHTML'
 		fc=call("websrc.tp_$type") not(typeof(fc,'func'))  return "tp_$type 함수 미정의"
 		return call(fc,param,s,arr,fn, param)
-	}	 
+	}
 	@websrc.tp_var(&src, arr, fn,param) {
 		arr.inject(&s)
 		not(s.ch()) s=src
@@ -253,6 +252,7 @@ x=object('@inc.userFunc').get('printLine')
 		not(depth) depth=0
 		result=''
 		while(s.valid()) {
+			printLine("parseHtml",s)
 			c=s.ch() not(c) break;
 			if(c.eq('<')) {
 				sp=s.cur()
@@ -270,8 +270,12 @@ x=object('@inc.userFunc').get('printLine')
 					if(typeof(ss,'bool')) ss=s.findPos("</$tag>")
 					prop=ss.findPos('>')
 				}
-				if(typeof(ss,'bool')) break;
-				if(ss.ch('<')) {
+				if(typeof(ss,'bool')) {
+					printLine("$tag 매칭오류")
+					break;
+				}
+				c=ss.ch()
+				if(c.eq('<')) {
 					src = @websrc.parseHtml(ss,fn,param,prop,depth)
 					if(tag) {
 						result.add("<$tag $prop>", src, "</$tag>")
@@ -280,12 +284,10 @@ x=object('@inc.userFunc').get('printLine')
 					}
 				} else {
 					if( @websrc.isTemplateVar(ss)) {
-						printLine(">> parse html prop:$prop $tag ", ss)
 						result.add(@websrc.parseHtmlSrc(ss,fn,param,tag,prop))						
 					} else {
 						result.add("<$tag $prop>", ss, "</$tag>")
 					}
-					break;
 				}
 			} else {
 				printLine("parse html 시작오류:: ", ss)
@@ -294,25 +296,37 @@ x=object('@inc.userFunc').get('printLine')
 		return result;
 	}
 	@websrc.parseHtmlSrc(&s,fn,param, tag, prop, depth) {
-		result=''
-		type = s.move()
-		if(s.ch('[')) {
-			ss = s.match(1)
+		type=s.move()
+		fnm = "websrc.parseHtml_$type"
+		fc = call(fnm)
+		if(typeof(fc,'function')) {
+			return call(fc,param, s, fn,param,tag,prop)
+		} else {
+			printLine("$fnm 함수 미정의 :", s)
 		}
-		if(type.eq('echo')) {
-			result.add('#{',ss.trim(),'}')
-		} else if(type.eq('effect')) {
-		} else if(type.eq('eval')) {
-			@websrc.parseHtml_eval(s,fn,param,tag,prop)
-		}
-		return result;
 	}
 	@websrc.parseHtml_eval(&s,fn,param,tag,prop) {
 		
 	}
-	
+	@websrc.parseHtml_effect(&s,fn,param,tag,prop) {
+		print("effect>>$s")
+	}
+	@websrc.parseHtml_echo(&s,fn,param,tag,prop) {
+		print("echo>>$s")
+	}	
+</func>
+~~
+<func>
+		@websrc.tp_innerHTML(&src, arr, fn,param) {
+		id=arr.get(0)
+		node = param.addNode('@innerHtml')
+		ss= @websrc.parseHtml(src,fn,param)
+		node.set(k,ss)
+		return;
+	}
 </func>
 
+~~
 <script>
 const clog=window.console.log
 const randomKey = () => (new Date%9e64).toString(36)
@@ -384,6 +398,8 @@ function getStateNodes(id) {
 	return arr;
 }
 </script>
+
+~~
 <func>
 	getFileName(path) {
 		if(path.find("\\")) path = path.replace("\\","/")
