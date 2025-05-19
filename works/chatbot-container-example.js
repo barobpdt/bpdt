@@ -129,23 +129,14 @@ x=object('@inc.userFunc').get('printLine')
 		s=fileRead('c:/temp/a.html')
 		param = _node('param')
 		param.val('webpageFileName','c:/bpdt/web/common/a.html')
-		ss = @web.parseTemplate(s,fn,param)
+		ss = @websrc.parseTemplate(s,fn,param)
 		fileWrite('c:/temp/a_conv.html', ss)
 	}
 </func>
 
 ~~
 <func>
-	printLine(n,&s) {
-		if(s.ch()) {
-			a=s.findPos("\n").trim()
-		} else {
-			a='no data'
-		}
-		print("$n>>$a")
-		return;
-	}
-	@web.parseTemplate(&s, fn, param) {
+	@websrc.parseTemplate(&s, fn, param) {
 		not(s.find('#{')) return s;
 		checkStart = false
 	 	not(typeof(fn,'func') ) fn=Cf.funcNode('parent')
@@ -162,24 +153,21 @@ x=object('@inc.userFunc').get('printLine')
 	 		sp = s.cur() - 1;
 	 		s.pos(sp) not(s.ch('{')) continue;
 	 		src=s.match(1) if(typeof(src,'bool')) continue;
-	 		ss.add( @web.parseTemplateVar(src,fn,param) )
+	 		ss.add( @websrc.parseTemplateVar(src,fn,param) )
 	 	}
 	 	return ss; 
 	}
-	@web.isTemplateVar(&s) {
+	@websrc.isTemplateVar(&s) {
 		c=s.next().ch()
 		return c.eq('[')
 	}
-	@web.parseTemplateVar(&s,fn,param) {
-		not(@web.isTemplateVar(s)) return "#{$s}";
+	@websrc.parseTemplateVar(&s,fn,param) {
+		not(@websrc.isTemplateVar(s)) return "#{$s}";
 		type=s.findPos('[',0,1).trim()
 		a=s.match(1).trim()
-		arr=@web.splitParam(a,[])
-		fc=call("websrc.tp_$type")
-		if(typeof(fc,'func')) {
-			return call(fc,param,s,arr,fn, param)
-		}
-		return "tp_$type 함수 미정의"
+		arr=@websrc.splitParam(a,[])
+		fc=call("websrc.tp_$type") not(typeof(fc,'func'))  return "tp_$type 함수 미정의"
+		return call(fc,param,s,arr,fn, param)
 	}	 
 	@websrc.tp_var(&src, arr, fn,param) {
 		arr.inject(&s)
@@ -198,7 +186,13 @@ x=object('@inc.userFunc').get('printLine')
 	@websrc.tp_html(&src, arr, fn,param) {
 		id=arr.get(0)
 		node = param.addNode('@set')
-		node.set(k,@web.parseHtml(src,fn,param))
+		node.set(k,@websrc.parseHtml(src,fn,param))
+		return;
+	}
+	@websrc.tp_innerHTML(&src, arr, fn,param) {
+		id=arr.get(0)
+		node = param.addNode('@setEl')
+		node.set(k,@websrc.parseHtml(src,fn,param))
 		return;
 	}
 	@websrc.tp_include(&src, arr, fn,param) {
@@ -209,18 +203,19 @@ x=object('@inc.userFunc').get('printLine')
 			line = src.findPos("\n").trim()
 			not(line) continue;
 			param.set('@includeName', getFileName(line))
-			@web.parseInclude(fileRead("$path/$line"),fn,param)
+			@websrc.parseInclude(fileRead("$path/$line"),fn,param)
 		}
+		return;
 	}
 	@websrc.tp_script(&src, arr, fn,param) {
 		arr.inject(&s)
 		not(s.ch()) s=src
-		
+		return;
 	}	
 </func> 
 ~~
 <func>
-	@web.parseInclude(&s, fn, param,name) {
+	@websrc.parseInclude(&s, fn, param,name) {
 		not(s.find('#{')) return s;
 		not(name) name = param.val('@includeName')
 	 	ln ="\r\n", ss=''
@@ -231,15 +226,15 @@ x=object('@inc.userFunc').get('printLine')
 	 		sp = s.cur() - 1;
 	 		s.pos(sp) not(s.ch('{')) continue;
 	 		src=s.match()
-	 		if(typeof(src,'bool')) {
+	 		if( typeof(src,'bool')) {
 	 			s.findPos('}')
 	 			continue;
 	 		}
-	 		@web.parseTemplateVar(src,fn,param)
+	 		// @websrc.parseTemplateVar(src,fn,param)
 	 	}
 	 	if( ss) param.set('@script', ss)
 	}
-	@web.splitParam(&s,arr) {
+	@websrc.splitParam(&s,arr) {
 		arr.reuse()
 		while(s.valid()) {
 			c=s.ch()
@@ -254,10 +249,7 @@ x=object('@inc.userFunc').get('printLine')
 		}
 		return arr;
 	}
-	@web.parseHtmlSrc(&s,fn,param, prop, depth) {
-		print("parse html src => $s", prop)
-	}
-	@web.parseHtml(&s,fn,param, prop, depth) {		
+	@websrc.parseHtml(&s,fn,param, prop, depth) {		
 		not(depth) depth=0
 		result=''
 		while(s.valid()) {
@@ -280,18 +272,136 @@ x=object('@inc.userFunc').get('printLine')
 				}
 				if(typeof(ss,'bool')) break;
 				if(ss.ch('<')) {
-					src = @web.parseHtml(ss,fn,param,prop,depth)
+					src = @websrc.parseHtml(ss,fn,param,prop,depth)
 					if(tag) {
 						result.add("<$tag $prop>", src, "</$tag>")
 					} else {
 						result.add(src)
 					}
-				} 
+				} else {
+					if( @websrc.isTemplateVar(ss)) {
+						printLine(">> parse html prop:$prop $tag ", ss)
+						result.add(@websrc.parseHtmlSrc(ss,fn,param,tag,prop))						
+					} else {
+						result.add("<$tag $prop>", ss, "</$tag>")
+					}
+					break;
+				}
 			} else {
-				result.add(@web.parseHtmlSrc(s,fn,param,prop))
-				break;
+				printLine("parse html 시작오류:: ", ss)
 			}
 		}
 		return result;
 	}
+	@websrc.parseHtmlSrc(&s,fn,param, tag, prop, depth) {
+		result=''
+		type = s.move()
+		if(s.ch('[')) {
+			ss = s.match(1)
+		}
+		if(type.eq('echo')) {
+			result.add('#{',ss.trim(),'}')
+		} else if(type.eq('effect')) {
+		} else if(type.eq('eval')) {
+			@websrc.parseHtml_eval(s,fn,param,tag,prop)
+		}
+		return result;
+	}
+	@websrc.parseHtml_eval(&s,fn,param,tag,prop) {
+		
+	}
+	
+</func>
+
+<script>
+const clog=window.console.log
+const randomKey = () => (new Date%9e64).toString(36)
+const isNull = a => a===null || typeof a == 'undefined'
+const isEmpty = a => isNull(a) || (typeof a=='string' && a=='' )
+const isObj = a => !isNull(a) && typeof a=='object';
+const isNum = a => typeof a=='number' ? true: typeof a=='string' ? /^[0-9]+$/.test(a): false
+const jqCheck= a => typeof JQuery=='object' && a instanceof jQuery;
+const constructorName = val => val && val.constructor ? val.constructor.name: ''
+const isValid= a => Array.isArray(a)? a.length>0: isObj(a)? Object.keys(a).length : !isEmpty(a)
+const isEl = o => 
+	typeof HTMLElement === "object" ? o instanceof HTMLElement :
+	o && typeof o === "object" && o.nodeType === 1 && typeof o.nodeName==="string"
+const getEl = el => isEl(el) ? el : 
+	jqCheck(el)? el[0]: 
+	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el)[0]: document.getElementById(el)): null;
+	
+const cf={stateMap:{}, effectMap:{}}
+
+function setState(id, data) {
+	const map = cf.effectMap
+	stateMap[id]=data
+	for(const cur of getStateNodes(id)) {
+		if(typeof(cur.target)=='function') {
+			cur.target(data, cur)
+		} else {
+			const el=getEl(cur.target)
+			if(el) {
+				$(el).html(data)
+			}
+		}
+	}	
+}
+function setEffect(incCode, names, target, data) {
+	if(!Array.isArray(names)) {
+		name = names
+		names = [name]
+	}
+	const alen = arguments.length
+	names.forEach(name=> {
+		const id = incCode+'--'+name
+		if(cf.effectMap[id]) {
+			if(alen>2 ) cf.effectMap[id].target = target
+			if(alen>3 ) cf.effectMap[id].data = data
+		} else {
+			cf.effectMap[id] = {incCode,id,names,target,data}
+		}
+	})	
+}
+function changeState(id) {
+	if(cf.effectMap.hasOwnProperty(id)) {
+		const {incCode,id,names,target,data} = cf.effectMap[id]
+	}
+}
+
+function getStateNodes(id) {
+	const arr=[]
+	const map = cf.effectMap
+	stateMap[id]=data	
+	for(const k in map) {
+		const cur = map[k]
+		if(!Array.isArray(cur.names)) continue;
+		for(const a of cur.names) {
+			if( a.name==nm && (pc==null||pc==cur.pageCode)) {
+				arr.push(cur)
+			}
+		}
+	}
+	return arr;
+}
+</script>
+<func>
+	getFileName(path) {
+		if(path.find("\\")) path = path.replace("\\","/")
+		a=path.findLast('/')
+		if(a) {
+			return left(a.right(),'.')
+		} else {
+			return left(path,'.')
+		}
+	}
+	printLine(n,&s) {
+		if(s.ch()) {
+			a=s.findPos("\n").trim()
+		} else {
+			a='no data'
+		}
+		print("$n>>$a")
+		return;
+	}
+
 </func>
