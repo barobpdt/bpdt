@@ -22,3 +22,14 @@
 	</div>
 </body>
 </html>
+
+
+currentIcnNode = param.addNode('@incNodeMap').addNode('global')
+stack=param.addArray('@incStack')
+
+<func>
+	pushArray(a,b) {
+		if(a.size()) a.insert(0,b) else a.add(b)
+		return a;
+	}
+</func>
