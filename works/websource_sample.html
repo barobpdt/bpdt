@@ -23,13 +23,46 @@
 </body>
 </html>
 
-
-currentIcnNode = param.addNode('@incNodeMap').addNode('global')
+not(incName) incName = 'main'
 stack=param.addArray('@incStack')
+map=param.addNode('@incNodeMap')
+pushArray(stack, map.addNode(incName))
+
+node = stack.get(0)
+
 
 <func>
 	pushArray(a,b) {
 		if(a.size()) a.insert(0,b) else a.add(b)
-		return a;
+		return b;
 	}
+	@web.pagePath(&s) {
+		home = conf('web.rootPath')
+		a=s.findLast('/')
+		if(a) {
+			b=s.trim()
+			if(b.find('.')) {
+				name = b.findLast('.').trim()
+			} else {
+				name = b
+			}
+		}
+	}
+	
+	@web.page(req, param) {
+		srcFile = @web.pagePath(req.getValue('url'))
+		src=fileRead(srcPath)
+		req.send(@web.parseTemplate(src, param)) 
+	} 
+	
+	@web.addUrl(url, fc) {
+		prev = map.get(url)
+		if(typeof(prev,'function')) {
+			not(fc) return;
+			return print("이미등록된 URL 입니다 (경로:$url)");
+		}
+		not(fc) fc=@web.page
+		map.set(url, fc)
+	} 
+
 </func>
