@@ -66,3 +66,57 @@ node = stack.get(0)
 	} 
 
 </func>
+
+
+~~
+s=fileRead('c:/temp/webtest/a.html')
+a1(s)
+~~
+<func>
+	a1(&s) {
+		ss=''
+		sp=0
+		while(s.valid()) {
+			c=s.ch()
+			not(c) break;
+			while( c.is('oper') ) c=s.incr().ch()
+			if(isEffect(s)) {
+				ep=s.cur()
+				ss.add(s.value(sp,ep))
+				sp=makeEffectFunc(s)
+				print("sp===$sp", ep)
+				if(sp<ep) break;
+				s.pos(sp)
+			} else {
+				s.next()
+			}
+		}
+		ep=s.cur()
+		if(sp<ep) ss.add(s.value(sp,ep))
+		fileWrite("c:/temp/a1.html", ss)		
+	}
+	isEffect(&s) {
+		sp=s.cur()
+		not(s.ch()) return false;
+		c=s.next().ch()
+		if(c.eq('[')) {
+			type=s.trim(sp,s.cur())
+			if(type.eq('$', 'switch','case','default','inc','get','set')) return true
+		}
+		return false
+	}
+	makeEffectFunc(&s) {
+		type = s.move()
+		s.match(1)
+		sp=s.cur()
+		while(isEffect(s)) {
+			ep=makeEffectFunc(s)
+			if(sp>=ep) return sp+1
+			s.pos(ep)
+		}
+		ep = s.cur()
+		print("xxxx ($sp, $ep)", type)
+		if(sp>=ep) ep = sp+1;
+		return ep
+	}
+</func>
