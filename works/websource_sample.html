@@ -120,3 +120,204 @@ a1(s)
 		return ep
 	}
 </func>
+
+s='/xxx/ccc/vvvv/aa.bbb.htm'
+s.ref()
+~~
+left=s.findLast('/')
+b=s.trim()
+
+
+if(left ) {
+	xx=left.right()
+	print("xxx",left,xx)
+}
+
+fc=@web.page
+
+
+
+home = conf('web.rootPath')
+
+~~
+param = _node('test')
+not(incName) incName = 'main'
+stack=param.addArray('@incStack')
+map=param.addNode('@incNodeMap')
+pushArray(stack, map.addNode(incName))
+
+~~
+<func>
+	tm=System.tick()
+	node=stack.get(0)
+	node.fnm = "p$tm"
+node.fsrc=''
+
+param.var(id,'test')
+param.inject(@incStack)
+incStack
+
+	ws_switch(&s, &p, param) {
+		while(s.valid()) {
+			not(s.ch()) break;
+			not( isTemplateVar(s) ) break;
+			ty = s.move()
+			if(ty.eq('case', 'default')) {
+					
+			}
+		}
+		return s.cur()
+	}
+	ws_inc(&s,&p, param) {
+		
+	}
+
+</func>
+~~
+<func>
+	@web.pagePath(&s) {
+		home = conf('web.rootPath')
+		print("s==>$s")
+		if( s.find('/index.html') ) {
+			a=s.findPos('/index.html')
+			return Cf.val(home, a,".htm")
+		}
+		return Cf.val(home, s,".htm");
+	}
+	@web.page(req, param) {
+		srcPath = @web.pagePath(req.getValue('url'))
+		print("web page path => $srcPath")
+		src=fileRead(srcPath)
+		param.set('@srcPath', srcPath)
+		req.send(@web.parseTemplate(src, param)) 
+	} 
+	
+	@web.addUrl(url, fc) {
+		map = Baro.was().uriMap()
+		prev = map.get(url)
+		if(typeof(prev,'function')) {
+			not(fc) return;
+			return print("이미등록된 URL 입니다 (경로:$url)");
+		}
+		not(fc) fc=@web.page
+		map.set(url, fc)
+		print("map -> $map")
+	}
+
+</func>
+
+~~
+@web.addUrl('/pages/app', @web.page)
+
+~~
+<func>
+	@web.parseTemplate(&s, param) {
+		not(incName) incName = 'main'
+		stack=param.addArray('@incStack')
+		map = param.addNode('@incNodeMap')
+		node = pushArray(stack, map.addNode(incName))
+		param.set('@funcNode', Cf.funcNode())
+		ss='', sp=0
+		while(s.valid()) {
+			c=s.ch()
+			not(c) break;
+			while( c.is('oper') ) {
+				c=s.incr().ch()
+			}
+			not(@web.isPageVar(s) ) { 
+				s.next()
+				continue;
+			}
+			ep=s.cur()
+			ss.add(s.value(sp,ep))
+			Cf.error(true)
+			sp = @web.makePageVar(s, param)
+			if(Cf.error()) {
+				ss.add(Cf.error() )
+				break	
+			}
+			if( sp<ep) {
+				print("parse template end point error ($sp, $ep) ")
+				break;
+			}
+			s.pos(sp)
+		}
+		return ss;
+	}
+	@web.isPageVar(&s) {
+		name = s.move()
+		not( name.eq('get','set','$','switch','if','case','default', 'while', 'effect') ) return false;
+		c=s.ch()
+		not(c.eq('[') ) return false;
+		return true;
+	}
+	@web.makePageVar(s, param) {
+		param.inject(appendVarName)
+		name=s.move() if(name.eq('$')) name = 'get'
+		c=s.ch() not(c.eq('[')) return print("xx [error] xx", s)
+		p=s.match()
+		c=s.ch()
+		fc = call("ws.$name")
+		if( typeof(fc,'func')) {
+			ep = fc(s, p,param)
+		} else {
+			ep = s.cur()
+		}
+		return ep;
+	}
+	
+	@ws.switch(s,p,param) {
+		print("switch == $p start")
+		while(s.valid()) {
+			not(@web.isPageVar(s)) break;
+			sp = s.cur()
+			name = s.move()
+			if( name.eq('case','default')) {
+				pp=s.match()
+				ep=@ws.case(s, pp,param, name, p)
+				not(ep) return 0;
+				s.pos(ep)
+			} else {
+				s.pos(sp)
+				break;
+			}
+		}
+		return s.cur();
+	}
+	@ws.inc(s,p,param) {
+		print("ws inc[$p] ")
+		return s.cur()
+	}
+	@ws.case(s,p,param,type, pp) {
+		fn = param.var(funcNode)
+		print("case ->[$p]", type, pp)
+		ep = @ws.sub(s,param)
+		return ep;
+	}
+	@ws.sub(s,param) {
+		if( @web.isPageVar(s)) {
+			ep = @web.makePageVar(s,param)
+		} else {
+			c=s.ch()
+			if( c.eq() ) {
+				s.match()
+			} else if( c.eq('<')) {
+				sp=s.cur()
+				c=s.incr().next().ch()
+				if(c.eq('-')) s.incr().next()
+				ep=s.cur()
+				tag = s.trim(sp+1,ep)
+				s.pos(sp)
+				s.match("<$tag", "</$tag>")
+			} else {
+				s.next()
+			}
+			ep=s.cur()
+		}
+		return ep;
+	}
+</func>
+ 
+~~
+	
+
