@@ -121,6 +121,7 @@ a1(s)
 	}
 </func>
 
+~~
 s='/xxx/ccc/vvvv/aa.bbb.htm'
 s.ref()
 ~~
@@ -217,13 +218,16 @@ incStack
 		map = param.addNode('@incNodeMap')
 		node = pushArray(stack, map.addNode(incName))
 		param.set('@funcNode', Cf.funcNode())
+		param.addNode('@vars')
 		ss='', sp=0
 		while(s.valid()) {
 			c=s.ch()
 			not(c) break;
 			while( c.is('oper') ) {
 				c=s.incr().ch()
+				not(c) break
 			}
+			not(c) break;
 			not(@web.isPageVar(s) ) { 
 				s.next()
 				continue;
@@ -242,22 +246,26 @@ incStack
 			}
 			s.pos(sp)
 		}
+		ep=s.cur()
+		if(sp<ep) ss.add(s.value(sp,ep))
 		return ss;
 	}
 	@web.isPageVar(&s) {
 		name = s.move()
-		not( name.eq('get','set','$','switch','if','case','default', 'while', 'effect') ) return false;
+		not( name.eq('$','inc', 'get','set','switch','if','case','default', 'while', 'effect', 'vars') ) return false;
 		c=s.ch()
 		not(c.eq('[') ) return false;
 		return true;
 	}
 	@web.makePageVar(s, param) {
-		param.inject(appendVarName)
+		not(s.ch()) return print("@@ make page var start error", s)
 		name=s.move() if(name.eq('$')) name = 'get'
-		c=s.ch() not(c.eq('[')) return print("xx [error] xx", s)
+		c=s.ch() not(c.eq('[')) return print("@@ make page var Param error", s)
 		p=s.match()
 		c=s.ch()
 		fc = call("ws.$name")
+	
+		print("xxxxxxxxxx make page var xxxxxxxxx", name, fc, p)
 		if( typeof(fc,'func')) {
 			ep = fc(s, p,param)
 		} else {
@@ -265,7 +273,11 @@ incStack
 		}
 		return ep;
 	}
-	
+	@ws.vars(s,p,param) {
+		param.get('@vars').parseJson(p)
+		print("@@ vars => ", param.get('@vars'))
+		return s.cur()
+	}
 	@ws.switch(s,p,param) {
 		print("switch == $p start")
 		while(s.valid()) {
@@ -278,6 +290,7 @@ incStack
 				not(ep) return 0;
 				s.pos(ep)
 			} else {
+				return print("@@ switch end error $s")
 				s.pos(sp)
 				break;
 			}
@@ -288,9 +301,27 @@ incStack
 		print("ws inc[$p] ")
 		return s.cur()
 	}
+	@ws.if(s,p,param,type, pp) {
+		param.inject(@funcNode, @incStack)
+		sp = s.cur()
+		ep = @ws.sub(s,param)
+		ssize = incStack.size()
+		if( sp<ep) {
+			val = s.value(sp,ep)
+			funcNode.append('ss', val)
+		}
+		return ep;
+	}
+	@ws.isSingleTag(tag, &s) {
+		if(tag.eq('link','img','br') ) return true;
+		a=s.findPos('>')
+		c=a.ch(-1)
+		if(c.eq('/')) return true;
+		return false;
+	}
 	@ws.case(s,p,param,type, pp) {
 		fn = param.var(funcNode)
-		print("case ->[$p]", type, pp)
+		sp = s.cur()
 		ep = @ws.sub(s,param)
 		return ep;
 	}
@@ -299,6 +330,7 @@ incStack
 			ep = @web.makePageVar(s,param)
 		} else {
 			c=s.ch()
+			print("make sub c==$c")
 			if( c.eq() ) {
 				s.match()
 			} else if( c.eq('<')) {
@@ -307,8 +339,13 @@ incStack
 				if(c.eq('-')) s.incr().next()
 				ep=s.cur()
 				tag = s.trim(sp+1,ep)
-				s.pos(sp)
-				s.match("<$tag", "</$tag>")
+				if(@ws.isSingleTag(tag,s)) {
+					s.findPos('>',1)
+				} else {
+					s.pos(sp)
+					a=s.match("<$tag", "</$tag>")
+					if(typeof(a,'bool')) return print("@@ $tag match error ", s)
+				} 
 			} else {
 				s.next()
 			}
@@ -319,5 +356,5 @@ incStack
 </func>
  
 ~~
+ 
 	
-
