@@ -23,14 +23,12 @@
 </body>
 </html>
 
-not(incName) incName = 'main'
-stack=param.addArray('@incStack')
-map=param.addNode('@incNodeMap')
-pushArray(stack, map.addNode(incName))
-
-node = stack.get(0)
+~~
+@web.addUrl('/pages/app', @web.page)
 
 
+
+~~
 <func>
 	pushArray(a,b) {
 		if(a.size()) a.insert(0,b) else a.add(b)
@@ -63,119 +61,8 @@ node = stack.get(0)
 		}
 		not(fc) fc=@web.page
 		map.set(url, fc)
-	} 
-
-</func>
-
-
-~~
-s=fileRead('c:/temp/webtest/a.html')
-a1(s)
-~~
-<func>
-	a1(&s) {
-		ss=''
-		sp=0
-		while(s.valid()) {
-			c=s.ch()
-			not(c) break;
-			while( c.is('oper') ) c=s.incr().ch()
-			if(isEffect(s)) {
-				ep=s.cur()
-				ss.add(s.value(sp,ep))
-				sp=makeEffectFunc(s)
-				print("sp===$sp", ep)
-				if(sp<ep) break;
-				s.pos(sp)
-			} else {
-				s.next()
-			}
-		}
-		ep=s.cur()
-		if(sp<ep) ss.add(s.value(sp,ep))
-		fileWrite("c:/temp/a1.html", ss)		
 	}
-	isEffect(&s) {
-		sp=s.cur()
-		not(s.ch()) return false;
-		c=s.next().ch()
-		if(c.eq('[')) {
-			type=s.trim(sp,s.cur())
-			if(type.eq('$', 'switch','case','default','inc','get','set')) return true
-		}
-		return false
-	}
-	makeEffectFunc(&s) {
-		type = s.move()
-		s.match(1)
-		sp=s.cur()
-		while(isEffect(s)) {
-			ep=makeEffectFunc(s)
-			if(sp>=ep) return sp+1
-			s.pos(ep)
-		}
-		ep = s.cur()
-		print("xxxx ($sp, $ep)", type)
-		if(sp>=ep) ep = sp+1;
-		return ep
-	}
-</func>
-
-~~
-s='/xxx/ccc/vvvv/aa.bbb.htm'
-s.ref()
-~~
-left=s.findLast('/')
-b=s.trim()
-
-
-if(left ) {
-	xx=left.right()
-	print("xxx",left,xx)
-}
-
-fc=@web.page
-
-
-
-home = conf('web.rootPath')
-
-~~
-param = _node('test')
-not(incName) incName = 'main'
-stack=param.addArray('@incStack')
-map=param.addNode('@incNodeMap')
-pushArray(stack, map.addNode(incName))
-
-~~
-<func>
-	tm=System.tick()
-	node=stack.get(0)
-	node.fnm = "p$tm"
-node.fsrc=''
-
-param.var(id,'test')
-param.inject(@incStack)
-incStack
-
-	ws_switch(&s, &p, param) {
-		while(s.valid()) {
-			not(s.ch()) break;
-			not( isTemplateVar(s) ) break;
-			ty = s.move()
-			if(ty.eq('case', 'default')) {
-					
-			}
-		}
-		return s.cur()
-	}
-	ws_inc(&s,&p, param) {
-		
-	}
-
-</func>
-~~
-<func>
+	
 	@web.pagePath(&s) {
 		home = conf('web.rootPath')
 		print("s==>$s")
@@ -206,9 +93,6 @@ incStack
 	}
 
 </func>
-
-~~
-@web.addUrl('/pages/app', @web.page)
 
 ~~
 <func>
@@ -301,17 +185,7 @@ incStack
 		print("ws inc[$p] ")
 		return s.cur()
 	}
-	@ws.if(s,p,param,type, pp) {
-		param.inject(@funcNode, @incStack)
-		sp = s.cur()
-		ep = @ws.sub(s,param)
-		ssize = incStack.size()
-		if( sp<ep) {
-			val = s.value(sp,ep)
-			funcNode.append('ss', val)
-		}
-		return ep;
-	}
+	
 	@ws.isSingleTag(tag, &s) {
 		if(tag.eq('link','img','br') ) return true;
 		a=s.findPos('>')
@@ -354,7 +228,91 @@ incStack
 		return ep;
 	}
 </func>
- 
 ~~
- 
+<func>
+	@ws.paramVal(param) {
+		c=s.ch(), v=null
+		if(c.eq()) {
+			v = s.match()	
+		} else {
+			sp = s.cur()
+			c=s.next().ch()
+			if(c.eq('.', ':')) {
+				s.next().ch()
+			}
+			a = s.trim(sp,s.cur())
+			v=@ws.varVal(a, param)
+		}
+		return v;
+	}
+	@ws.varVal(&s, param) {
+		param.inject(@vars)
+		name = s.move()
+		c=s.ch()
+		if(c) {
+			v="var value $s"
+		}	else {
+			if(param.isVar(name)) {
+				v=param.get(name)
+			} else {
+				v=vars.get(name)
+			}
+		}
+		return v;
+	}
 	
+	@ws.checkOper(a,oper,b) {
+		print("xxxxxxxxx check oper xxxxxxxx",a,oper,b)
+		switch(oper) {
+		case 1: return a.ne(b);
+		case 2: return a.eq(b);
+		case 3: return a.lt(b);
+		case 5: return a.gt(b);
+		case 4: return a.le(b);
+		case 6: return a.ge(b)l
+		case 7: if(a&&b) return true;		
+		case 8: if(a||b) return true;
+		default:
+		}
+		return false;
+	}
+	@ws.checkTrue(&s, param) {
+		not(s.ch()) return false;
+		a='',b='',c=s.ch()
+		a=@ws.paramVal(param)
+		oper=0
+		c=s.ch(), cc=s.incr().ch()
+		if(c.eq('!') ) {
+			if(cc.eq('=')) oper=1
+		} else if(c.eq('=')) {
+			if(cc.eq('=')) oper=2			
+		} else if(c.eq('<','>')) {
+			if(cc.eq('=')) oper=4 else oper=3
+			if(c.eq('>')) oper+=2
+		} else if(c.eq('&','|')) {
+			if(c.eq(cc)) {
+				if(c.eq('&')) oper=7 else oper=8
+			}
+		}
+		not(oper) return false;
+		not(oper.eq(3,5) ) {
+			s.incr()
+		}
+		b=@ws.paramVal(param)
+		return @ws.checkOper(a,oper,b)
+	}
+	@ws.if(s,p,param,type, pp) {
+		param.inject(@funcNode, @incStack)
+		sp = s.cur()
+		ep = @ws.sub(s,param)
+		ssize = incStack.size()		
+		if( sp<ep) {
+			if( @ws.checkTrue(p,param)) {				
+				val = s.value(sp,ep)
+				funcNode.append('ss', val)
+			}
+		}
+		return ep;
+	}
+</func>
+
