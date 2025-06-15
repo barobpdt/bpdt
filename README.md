@@ -1,3 +1,9 @@
+## git 초기화
+git fetch --all
+git reset --hard origin/main
+git reset --soft origin/main <== 혼자작업시
+
+
 # React Native 푸시 알림 예제
 
 이 프로젝트는 React Native에서 Firebase Cloud Messaging을 사용하여 백그라운드 푸시 알림을 처리하는 예제입니다.
