@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+vars[
+	title:테스트 페이지
+	sty:aaa
+]
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>${title}</title>
+	if[sty=='aaa'] 
+	<link rel="stylesheet" href="/css/styles.css">
+	<link rel="stylesheet" href="/css/emoji-api.css">
+	<script src="/js/common.js"></script>
+	<script src="/js/jquery.js"></script>
+	<!-- Ace Editor CDN -->
+</head>
+<body>
+	<div class="chat-container">
+		switch[global:pageCode]
+		case[login] 
+			inc[/include/login]
+		case[main]
+			inc[/include/main]
+		default[]
+			<div>$[global:pageCode] not defined</div>
+	</div>
+</body>
+</html>
