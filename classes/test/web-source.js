@@ -82,22 +82,40 @@ include('classes/common/json')
 		map.set(url, fc)
 		log("map -> $map")
 	}
+	@ws.setLastTagStr(param, &s) {
+		s.findLast('<',1)
+		val = s.trim()
+		if( val) {			
+			param.set('@lastTagStr', "<$val")
+		}
+		print("@@ setLastTagStr => $val")
+	}
 	 
-	@ws.setIncVars(cur, code, param) {
-		fidx = param.incrNum("@funcIndex")
+	@ws.pushIncVars(cur, code, param) {
+		param.inject(@incStack, @incMap)
+		if( incMap.isVar(code) ) {
+			return print("$code 컨포넌트가 이미 등록되었습니다");
+		}
+		iidx = param.incrNum("@incIndex")
+		cur = incMap.addNode(code)
+		not( incStack.size() ) {
+			while(key, param.keys()) {
+				cur.set(key, param.get(key))
+			}
+		}
 		cur.set('@incCode', code)
-		cur.set('@incFuncName',"${code}_$fidx")
+		cur.set('@incIndex', iidx)
+		cur.set('@incFuncName',"incfc_$iidx")
 		cur.set('@incFuncSrc','')
 		cur.set('@incFuncScript','')
+		print("@@ push inc vars cur ==> $cur")
+		return pushArray(incStack, cur);
 	}
 	@ws.parseTemplate(&s, param) {
-		stack=param.addArray('@incStack')
-		map = param.addNode('@incMap')
-		cur = map.addNode('index')
-		@ws.setIncVars(cur,"index",param)
-		pushArray(stack,cur)
 		param.set('@funcNode', Cf.funcNode())
-		
+		param.addArray('@incStack')
+		param.addNode('@incMap')
+		@ws.pushIncVars(cur,"index",param)
 		ss='', sp=0
 		while(s.valid()) {
 			c=s.ch()
@@ -111,9 +129,11 @@ include('classes/common/json')
 				s.next()
 				continue;
 			}
-			ep=s.cur()
-			ss.add(s.value(sp,ep))
 			Cf.error(true)
+			ep=s.cur()
+			left = s.value(sp,ep)
+			ss.add(left)
+			@ws.setLastTagStr(param, left)
 			sp = @ws.makePageVar(s, param) not(typeof(sp,'number')) return;
 			if(Cf.error()) {
 				ss.add(Cf.error() )
@@ -184,9 +204,37 @@ include('classes/common/json')
 			}
 		}
 		return s.cur();
+	} 
+	@ws.getFileName(&s) {
+		name = right(s,'/')
+		return name.findPos('.').trim()
 	}
-	@ws.inc(s,p,param) {
-		log("ws inc[$p] ")
+	@ws.incPath(param, &s) {
+		wp=conf('web.rootPath')		
+		s.start('./', true)
+		sa = param.ref('@srcPath')
+		sa=sa.findLast('/')
+		while(s.valid()) {
+			if(s.start('../', true) ) {
+				if(sa) {
+					sa=sa.findLast('/')
+				}
+			} 
+		}
+		fullPath = Cf.val(wp, '/', sa)
+		print("fullPath == $fullPath", @ws.getFileName(fullPath) )
+		return fullPath
+	}
+	@ws.inc(s,&p,param) {
+		param.inject(@incStack, @incMap)
+		code = ''
+		if( p.find(',') ) {
+			code = p.findPos(",").trim()
+		} 
+		path = @ws.incPath(param,p)
+		not(code) {
+			code = @ws.getFileName(path)
+		}
 		return s.cur()
 	}
 	@ws.case(s,p,param,type,pp) {

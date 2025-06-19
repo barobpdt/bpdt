@@ -1,7 +1,68 @@
 /* 
 페이지 공통설정 
 */
-const cf={}
+const clog=window.console.log
+const randomKey = () => (new Date%9e64).toString(36)
+const isNull = a => a===null || typeof a == 'undefined'
+const isEmpty = a => isNull(a) || (typeof a=='string' && a=='' )
+const isObj = a => !isNull(a) && typeof a=='object';
+const isNum = a => typeof a=='number' ? true: typeof a=='string' ? /^[0-9]+$/.test(a): false
+const jqCheck= a => typeof JQuery=='object' && a instanceof jQuery;
+const constructorName = val => val && val.constructor ? val.constructor.name: ''
+const isValid= a => Array.isArray(a)? a.length>0: isObj(a)? Object.keys(a).length : !isEmpty(a)
+const isEl = o => 
+	typeof HTMLElement === "object" ? o instanceof HTMLElement :
+	o && typeof o === "object" && o.nodeType === 1 && typeof o.nodeName==="string"
+const getEl = el => isEl(el) ? el : 
+	jqCheck(el)? el[0]: 
+	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el)[0]: document.getElementById(el)): null;
+	
+const cf={stateMap:{}, effectMap:{}}
+
+function setState(id, data) {
+	const map = cf.effectMap
+	stateMap[id]=data
+	for(const cur of getStateNodes(id)) {
+		if(typeof(cur.target)=='function') {
+			cur.target(data, cur)
+		} else {
+			const el=getEl(cur.target)
+			if(el) {
+				$(el).html(data)
+			}
+		}
+	}	
+}
+function setStateEffect(pageCode, names, target, data) {
+	if(!Array.isArray(names)) {
+		name = names
+		names = [name]
+	}
+	const alen = arguments.length
+	const id = pageCode+'--'+name
+	if(cf.effectMap[id]) {
+		if(alen>2 ) cf.effectMap[id].target = target
+		if(alen>3 ) cf.effectMap[id].data = data
+	} else {
+		cf.effectMap[id] = {pageCode,id,names,target,data}
+	}
+	
+}
+function getStateNodes(id) {
+	const arr=[]
+	const map = cf.effectMap
+	stateMap[id]=data	
+	for(const k in map) {
+		const cur = map[k]
+		if(!Array.isArray(cur.names)) continue;
+		for(const a of cur.names) {
+			if( a.name==nm && (pc==null||pc==cur.pageCode)) {
+				arr.push(cur)
+			}
+		}
+	}
+	return arr;
+}
 const pageInfo = {
 	editor: null
 	/* 웹소켓 설정 */
