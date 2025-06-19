@@ -210,19 +210,23 @@ include('classes/common/json')
 		return name.findPos('.').trim()
 	}
 	@ws.incPath(param, &s) {
-		wp=conf('web.rootPath')		
-		s.start('./', true)
-		sa = param.ref('@srcPath')
-		sa=sa.findLast('/')
-		while(s.valid()) {
-			if(s.start('../', true) ) {
-				if(sa) {
-					sa=sa.findLast('/')
-				}
-			} 
+		if( s.ch('/') ) {
+			fullPath = Cf.val(conf('web.rootPath'), s)			
+		} else {			
+			s.start('./', true)
+			sa = param.ref('@srcPath')
+			sa=sa.findLast('/')
+			while(s.valid()) {
+				if(s.start('../', true) ) {
+					if(sa) {
+						sa=sa.findLast('/')
+					}
+				} 
+			}
+			fullPath = Cf.val(sa, '/', p)
 		}
-		fullPath = Cf.val(wp, '/', sa)
-		print("fullPath == $fullPath", @ws.getFileName(fullPath) )
+		name = @ws.getFileName(fullPath)
+		print("fullPath == $fullPath",  name)
 		return fullPath
 	}
 	@ws.inc(s,&p,param) {

@@ -20,9 +20,9 @@ vars[
 	<div class="chat-container">
 		switch[global:pageCode]
 		case[login] 
-			inc[/include/login]
+			inc[/include/login.htm]
 		case[main]
-			inc[/include/main]
+			inc[/include/main.htm]
 		default[]
 			<div>$[global:pageCode] not defined</div>
 	</div>
