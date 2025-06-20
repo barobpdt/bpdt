@@ -4,6 +4,53 @@ include('classes/common/json')
  
 ~~
 <func>
+	@ws.parseTag(&s, depth) {
+		not(depth) depth = 0
+		while(s.valid() ) {		
+			c=s.ch()
+			if( c.eq('<')) {
+				sp=s.cur()
+				c=s.incr().next().ch()
+				while(c.eq('-')) c=ss.incr().next().ch()
+				tag = s.trim(sp+1, s.cur())
+				print("$depth>>$tag")
+				s.pos(sp)
+				ss=s.match("<$tag", "</$tag>") if(typeof(ss,'bool')) return print("$tag match error", s)
+				parseProp()
+				parseTag(ss, depth+1)
+			} else {
+				if(s) print("text :", s)
+				break;
+			}
+		}
+		parseProp = func() {
+			while(ss.valid()) {
+				c=ss.ch()
+				not(c) break;
+				if(c.eq('>')) {
+					ss.incr()
+					return true;
+				}
+				sp=ss.cur()
+				c=ss.next().ch()
+				while(c.eq('-')) c=ss.incr().next().ch()
+				key=ss.trim(sp,ss.cur())
+				
+				not(ss.ch('=')) {
+					print("\t>> not match prop start [key:$key] c==$c")
+					ss.findPos('>')
+					break;
+				}
+				c=ss.incr().ch()
+				if(c.eq()) {
+					val=ss.match()
+				}
+				print("\t>> $key = $val")
+			}
+			return false;
+		};
+	}
+
 	pushArray(a,b) {
 		if(a.size()) a.insert(0,b) else a.add(b)
 		return b;
@@ -91,7 +138,7 @@ include('classes/common/json')
 		print("@@ setLastTagStr => $val")
 	}
 	 
-	@ws.pushIncVars(cur, code, param) {
+	@ws.pushIncVars(param, code) {
 		param.inject(@incStack, @incMap)
 		if( incMap.isVar(code) ) {
 			return print("$code 컨포넌트가 이미 등록되었습니다");
@@ -115,7 +162,7 @@ include('classes/common/json')
 		param.set('@funcNode', Cf.funcNode())
 		param.addArray('@incStack')
 		param.addNode('@incMap')
-		@ws.pushIncVars(cur,"index",param)
+		@ws.pushIncVars(param,"index")
 		ss='', sp=0
 		while(s.valid()) {
 			c=s.ch()
@@ -221,7 +268,7 @@ include('classes/common/json')
 					if(sa) {
 						sa=sa.findLast('/')
 					}
-				} 
+				}
 			}
 			fullPath = Cf.val(sa, '/', p)
 		}
