@@ -4,10 +4,63 @@ include('classes/common/json')
  
 ~~
 <func>
-	@ws.parseTag(&s, depth) {
-		not(depth) depth = 0
-		while(s.valid() ) {		
+	 
+	@ws.parseText(param, &s) {
+		ss='', sp=0
+		while(s.valid()) {
 			c=s.ch()
+			not(c) break;
+			while( c.is('oper') ) {
+				c=s.incr().ch()
+				not(c) break
+			}
+			not(c) break;
+			not(@ws.isWebTag(s) ) { 
+				s.next()
+				continue;
+			}
+			Cf.error(true)
+			ep=s.cur()
+			left = s.value(sp,ep)
+			ss.add(left)
+			sp = @ws.makeWebTag(param,s) not(typeof(sp,'number')) return;
+			if(Cf.error()) {
+				ss.add(Cf.error() )
+				break	
+			}
+			if( sp<ep) {
+				log("parse template end point error ($sp, $ep) ")
+				break;
+			}
+			s.pos(sp)
+		}
+		ep=s.cur()
+		if(sp<ep) ss.add(s.value(sp,ep))
+		return ss;
+	}
+	@ws.parseTag(param, &s, parentEl, depth) {
+		use(end)
+		not(depth) depth = 0
+		param.inject(@srcStack, @incStack)
+		cur = incStack.get(0)
+		not(parentEl) {
+			return print("parseTag 오류 부모요소 미정의 inc=>",cur)
+		}
+		while(s.valid() ) {
+			c=s.ch()
+			if( @ws.isWebTag(s) ) {
+				sp = @ws.makeWebTag(param,s) not(typeof(sp,'number')) return;
+				if(Cf.error()) {
+					ss.add(Cf.error() )
+					break	
+				}
+				if( sp<ep) {
+					log("parse template end point error ($sp, $ep) ")
+					break;
+				}
+				s.pos(sp)
+				continue;
+			}
 			if( c.eq('<')) {
 				sp=s.cur()
 				c=s.incr().next().ch()
@@ -15,21 +68,25 @@ include('classes/common/json')
 				tag = s.trim(sp+1, s.cur())
 				print("$depth>>$tag")
 				s.pos(sp)
-				ss=s.match("<$tag", "</$tag>") if(typeof(ss,'bool')) return print("$tag match error", s)
-				parseProp()
-				parseTag(ss, depth+1)
+				ss=s.match("<$tag", "</$tag>",8) if(typeof(ss,'bool')) return print("$tag match error", s)
+				props=parseProp()
+				idx = cur.incrNum('elIndex')
+				srcStack.append(0,"childEl[e$idx]=createEl('$tag',$props)", end)
+				@ws.parseTag(param,ss,"childEl[e$idx]",depth+1)
+				srcStack.append(0,"${parentEl}.append(childEl[e$idx])", end)
 			} else {
-				if(s) print("text :", s)
-				break;
+				@ws.parseText(param,ss)
 			}
 		}
 		parseProp = func() {
+			rst='{'
 			while(ss.valid()) {
 				c=ss.ch()
 				not(c) break;
 				if(c.eq('>')) {
 					ss.incr()
-					return true;
+					rst.add('}')
+					return rst;
 				}
 				sp=ss.cur()
 				c=ss.next().ch()
@@ -44,10 +101,14 @@ include('classes/common/json')
 				c=ss.incr().ch()
 				if(c.eq()) {
 					val=ss.match()
+				} else if(c.eq('{')) {
+					val=ss.match(1)
+				} else {
+					val=ss.findPos(" \t\n>",4)
 				}
 				print("\t>> $key = $val")
 			}
-			return false;
+			return '[]';
 		};
 	}
 
@@ -111,6 +172,7 @@ include('classes/common/json')
 		return Cf.val(home, s,".htm");
 	}
 	@ws.page(req, param) {
+		end=";\n"
 		srcPath = @ws.pagePath(req.getValue('url'))
 		log("web page path => $srcPath")
 		src=fileRead(srcPath)
@@ -137,13 +199,16 @@ include('classes/common/json')
 		}
 		print("@@ setLastTagStr => $val")
 	}
-	 
+	@ws.getFnm(param, prefix) {
+		idx = param.incrNum("@incIndex")
+		not(prefix) prefix='incfc'
+		return "${prefix}_${idx}";
+	}
 	@ws.pushIncVars(param, code) {
 		param.inject(@incStack, @incMap)
 		if( incMap.isVar(code) ) {
 			return print("$code 컨포넌트가 이미 등록되었습니다");
 		}
-		iidx = param.incrNum("@incIndex")
 		cur = incMap.addNode(code)
 		not( incStack.size() ) {
 			while(key, param.keys()) {
@@ -152,16 +217,17 @@ include('classes/common/json')
 		}
 		cur.set('@incCode', code)
 		cur.set('@incIndex', iidx)
-		cur.set('@incFuncName',"incfc_$iidx")
+		cur.set('@incFuncName', @ws.getFnm())
 		cur.set('@incFuncSrc','')
-		cur.set('@incFuncScript','')
 		print("@@ push inc vars cur ==> $cur")
 		return pushArray(incStack, cur);
 	}
 	@ws.parseTemplate(&s, param) {
 		param.set('@funcNode', Cf.funcNode())
+		param.addArray('@srcStack')
 		param.addArray('@incStack')
 		param.addNode('@incMap')
+		param.set('@funcScript', '')
 		@ws.pushIncVars(param,"index")
 		ss='', sp=0
 		while(s.valid()) {
@@ -172,7 +238,7 @@ include('classes/common/json')
 				not(c) break
 			}
 			not(c) break;
-			not(@ws.isPageVar(s) ) { 
+			not(@ws.isWebTag(s) ) { 
 				s.next()
 				continue;
 			}
@@ -181,7 +247,7 @@ include('classes/common/json')
 			left = s.value(sp,ep)
 			ss.add(left)
 			@ws.setLastTagStr(param, left)
-			sp = @ws.makePageVar(s, param) not(typeof(sp,'number')) return;
+			sp = @ws.makeWebTag(param,s) not(typeof(sp,'number')) return;
 			if(Cf.error()) {
 				ss.add(Cf.error() )
 				break	
@@ -196,31 +262,91 @@ include('classes/common/json')
 		if(sp<ep) ss.add(s.value(sp,ep))
 		return ss;
 	}
-	@ws.isPageVar(&s) {
+	@ws.getEl(&ref) {
+		id=propVal(ref,'id')
+		if(id) {
+			el = "getEl('#$id')"
+		} else {
+			clsVal=''
+			cls=propVal(ref,'class')
+			cls.ref()
+			while(cls.valid()) {
+				a=cls.findPos(" \t",4).trim()
+				not(a) break;
+				clsVal.add(".$a")
+			}
+			if( clsVal) {
+				el = "getEl('$clsVal')"
+			} else {
+				el = "getEl()"
+			}
+		}
+		return el;
+	}
+	@ws.isWebTag(&s) {
 		name = s.move()
 		not( name.eq('$','inc', 'get','set','switch','if','case','default', 'while', 'effect', 'vars') ) return false;
 		c=s.ch()
 		not(c.eq('[') ) return false;
 		return true;
 	}
-	@ws.makePageVar(s, param) {
+	@ws.makeWebTag(param,&s,parentEl) {
 		not(s.ch()) return print("@@ make page var start error", s)
 		name=s.move() if(name.eq('$')) name = 'get'
 		c=s.ch() not(c.eq('[')) return print("@@ make page var Param error", s)
 		p=s.match()
 		c=s.ch()
-		fc = call("ws.$name")
+		fc = call("ws.fc_$name")
 	
 		log("xxxxxxxxxx make page var xxxxxxxxx", name, fc, p)
+		param.inject(@incStack)
+		isRoot=false;
+		not(parentEl) {
+			if(incStack.size()==1 ) {
+				isRoot=true;
+				parentEl=@ws.getEl(param.ref('@lastTagStr'))
+			}
+		}
+		not(parentEl) {
+			return print("makeWebTag 오류 부모요소 미정의 name:$name")
+		}
 		if( typeof(fc,'func')) {
-			ep = fc(s, p,param)
+			ep = fc(param,s,p,parentEl)
 		} else {
 			ep = s.cur()
+		}
+		use(end)
+		if(isRoot) {
+			cur=incStack.get(0)
+			param.appendText('@funcReady', cur.get('@incFuncName'), "($parentEl)", end)
 		}
 		log("xxxxxxxxxx $name xxxxxxxxx ep==$ep")
 		return ep;
 	}
-	@ws.vars(s,p,param) {
+	@ws.fc_inc(param,s,&p,parentEl) {
+		param.inject(@incStack, @incMap, @srcStack)
+		code = ''
+		if( p.find(',') ) {
+			code = p.findPos(",").trim()
+		} 
+		path = @ws.incPath(param,p)
+		not(isFile(path)) {
+			return print("inc 오류 : $path 파일 찾기오류")
+		}
+		not(code) {
+			code = @ws.getFileName(path)
+		}
+		cur=@ws.pushIncVars(param, code)
+		cur.set('@parentEl', parentEl)
+		cur.set('@srcPath', path)
+		pushArray(srcStack, '')
+		srcStack.append(0,'const childEl={}', end)
+		@ws.parseTag(param, fileRead(path), parentEl)
+		src=srcStack.pop()
+		fnm=@ws.getFnm(param,'fcinc')
+		return s.cur()
+	}
+	@ws.fc_vars(param,s,p,parentEl) {
 		param.inject(@funcNode, @incStack, inlineMode)
 		cur = incStack.get(0)
 		if(inlineMode) {
@@ -232,16 +358,81 @@ include('classes/common/json')
 		log("@@ vars => ", val)
 		return s.cur()
 	}
-	@ws.switch(s,p,param) {
+	@ws.appendScript(param) {
+		param.inject(@incStack)
+		cur = incStack.get(0)
+		ss=''
+		while(a, args(1)) ss.add(a); 
+		cur.apptenText('@incFuncSrc',  ss)
+	}
+	@ws.parseCtrl(param, &s, arr) {
+		ss='';
+		while(s.valid()) {
+			c=s.ch()
+			not(c) break;
+			if(c.eq('(')) {
+				a=s.match()
+				ss.add('(',@ws.parseCtrl(param,a),')')
+				continue;
+			}
+			if(c.is('oper')) {
+				ss.add(c)
+				continue;
+			}
+			if(c.eq()) {
+				v=s.match()
+				ss.add(Cf.jsValue(v))
+			} else {
+				sp=s.cur()
+				c=s.next().ch()
+				while(c.eq('.',':')) c=s.incr().next().ch();
+				v=Cf.trim(sp,s.cur())
+				if(arr) arr.add(v)
+				ss.add('getVal("',v,'")')
+			}
+		}
+		return ss;
+	}
+	@ws.fc_if(param,s,p,parentEl) {
+		param.inject(@funcNode, @incStack, @srcStack)
+		ssize = incStack.size()
+		sp = s.cur()
+		if( asize==1 ) {
+			ep = @ws.sub(param,s)
+			if( sp>ep ) return 0;
+			val = s.value(sp,ep)
+			if( @ws.checkTrue(param,p)) {				
+				funcNode.append('ss', val)
+			}
+			return ep;
+		}
+		cur=incStack.get(0)
+		not(typeof(cur,'node')) {
+			print("@@ 컴포넌트 스택오류", s)
+			return 0;
+		}
+		arr=_arr()
+		pushArray(srcStack,'')
+		srcStack.append(0, 'if(', @ws.parseCtrl(param,p,arr),') {' )
+		srcStack.append(0, '}')
+		src = srcStack.get(0)
+		cur.appentText('@incFuncSrc', src)
+		srcStack.pop()
+		return ep;
+	}
+	@ws.fc_case(param,s,p,type,pp) {
+		log("call case => ", p, param, type, pp)
+		return @ws.sub(param,s)
+	}		
+	@ws.fc_switch(param,s,p,parentEl) {
 		log("switch == $p start")
 		while(s.valid()) {
-			not(@ws.isPageVar(s)) break;
+			not(@ws.isWebTag(s)) break;
 			sp = s.cur()
-			name = s.move()
-			if( name.eq('case','default')) {
+			type = s.move()
+			if( type.eq('case','default')) {
 				pp=s.match()
-				ep=@ws.case(s, pp,param, name, p)
-				log("switch case ep == $ep")
+				ep=@ws.fc_case(param,s,pp,type,p)
 				not(ep) return 0;
 				s.pos(ep)
 			} else {
@@ -256,7 +447,7 @@ include('classes/common/json')
 		name = right(s,'/')
 		return name.findPos('.').trim()
 	}
-	@ws.incPath(param, &s) {
+	@ws.incPath(param,&s) {
 		if( s.ch('/') ) {
 			fullPath = Cf.val(conf('web.rootPath'), s)			
 		} else {			
@@ -276,22 +467,7 @@ include('classes/common/json')
 		print("fullPath == $fullPath",  name)
 		return fullPath
 	}
-	@ws.inc(s,&p,param) {
-		param.inject(@incStack, @incMap)
-		code = ''
-		if( p.find(',') ) {
-			code = p.findPos(",").trim()
-		} 
-		path = @ws.incPath(param,p)
-		not(code) {
-			code = @ws.getFileName(path)
-		}
-		return s.cur()
-	}
-	@ws.case(s,p,param,type,pp) {
-		log("call case => ", p, param, type, pp)
-		return @ws.sub(s,param)
-	}	
+
 	@ws.isSingleTag(tag, &s) {
 		if(tag.eq('link','img','br') ) return true;
 		a=s.findPos('>')
@@ -300,9 +476,9 @@ include('classes/common/json')
 		return false;
 	}
 	
-	@ws.sub(s,param) {
-		if( @ws.isPageVar(s)) {
-			ep = @ws.makePageVar(s,param)
+	@ws.sub(param, &s) {
+		if( @ws.isWebTag(s)) {
+			ep = @ws.makeWebTag(param, s)
 		} else {
 			c=s.ch()
 			log("make sub c==$c")
@@ -383,7 +559,7 @@ include('classes/common/json')
 		}
 		return false;
 	}
-	@ws.checkTrue(&s, param) {
+	@ws.checkTrue(param, &s) {
 		not(s.ch()) return false;
 		a='',b='',c=s.ch()
 		a=@ws.paramVal(param)
