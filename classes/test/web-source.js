@@ -173,6 +173,7 @@ include('classes/common/json')
 	}
 	@ws.page(req, param) {
 		end=";\n"
+		ln="\n"
 		srcPath = @ws.pagePath(req.getValue('url'))
 		log("web page path => $srcPath")
 		src=fileRead(srcPath)
@@ -227,7 +228,7 @@ include('classes/common/json')
 		param.addArray('@srcStack')
 		param.addArray('@incStack')
 		param.addNode('@incMap')
-		param.set('@funcScript', '')
+		param.set('@jsRady', '')
 		@ws.pushIncVars(param,"index")
 		ss='', sp=0
 		while(s.valid()) {
@@ -420,19 +421,30 @@ include('classes/common/json')
 		srcStack.pop()
 		return ep;
 	}
-	@ws.fc_case(param,s,p,type,pp) {
+	@ws.fc_case(param,s,p,parentEl,type,pp) {
 		log("call case => ", p, param, type, pp)
 		return @ws.sub(param,s)
 	}		
 	@ws.fc_switch(param,s,p,parentEl) {
 		log("switch == $p start")
+		use(ln,end)
+		param.inject(@incStack, @srcStack)
+		pushArray(srcStack,'')
+		srcStack.append(0,"switch(getVal('$p')) {',end)
 		while(s.valid()) {
-			not(@ws.isWebTag(s)) break;
+			not(@ws.isPageVar(s)) break;
 			sp = s.cur()
-			type = s.move()
-			if( type.eq('case','default')) {
+			name = s.move()
+			if( name.eq('case','default')) {
 				pp=s.match()
-				ep=@ws.fc_case(param,s,pp,type,p)
+				if( name.eq('case')) {
+					srcStack.append(0,"case $name:",ln)
+				} else {
+					srcStack.append(0,"default:",ln)
+				}
+				ep=@ws.case(param,s,pp,parentEl,name,p)
+				srcStack.append(0,"break",end)
+				log("switch case ep == $ep")
 				not(ep) return 0;
 				s.pos(ep)
 			} else {
@@ -440,6 +452,16 @@ include('classes/common/json')
 				s.pos(sp)
 				break;
 			}
+		}
+		srcStack.append(0,"}",end)
+		src=srcStack.pop()
+		fnm=@ws.getFnm('switch')
+		funcSrc="const ${fnm} = (parentEl) => {$src}"
+		param.appendText("@jsReady", "setEffect(getVal('$p'),$parentEl,$fnm)", end)
+		not(srcStack.size()) {
+			param.appendText("@jsReady", "${fnm}($parentEl)", end)
+		} else {
+			cur.appendText("@incFuncSrc", funcSrc, ln)
 		}
 		return s.cur();
 	} 
