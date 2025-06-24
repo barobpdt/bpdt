@@ -1,3 +1,19 @@
+##
+path=conf('python.path')
+c=cmd()
+c.run("cd $x")
+c.run("cd Python313")
+c.run('python -m pip install openai==1.75.0')
+c.run('python -m pip install python-dotenv')
+c.run('python -m pip install typer[all]')
+c.run('python -m pip install mcp[cli]==1.6.0')
+
+c.run('python -m pip freeze > c:/temp/0625.txt')
+
+# python -m pip install --upgrade pip
+
+
+##
 include('classes/common/etc')
 c=cmd()
 in=logWriter('runcmd-in')
