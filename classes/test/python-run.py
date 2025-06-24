@@ -1,4 +1,6 @@
 ##
+conf('python.path', " %userprofile%/AppData/Local/Programs/Python/Python313", true)
+
 path=conf('python.path')
 c=cmd()
 c.run("cd $x")
@@ -12,6 +14,15 @@ c.run('python -m pip freeze > c:/temp/0625.txt')
 
 # python -m pip install --upgrade pip
 
+## FastApi
+Run the application:
+
+cd app
+uvicorn main:app --reload
+Access your API:
+
+API endpoints: http://localhost:8000/events
+Interactive docs: http://localhost:8000/docs
 
 ##
 include('classes/common/etc')
