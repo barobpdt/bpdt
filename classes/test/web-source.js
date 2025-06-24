@@ -4,8 +4,14 @@ include('classes/common/json')
  
 ~~
 <func>
-	 
-	@ws.parseText(param, &s) {
+	pushArray(a,b) {
+		if(a.size()) a.insert(0,b) else a.add(b)
+		return b;
+	}
+	log(&a) {
+		line = a.findPos("\n")
+	}
+	@ws.parseText(param, &s, parentEl) {
 		ss='', sp=0
 		while(s.valid()) {
 			c=s.ch()
@@ -23,7 +29,7 @@ include('classes/common/json')
 			ep=s.cur()
 			left = s.value(sp,ep)
 			ss.add(left)
-			sp = @ws.makeWebTag(param,s) not(typeof(sp,'number')) return;
+			sp = @ws.makeWebTag(param,s,parentEl) not(typeof(sp,'number')) return;
 			if(Cf.error()) {
 				ss.add(Cf.error() )
 				break	
@@ -69,13 +75,13 @@ include('classes/common/json')
 				print("$depth>>$tag")
 				s.pos(sp)
 				ss=s.match("<$tag", "</$tag>",8) if(typeof(ss,'bool')) return print("$tag match error", s)
-				props=parseProp()
 				idx = cur.incrNum('elIndex')
+				props=parseProp()
 				srcStack.append(0,"childEl[e$idx]=createEl('$tag',$props)", end)
 				@ws.parseTag(param,ss,"childEl[e$idx]",depth+1)
 				srcStack.append(0,"${parentEl}.append(childEl[e$idx])", end)
 			} else {
-				@ws.parseText(param,ss)
+				@ws.parseText(param,ss,parentEl)
 			}
 		}
 		parseProp = func() {
@@ -368,29 +374,32 @@ include('classes/common/json')
 	}
 	@ws.parseCtrl(param, &s, arr) {
 		ss='';
+		print("parse ctrl s===============$s")
 		while(s.valid()) {
 			c=s.ch()
 			not(c) break;
 			if(c.eq('(')) {
 				a=s.match()
-				ss.add('(',@ws.parseCtrl(param,a),')')
+				ss.add('(',@ws.parseCtrl(param,a,arr),')')
+				continue;
+			}			
+			if(c.eq()) {
+				v=s.match()
+				print("v==$v")
+				ss.add(Cf.jsValue(v))
 				continue;
 			}
-			if(c.is('oper')) {
+			if( c.is('oper')) {				
+				s.incr()
 				ss.add(c)
 				continue;
 			}
-			if(c.eq()) {
-				v=s.match()
-				ss.add(Cf.jsValue(v))
-			} else {
-				sp=s.cur()
-				c=s.next().ch()
-				while(c.eq('.',':')) c=s.incr().next().ch();
-				v=Cf.trim(sp,s.cur())
-				if(arr) arr.add(v)
-				ss.add('getVal("',v,'")')
-			}
+			sp=s.cur()
+			c=s.next().ch()
+			while(c.eq('.',':')) c=s.incr().next().ch();
+			v=s.trim(sp,s.cur())
+			if(arr) arr.add(v)
+			ss.add('getVal("',v,'")')
 		}
 		return ss;
 	}
@@ -399,7 +408,7 @@ include('classes/common/json')
 		ssize = incStack.size()
 		sp = s.cur()
 		if( asize==1 ) {
-			ep = @ws.sub(param,s)
+			ep = @ws.sub(param,s,parentEl)
 			if( sp>ep ) return 0;
 			val = s.value(sp,ep)
 			if( @ws.checkTrue(param,p)) {				
@@ -423,7 +432,7 @@ include('classes/common/json')
 	}
 	@ws.fc_case(param,s,p,parentEl,type,pp) {
 		log("call case => ", p, param, type, pp)
-		return @ws.sub(param,s)
+		return @ws.sub(param,s,parentEl)
 	}		
 	@ws.fc_switch(param,s,p,parentEl) {
 		log("switch == $p start")
@@ -498,9 +507,11 @@ include('classes/common/json')
 		return false;
 	}
 	
-	@ws.sub(param, &s) {
+	@ws.sub(param,&s,parentEl) {
+		param.inject(@funcNode, @incStack, @srcStack)
+		ssize = incStack.size()
 		if( @ws.isWebTag(s)) {
-			ep = @ws.makeWebTag(param, s)
+			ep = @ws.makeWebTag(param,s,parentEl)
 		} else {
 			c=s.ch()
 			log("make sub c==$c")
@@ -517,7 +528,7 @@ include('classes/common/json')
 					s.findPos('>',1)
 				} else {
 					s.pos(sp)
-					a=s.match("<$tag", "</$tag>")
+					a=s.match("<$tag", "</$tag>",8)
 					if(typeof(a,'bool')) return print("@@ $tag match error ", s)
 				} 
 			} else {
