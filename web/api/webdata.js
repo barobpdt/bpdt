@@ -1,4 +1,3 @@
-<api>
 emoji(req, param, &uri) { 
 	conf('webdata.emoji',#[
 표정
@@ -33,4 +32,57 @@ emoji(req, param, &uri) {
 	param.val('@treeMode', true)
 	return param;
 }
-</api>
+
+parseDdl(req,param,&uri,data) {
+	s=stripSqlComment(fileRead('c:/temp/jkj.sql'))
+	s=parseTable(s)
+	fileWrite('c:/temp/jkj_table.txt', s)
+	req.send(s)
+	
+	stripSqlComment = func(&s) {
+		ss=''
+		while(s.valid()) {
+			ss.add(s.findPos('--'))
+			not(s.ch()) break;
+			s.findPos("\n")
+		}
+		return ss;
+	};
+	parseTable = func(&s) {
+		ss = ''
+		while(s.valid()) {
+			a=s.move().lower()
+			not(a.eq('create')) break;
+			sp=skip(s)
+			if(sp) s.pos(sp)
+			a=s.findPos('(',1,1)
+			c=a.ch()
+			if(c.eq('`')) {
+				table = a.match('`','`')
+			} else {
+				table = a.trim()
+			}
+			body = s.match(1)
+			line = s.findPos(';')
+			line.findPos('COMMENT=')
+			c=line.ch()
+			if(c.eq()) tableDesc=line.match() else tableDesc=''
+			ss.add("$table<sep>$body<sep>$tableDesc<end>\r\n")
+		}
+		return ss;
+	}
+	skip = func(&s,type) {
+		not(s.ch()) return 0;
+		sp=0
+		while(s.valid()) {
+			a=s.move().lower()
+			if(a.eq('table','if','not','exists')) {
+				sp=s.cur()
+				n++
+				continue;
+			}
+			break;
+		}
+		return sp;
+	}
+}

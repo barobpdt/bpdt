@@ -100,6 +100,7 @@
 			@status = 'start'
 			this.runStartTick = System.localtime()
 			this.set('cmdResult','')
+			print("@@ cmd: $cmd")
 			proc.write(cmd);
 		} else {
 			dist = System.localtime() - this.runStartTick
