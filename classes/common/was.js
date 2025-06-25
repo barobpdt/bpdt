@@ -21,6 +21,81 @@
 		}
 		data=''
 		uri=param.ref('@uri')
+		webRoot = conf('web.rootPath')
+		fileName = "$webRoot/api/${service}.js"
+		name=uri.findPos('/').trim();
+		if( uri.find('/') ) {
+			if(isFile(fileName) ) {
+				objectId=service
+			} else {
+				fileName="$webRoot/api/$service/${name}.js"
+				not(isFile(fileName)) {
+					ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
+					return req.send(ss)
+				}
+				objectId = "$service/$name"
+				name = uri.findPos('/').trim()
+				not(name) {
+					ss=pv('{"error":"api호출 오류 #{fileName} 파일 $name 함수가 없습니다"}')
+					return req.send(ss)
+				}
+			}
+		} else {
+			if(isFile(fileName) ) {
+				objectId=service
+			} else {
+				ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
+				return req.send(ss)
+			}
+		}
+		serviceNode=Cf.getObject("api", objectId, true)
+		print("xxx", name, service, objectId, serviceNode)
+		not( serviceNode.isValid('lastModifyTm') ) { 
+			modifyTm = Baro.file('api').modifyDate(fileName)
+			serviceNode.set('lastModifyTm', modifyTm)
+			was.addServiceFunc(serviceNode, fileRead(fileName))
+		}
+		Cf.error(true)
+		fc=serviceNode.val(name)
+		if(typeof(fc,'func')) {
+			result = fc(req, param, data, buffer)
+			not(result) result = param
+		} else {
+			result = "$objectId 서비스에 $name 함수미정의"
+		}
+		if( param.var(sendCheck)) return;
+		if( typeof(result,'node')) {
+			if(result.isValid('@treeMode')) {
+				req.send(json().listData(result) )
+			} else {
+				req.send(jsonData(result) )
+			}
+		} else {
+			req.send(result)
+		} 
+	}	
+	apiController_old(req, param, service, uri) {
+		was=Cf.rootNode("_node.was.object")
+		param.set('@uri', uri)
+		bound=req.getValue('boundary');
+		buffer=null;
+		if(bound) {
+			was.parseReqParam( req, param, bound );
+		} else {
+			buffer=req.readBuffer();
+			if(buffer) {
+				type=req.getValue('Content-Type');
+				if(type.eq('application/data')) {
+					print("type == application/data")
+				} else if(type.eq('application/xml')) {
+					parseXml(buffer);
+				} else {
+					param.parseJson(buffer);
+				}
+			}
+		}
+		data=''
+		uri=param.ref('@uri')
 		if( uri.find('/') ) {
 			name=uri.findPos('/').trim();
 			if(was.isValid("@api/$service/$name")) {
