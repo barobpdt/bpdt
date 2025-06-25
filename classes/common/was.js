@@ -19,17 +19,17 @@
 				}
 			}
 		}
-		data=''
 		uri=param.ref('@uri')
 		webRoot = conf('web.rootPath')
 		fileName = "$webRoot/api/${service}.js"
 		name=uri.findPos('/').trim();
+		fo=Baro.file('api')
 		if( uri.find('/') ) {
-			if(isFile(fileName) ) {
+			if(fo.isFile(fileName) ) {
 				objectId=service
 			} else {
 				fileName="$webRoot/api/$service/${name}.js"
-				not(isFile(fileName)) {
+				not(fo.isFile(fileName)) {
 					ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
 					return req.send(ss)
 				}
@@ -41,7 +41,7 @@
 				}
 			}
 		} else {
-			if(isFile(fileName) ) {
+			if(fo.isFile(fileName) ) {
 				objectId=service
 			} else {
 				ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
@@ -49,16 +49,18 @@
 			}
 		}
 		serviceNode=Cf.getObject("api", objectId, true)
-		print("xxx", name, service, objectId, serviceNode)
-		not( serviceNode.isValid('lastModifyTm') ) { 
-			modifyTm = Baro.file('api').modifyDate(fileName)
+		lastTm = serviceNode.get('lastModifyTm')		
+		modifyTm = fo.modifyDate(fileName)
+		if( lastTm!=modifyTm ) {
+			fsrc = fileRead(fileName)
+			serviceNode[$fsrc]
+			print("service node=>", serviceNode)
 			serviceNode.set('lastModifyTm', modifyTm)
-			was.addServiceFunc(serviceNode, fileRead(fileName))
 		}
 		Cf.error(true)
 		fc=serviceNode.val(name)
 		if(typeof(fc,'func')) {
-			result = fc(req, param, data, buffer)
+			result = fc(req, param,uri,buffer)
 			not(result) result = param
 		} else {
 			result = "$objectId 서비스에 $name 함수미정의"
@@ -73,7 +75,7 @@
 		} else {
 			req.send(result)
 		} 
-	}	
+	}
 	apiController_old(req, param, service, uri) {
 		was=Cf.rootNode("_node.was.object")
 		param.set('@uri', uri)
