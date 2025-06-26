@@ -3,6 +3,7 @@ import sys
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+#https://colab.research.google.com/github/i-am-shuan/learn-langchain/blob/main/langchain_chroma_crud_example.ipynb#scrollTo=cYlYbuTzGV2e
 
 class ColumnType(Enum):
 	INTEGER = "Integer"
@@ -451,7 +452,8 @@ class SQLAlchemyGenerator:
 			constraints.append('autoincrement=True')
 		
 		if column.default:
-			if column.default.upper() in ['NULL', 'CURRENT_TIMESTAMP']:
+			ch = column.default[0]
+			if column.default.upper() in ['NULL', 'CURRENT_TIMESTAMP'] or (ch == '"' or ch == "'"):
 				constraints.append(f"default={column.default}")
 			else:
 				constraints.append(f"default='{column.default}'")
