@@ -53,8 +53,7 @@
 		modifyTm = fo.modifyDate(fileName)
 		if( lastTm!=modifyTm ) {
 			fsrc = fileRead(fileName)
-			serviceNode[$fsrc]
-			print("service node=>", serviceNode)
+			apiSourceApply(serviceNode, fsrc)			
 			serviceNode.set('lastModifyTm', modifyTm)
 		}
 		Cf.error(true)
@@ -75,6 +74,23 @@
 		} else {
 			req.send(result)
 		} 
+	}
+	apiSourceApply(node, &s) {
+		if(s.find('<func>')) {
+			ss='', fsrc=''
+			while(s.valid()) {
+				left = s.findPos('<func>',0,1)
+				fsrc.add(left)
+				not(s.ch()) break;
+				a=s.match('<func>','</func>')
+				ss.add(a)
+			}
+			Cf.sourceApply(ss)
+		} else {
+			fsrc = s
+		}
+		node[$fsrc]
+		print("@@ apiSourceApply node=>", node)
 	}
 	apiController_old(req, param, service, uri) {
 		was=Cf.rootNode("_node.was.object")

@@ -464,7 +464,6 @@ class SQLAlchemyGenerator:
 		col_def += ')'
 		
 		# 주석
-		print("@@ generate_column 1", column.comment)
 		if column.comment:
 			lines.append(f'    # {column.comment}')
 		

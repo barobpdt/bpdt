@@ -139,8 +139,8 @@
 	parseResult() {
 		// result = this.ref(cmdResult)
 		result = this.get('cmdResult')
-		print("current node=> ", currentNode)
 		if( currentNode) {
+			print("current node=> ", currentNode)
 			ftype=typeof(currentNode.callback)
 			if(ftype.eq('funcRef')) {
 				target = currentNode.target not(target) target=this
@@ -155,7 +155,7 @@
 			}
 			this.member(currentNode, null)
 		} else {
-			fn = this.onLogChange
+			fn = this.onResult
 			if(typeof(fn,'func')) {
 				fn.callFuncParams(result)
 				fn.callFuncSrc()

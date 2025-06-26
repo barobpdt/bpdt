@@ -37,7 +37,9 @@ parseDdl(req,param,&uri,data) {
 	s=stripSqlComment(fileRead('c:/temp/jkj.sql'))
 	s=parseTable(s)
 	fileWrite('c:/temp/jkj_table.txt', s)
-	req.send(s)
+	result = pythonSampleRun('path_test.py')
+	not(result ) result = '실행결과가 없습니다'
+	req.send(result)
 	
 	stripSqlComment = func(&s) {
 		ss=''
@@ -86,3 +88,34 @@ parseDdl(req,param,&uri,data) {
 		return sp;
 	}
 }
+
+<func>
+	pythonSampleRun(runFile) {
+			pythonPath=conf('python.path')
+			bpdtPath='c:/bpdt'
+			c=cmd('python')
+			while(n=0,10) {
+				if(c.status=='stay') break;
+				System.sleep(500)
+			}
+			setEvent(c,'onResult', func(s) {
+				fn=Cf.funcNode('parent')
+				print("python result == $s")
+				print("fn=>", fn)
+				this.result = s
+			})
+			cmd=fv('#{pythonPath}/python #{bpdtPath}/sample/#{runFile}')
+			print("python cmd=>$cmd")
+			c.run(cmd)
+			while(n=0,10) {
+				if(c.result) break;
+				System.sleep(500)
+			}
+			return getObjectResult(c)
+	}
+	getObjectResult(obj) {
+		s=obj.result
+		obj.result = ''
+		return s;
+	}
+</func>
