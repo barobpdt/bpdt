@@ -19,6 +19,10 @@ FastAPI와 MySQL을 사용한 간단한 CRUD(Create, Read, Update, Delete) 애�
 - ✅ MySQL 데이터베이스 연결
 - ✅ 데이터베이스 연결 상태 확인
 
+## 백터DB
+https://wikidocs.net/262584
+npm view react-native-google-mobile-ads versions --json
+
 ## 설치 및 실행
 
 ### 1. 의존성 설치
