@@ -101,6 +101,7 @@ class DDLParser:
 						aa=pk_match.group(1)
 						pk_columns = [col.strip().strip('`') for col in aa.split(',')]
 						primary_keys.extend(pk_columns)
+						print(f"@@ Found PRIMARY KEY columns: {pk_columns}")
 				except Exception as e:
 					print(f"primary key match error line={line}")
 				continue
@@ -137,6 +138,12 @@ class DDLParser:
 			column = self._parse_column(line)
 			if column:
 				columns.append(column)
+
+		# PRIMARY KEY 컬럼들의 primary_key 속성을 업데이트
+		for column in columns:
+			if column.name in primary_keys:
+				column.primary_key = True
+				print(f"@@ Updated column {column.name} as primary key")
 
 		if columns:
 			return Table(
@@ -329,8 +336,7 @@ class SQLAlchemyGenerator:
 	def _collect_imports(self, tables: List[Table]):
 		"""필요한 import를 수집합니다."""
 		self.imports.add("from sqlalchemy import Column, Integer, String, Text, Boolean, Date, DateTime, Numeric, BigInteger, SmallInteger, Float, JSON, LargeBinary, ForeignKey")
-		self.imports.add("from sqlalchemy.ext.declarative import declarative_base")
-		self.imports.add("from sqlalchemy.orm import relationship")
+		self.imports.add("from sqlalchemy.orm import declarative_base, relationship")
 		self.imports.add("from datetime import datetime")
 		
 		# 사용되는 타입들 확인
@@ -410,10 +416,18 @@ class SQLAlchemyGenerator:
 		lines.append('')
 		lines.append('    def __repr__(self):')
 		primary_key = next((col for col in table.columns if col.primary_key), None)
+		print(f"@@ primary_key for table {table.name}: {primary_key}")
+		print(f"@@ All columns in {table.name}: {[col.name for col in table.columns]}")
+		print(f"@@ Primary key columns: {[col.name for col in table.columns if col.primary_key]}")
 		if primary_key:
 			lines.append(f'        return f"<{class_name}({primary_key.name}={{self.{primary_key.name}}})>"')
 		else:
-			lines.append(f'        return f"<{class_name}>"')
+			# primary key가 없으면 첫 번째 컬럼을 사용하거나 기본 메시지 사용
+			if table.columns:
+				first_col = table.columns[0]
+				lines.append(f'        return f"<{class_name}({first_col.name}={{self.{first_col.name}}})>"')
+			else:
+				lines.append(f'        return f"<{class_name}>"')
 		
 		return lines
 	
@@ -454,7 +468,10 @@ class SQLAlchemyGenerator:
 		if column.default:
 			ch = column.default[0]
 			if column.default.upper() in ['NULL', 'CURRENT_TIMESTAMP'] or (ch == '"' or ch == "'"):
-				constraints.append(f"default={column.default}")
+				if(column.default.upper() == 'NULL'):
+					constraints.append(f"default=None")
+				else:
+					constraints.append(f"default={column.default}")
 			else:
 				constraints.append(f"default='{column.default}'")
 		

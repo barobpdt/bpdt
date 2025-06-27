@@ -16,115 +16,115 @@ class SgActInfo(Base):
     __tablename__ = "sg_act_info"
 
     # 메뉴번호
-    MENU_NO = Column(Integer(), nullable=False)
+    MENU_NO = Column(Integer(), primary_key=True, nullable=False)
     # 액션순번
-    ACT_ID = Column(String(30), nullable=False)
+    ACT_ID = Column(String(30), primary_key=True, nullable=False)
     # 액션타입
-    ACT_TP_CD = Column(String(10), default=NULL)
+    ACT_TP_CD = Column(String(10), default=None)
     # 액션명
-    ACT_NM = Column(String(128), default=NULL)
+    ACT_NM = Column(String(128), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 호출URL
-    CONN_URL = Column(String(128), default=NULL)
+    CONN_URL = Column(String(128), default=None)
     # WR_YN
-    WR_YN = Column(String(1), default=NULL)
+    WR_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgActInfo>"
+        return f"<SgActInfo(MENU_NO={self.MENU_NO})>"
 
 class SgAnnounce(Base):
     # 공지정보
     __tablename__ = "sg_announce"
 
     # 공지번호
-    ANN_NO = Column(String(20), nullable=False)
+    ANN_NO = Column(String(20), primary_key=True, nullable=False)
     # 공지명 한국어
-    ANN_NM_KO = Column(String(40), default=NULL)
+    ANN_NM_KO = Column(String(40), default=None)
     # 공지명 영어
-    ANN_NM_EN = Column(String(40), default=NULL)
+    ANN_NM_EN = Column(String(40), default=None)
     # 공지명 중국어
-    ANN_NM_CH = Column(String(40), default=NULL)
+    ANN_NM_CH = Column(String(40), default=None)
     # 공지명 일본어
-    ANN_NM_JP = Column(String(40), default=NULL)
+    ANN_NM_JP = Column(String(40), default=None)
     # 공지내용 한국어
-    ANN_DESC_KO = Column(String(2000), default=NULL)
+    ANN_DESC_KO = Column(String(2000), default=None)
     # 공지내용 영어
-    ANN_DESC_EN = Column(String(2000), default=NULL)
+    ANN_DESC_EN = Column(String(2000), default=None)
     # 공지내용 중국어
-    ANN_DESC_CH = Column(String(2000), default=NULL)
+    ANN_DESC_CH = Column(String(2000), default=None)
     # 공지내용 일본어
-    ANN_DESC_JP = Column(String(2000), default=NULL)
+    ANN_DESC_JP = Column(String(2000), default=None)
     # 공지시작일
-    ANN_START_DT = Column(String(8), default=NULL)
+    ANN_START_DT = Column(String(8), default=None)
     # 공지종료일
-    ANN_END_DT = Column(String(8), default=NULL)
+    ANN_END_DT = Column(String(8), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAnnounce>"
+        return f"<SgAnnounce(ANN_NO={self.ANN_NO})>"
 
 class SgAppMenu(Base):
     # 앱메뉴정보
     __tablename__ = "sg_app_menu"
 
     # 메뉴번호
-    APP_MENU_NO = Column(String(20), nullable=False)
+    APP_MENU_NO = Column(String(20), primary_key=True, nullable=False)
     # 앱타입
     APP_MENU_TYPE_CD = Column(String(20), nullable=False)
     # 메뉴명KO
-    APP_MENU_NM_KR = Column(String(40), default=NULL)
+    APP_MENU_NM_KR = Column(String(40), default=None)
     # 메뉴명EN
-    APP_MENU_NM_EN = Column(String(40), default=NULL)
+    APP_MENU_NM_EN = Column(String(40), default=None)
     # 메뉴명ZH
-    APP_MENU_NM_CH = Column(String(40), default=NULL)
+    APP_MENU_NM_CH = Column(String(40), default=None)
     # 메뉴명JA
-    APP_MENU_NM_JP = Column(String(40), default=NULL)
+    APP_MENU_NM_JP = Column(String(40), default=None)
     # 사용여부
     USE_YN = Column(String(2), default='N')
     # 메뉴 이미지 파일번호
-    MENU_FILE_NO = Column(String(20), default=NULL)
+    MENU_FILE_NO = Column(String(20), default=None)
     # 광고출력메뉴
-    AD_OUT_YN = Column(String(2), default=NULL)
+    AD_OUT_YN = Column(String(2), default=None)
     # 순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 삭제여부
     DEL_YN = Column(String(2), default='N')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAppMenu>"
+        return f"<SgAppMenu(APP_MENU_NO={self.APP_MENU_NO})>"
 
 class SgAppSetting(Base):
     # 앱호출세팅
     __tablename__ = "sg_app_setting"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # CALL알람 여부
     ALARM_USE_YN = Column(String(2), nullable=False, default='Y')
     # CALL호출간격
@@ -142,549 +142,549 @@ class SgAppSetting(Base):
     # 언어
     LANG_CD = Column(String(10), nullable=False)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAppSetting>"
+        return f"<SgAppSetting(MEMB_NO={self.MEMB_NO})>"
 
 class SgAsk(Base):
     # 문의정보
     __tablename__ = "sg_ask"
 
     # 문의번호
-    ASK_NO = Column(String(20), nullable=False)
+    ASK_NO = Column(String(20), primary_key=True, nullable=False)
     # 문의제목
-    ASK_SUBJECT = Column(String(100), default=NULL)
+    ASK_SUBJECT = Column(String(100), default=None)
     # 문의내용
-    ASK_DESC = Column(String(1000), default=NULL)
+    ASK_DESC = Column(String(1000), default=None)
     # 이메일
-    EMAIL = Column(String(100), default=NULL)
+    EMAIL = Column(String(100), default=None)
     # 문의상태
-    ASK_STAT_CD = Column(String(20), default=NULL)
+    ASK_STAT_CD = Column(String(20), default=None)
     # 문의상태
-    ASK_STAT_DT = Column(DateTime(), default=NULL)
+    ASK_STAT_DT = Column(DateTime(), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 답변
-    REPLY_DESC = Column(String(1000), default=NULL)
+    REPLY_DESC = Column(String(1000), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAsk>"
+        return f"<SgAsk(ASK_NO={self.ASK_NO})>"
 
 class SgAuthDtl(Base):
     # 권한상세
     __tablename__ = "sg_auth_dtl"
 
     # 권한코드
-    AUTH_NO = Column(String(20), nullable=False)
+    AUTH_NO = Column(String(20), primary_key=True, nullable=False)
     # 메뉴번호
-    MENU_NO = Column(Integer(), nullable=False)
+    MENU_NO = Column(Integer(), primary_key=True, nullable=False)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 읽기여부
-    WR_YN = Column(String(1), default=NULL)
+    WR_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAuthDtl>"
+        return f"<SgAuthDtl(AUTH_NO={self.AUTH_NO})>"
 
 class SgAuthInfo(Base):
     # 권한정보
     __tablename__ = "sg_auth_info"
 
     # 권한코드
-    AUTH_NO = Column(String(20), nullable=False)
+    AUTH_NO = Column(String(20), primary_key=True, nullable=False)
     # 권한명
-    AUTH_NM = Column(String(40), default=NULL)
+    AUTH_NM = Column(String(40), default=None)
     # 권한타입
-    AUTH_TP_CD = Column(String(10), default=NULL)
+    AUTH_TP_CD = Column(String(10), default=None)
     # 상위메뉴
-    TOP_MENU_NO = Column(String(20), default=NULL)
+    TOP_MENU_NO = Column(String(20), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgAuthInfo>"
+        return f"<SgAuthInfo(AUTH_NO={self.AUTH_NO})>"
 
 class SgCasAgreeInfo(Base):
     # 약관동의정보
     __tablename__ = "sg_cas_agree_info"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # 약관번호
-    CAS_NO = Column(String(20), nullable=False)
+    CAS_NO = Column(String(20), primary_key=True, nullable=False)
     # 동의여부
-    AGREE_YN = Column(String(1), default=NULL)
+    AGREE_YN = Column(String(1), default=None)
     # 동의일자
-    AGREE_DT = Column(DateTime(), default=NULL)
+    AGREE_DT = Column(DateTime(), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgCasAgreeInfo>"
+        return f"<SgCasAgreeInfo(MEMB_NO={self.MEMB_NO})>"
 
 class SgCasMng(Base):
     # 약관관리
     __tablename__ = "sg_cas_mng"
 
     # 약관번호
-    CAS_NO = Column(String(20), nullable=False)
+    CAS_NO = Column(String(20), primary_key=True, nullable=False)
     # 약관타입
-    CAS_TY_CD = Column(String(10), default=NULL)
+    CAS_TY_CD = Column(String(10), default=None)
     # 약관명
-    CAS_NM_KO = Column(String(40), default=NULL)
-    CAS_NM_EN = Column(String(40), default=NULL)
-    CAS_NM_ZH = Column(String(40), default=NULL)
-    CAS_NM_JA = Column(String(40), default=NULL)
+    CAS_NM_KO = Column(String(40), default=None)
+    CAS_NM_EN = Column(String(40), default=None)
+    CAS_NM_ZH = Column(String(40), default=None)
+    CAS_NM_JA = Column(String(40), default=None)
     # 약관내용
-    CAS_DESC_KO = Column(Text(), default=NULL)
-    CAS_DESC_EN = Column(Text(), default=NULL)
-    CAS_DESC_ZH = Column(Text(), default=NULL)
-    CAS_DESC_JA = Column(Text(), default=NULL)
+    CAS_DESC_KO = Column(Text(), default=None)
+    CAS_DESC_EN = Column(Text(), default=None)
+    CAS_DESC_ZH = Column(Text(), default=None)
+    CAS_DESC_JA = Column(Text(), default=None)
     # 약관변경일
-    CAS_CHG_DT = Column(DateTime(), default=NULL)
+    CAS_CHG_DT = Column(DateTime(), default=None)
     # 필수여부
-    REQUIRED_YN = Column(String(2), default=NULL)
+    REQUIRED_YN = Column(String(2), default=None)
     # 순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 삭제여부
     DEL_YN = Column(String(2), default='N')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgCasMng>"
+        return f"<SgCasMng(CAS_NO={self.CAS_NO})>"
 
 class SgCdDtl(Base):
     # 코드상세
     __tablename__ = "sg_cd_dtl"
 
     # 코드
-    CODE_CD = Column(String(20), nullable=False)
+    CODE_CD = Column(String(20), primary_key=True, nullable=False)
     # 상세코드
-    CODE_DTL_CD = Column(String(10), nullable=False)
+    CODE_DTL_CD = Column(String(10), primary_key=True, nullable=False)
     # 상세코드명 한국어
-    CODE_DTL_NM_KR = Column(String(100), default=NULL)
+    CODE_DTL_NM_KR = Column(String(100), default=None)
     # 상세코드명 영어
-    CODE_DTL_NM_EN = Column(String(100), default=NULL)
+    CODE_DTL_NM_EN = Column(String(100), default=None)
     # 상세코드명 중국어
-    CODE_DTL_NM_CH = Column(String(100), default=NULL)
+    CODE_DTL_NM_CH = Column(String(100), default=None)
     # 상세코드명 일본어
-    CODE_DTL_NM_JP = Column(String(100), default=NULL)
+    CODE_DTL_NM_JP = Column(String(100), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 출력순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 비고
-    CODE_DESC = Column(String(128), default=NULL)
+    CODE_DESC = Column(String(128), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgCdDtl>"
+        return f"<SgCdDtl(CODE_CD={self.CODE_CD})>"
 
 class SgCdInfo(Base):
     # 코드마스터
     __tablename__ = "sg_cd_info"
 
     # 코드
-    CODE_CD = Column(String(20), nullable=False)
+    CODE_CD = Column(String(20), primary_key=True, nullable=False)
     # 코드타입
-    CODE_TP_CD = Column(String(10), default=NULL)
+    CODE_TP_CD = Column(String(10), default=None)
     # 코드명
-    CODE_NM = Column(String(40), default=NULL)
+    CODE_NM = Column(String(40), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgCdInfo>"
+        return f"<SgCdInfo(CODE_CD={self.CODE_CD})>"
 
 class SgDistributorInfo(Base):
     # 가맹점기본정보
     __tablename__ = "sg_distributor_info"
 
     # 가맹점번호
-    DISTRIBUTOR_NO = Column(String(20), nullable=False)
+    DISTRIBUTOR_NO = Column(String(20), primary_key=True, nullable=False)
     # 가맹점명
-    DISTRIBUTOR_NM = Column(String(40), default=NULL)
+    DISTRIBUTOR_NM = Column(String(40), default=None)
     # 상태코드
-    USE_STAT_CD = Column(String(4), default=NULL)
+    USE_STAT_CD = Column(String(4), default=None)
     # 상버구분-법인,개인
-    BUSI_TYPE_CD = Column(String(4), default=NULL)
+    BUSI_TYPE_CD = Column(String(4), default=None)
     # 거래처등록 - 총판, 대리점, 개인
-    BUSI_GRADE_CD = Column(String(4), default=NULL)
+    BUSI_GRADE_CD = Column(String(4), default=None)
     # 사업자등록번호
-    BSNS_REG_NO = Column(String(10), default=NULL)
+    BSNS_REG_NO = Column(String(10), default=None)
     # 법인등록번호
-    CORP_REG_NO = Column(String(13), default=NULL)
+    CORP_REG_NO = Column(String(13), default=None)
     # 업태
-    BSNS_CNDT = Column(String(40), default=NULL)
+    BSNS_CNDT = Column(String(40), default=None)
     # 업종
-    CTGR_BSNS = Column(String(40), default=NULL)
+    CTGR_BSNS = Column(String(40), default=None)
     # 대표자명
-    OWNER_NM = Column(String(40), default=NULL)
+    OWNER_NM = Column(String(40), default=None)
     # 대표자연락처
-    OWNER_TEL_NO = Column(String(20), default=NULL)
+    OWNER_TEL_NO = Column(String(20), default=None)
     # 대표팩스번호
-    RPRST_FAX_NO = Column(String(20), default=NULL)
+    RPRST_FAX_NO = Column(String(20), default=None)
     # 대표이메일
-    RPRST_EMAIL = Column(String(50), default=NULL)
+    RPRST_EMAIL = Column(String(50), default=None)
     # 우편번호
-    ZIP_NO = Column(String(6), default=NULL)
+    ZIP_NO = Column(String(6), default=None)
     # 주소1
-    ADDR1 = Column(String(100), default=NULL)
+    ADDR1 = Column(String(100), default=None)
     # 주소2
-    ADDR2 = Column(String(100), default=NULL)
+    ADDR2 = Column(String(100), default=None)
     # 가입시작일자
-    JOIN_STT_DT = Column(String(8), default=NULL)
+    JOIN_STT_DT = Column(String(8), default=None)
     # 가입종료일자
-    JOIN_END_DT = Column(String(8), default=NULL)
+    JOIN_END_DT = Column(String(8), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # QR정의어
-    QR_DEFIN = Column(String(6), default=NULL)
-    QR_AMT = Column(Numeric(), default=NULL)
-    GIFT_URL = Column(String(100), default=NULL)
+    QR_DEFIN = Column(String(6), default=None)
+    QR_AMT = Column(Numeric(), default=None)
+    GIFT_URL = Column(String(100), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgDistributorInfo>"
+        return f"<SgDistributorInfo(DISTRIBUTOR_NO={self.DISTRIBUTOR_NO})>"
 
 class SgFaq(Base):
     # FAQ 정보
     __tablename__ = "sg_faq"
 
     # FAQ번호
-    FAQ_NO = Column(String(20), nullable=False)
+    FAQ_NO = Column(String(20), primary_key=True, nullable=False)
     # FAQ 타입
-    FAQ_TYPE_CD = Column(String(100), default=NULL)
+    FAQ_TYPE_CD = Column(String(100), default=None)
     # FAQ제목
-    FAQ_SUBJECT_KR = Column(String(100), default=NULL)
+    FAQ_SUBJECT_KR = Column(String(100), default=None)
     # FAQ제목
-    FAQ_SUBJECT_EN = Column(String(100), default=NULL)
+    FAQ_SUBJECT_EN = Column(String(100), default=None)
     # FAQ제목
-    FAQ_SUBJECT_CH = Column(String(100), default=NULL)
+    FAQ_SUBJECT_CH = Column(String(100), default=None)
     # FAQ제목
-    FAQ_SUBJECT_JP = Column(String(100), default=NULL)
+    FAQ_SUBJECT_JP = Column(String(100), default=None)
     # FAQ내용
-    FAQ_DESC_KR = Column(String(2000), default=NULL)
+    FAQ_DESC_KR = Column(String(2000), default=None)
     # FAQ내용
-    FAQ_DESC_EN = Column(String(2000), default=NULL)
+    FAQ_DESC_EN = Column(String(2000), default=None)
     # FAQ내용
-    FAQ_DESC_CH = Column(String(2000), default=NULL)
+    FAQ_DESC_CH = Column(String(2000), default=None)
     # FAQ내용
-    FAQ_DESC_JP = Column(String(2000), default=NULL)
+    FAQ_DESC_JP = Column(String(2000), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgFaq>"
+        return f"<SgFaq(FAQ_NO={self.FAQ_NO})>"
 
 class SgFile(Base):
     # 파일관리
     __tablename__ = "sg_file"
 
     # 파일번호
-    FILE_NO = Column(String(20), nullable=False)
+    FILE_NO = Column(String(20), primary_key=True, nullable=False)
     # 파일순번
-    FILE_SEQ = Column(Integer(), nullable=False)
+    FILE_SEQ = Column(Integer(), primary_key=True, nullable=False)
     # 파일경로
-    FILE_PATH = Column(String(128), default=NULL)
+    FILE_PATH = Column(String(128), default=None)
     # 다운로드경로
-    LOCAL_PATH = Column(String(128), default=NULL)
+    LOCAL_PATH = Column(String(128), default=None)
     # 파일명
-    FILE_NM = Column(String(128), default=NULL)
+    FILE_NM = Column(String(128), default=None)
     # 파일초기명
-    FILE_ORG_NM = Column(String(128), default=NULL)
+    FILE_ORG_NM = Column(String(128), default=None)
     # 파일사이즈
-    FILE_SIZE = Column(String(20), default=NULL)
+    FILE_SIZE = Column(String(20), default=None)
     # 파일타입
-    FILE_TYPE = Column(String(20), default=NULL)
+    FILE_TYPE = Column(String(20), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgFile>"
+        return f"<SgFile(FILE_NO={self.FILE_NO})>"
 
 class SgGnbAd(Base):
     # 광고출력위치
     __tablename__ = "sg_gnb_ad"
 
     # 앱광로위치번호
-    GNB_NO = Column(String(20), nullable=False)
+    GNB_NO = Column(String(20), primary_key=True, nullable=False)
     # 앱광고위치명
     GNB_NM = Column(String(20), nullable=False)
     # 출력여부
-    AD_OUT_YN = Column(String(40), default=NULL)
+    AD_OUT_YN = Column(String(40), default=None)
     # 광고정보-출력사이즈
-    AD_INFO = Column(String(40), default=NULL)
+    AD_INFO = Column(String(40), default=None)
     # 사용여부
     USE_YN = Column(String(2), nullable=False, default='Y')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgGnbAd>"
+        return f"<SgGnbAd(GNB_NO={self.GNB_NO})>"
 
 class SgGoodInfo(Base):
     # 제품정보
     __tablename__ = "sg_good_info"
 
     # 제품파일번호
-    GOOD_NO = Column(String(20), nullable=False)
+    GOOD_NO = Column(String(20), primary_key=True, nullable=False)
     # 제품명
     GOOD_NM = Column(String(40), nullable=False)
     # 제품파일번호
     GOOD_FILE_NO = Column(String(20), nullable=False)
     # 제품 로컬정보
-    GOOD_INFO = Column(String(100), default=NULL)
+    GOOD_INFO = Column(String(100), default=None)
     # 제품 사이즈이미지WIDHT
-    GOOD_WIDTH = Column(Numeric(), default=NULL)
+    GOOD_WIDTH = Column(Numeric(), default=None)
     # 제품 사이즈이미지HEIGHT
-    GOOD_HEIGHT = Column(Numeric(), default=NULL)
+    GOOD_HEIGHT = Column(Numeric(), default=None)
     # QR위치X
-    QR_X = Column(Numeric(), default=NULL)
+    QR_X = Column(Numeric(), default=None)
     # QR위치 Y
-    QR_Y = Column(Numeric(), default=NULL)
+    QR_Y = Column(Numeric(), default=None)
     # qr길이
-    QR_WIDTH = Column(Numeric(), default=NULL)
+    QR_WIDTH = Column(Numeric(), default=None)
     # qr 높이
-    QR_HEIGHT = Column(Numeric(), default=NULL)
+    QR_HEIGHT = Column(Numeric(), default=None)
     # 프린터용지타임 A4, B4
-    PRINT_TYPE_CD = Column(String(20), default=NULL)
+    PRINT_TYPE_CD = Column(String(20), default=None)
     # 길이간격 mm
-    PDF_WIDTH_GAP = Column(Numeric(), default=NULL)
+    PDF_WIDTH_GAP = Column(Numeric(), default=None)
     # 높이간격 mm
-    PDF_HEIGHT_GAP = Column(Numeric(), default=NULL)
+    PDF_HEIGHT_GAP = Column(Numeric(), default=None)
     # 출력물 길이 cm
-    PNT_WIDHT = Column(Numeric(), default=NULL)
+    PNT_WIDHT = Column(Numeric(), default=None)
     # 출력물 높이 cm
-    PNT_HEIGHT = Column(Numeric(), default=NULL)
+    PNT_HEIGHT = Column(Numeric(), default=None)
     # 사용여부
     USE_YN = Column(String(2), default='Y')
     # 삭제여부
     DEL_YN = Column(String(2), default='N')
     # 제품설명
-    GOOD_DESC = Column(String(4000), default=NULL)
+    GOOD_DESC = Column(String(4000), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgGoodInfo>"
+        return f"<SgGoodInfo(GOOD_NO={self.GOOD_NO})>"
 
 class SgIntro(Base):
     # 소개이미지
     __tablename__ = "sg_intro"
 
     # 소개이미지번호
-    INTRO_NO = Column(String(20), nullable=False)
+    INTRO_NO = Column(String(20), primary_key=True, nullable=False)
     # 이미지파일경로
-    FILE_PATH = Column(String(200), default=NULL)
+    FILE_PATH = Column(String(200), default=None)
     # 이미지파일다운로드 URL
-    FILE_URL = Column(String(200), default=NULL)
+    FILE_URL = Column(String(200), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 노출순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 디바이스타입(  SA, SI )
-    DEVI_TP_CD = Column(String(10), default=NULL)
+    DEVI_TP_CD = Column(String(10), default=None)
     # 언어타입
-    LANG_CD = Column(String(10), default=NULL)
+    LANG_CD = Column(String(10), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgIntro>"
+        return f"<SgIntro(INTRO_NO={self.INTRO_NO})>"
 
 class SgManual(Base):
     # 매뉴얼
     __tablename__ = "sg_manual"
 
     # 매뉴얼번호
-    MANUAL_NO = Column(String(20), nullable=False)
+    MANUAL_NO = Column(String(20), primary_key=True, nullable=False)
     # 이미지파일번호
-    FILE_NO = Column(String(20), default=NULL)
+    FILE_NO = Column(String(20), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 노출순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgManual>"
+        return f"<SgManual(MANUAL_NO={self.MANUAL_NO})>"
 
 class SgMemb(Base):
     # 회원정보
     __tablename__ = "sg_memb"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # 단말ID
-    DEVI_ID = Column(String(256), default=NULL)
+    DEVI_ID = Column(String(256), default=None)
     # 단말KEY 유일한값 자체생성
-    DEVI_KEY = Column(String(256), default=NULL)
+    DEVI_KEY = Column(String(256), default=None)
     # 단말기타입
-    DEVI_TP_CD = Column(String(10), default=NULL)
+    DEVI_TP_CD = Column(String(10), default=None)
     # 단말OS버전
-    DEVI_OS_VER = Column(String(128), default=NULL)
+    DEVI_OS_VER = Column(String(128), default=None)
     # 앱레지스트값
-    APP_REG = Column(String(250), default=NULL)
+    APP_REG = Column(String(250), default=None)
     # APP버전
-    APP_VER = Column(String(10), default=NULL)
+    APP_VER = Column(String(10), default=None)
     # FIRST 회원명
-    F_MEMB_NM = Column(String(40), default=NULL)
+    F_MEMB_NM = Column(String(40), default=None)
     # LAST 회원명
-    L_MEMB_NM = Column(String(40), default=NULL)
+    L_MEMB_NM = Column(String(40), default=None)
     # 이메일
-    EMAIL = Column(String(128), default=NULL)
+    EMAIL = Column(String(128), default=None)
     # 휴대폰번호
-    PHONE_NO = Column(String(15), default=NULL)
+    PHONE_NO = Column(String(15), default=None)
     # 국가명
-    COUNTRY_NM = Column(String(20), default=NULL)
+    COUNTRY_NM = Column(String(20), default=None)
     # 생년월일
-    BIR_DT = Column(String(8), default=NULL)
+    BIR_DT = Column(String(8), default=None)
     # 성별
-    GEN_CD = Column(String(10), default=NULL)
+    GEN_CD = Column(String(10), default=None)
     # 공지수신동의여부
-    NOTI_RCV_YN = Column(String(1), default=NULL)
+    NOTI_RCV_YN = Column(String(1), default=None)
     # 회원상태
-    MEMB_STAT_CD = Column(String(10), default=NULL)
+    MEMB_STAT_CD = Column(String(10), default=None)
     # 상태날자
-    STAT_DT = Column(DateTime(), default=NULL)
+    STAT_DT = Column(DateTime(), default=None)
     # 회원가입일
-    MEMB_JOIN_DT = Column(DateTime(), default=NULL)
+    MEMB_JOIN_DT = Column(DateTime(), default=None)
     # 최초실행일
-    FIRST_DAY = Column(DateTime(), default=NULL)
+    FIRST_DAY = Column(DateTime(), default=None)
     # 마지막실행일
-    LAST_DAY = Column(DateTime(), default=NULL)
+    LAST_DAY = Column(DateTime(), default=None)
     # 회원탈퇴일
-    MEMB_EXIT_DT = Column(DateTime(), default=NULL)
+    MEMB_EXIT_DT = Column(DateTime(), default=None)
     # 광고출력여부
     AD_OUT_YN = Column(String(2), default='Y')
     # 닉네임
-    NICK_NM = Column(String(40), default=NULL)
+    NICK_NM = Column(String(40), default=None)
     # 소개글
-    INTRODUCTION_INFO = Column(String(200), default=NULL)
+    INTRODUCTION_INFO = Column(String(200), default=None)
     # 이미지파일저장경로
-    IMG_FILE_PATH = Column(String(200), default=NULL)
+    IMG_FILE_PATH = Column(String(200), default=None)
     # 이미지파일다운로그 url
-    IMG_FILE_URL = Column(String(200), default=NULL)
+    IMG_FILE_URL = Column(String(200), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMemb>"
+        return f"<SgMemb(MEMB_NO={self.MEMB_NO})>"
 
 class SgMembAppSetting(Base):
     # 앱호출세팅
     __tablename__ = "sg_memb_app_setting"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # CALL알람 여부
     ALARM_USE_YN = Column(String(2), nullable=False, default='Y')
     # CALL호출간격
@@ -706,327 +706,327 @@ class SgMembAppSetting(Base):
     # 언어
     LANG_CD = Column(String(10), nullable=False)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMembAppSetting>"
+        return f"<SgMembAppSetting(MEMB_NO={self.MEMB_NO})>"
 
 class SgMembAppkey(Base):
     # 회원앱키정보
     __tablename__ = "sg_memb_appkey"
 
     # 단말ID
-    DEVI_ID = Column(String(256), nullable=False)
+    DEVI_ID = Column(String(256), primary_key=True, nullable=False)
     # 회워번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # 회원구분
-    MEMB_CD = Column(String(2), default=NULL)
+    MEMB_CD = Column(String(2), default=None)
     # 앱키
-    APP_KEY = Column(String(512), default=NULL)
+    APP_KEY = Column(String(512), default=None)
     # PUSH발송키
-    APP_REG = Column(String(512), default=NULL)
+    APP_REG = Column(String(512), default=None)
     # 삭제여부
-    DEL_YN = Column(String(2), default=NULL)
+    DEL_YN = Column(String(2), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
 
     def __repr__(self):
-        return f"<SgMembAppkey>"
+        return f"<SgMembAppkey(DEVI_ID={self.DEVI_ID})>"
 
 class SgMembCall(Base):
     # 호출정보
     __tablename__ = "sg_memb_call"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # CALL순번
-    CALL_SEQ = Column(String(20), nullable=False)
+    CALL_SEQ = Column(String(20), primary_key=True, nullable=False)
     # QR번호
     QR_NO = Column(String(20), nullable=False)
     # 호출타입 - 차량, 인증, 문자, 보이스톡
-    CALL_TYPE_CD = Column(String(20), default=NULL)
+    CALL_TYPE_CD = Column(String(20), default=None)
     # 콜 요청 메세지코드
-    CALL_REQ_CD = Column(String(20), default=NULL)
+    CALL_REQ_CD = Column(String(20), default=None)
     # 콜 요청 메세지
-    CALL_REQ_MSG = Column(String(100), default=NULL)
+    CALL_REQ_MSG = Column(String(100), default=None)
     # 콜 응답  메세지 코드
-    CALL_REPLY_CD = Column(String(20), default=NULL)
+    CALL_REPLY_CD = Column(String(20), default=None)
     # 콜 응답 메세지
-    CALL_REPLY_MSG = Column(String(100), default=NULL)
+    CALL_REPLY_MSG = Column(String(100), default=None)
     # 콜상태
-    CALL_STAT_CD = Column(String(20), default=NULL)
+    CALL_STAT_CD = Column(String(20), default=None)
     # 콜 상태일시
-    CALL_STAT_DT = Column(DateTime(), default=NULL)
+    CALL_STAT_DT = Column(DateTime(), default=None)
     # 구독정보
-    CALL_SUB_SCR = Column(String(200), default=NULL)
+    CALL_SUB_SCR = Column(String(200), default=None)
     # 답변회원번호
-    REPLY_MEMB_NO = Column(String(20), default=NULL)
+    REPLY_MEMB_NO = Column(String(20), default=None)
     # ROOID번호
-    SUB_SCR = Column(String(200), default=NULL)
+    SUB_SCR = Column(String(200), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMembCall>"
+        return f"<SgMembCall(MEMB_NO={self.MEMB_NO})>"
 
 class SgMembDeviInfo(Base):
     # 회원단말정보
     __tablename__ = "sg_memb_devi_info"
 
     # 단말ID
-    DEVI_ID = Column(String(256), nullable=False)
+    DEVI_ID = Column(String(256), primary_key=True, nullable=False)
     # 순번
-    DEVI_SEQ = Column(Integer(), nullable=False)
+    DEVI_SEQ = Column(Integer(), primary_key=True, nullable=False)
     # 단말기타입
-    DEVI_TP_CD = Column(String(10), default=NULL)
+    DEVI_TP_CD = Column(String(10), default=None)
     # 단말OS버전
-    DEVI_OS_VER = Column(String(10), default=NULL)
+    DEVI_OS_VER = Column(String(10), default=None)
     # 앱레지스트값
-    APP_REG = Column(String(250), default=NULL)
+    APP_REG = Column(String(250), default=None)
     # APP버전
-    APP_VER = Column(String(10), default=NULL)
+    APP_VER = Column(String(10), default=None)
     # 최종 사용언어
-    LANG_CD = Column(String(10), default=NULL)
+    LANG_CD = Column(String(10), default=None)
     # 등록일시
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 변경일시
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
 
     def __repr__(self):
-        return f"<SgMembDeviInfo>"
+        return f"<SgMembDeviInfo(DEVI_ID={self.DEVI_ID})>"
 
 class SgMembFriend(Base):
     # 친구정보
     __tablename__ = "sg_memb_friend"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # 친구회원번호
-    FRIEND_NO = Column(String(20), nullable=False)
+    FRIEND_NO = Column(String(20), primary_key=True, nullable=False)
     # 서비스타입
-    SERVICE_TYPE_CD = Column(String(20), nullable=False)
+    SERVICE_TYPE_CD = Column(String(20), primary_key=True, nullable=False)
     # 회원QR번호
     MEMB_QR_NO = Column(String(20), nullable=False)
     # 친구QR번호
     FRIEND_QR_NO = Column(String(20), nullable=False)
     # 친구닉네임
-    FRIEND_NICK_NM = Column(String(40), default=NULL)
+    FRIEND_NICK_NM = Column(String(40), default=None)
     # 방번호
-    ROOM_NO = Column(String(40), default=NULL)
+    ROOM_NO = Column(String(40), default=None)
     # 회원위치정보상태
-    MEMB_LOCATION_CD = Column(String(20), default=NULL)
+    MEMB_LOCATION_CD = Column(String(20), default=None)
     # 회원위치알럿여부
-    MEMB_ALERT_YN = Column(String(2), default=NULL)
+    MEMB_ALERT_YN = Column(String(2), default=None)
     # 친구위치정보상태
-    FRIEND_LOCATION_CD = Column(String(20), default=NULL)
+    FRIEND_LOCATION_CD = Column(String(20), default=None)
     # 친구위치알럿여부
-    FRIEND_ALERT_YN = Column(String(2), default=NULL)
+    FRIEND_ALERT_YN = Column(String(2), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMembFriend>"
+        return f"<SgMembFriend(MEMB_NO={self.MEMB_NO})>"
 
 class SgMembQr(Base):
     # QR사용자정보
     __tablename__ = "sg_memb_qr"
 
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # QR번호
-    QR_NO = Column(String(20), nullable=False)
+    QR_NO = Column(String(20), primary_key=True, nullable=False)
     # QR소유자구분 - M:MASTER, S:SUB
-    QR_OWNER_CD = Column(String(20), default=NULL)
+    QR_OWNER_CD = Column(String(20), default=None)
     # QR상태 - 사용,대기,미사용
-    QR_USE_CD = Column(String(20), default=NULL)
+    QR_USE_CD = Column(String(20), default=None)
     # 명칭
-    NICK_NM = Column(String(40), default=NULL)
+    NICK_NM = Column(String(40), default=None)
     # 차량번호
-    CAR_INFO = Column(String(40), default=NULL)
+    CAR_INFO = Column(String(40), default=None)
     # 차종
-    MAKER_CAR = Column(String(40), default=NULL)
+    MAKER_CAR = Column(String(40), default=None)
     # MQ번호-구독진행
-    SUB_SCR = Column(String(200), default=NULL)
+    SUB_SCR = Column(String(200), default=None)
     # 주차문구
-    PARK_TEXT = Column(String(50), default='잠시)
+    PARK_TEXT = Column(String(50), default='잠시 주차하세요')
     # PIN번호
-    PIN_NO = Column(String(10), default=NULL)
+    PIN_NO = Column(String(10), default=None)
     # 소개글
-    INTRODUCTION_INFO = Column(String(200), default=NULL)
+    INTRODUCTION_INFO = Column(String(200), default=None)
     # 서비스타입
-    SERVICE_TYPE_CD = Column(String(20), default=NULL)
+    SERVICE_TYPE_CD = Column(String(20), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMembQr>"
+        return f"<SgMembQr(MEMB_NO={self.MEMB_NO})>"
 
 class SgMessage(Base):
     # 메세지정보
     __tablename__ = "sg_message"
 
     # 방번호
-    ROOM_NO = Column(String(40), nullable=False)
+    ROOM_NO = Column(String(40), primary_key=True, nullable=False)
     # 메세지순번
-    CHAT_SEQ = Column(Integer(), nullable=False)
+    CHAT_SEQ = Column(Integer(), primary_key=True, nullable=False)
     # 메세지타입 T, C, F
-    MSG_TYPE_CD = Column(String(20), default=NULL)
+    MSG_TYPE_CD = Column(String(20), default=None)
     # 메세지
-    MSG_DESC = Column(String(4000), default=NULL)
+    MSG_DESC = Column(String(4000), default=None)
     # 파일URL
-    FILE_IMG_URL = Column(String(100), default=NULL)
+    FILE_IMG_URL = Column(String(100), default=None)
     # 파일경로
-    FILE_PATH = Column(String(100), default=NULL)
+    FILE_PATH = Column(String(100), default=None)
     # 작성자
-    WRITE_MEMB_NO = Column(String(20), default=NULL)
+    WRITE_MEMB_NO = Column(String(20), default=None)
     # 삭제여부
-    DELETE_YN = Column(String(20), default=NULL)
+    DELETE_YN = Column(String(20), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgMessage>"
+        return f"<SgMessage(ROOM_NO={self.ROOM_NO})>"
 
 class SgNum(Base):
     # 채번정보
     __tablename__ = "sg_num"
 
     # 채번코드
-    NUM_NO = Column(String(10), nullable=False)
+    NUM_NO = Column(String(10), primary_key=True, nullable=False)
     # 정의어
-    DEFI_INFO = Column(String(20), default=NULL)
+    DEFI_INFO = Column(String(20), default=None)
     # 채번명
-    NUM_NM = Column(String(40), default=NULL)
+    NUM_NM = Column(String(40), default=None)
     # 연
-    YEAR_CHK = Column(String(1), default=NULL)
+    YEAR_CHK = Column(String(1), default=None)
     # 월
-    MONTH_CHK = Column(String(1), default=NULL)
+    MONTH_CHK = Column(String(1), default=None)
     # 일
-    DAY_CHK = Column(String(1), default=NULL)
+    DAY_CHK = Column(String(1), default=None)
     # 채번식작번호
-    NUM_ST_NO = Column(Integer(), default=NULL)
+    NUM_ST_NO = Column(Integer(), default=None)
     # 채번종료번호
-    NUM_ED_NO = Column(Integer(), default=NULL)
+    NUM_ED_NO = Column(Integer(), default=None)
     # 마지막사용번호
-    NUM_USE_NO = Column(Integer(), default=NULL)
+    NUM_USE_NO = Column(Integer(), default=None)
     # 현채번번호
-    NUM_CU_NO = Column(String(20), default=NULL)
+    NUM_CU_NO = Column(String(20), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 마지막생성일
-    USE_DAY = Column(DateTime(), default=NULL)
+    USE_DAY = Column(DateTime(), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgNum>"
+        return f"<SgNum(NUM_NO={self.NUM_NO})>"
 
 class SgPo(Base):
     # 거래처 QR발급리스트
     __tablename__ = "sg_po"
 
     # 가맹점번호
-    DISTRIBUTOR_NO = Column(String(20), nullable=False)
+    DISTRIBUTOR_NO = Column(String(20), primary_key=True, nullable=False)
     # PO번호
-    PO_NO = Column(String(20), nullable=False)
+    PO_NO = Column(String(20), primary_key=True, nullable=False)
     # 발행일
-    PO_DT = Column(DateTime(), default=NULL)
+    PO_DT = Column(DateTime(), default=None)
     # PO발행자ID
     PO_USER_ID = Column(String(20), nullable=False)
     # 발행요청수
-    PO_REQ_CNT = Column(Numeric(), default=NULL)
+    PO_REQ_CNT = Column(Numeric(), default=None)
     # 발행수
-    PO_CNT = Column(Numeric(), default=NULL)
+    PO_CNT = Column(Numeric(), default=None)
     # 시작QR번호
     START_QR_NO = Column(String(20), nullable=False)
     # 종료QR번호
     END_QR_NO = Column(String(20), nullable=False)
     # QR 스티커 파일번호
-    QR_STICKER_NO = Column(String(20), default=NULL)
+    QR_STICKER_NO = Column(String(20), default=None)
     # 다운로드수
-    DOWNLOAD_CNT = Column(Numeric(), default=NULL)
+    DOWNLOAD_CNT = Column(Numeric(), default=None)
     # 최근다운로드 일자
-    DOWNLOAD_DT = Column(DateTime(), default=NULL)
+    DOWNLOAD_DT = Column(DateTime(), default=None)
     # 최근다운로드 담당자
-    DOWNLOAD_USER_ID = Column(String(20), default=NULL)
+    DOWNLOAD_USER_ID = Column(String(20), default=None)
     # 최근다운로드 파일번호
-    DOWNLOAD_FILE_NO = Column(String(20), default=NULL)
+    DOWNLOAD_FILE_NO = Column(String(20), default=None)
     # 다운로드수
-    DOWNLOAD_ST_CNT = Column(Numeric(), default=NULL)
-    DOWNLOAD_PDF_CNT = Column(Numeric(), default=NULL)
+    DOWNLOAD_ST_CNT = Column(Numeric(), default=None)
+    DOWNLOAD_PDF_CNT = Column(Numeric(), default=None)
     # 최근다운로드 일자
-    DOWNLOAD_ST_DT = Column(DateTime(), default=NULL)
-    DOWNLOAD_PDF_DT = Column(DateTime(), default=NULL)
+    DOWNLOAD_ST_DT = Column(DateTime(), default=None)
+    DOWNLOAD_PDF_DT = Column(DateTime(), default=None)
     # 최근다운로드 담당자
-    DOWNLOAD_ST_USER_ID = Column(String(20), default=NULL)
-    DOWNLOAD_PDF_USER_ID = Column(String(20), default=NULL)
+    DOWNLOAD_ST_USER_ID = Column(String(20), default=None)
+    DOWNLOAD_PDF_USER_ID = Column(String(20), default=None)
     # 최근다운로드 파일번호
-    DOWNLOAD_ST_FILE_NO = Column(String(20), default=NULL)
-    DOWNLOAD_PDF_FILE_NO = Column(String(20), default=NULL)
+    DOWNLOAD_ST_FILE_NO = Column(String(20), default=None)
+    DOWNLOAD_PDF_FILE_NO = Column(String(20), default=None)
     # 개별단가
-    UNIT_PRICE_AMT = Column(Numeric(), default=NULL)
+    UNIT_PRICE_AMT = Column(Numeric(), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgPo>"
+        return f"<SgPo(DISTRIBUTOR_NO={self.DISTRIBUTOR_NO})>"
 
 class SgQrInfo(Base):
     # QR생성정보
     __tablename__ = "sg_qr_info"
 
     # QR파일번호
-    QR_NO = Column(String(20), nullable=False)
+    QR_NO = Column(String(20), primary_key=True, nullable=False)
     # QR파일번호
     QR_FILE_NO = Column(String(20), nullable=False)
     # QR 내부 URL 정보
-    QR_INFO = Column(String(100), default=NULL)
+    QR_INFO = Column(String(100), default=None)
     # 앱에서보는 사이즈이미지URL
-    LOW_QR_INFO = Column(String(100), default=NULL)
+    LOW_QR_INFO = Column(String(100), default=None)
     # QR 사용여부
     USE_YN = Column(String(2), default='Y')
     # QR 삭제여부
@@ -1034,37 +1034,37 @@ class SgQrInfo(Base):
     # 서비스 타입
     SERVICE_TYPE_CD = Column(String(20), default='N')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgQrInfo>"
+        return f"<SgQrInfo(QR_NO={self.QR_NO})>"
 
 class SgQrPo(Base):
     # 거래처 QR발급리스트
     __tablename__ = "sg_qr_po"
 
     # 가맹점번호
-    DISTRIBUTOR_NO = Column(String(20), nullable=False)
+    DISTRIBUTOR_NO = Column(String(20), primary_key=True, nullable=False)
     # QR번호
-    QR_NO = Column(String(20), nullable=False)
+    QR_NO = Column(String(20), primary_key=True, nullable=False)
     # QR파일번호
-    QR_FILE_NO = Column(String(20), default=NULL)
+    QR_FILE_NO = Column(String(20), default=None)
     # QR 내부 URL 정보
-    QR_INFO = Column(String(100), default=NULL)
+    QR_INFO = Column(String(100), default=None)
     # QR 스티커 파일번호
-    QR_STICKER_NO = Column(String(20), default=NULL)
+    QR_STICKER_NO = Column(String(20), default=None)
     # QR 스티커 정보
-    QR_STICKER_INFO = Column(String(100), default=NULL)
+    QR_STICKER_INFO = Column(String(100), default=None)
     # 적용여부
     APPLY_YN = Column(String(2), default='N')
     # PO번호
-    PO_NO = Column(String(20), default=NULL)
+    PO_NO = Column(String(20), default=None)
     # 삭제여부
     DEL_YN = Column(String(2), default='N')
     # 생성일자
@@ -1072,286 +1072,286 @@ class SgQrPo(Base):
     # 적용일자
     APPLY_DT = Column(String(8), default='N')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgQrPo>"
+        return f"<SgQrPo(DISTRIBUTOR_NO={self.DISTRIBUTOR_NO})>"
 
 class SgRoomDelMessage(Base):
     # 메세지삭제정보
     __tablename__ = "sg_room_del_message"
 
     # 방번호
-    ROOM_NO = Column(String(40), nullable=False)
+    ROOM_NO = Column(String(40), primary_key=True, nullable=False)
     # 회원번호
-    MEMB_NO = Column(String(20), nullable=False)
+    MEMB_NO = Column(String(20), primary_key=True, nullable=False)
     # 삭제 생성 순번
-    CHAT_SEQ = Column(Integer(), nullable=False)
+    CHAT_SEQ = Column(Integer(), primary_key=True, nullable=False)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgRoomDelMessage>"
+        return f"<SgRoomDelMessage(ROOM_NO={self.ROOM_NO})>"
 
 class SgRoomInfo(Base):
     # 방정보
     __tablename__ = "sg_room_info"
 
     # 방번호
-    ROOM_NO = Column(String(40), nullable=False)
+    ROOM_NO = Column(String(40), primary_key=True, nullable=False)
     # 방명
     ROOM_NM = Column(String(40), nullable=False)
     # 방타입 Group Sigle
-    ROOM_TYPE_CD = Column(String(20), default=NULL)
+    ROOM_TYPE_CD = Column(String(20), default=None)
     # 마지막번호
-    LAST_CHAT_SEQ = Column(Integer(), default=NULL)
+    LAST_CHAT_SEQ = Column(Integer(), default=None)
     # 서비스타입
-    SERVICE_TYPE_CD = Column(String(20), default=NULL)
+    SERVICE_TYPE_CD = Column(String(20), default=None)
     # qr번호
-    QR_NO = Column(String(20), default=NULL)
+    QR_NO = Column(String(20), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgRoomInfo>"
+        return f"<SgRoomInfo(ROOM_NO={self.ROOM_NO})>"
 
 class SgRoomMember(Base):
     # 방멤버정보
     __tablename__ = "sg_room_member"
 
     # 방번호
-    ROOM_NO = Column(String(40), nullable=False)
+    ROOM_NO = Column(String(40), primary_key=True, nullable=False)
     # 방명
-    MEMB_SEQ = Column(String(40), nullable=False)
+    MEMB_SEQ = Column(String(40), primary_key=True, nullable=False)
     # 회원번호
     MEMB_NO = Column(String(20), nullable=False)
     # QR번호
     QR_NO = Column(String(20), nullable=False)
     # 최초 생성 순번
-    FIRST_CHAT_SEQ = Column(Integer(), default=NULL)
+    FIRST_CHAT_SEQ = Column(Integer(), default=None)
     # 마지막작성순번
-    WRITE_CHAT_SEQ = Column(Integer(), default=NULL)
+    WRITE_CHAT_SEQ = Column(Integer(), default=None)
     # 마지막읽음순번
-    READ_CHAT_SEQ = Column(Integer(), default=NULL)
+    READ_CHAT_SEQ = Column(Integer(), default=None)
     # 탈퇴마지막순번
-    EXIT_CHAT_SEQ = Column(Integer(), default=NULL)
+    EXIT_CHAT_SEQ = Column(Integer(), default=None)
     # 친구추가여부
     FRIEND_JOIN_YN = Column(String(2), default='N')
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgRoomMember>"
+        return f"<SgRoomMember(ROOM_NO={self.ROOM_NO})>"
 
 class SgSellerInfo(Base):
     # 영업담당자 기본 정보
     __tablename__ = "sg_seller_info"
 
     # 사용자ID
-    SELLER_USER_ID = Column(String(20), nullable=False)
+    SELLER_USER_ID = Column(String(20), primary_key=True, nullable=False)
     # 가맹점번호
     DISTRIBUTOR_NO = Column(String(20), nullable=False)
     # 담당자명
-    SELLER_USER_NM = Column(String(40), default=NULL)
+    SELLER_USER_NM = Column(String(40), default=None)
     # 사업구분
-    SELLER_TYPE_CD = Column(String(20), default=NULL)
+    SELLER_TYPE_CD = Column(String(20), default=None)
     # 상태
-    USE_STAT_CD = Column(String(20), default=NULL)
+    USE_STAT_CD = Column(String(20), default=None)
     # 연락처
-    TEL_NO = Column(String(20), default=NULL)
+    TEL_NO = Column(String(20), default=None)
     # 메일
-    EMAIL = Column(String(50), default=NULL)
+    EMAIL = Column(String(50), default=None)
     # 가입시작일자
-    JOIN_STT_DT = Column(String(8), default=NULL)
+    JOIN_STT_DT = Column(String(8), default=None)
     # 가입종료일자
-    JOIN_END_DT = Column(String(8), default=NULL)
+    JOIN_END_DT = Column(String(8), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgSellerInfo>"
+        return f"<SgSellerInfo(SELLER_USER_ID={self.SELLER_USER_ID})>"
 
 class SgSysMenu(Base):
     # 시스템메뉴정보
     __tablename__ = "sg_sys_menu"
 
     # 메뉴번호
-    MENU_NO = Column(Integer(), nullable=False, autoincrement=True)
+    MENU_NO = Column(Integer(), primary_key=True, nullable=False, autoincrement=True)
     # 메뉴아이디
-    MENU_ID = Column(String(20), default=NULL)
+    MENU_ID = Column(String(20), default=None)
     # 상위메뉴번호
-    TOP_MENU_NO = Column(Integer(), default=NULL)
+    TOP_MENU_NO = Column(Integer(), default=None)
     # 메뉴명
-    MENU_NM = Column(String(40), default=NULL)
+    MENU_NM = Column(String(40), default=None)
     # 사용여부
-    USE_YN = Column(String(1), default=NULL)
+    USE_YN = Column(String(1), default=None)
     # 출력순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 접속URL
-    CONN_URL = Column(String(128), default=NULL)
+    CONN_URL = Column(String(128), default=None)
     # 아이콘여부
-    ICON_YN = Column(String(1), default=NULL)
+    ICON_YN = Column(String(1), default=None)
     # 역할내역
-    ROLE_DESC = Column(String(128), default=NULL)
+    ROLE_DESC = Column(String(128), default=None)
     # View구분
-    OPEN_CD = Column(String(10), default=NULL)
+    OPEN_CD = Column(String(10), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 시스템구분 W 웹 , M 모바일
-    SYS_TYPE_CD = Column(String(10), default=NULL)
+    SYS_TYPE_CD = Column(String(10), default=None)
 
     def __repr__(self):
-        return f"<SgSysMenu>"
+        return f"<SgSysMenu(MENU_NO={self.MENU_NO})>"
 
 class SgTuto(Base):
     # 튜토리얼
     __tablename__ = "sg_tuto"
 
     # 튜토리얼번호
-    TUTO_NO = Column(String(20), nullable=False)
+    TUTO_NO = Column(String(20), primary_key=True, nullable=False)
     # 이미지파일번호
-    FILE_NO = Column(String(20), default=NULL)
+    FILE_NO = Column(String(20), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 노출순번
-    VIEW_NUM = Column(Integer(), default=NULL)
+    VIEW_NUM = Column(Integer(), default=None)
     # 단말기타입
-    DEVI_TP_CD = Column(String(10), default=NULL)
+    DEVI_TP_CD = Column(String(10), default=None)
     # 언어
-    LANG_CD = Column(String(10), default=NULL)
+    LANG_CD = Column(String(10), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgTuto>"
+        return f"<SgTuto(TUTO_NO={self.TUTO_NO})>"
 
 class SgUserAuth(Base):
     # 사용자권한
     __tablename__ = "sg_user_auth"
 
     # 사용자ID
-    USER_ID = Column(String(20), nullable=False)
+    USER_ID = Column(String(20), primary_key=True, nullable=False)
     # 권한코드
-    AUTH_NO = Column(String(20), nullable=False)
+    AUTH_NO = Column(String(20), primary_key=True, nullable=False)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgUserAuth>"
+        return f"<SgUserAuth(USER_ID={self.USER_ID})>"
 
 class SgUserInfo(Base):
     # 사용자정보 
     __tablename__ = "sg_user_info"
 
     # 사용자ID
-    USER_ID = Column(String(20), nullable=False)
+    USER_ID = Column(String(20), primary_key=True, nullable=False)
     # 사용자명
-    USER_NM = Column(String(40), default=NULL)
+    USER_NM = Column(String(40), default=None)
     # 전화번호
-    TEL_NO = Column(String(20), default=NULL)
+    TEL_NO = Column(String(20), default=None)
     # 이메일
-    EMAIL = Column(String(128), default=NULL)
+    EMAIL = Column(String(128), default=None)
     # 비밀번호
-    USER_PW = Column(String(128), default=NULL)
+    USER_PW = Column(String(128), default=None)
     # 최초로그인일자
-    FIRST_LOGIN_DT = Column(DateTime(), default=NULL)
+    FIRST_LOGIN_DT = Column(DateTime(), default=None)
     # 최종로그인일자
-    LAST_LOGIN_DT = Column(DateTime(), default=NULL)
+    LAST_LOGIN_DT = Column(DateTime(), default=None)
     # 오류횟수
-    PW_ERR_CNT = Column(Integer(), default=NULL)
+    PW_ERR_CNT = Column(Integer(), default=None)
     # 사용자상태(10:활성,20:잠김,30:보류,90:삭제)
-    USER_STAT_CD = Column(String(10), default=NULL)
-    USER_STAT_DT = Column(DateTime(), default=NULL)
+    USER_STAT_CD = Column(String(10), default=None)
+    USER_STAT_DT = Column(DateTime(), default=None)
     # 권한타입(AUTH_TP_CD )
-    AUTH_TP_CD = Column(String(10), default=NULL)
+    AUTH_TP_CD = Column(String(10), default=None)
     # 가맹점코드
-    DISTRIBUTOR_NO = Column(String(20), default=NULL)
+    DISTRIBUTOR_NO = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
-    add_dt = Column(DateTime(), default=NULL)
+    CHG_ID = Column(String(20), default=None)
+    add_dt = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
-    ROLE = Column(String(), default=NULL)
+    ADD_ID = Column(String(20), default=None)
+    ROLE = Column(String(), default=None)
 
     def __repr__(self):
-        return f"<SgUserInfo>"
+        return f"<SgUserInfo(USER_ID={self.USER_ID})>"
 
 class SgVerInfo(Base):
     # 앱버전정보
     __tablename__ = "sg_ver_info"
 
     # APP번호
-    APP_NO = Column(String(10), nullable=False)
+    APP_NO = Column(String(10), primary_key=True, nullable=False)
     # 단말타입
-    DEVI_TP_CD = Column(String(10), default=NULL)
+    DEVI_TP_CD = Column(String(10), default=None)
     # APP버전
-    APP_VER = Column(String(10), default=NULL)
+    APP_VER = Column(String(10), default=None)
     # 버전설명
-    DES_VER = Column(String(128), default=NULL)
+    DES_VER = Column(String(128), default=None)
     # 버전생성일
-    APP_VER_DT = Column(DateTime(), default=NULL)
+    APP_VER_DT = Column(DateTime(), default=None)
     # 업그레이드필수여부
-    UP_REQUIRE_YN = Column(String(2), default=NULL)
+    UP_REQUIRE_YN = Column(String(2), default=None)
     # 다운로드경로
-    STORE_URL = Column(String(100), default=NULL)
+    STORE_URL = Column(String(100), default=None)
     # 삭제여부
-    DEL_YN = Column(String(1), default=NULL)
+    DEL_YN = Column(String(1), default=None)
     # 등록일
-    ADD_DT = Column(DateTime(), default=NULL)
+    ADD_DT = Column(DateTime(), default=None)
     # 등록자
-    ADD_ID = Column(String(20), default=NULL)
+    ADD_ID = Column(String(20), default=None)
     # 수정일
-    CHG_DT = Column(DateTime(), default=NULL)
+    CHG_DT = Column(DateTime(), default=None)
     # 수정자
-    CHG_ID = Column(String(20), default=NULL)
+    CHG_ID = Column(String(20), default=None)
 
     def __repr__(self):
-        return f"<SgVerInfo>"
+        return f"<SgVerInfo(APP_NO={self.APP_NO})>"

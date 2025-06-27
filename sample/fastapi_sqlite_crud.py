@@ -10,8 +10,8 @@ import os
 
 # FastAPI 앱 생성
 app = FastAPI(
-    title="FastAPI SQLite CRUD Sample",
-    description="A simple CRUD application using FastAPI and SQLite",
+    title="FastAPI MySQL CRUD Sample",
+    description="A simple CRUD application using FastAPI and MySQL",
     version="1.0.0"
 )
 
@@ -24,9 +24,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SQLite 데이터베이스 설정
-DATABASE_URL = "sqlite:///./crud_sample.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# MySQL 데이터베이스 설정
+DB_HOST = "106.246.249.162:23381"
+DB_NAME = "secretguard"
+DB_USER = "secretguard"
+DB_PASSWORD = "snflWkd22!"
+
+DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}?charset=utf8mb4"
+
+# MySQL 엔진 생성 (SSL 설정 포함)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args={
+        "ssl": {
+            "ssl_ca": None,
+            "ssl_cert": None,
+            "ssl_key": None,
+            "ssl_verify_cert": False
+        }
+    }
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -34,7 +54,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     age = Column(Integer)
@@ -67,7 +87,16 @@ class UserResponse(UserBase):
         from_attributes = True
 
 # 데이터베이스 테이블 생성
-Base.metadata.create_all(bind=engine)
+def create_tables():
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ 데이터베이스 테이블이 성공적으로 생성되었습니다.")
+    except Exception as e:
+        print(f"❌ 테이블 생성 중 오류 발생: {e}")
+        raise e
+
+# 애플리케이션 시작 시 테이블 생성
+create_tables()
 
 # 데이터베이스 세션 의존성
 def get_db():
@@ -118,7 +147,8 @@ def delete_user(db: Session, user_id: int):
 @app.get("/")
 def read_root():
     return {
-        "message": "FastAPI SQLite CRUD Sample",
+        "message": "FastAPI MySQL CRUD Sample",
+        "database": f"Connected to {DB_NAME} on {DB_HOST}",
         "docs": "/docs",
         "endpoints": {
             "users": "/users",
@@ -188,6 +218,29 @@ def get_user_stats(db: Session = Depends(get_db)):
         "inactive_users": inactive_users
     }
 
+@app.get("/health")
+def health_check():
+    """데이터베이스 연결 상태를 확인합니다."""
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "message": f"Successfully connected to {DB_NAME} on {DB_HOST}"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }
+
 if __name__ == "__main__":
     import uvicorn
+    print(f"🚀 FastAPI MySQL CRUD 서버 시작")
+    print(f"📊 데이터베이스: {DB_NAME} on {DB_HOST}")
+    print(f"🌐 서버 주소: http://localhost:8000")
+    print(f"📚 API 문서: http://localhost:8000/docs")
     uvicorn.run(app, host="0.0.0.0", port=8000) 
