@@ -1,10 +1,11 @@
 <script>
-	cmd(name) {		
+	cmd(name, fc) {		
 		not(name) name='cmd'
 		obj = _node("process.$name")
 		if(obj.var(useModule)) {
 			return obj;
 		}
+		if(typeof(fc,'func')) setEvent(obj,'onResult',fc)
 		include('classes/common/process.js')
 		return addModule(obj, '@cmd', name)
 	}

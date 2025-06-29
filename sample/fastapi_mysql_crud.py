@@ -159,6 +159,7 @@ class QrUserDetailResponse(BaseModel):
     class Config:
         from_attributes = True
 
+'''
 # 데이터베이스 테이블 생성
 def create_tables():
     try:
@@ -174,6 +175,7 @@ try:
 except Exception as e:
     print(f"⚠️ 테이블 생성 실패: {e}")
     print("⚠️ 애플리케이션은 계속 실행되지만 일부 기능이 제한될 수 있습니다.")
+'''
 
 # 데이터베이스 세션 의존성
 def get_db():
@@ -186,7 +188,6 @@ def get_db():
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     finally:
         db.close()
-
 
 # QR 사용자 정보 조회 함수들
 def get_qr_users(db: Session, skip: int = 0, limit: int = 100):

@@ -1,0 +1,26 @@
+2025-06-28 14:06:27,415 -INFO - create_tables:212 - ✅ 데이터베이스 테이블이 성공적으로 생성되었습니다.
+2025-06-28 14:06:28,213 -INFO - <module>:597 - 🚀 FastAPI MySQL CRUD 서버 시작
+2025-06-28 14:06:28,219 -INFO - <module>:598 - 📊 데이터베이스: secretguard on 106.246.249.162:23381
+2025-06-28 14:06:28,222 -INFO - <module>:599 - 🌐 서버 주소: http://localhost:8000
+2025-06-28 14:06:28,225 -INFO - <module>:600 - 📚 API 문서: http://localhost:8000/docs
+2025-06-28 14:06:28,227 -INFO - <module>:601 - 📋 로그 파일: logs/fastapi_mysql_crud.log
+2025-06-28 14:07:08,266 -INFO - read_root:394 - 루트 엔드포인트 호출
+2025-06-28 14:07:35,222 -INFO - read_qr_users:411 - QR 사용자 목록 API 호출: skip=0, limit=2
+2025-06-28 14:07:35,226 -INFO - get_qr_users:241 - QR 사용자 목록 조회: skip=0, limit=2
+2025-06-28 14:07:35,579 -INFO - get_qr_users:243 - QR 사용자 목록 조회 완료: 2건
+2025-06-28 14:07:35,582 -INFO - read_qr_users:438 - QR 사용자 목록 API 응답 완료: 2건
+2025-06-28 14:58:00,614 -INFO - read_qr_user:447 - QR 사용자 조회 API 호출: qr_no=241031-00061-QR
+2025-06-28 14:58:00,618 -INFO - get_qr_user_by_qr_no:252 - QR 사용자 조회: qr_no=241031-00061-QR
+2025-06-28 14:58:00,690 -INFO - get_qr_user_by_qr_no:255 - QR 사용자 조회 완료: 241031-00061-QR
+2025-06-28 14:58:00,696 -INFO - read_qr_user:457 - QR 사용자 조회 API 응답 완료: 241031-00061-QR
+2025-06-28 14:58:25,014 -INFO - read_qr_user_detail:488 - QR 사용자 상세 정보 API 호출: qr_no=241031-00061-QR
+2025-06-28 14:58:25,017 -INFO - get_qr_user_detail:277 - QR 사용자 상세 정보 조회: qr_no=241031-00061-QR
+2025-06-28 14:58:25,053 -ERROR - get_qr_user_detail:340 - ⚠️ QR 사용자 상세 정보 조회 오류: (pymysql.err.OperationalError) (1054, "Unknown column 'sg_memb.DEVI_KEY' in 'field list'")
+[SQL: SELECT sg_memb.`MEMB_NO` AS `sg_memb_MEMB_NO`, sg_memb.`DEVI_ID` AS `sg_memb_DEVI_ID`, sg_memb.`DEVI_KEY` AS `sg_memb_DEVI_KEY`, sg_memb.`DEVI_TP_CD` AS `sg_memb_DEVI_TP_CD`, sg_memb.`DEVI_OS_VER` AS `sg_memb_DEVI_OS_VER`, sg_memb.`APP_REG` AS `sg_memb_APP_REG`, sg_memb.`APP_VER` AS `sg_memb_APP_VER`, sg_memb.`F_MEMB_NM` AS `sg_memb_F_MEMB_NM`, sg_memb.`L_MEMB_NM` AS `sg_memb_L_MEMB_NM`, sg_memb.`EMAIL` AS `sg_memb_EMAIL`, sg_memb.`PHONE_NO` AS `sg_memb_PHONE_NO`, sg_memb.`COUNTRY_NM` AS `sg_memb_COUNTRY_NM`, sg_memb.`BIR_DT` AS `sg_memb_BIR_DT`, sg_memb.`GEN_CD` AS `sg_memb_GEN_CD`, sg_memb.`NOTI_RCV_YN` AS `sg_memb_NOTI_RCV_YN`, sg_memb.`MEMB_STAT_CD` AS `sg_memb_MEMB_STAT_CD`, sg_memb.`STAT_DT` AS `sg_memb_STAT_DT`, sg_memb.`MEMB_JOIN_DT` AS `sg_memb_MEMB_JOIN_DT`, sg_memb.`FIRST_DAY` AS `sg_memb_FIRST_DAY`, sg_memb.`LAST_DAY` AS `sg_memb_LAST_DAY`, sg_memb.`MEMB_EXIT_DT` AS `sg_memb_MEMB_EXIT_DT`, sg_memb.`AD_OUT_YN` AS `sg_memb_AD_OUT_YN`, sg_memb.`NICK_NM` AS `sg_memb_NICK_NM`, sg_memb.`INTRODUCTION_INFO` AS `sg_memb_INTRODUCTION_INFO`, sg_memb.`IMG_FILE_PATH` AS `sg_memb_IMG_FILE_PATH`, sg_memb.`IMG_FILE_URL` AS `sg_memb_IMG_FILE_URL`, sg_memb.`ADD_DT` AS `sg_memb_ADD_DT`, sg_memb.`ADD_ID` AS `sg_memb_ADD_ID`, sg_memb.`CHG_DT` AS `sg_memb_CHG_DT`, sg_memb.`CHG_ID` AS `sg_memb_CHG_ID` 
+FROM sg_memb 
+WHERE sg_memb.`MEMB_NO` = %(MEMB_NO_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'MEMB_NO_1': 'M241031000003179', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-28 14:58:25,313 -WARNING - read_qr_user_detail:492 - QR 사용자 상세 정보를 찾을 수 없음: 241031-00061-QR
+2025-06-28 14:58:25,314 -ERROR - get_db:230 - ⚠️ 데이터베이스 세션 오류: 404: QR User not found

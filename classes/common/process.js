@@ -61,7 +61,7 @@
 			prog=this.member(currentProgram)
 		}
 		this.cmdAdd('chcp 65001')
-		proc.run(prog, 0x400)
+		proc.run(prog, 0x801)
 	}
 	
 	stop() {
@@ -73,18 +73,17 @@
 		}
 	}
 	close() {
-		while(cur, cmdList ) {
-			paddingList.add(cur)
-		}
 		cmdList.reuse()
 		this.stop()
 	}
 	run(cmd) {
-		if(status.eq('first')) {
+		if( status.eq('first')) {
 			return this.cmdAdd(cmd)
 		}
 		not( proc.run() ) {
-			return this.start()
+			if(cmd) this.cmdAdd(cmd)
+			proc.run(prog, 0x801)
+			return true;
 		}
 		not(cmd) {
 			node = cmdList.pop()
@@ -104,7 +103,7 @@
 			proc.write(cmd);
 		} else {
 			dist = System.localtime() - this.runStartTick
-			print("run time == $dist")
+				print("run time == $dist")
 			if( dist > 5 ) {
 				print("모든 명령을 실행 했습니다")
 			}
@@ -155,13 +154,12 @@
 			}
 			this.member(currentNode, null)
 		} else {
+			print("cmd>> $result")
+			logWriter('cmd').appendLog(result)
 			fn = this.onResult
 			if(typeof(fn,'func')) {
 				fn.callFuncParams(result)
 				fn.callFuncSrc()
-			} else {
-				print("cmd>> $result")
-				logWriter('cmd').appendLog(result)
 			}
 		}
 	}

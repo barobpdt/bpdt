@@ -1,3 +1,26 @@
+<func>
+	kill_netstatePort(c) {
+		not(c) c=cmd('python')
+		closePort = func(param) {
+			ss=this.ref('cmdResult')
+			while(ss.valid()) {
+				line=ss.findPos("\n")
+				not(line.ch()) continue;
+				not(line.start('TCP',true)) continue;
+				line.findPos('LISTENING')
+				if(line.ch()) {
+					pid = line.trim()
+					print("netstate kill port pid=$pid")
+					if(pid) c.run("taskkill /f /pid $pid")
+					return true;
+				}
+			}
+		};
+		setEvent(c, 'onResult', closePort)
+		c.run("netstat -ano | findstr 8000")
+	}
+</func>
+
 emoji(req, param, &uri) { 
 	conf('webdata.emoji',#[
 표정

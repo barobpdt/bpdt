@@ -122,9 +122,9 @@
 		}
 		fcType=typeof(fc)
 		if( fcType.eq('bool') ) {
-			if( fcType && arr ) {
+			if( arr ) {
 				print("@@ setEvent $eventName 함수를 초기화 했습니다")
-				obj.set(eventName, null)
+				// obj.set(eventName, null)
 				arr.reuse()
 			}
 			return arr;
