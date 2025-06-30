@@ -122,12 +122,12 @@
 		}
 		fcType=typeof(fc)
 		if( fcType.eq('bool') ) {
-			if( arr ) {
-				print("@@ setEvent $eventName 함수를 초기화 했습니다")
-				// obj.set(eventName, null)
-				arr.reuse()
+			print("@@ setEvent $eventName 함수를 초기화 했습니다")
+			if(fn) {
+				obj.set(eventName, null)
+				fn.delete()
 			}
-			return arr;
+			return;
 		}
 		not( fcType.eq('func','funcRef') ) {		
 			if(fc) print("setEvent 함수타입 오류 (타입:$fcType)")
