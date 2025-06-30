@@ -140,3 +140,12 @@
 2025-06-29 05:18:14,016 -INFO - startup_event:46 - 📋 로그 파일: logs/fastapi_mysql_crud.log
 2025-06-29 05:18:31,123 -INFO - login_for_access_token:65 - 로그인 시도: username=admin
 2025-06-29 05:18:31,538 -INFO - login_for_access_token:76 - 로그인 성공: username=admin
+2025-06-29 14:11:26,129 -INFO - create_async_database_engine:45 - 🔍 비동기 데이터베이스 연결 시도 1: mysql+aiomysql://muknoori:snflWkd22!@106.246.249.162:23381/secretguard?charset=utf8mb4
+2025-06-29 14:11:26,883 -INFO - create_async_database_engine:61 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-06-29 14:11:26,883 -INFO - <module>:116 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-06-29 14:11:26,883 -INFO - create_database_engine:76 - 🔍 동기 데이터베이스 연결 시도 1: mysql+pymysql://muknoori:snflWkd22!@106.246.249.162:23381/secretguard?charset=utf8mb4
+2025-06-29 14:11:27,136 -INFO - create_database_engine:96 - ✅ 동기 데이터베이스 연결 성공! (연결 1)
+2025-06-29 14:11:27,891 -INFO - startup_event:43 - 🚀 FastAPI MySQL CRUD 서버 시작
+2025-06-29 14:11:28,075 -INFO - startup_event:44 - 🌐 서버 주소: http://localhost:8000
+2025-06-29 14:11:28,076 -INFO - startup_event:45 - 📚 API 문서: http://localhost:8000/docs
+2025-06-29 14:11:28,078 -INFO - startup_event:46 - 📋 로그 파일: logs/fastapi_mysql_crud.log

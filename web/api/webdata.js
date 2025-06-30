@@ -67,6 +67,7 @@
 		case first:
 			setEvent(c,'onResult',true)
 			setEvent(c,'onResult',pythonResult)
+			workPath=conf('python.workPath') not(workPath) workPath='c:/bpdt/sample'
 			c.cmdAdd('c:')
 			c.cmdAdd("cd ${workPath}")
 			c.cmdAdd(command)
@@ -307,8 +308,9 @@ parseDdl(req,param,&uri,data) {
 		sp=s.cur()
 		ep=@wc.makeUl(map,s)
 		if(sp>=ep) break;
-		s.findPos('<section id="declarative-mapping-styles"',0,1)
-		content = s.match('<section','</section>')
+		s.pos(ep)
+		s.findPos('<section id="declarative-mapping-styles"',0,1) not(s.ch()) return print("본문시작 오류");
+		content = s.match('<section','</section>') if(typeof(content,'bool')) return print("본문시작 section 매칭 오류");
 		prop = content.findPos('>')		
 	}
 	
@@ -427,7 +429,8 @@ parseDdl(req,param,&uri,data) {
 		not(depth) depth=0
 		type='li'
 		s.findPos('<ul>',0,1)
-		ul=s.findPos('<ul','</ul>') 
+		ul=s.match('<ul','</ul>')
+		print("@@ make ul >> ", ul.size())
 		while(ul.valid()) {
 			ul.findPos('<li>',0,1)
 			li=ul.match('<li','</li>', 8) if(typeof(li,'bool')) break;

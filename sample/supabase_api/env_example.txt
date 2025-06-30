@@ -1,0 +1,11 @@
+# Supabase 설정
+# https://supabase.com 에서 프로젝트를 생성하고 다음 정보를 가져오세요
+
+# Supabase 프로젝트 URL
+SUPABASE_URL=https://your-project-id.supabase.co
+
+# Supabase Anonymous Key (공개 키)
+SUPABASE_ANON_KEY=your-anon-key-here
+
+# Supabase Service Role Key (비공개 키, 관리자 권한 필요시)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here 
