@@ -1,6 +1,7 @@
 <func>
-	kill_netstatePort(c) {
-		not(c) c=cmd('python')
+	kill_netstatePort(port) {
+		not(port) port='8000'
+		c=cmd()
 		closePort = func(param) {
 			ss=this.ref('cmdResult')
 			while(ss.valid()) {
@@ -10,14 +11,16 @@
 				line.findPos('LISTENING')
 				if(line.ch()) {
 					pid = line.trim()
-					print("netstate kill port pid=$pid")
-					if(pid) c.run("taskkill /f /pid $pid")
+					print("netstate kill port pid=$pid", this)
+					if(pid) this.run("taskkill /f /pid $pid")
 					return true;
 				}
 			}
 		};
-		setEvent(c, 'onResult', closePort)
-		c.run("netstat -ano | findstr 8000")
+		not(typeof(c.onResult,'func')) {
+			setEvent(c, 'onResult', closePort)
+		}
+		c.run("netstat -ano | findstr ${port}")
 	}
 	pythonRun(pyFileNm, pid) {
 		not(pid) pid='python'
@@ -44,7 +47,8 @@
 		case stay:
 			c.run(command)
 		default:
-		}		
+		}
+		return c;
 	}
 	pipInstall(name, mode) {
 		not(mode) mode='install'
@@ -81,6 +85,7 @@
 			}
 		default:
 		}
+		return c;
 	}
 	
 </func>

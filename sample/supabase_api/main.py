@@ -110,6 +110,7 @@ async def get_user(user_id: int):
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"사용자 조회 실패: {str(e)}")
 
+
 @app.post("/users", response_model=User)
 async def create_user(user: UserCreate):
 	"""새 사용자 생성"""

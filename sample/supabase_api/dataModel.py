@@ -8,6 +8,11 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 # Pydantic 모델들
 class UserBase(BaseModel):
     name: str
@@ -16,7 +21,10 @@ class UserBase(BaseModel):
     city: Optional[str] = None
 
 class UserCreate(UserBase):
-    pass
+	nameL: str
+	email: str
+	addr: str
+	hp: str
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None

@@ -1,0 +1,15 @@
+2025-07-02 00:38:44,998 -INFO - <module>:35 - Supabase URL과 API 키를 환경 변수에 설정되었습니다.
+2025-07-02 00:38:45,831 -INFO - init_database:203 - 데이터베이스 연결 확인 중...
+2025-07-02 00:38:47,056 -ERROR - init_database:207 - 데이터베이스 연결 오류: {'message': 'relation "public.users" does not exist', 'code': '42P01', 'hint': None, 'details': None}
+2025-07-02 00:38:47,089 -ERROR - init_database:208 - Supabase 대시보드에서 'users' 테이블을 생성해주세요.
+2025-07-02 00:38:47,092 -ERROR - init_database:209 - 테이블 스키마:
+2025-07-02 00:38:47,094 -ERROR - init_database:210 - - id: int8 (primary key, auto increment)
+2025-07-02 00:38:47,097 -ERROR - init_database:211 - - name: text (not null)
+2025-07-02 00:38:47,099 -ERROR - init_database:212 - - email: text (unique, not null)
+2025-07-02 00:38:47,101 -ERROR - init_database:213 - - age: int4
+2025-07-02 00:38:47,104 -ERROR - init_database:214 - - city: text
+2025-07-02 00:38:47,106 -ERROR - init_database:215 - - created_at: timestamptz (default: now())
+2025-07-02 00:39:48,747 -ERROR - create_table_from_model:195 - 테이블 생성 실패: 'FieldInfo' object has no attribute 'required'
+2025-07-02 00:40:01,096 -ERROR - create_table_from_model:195 - 테이블 생성 실패: 'FieldInfo' object has no attribute 'required'
+2025-07-02 01:33:37,655 -INFO - shutdown_server:107 - API를 통한 종료 실패, 프로세스 직접 종료 시도
+2025-07-02 01:46:31,919 -INFO - <module>:35 - Supabase URL과 API 키를 환경 변수에 설정되었습니다.
