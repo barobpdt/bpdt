@@ -325,4 +325,193 @@ python -m pytest tests/
 
 ## 📄 라이선스
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+
+# FastAPI + Supabase 테이블 생성 기능
+
+이 프로젝트는 Pydantic 모델을 기반으로 Supabase 테이블을 자동 생성하는 기능을 제공합니다.
+
+## 주요 기능
+
+### 1. Pydantic 모델 기반 테이블 스키마 생성
+- `User` 클래스의 필드 정보를 분석하여 PostgreSQL 테이블 스키마를 자동 생성
+- 타입 매핑: Python 타입 → PostgreSQL 타입
+- 제약 조건 자동 설정 (Primary Key, Unique, NOT NULL 등)
+
+### 2. SQL DDL 자동 생성
+- 생성된 스키마를 기반으로 완전한 SQL CREATE TABLE 문 생성
+- Supabase 대시보드에서 바로 실행 가능한 SQL 제공
+
+### 3. API 엔드포인트
+- `POST /generate-schema`: 테이블 스키마 생성
+- `GET /table-info`: 현재 테이블 정보 조회
+- `POST /create-table`: 테이블 생성 (스키마 생성)
+
+## 사용 방법
+
+### 1. 서버 실행
+```bash
+cd supabase_api
+python fastapi_supabase.py
+```
+
+### 2. 테이블 스키마 생성
+```bash
+# API 호출
+curl -X POST http://localhost:8000/generate-schema
+
+# 또는 테스트 스크립트 실행
+python test_table_generation.py
+```
+
+### 3. Supabase에서 테이블 생성
+1. Supabase 대시보드에 로그인
+2. SQL 편집기로 이동
+3. API에서 제공된 SQL을 복사하여 실행
+
+## User 모델 분석
+
+### 현재 User 클래스 구조
+```python
+class UserBase(BaseModel):
+    name: str                    # text NOT NULL
+    email: EmailStr             # text UNIQUE NOT NULL
+    age: Optional[int] = None   # integer
+    city: Optional[str] = None  # text
+
+class User(UserBase):
+    id: int                     # bigint PRIMARY KEY
+    created_at: datetime        # timestamptz NOT NULL DEFAULT now()
+```
+
+### 생성되는 SQL DDL
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    name text NOT NULL,
+    email text NOT NULL,
+    age integer,
+    city text,
+    id bigint NOT NULL DEFAULT identity,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (id),
+    UNIQUE (email)
+);
+```
+
+## 타입 매핑
+
+| Python 타입 | PostgreSQL 타입 | 설명 |
+|-------------|----------------|------|
+| `str` | `text` | 문자열 |
+| `int` | `integer` | 정수 |
+| `float` | `numeric` | 실수 |
+| `bool` | `boolean` | 불린 |
+| `datetime` | `timestamptz` | 타임스탬프 |
+| `EmailStr` | `text` | 이메일 (UNIQUE 제약) |
+| `Optional[Type]` | `Type` | 선택적 필드 |
+
+## 제약 조건 자동 설정
+
+### Primary Key
+- `id` 필드: 자동으로 PRIMARY KEY로 설정
+- 타입: `bigint` (자동 증가)
+
+### Unique 제약
+- `email` 필드: 자동으로 UNIQUE 제약 설정
+- `EmailStr` 타입: 자동으로 UNIQUE 제약 설정
+
+### NOT NULL 제약
+- 필수 필드: 자동으로 NOT NULL 설정
+- `id`, `created_at`: 자동으로 NOT NULL 설정
+
+### 기본값
+- `id`: `identity` (자동 증가)
+- `created_at`: `now()` (현재 시간)
+
+## 테스트
+
+### 테스트 스크립트 실행
+```bash
+python test_table_generation.py
+```
+
+### 테스트 내용
+1. **테이블 정보 조회**: 현재 테이블 상태 확인
+2. **스키마 생성**: User 모델 기반 스키마 생성
+3. **SQL DDL 생성**: 실행 가능한 SQL 생성
+4. **사용자 CRUD 테스트**: 실제 데이터베이스 작업 테스트
+
+## API 응답 예시
+
+### 스키마 생성 응답
+```json
+{
+  "message": "테이블 스키마가 성공적으로 생성되었습니다.",
+  "table_name": "users",
+  "columns": [
+    {
+      "name": "name",
+      "type": "text",
+      "nullable": false,
+      "default": null,
+      "unique": false,
+      "primary_key": false
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "nullable": false,
+      "default": null,
+      "unique": true,
+      "primary_key": false
+    }
+  ],
+  "constraints": [
+    {
+      "type": "primary_key",
+      "columns": ["id"]
+    },
+    {
+      "type": "unique",
+      "columns": ["email"]
+    }
+  ],
+  "sql_ddl": "CREATE TABLE IF NOT EXISTS users (...)",
+  "instructions": "Supabase 대시보드의 SQL 편집기에서 위의 SQL을 실행하세요."
+}
+```
+
+## 확장 가능성
+
+### 새로운 모델 추가
+1. Pydantic 모델 정의
+2. `TableSchemaGenerator.create_table_from_model()` 호출
+3. 자동으로 스키마 및 SQL 생성
+
+### 커스텀 타입 매핑
+`TableSchemaGenerator.TYPE_MAPPING` 딕셔너리에 새로운 타입 매핑 추가
+
+### 커스텀 제약 조건
+필드명이나 타입을 기반으로 추가 제약 조건 설정 가능
+
+## 주의사항
+
+1. **Supabase 권한**: 테이블 생성에는 적절한 데이터베이스 권한이 필요합니다.
+2. **기존 테이블**: 이미 존재하는 테이블은 `CREATE TABLE IF NOT EXISTS`로 보호됩니다.
+3. **스키마 변경**: 기존 테이블의 스키마 변경은 별도의 ALTER TABLE 문이 필요합니다.
+4. **데이터 손실**: 테이블 삭제 시 데이터가 손실될 수 있으므로 주의하세요.
+
+## 문제 해결
+
+### 테이블 생성 실패
+1. Supabase 연결 확인
+2. 데이터베이스 권한 확인
+3. SQL 문법 오류 확인
+
+### 타입 매핑 오류
+1. `TableSchemaGenerator.TYPE_MAPPING` 확인
+2. 커스텀 타입 추가
+
+### 제약 조건 오류
+1. 필드명 규칙 확인
+2. 중복 제약 조건 확인 

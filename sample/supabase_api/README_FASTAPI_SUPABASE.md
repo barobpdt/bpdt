@@ -10,6 +10,8 @@
 - ✅ 자동 API 문서 생성 (Swagger UI)
 - ✅ 웹 인터페이스
 - ✅ 클라이언트 테스트 스크립트
+- ✅ **서버 제어 기능 (상태 조회, 종료)**
+- ✅ **Pydantic 모델 기반 테이블 생성**
 
 ## 📋 요구사항
 
@@ -33,6 +35,7 @@ pip install -r requirements.txt
 
 ### 3. 데이터베이스 테이블 생성
 
+#### 방법 1: 수동 생성
 Supabase 대시보드의 SQL Editor에서 다음 SQL을 실행하여 `users` 테이블을 생성합니다:
 
 ```sql
@@ -56,6 +59,15 @@ GRANT USAGE, SELECT ON SEQUENCE users_id_seq TO anon;
 GRANT USAGE, SELECT ON SEQUENCE users_id_seq TO authenticated;
 ```
 
+#### 방법 2: 자동 생성 (Pydantic 모델 기반)
+```bash
+# API를 통한 스키마 생성
+curl -X POST http://localhost:8000/generate-schema
+
+# 또는 테이블 생성
+curl -X POST http://localhost:8000/create-table
+```
+
 ### 4. 환경 변수 설정
 
 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 추가합니다:
@@ -71,25 +83,25 @@ SUPABASE_ANON_KEY=your-anon-key-here
 ### 1. FastAPI 서버 실행
 
 ```bash
-python fastapi_supabase_example.py
+python fastapi_supabase.py
 ```
 
 또는 uvicorn을 직접 사용:
 
 ```bash
-uvicorn fastapi_supabase_example:app --host 0.0.0.0 --port 8000 --reload
+uvicorn fastapi_supabase:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 2. 웹 인터페이스 접속
 
 브라우저에서 다음 URL에 접속합니다:
 - **API 문서**: http://localhost:8000/docs
-- **웹 인터페이스**: http://localhost:8000/static/fastapi_supabase.html
+- **웹 인터페이스**: http://localhost:8000/web
 
 ### 3. 클라이언트 테스트 실행
 
 ```bash
-python fastapi_supabase_client.py
+python test_fastapi_supabase.py
 ```
 
 ## 📚 API 엔드포인트
@@ -106,6 +118,70 @@ python fastapi_supabase_client.py
 
 ### 검색
 - **GET** `/users/search/{keyword}` - 사용자 검색 (이름 또는 이메일)
+
+### 테이블 관리
+- **POST** `/generate-schema` - User 모델 기반 테이블 스키마 생성
+- **GET** `/table-info` - 현재 테이블 정보 조회
+- **POST** `/create-table` - User 모델 기반 테이블 생성
+
+### 서버 제어
+- **GET** `/server/status` - 현재 서버 상태 조회
+- **GET** `/server/list` - 모든 uvicorn 서버 목록 조회
+- **POST** `/server/shutdown` - 현재 서버 정상 종료
+- **POST** `/server/shutdown/{port}` - 특정 포트 서버 종료
+- **POST** `/server/force-shutdown` - 현재 서버 강제 종료
+- **POST** `/server/force-shutdown/{port}` - 특정 포트 서버 강제 종료
+- **GET** `/server/status/{port}` - 특정 포트 서버 상태 조회
+
+## 🔧 서버 제어 기능
+
+### 서버 상태 확인
+```bash
+# 현재 서버 상태
+curl http://localhost:8000/server/status
+
+# 특정 포트 서버 상태
+curl http://localhost:8000/server/status/8000
+
+# 모든 uvicorn 서버 목록
+curl http://localhost:8000/server/list
+```
+
+### 서버 종료
+```bash
+# 정상 종료
+curl -X POST http://localhost:8000/server/shutdown
+
+# 강제 종료
+curl -X POST http://localhost:8000/server/force-shutdown
+
+# 특정 포트 서버 종료
+curl -X POST http://localhost:8000/server/shutdown/8000
+
+# 특정 포트 서버 강제 종료
+curl -X POST http://localhost:8000/server/force-shutdown/8000
+```
+
+### 명령줄 도구
+```bash
+# 서버 목록 조회
+python stop_server.py --list
+
+# 기본 포트 서버 종료
+python stop_server.py
+
+# 특정 포트 서버 종료
+python stop_server.py --port 8001
+
+# 강제 종료
+python stop_server.py --port 8000 --force
+
+# 모든 uvicorn 서버 종료
+python stop_server.py --all
+
+# 서버 제어 기능 테스트
+python test_server_control.py
+```
 
 ## 📝 사용 예제
 
@@ -157,9 +233,21 @@ curl -X DELETE "http://localhost:8000/users/1"
 curl "http://localhost:8000/users/search/홍"
 ```
 
+### 7. 테이블 스키마 생성
+
+```bash
+curl -X POST "http://localhost:8000/generate-schema"
+```
+
+### 8. 서버 종료
+
+```bash
+curl -X POST "http://localhost:8000/server/shutdown"
+```
+
 ## 🎨 웹 인터페이스 사용법
 
-1. 브라우저에서 `http://localhost:8000/static/fastapi_supabase.html` 접속
+1. 브라우저에서 `http://localhost:8000/web` 접속
 2. 각 섹션에서 원하는 작업 수행:
    - **검색**: 이름이나 이메일로 사용자 검색
    - **생성**: 새 사용자 정보 입력 후 생성
@@ -184,9 +272,10 @@ async def get_user_count():
 
 ### 새로운 테이블 추가
 
-1. Supabase 대시보드에서 새 테이블 생성
-2. FastAPI에서 해당 테이블에 대한 CRUD 엔드포인트 추가
-3. Pydantic 모델 정의
+1. Pydantic 모델 정의
+2. `TableSchemaGenerator.create_table_from_model()` 호출
+3. Supabase에서 생성된 SQL 실행
+4. FastAPI에서 해당 테이블에 대한 CRUD 엔드포인트 추가
 
 ### 인증 추가
 
@@ -198,62 +287,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        user = supabase.auth.get_user(credentials.credentials)
-        return user
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 ```
-
-## 🐛 문제 해결
-
-### 1. 데이터베이스 연결 오류
-
-- Supabase URL과 API 키가 올바른지 확인
-- `.env` 파일이 프로젝트 루트에 있는지 확인
-- Supabase 프로젝트가 활성 상태인지 확인
-
-### 2. 테이블이 존재하지 않는 경우
-
-Supabase 대시보드에서 `users` 테이블을 생성했는지 확인하고, 위의 SQL 스크립트를 실행하세요.
-
-### 3. CORS 오류
-
-웹 인터페이스에서 API 호출 시 CORS 오류가 발생하면, FastAPI 앱의 CORS 설정을 확인하세요.
-
-### 4. 포트 충돌
-
-기본 포트 8000이 사용 중인 경우, 다른 포트를 사용하세요:
-
-```bash
-uvicorn fastapi_supabase_example:app --host 0.0.0.0 --port 8001 --reload
-```
-
-## 📁 프로젝트 구조
-
-```
-├── fastapi_supabase_example.py    # 메인 FastAPI 애플리케이션
-├── fastapi_supabase_client.py     # API 테스트 클라이언트
-├── templates/
-│   └── fastapi_supabase.html      # 웹 인터페이스
-├── requirements.txt               # Python 의존성
-├── env_example.txt               # 환경 변수 예제
-└── README_FASTAPI_SUPABASE.md    # 이 파일
-```
-
-## 🤝 기여하기
-
-1. 이 저장소를 포크합니다
-2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/amazing-feature`)
-3. 변경사항을 커밋합니다 (`git commit -m 'Add some amazing feature'`)
-4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`)
-5. Pull Request를 생성합니다
 
 ## 📄 라이선스
 
