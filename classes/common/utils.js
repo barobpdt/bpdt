@@ -2,6 +2,50 @@
 공통 객체처리 함수
 */
 <script>
+	timerObject(obj, callback) {
+		root = Cf.rootNode()
+		arr = root.addArray('@timerObjects')
+		if(arr.find(obj) ) return print("이미등록된 타이머 객체입니다", obj);
+		arr.add(obj)
+		@common.globalTimer(callback)
+	}
+	@common.globalTimer(timerFunc, addMode) {
+		not(typeof(addMode,'bool')) {
+			addMode= true
+		}
+		not(System.globalTimer()) {
+			not(timerFunc) timerFunc = @common.globalTimerProc
+			System.globalTimer(500)
+		}
+		global=Cf.rootNode()
+		if( addMode ) {
+			print("timer add",timerFunc)
+			setEvent(global,'onTimeout', timerFunc)
+		} else {
+			fn = global.onTimeout
+			if(typeof(fn,'func')) {
+				fn.removeFuncSrc(timerFunc)
+			}		
+		}
+	}
+	@common.arrVal() {
+		a=_arr()
+		while(c,args()) {
+			if(typeof(c,'array')) {
+				while(d,c) a.add(d)
+			} else {
+				a.add(c)
+			}
+		}
+		return a;
+	}
+	@common.arrClone(param) {
+		a=_arr()		
+		not(typeof(param,'array')) return a;
+		while(c,param) a.add(c)
+		return a;
+	}
+
 	setCallback(obj, fc, target) {
 		if(typeof(obj,'func')) {
 			if(typeof(fc,'node')) {

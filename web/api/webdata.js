@@ -1,5 +1,22 @@
 <func>
-	kill_netstatePort(port) {
+	
+	restartFastApi() { 
+		c=cmd('python')
+		not(c.isRun()) {
+			return pythonRun('supabase_api/main.py')
+		}		
+		c.close()
+		kill_netstatePort(8000)
+		Cf.rootNode().set('@restartCmdObject',c)
+		timerObject(func() {
+			arr = this.get('@timerObjects') not(typeof(arr,'array')) return false;
+			c = arr.pop() not(c) return false;
+			pythonRun('supabase_api/main.py')
+			c.lastCloseTick = 0
+			return true;
+		})
+	}
+	kill_netstatePort(port, nextCall) {
 		not(port) port='8000'
 		c=cmd()
 		closePort = func(param) {
@@ -13,15 +30,23 @@
 					pid = line.trim()
 					print("netstate kill port pid=$pid", this)
 					if(pid) this.run("taskkill /f /pid $pid")
+					if(typeof(this.nextCallback,'func')) {
+						this.nextCallback(true)
+					}
 					return true;
 				}
+			}
+			if(typeof(this.nextCall,'func')) {
+				this.nextCallback(false)
 			}
 		};
 		not(typeof(c.onResult,'func')) {
 			setEvent(c, 'onResult', closePort)
 		}
+		c.nextCallback = nextCall
 		c.run("netstat -ano | findstr ${port}")
 	}
+	
 	pythonRun(pyFileNm, pid) {
 		not(pid) pid='python'
 		c=cmd(pid)
@@ -34,20 +59,13 @@
 		not(isFile("$workPath/$pyFileNm")) return print("파이션 실행파일 오류 (파일경로: $workPath/$pyFileNm)")
 		py="$pythonPath/python"
 		command = fv('#{py} "#{workPath}/#{pyFileNm}')
-		print("python status ########### ", c.status)
-		switch(c.status) {
-		case first:			
-			setEvent(c,'onResult',true)
+		not( c.onResult) {
 			setEvent(c,'onResult',pythonResult)
-			c.cmdAdd('c:')
-			c.cmdAdd("cd ${workPath}")
-			c.cmdAdd(command)
-		case start:
-			return print("파이션 프로그램이 시작중입니다", c.cmdResult)
-		case stay:
-			c.run(command)
-		default:
 		}
+		if( c.status.eq('first','stop') ) {
+			c.cmdSet(workPath.value(0,2), "cd $workPath")
+		}
+		c.run(command)
 		return c;
 	}
 	pipInstall(name, mode) {
@@ -67,24 +85,10 @@
 		} else {
 			command = fv('#{py} -m pip #{mode} #{name}')
 		}
-		switch(c.status) {
-		case first:
-			setEvent(c,'onResult',true)
+		not( c.onResult) {
 			setEvent(c,'onResult',pythonResult)
-			workPath=conf('python.workPath') not(workPath) workPath='c:/bpdt/sample'
-			c.cmdAdd('c:')
-			c.cmdAdd("cd ${workPath}")
-			c.cmdAdd(command)
-		case start:
-			return print("파이션 설치가 시작중입니다", c.cmdResult)
-		case stay:
-			c.run(command)
-			cnt = c.get('cmd.list').size()
-			if(cnt) {
-				print("파이션 설치 대기수 :$cnt")
-			}
-		default:
 		}
+		c.run(command)
 		return c;
 	}
 	

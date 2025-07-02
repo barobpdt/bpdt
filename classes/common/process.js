@@ -41,8 +41,8 @@
 		@currentProgram = program
 		@currentNode = null
 		setCallback(proc, this.cmdProc, this)
+		this.lastCloseTick = 0
 		this.runStartTick = System.localtime()
-		this.start()
 	}
 	isRun() {
 		return proc.run();
@@ -50,39 +50,41 @@
 	isStart() {
 		return status.eq('start');
 	}
-	start(prog) {
+	start(param) {
 		if( proc.run() ) {
 			proc.close()
 		}
-		@status = 'first'
-		if(prog) {
+		prog=this.member(currentProgram)
+		if(param) {
+			prog=param
 			@currentProgram = prog
-		} else {
-			prog=this.member(currentProgram)
 		}
-		this.cmdAdd('chcp 65001')
 		proc.run(prog, 0x801)
-	}
-	
+	}	
 	stop() {
-		@status = 'stop'
 		if( proc.run() ) {
+			@status = 'stop'
+			cmdList.reuse()
 			proc.kill()
 		} else {
 			print("cmd 가 실행중이 아닙니다")
 		}
 	}
-	close() {
-		cmdList.reuse()
+	close() {		
+		this.lastCloseTick = System.localtime()
 		this.stop()
 	}
 	run(cmd) {
-		if( status.eq('first')) {
+		not( proc.run() ) {
+			@status = 'stop'
+		}
+		if( status.eq('start')) {
 			return this.cmdAdd(cmd)
 		}
-		not( proc.run() ) {
-			if(cmd) this.cmdAdd(cmd)
-			proc.run(prog, 0x801)
+		if( status.eq('stop')) {
+			this.cmdAdd('chcp 65001')
+			this.cmdAdd(cmd)
+			this.start()
 			return true;
 		}
 		not(cmd) {
@@ -161,6 +163,20 @@
 				fn.callFuncParams(result)
 				fn.callFuncSrc()
 			}
+		}
+	}
+	cmdSet() {		
+		cmdList.reuse()
+		if( args().size() ) {
+			while(c,args()) {
+				cmdList.add(c)
+			}
+		}
+		return cmdList;
+	}
+	restart(a) {
+		if( status=='stop') {
+			this.start(a)
 		}
 	}
 </script>
@@ -326,5 +342,3 @@
 		}
 	}
 </script>
-
-
