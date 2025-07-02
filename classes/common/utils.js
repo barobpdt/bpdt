@@ -2,19 +2,48 @@
 공통 객체처리 함수
 */
 <script>
-	timerObject(obj, callback) {
+	globalTimeout(obj, callback) {
 		root = Cf.rootNode()
 		arr = root.addArray('@timerObjects')
 		if(arr.find(obj) ) return print("이미등록된 타이머 객체입니다", obj);
 		arr.add(obj)
-		@common.globalTimer(callback)
+		not(System.globalTimer()) {
+			not(typeof(callback,'function')) {
+				callback = @common.globalTimerProc
+			}
+			@common.globalTimer(callback)
+		} else if(typeof(callback,'function')) {
+			@common.globalTimer(callback)
+		}
 	}
+	globalTimerWork(cur) {
+		cur.inject(@workType, @workUrl, @timerFunc)
+		fc = call(timerFunc)
+		not(typeof(fc,'func')) {
+			return print("타이머 함수가 정의되지 않았습니다")
+		}
+		if( workType=='webscrap') {
+			not(workUrl) return print("웹스크랩 URL 미정의")	
+			fc(workUrl)
+		}
+		return true;
+	}
+	@common.globalTimerProc() {
+		arr = this.get('@timerObjects')
+		not(typeof(arr,'array')) return false;
+		cur = arr.pop()
+		not(cur) return false;
+		return globalTimerWork(cur);
+	}
+	
 	@common.globalTimer(timerFunc, addMode) {
 		not(typeof(addMode,'bool')) {
 			addMode= true
 		}
 		not(System.globalTimer()) {
-			not(timerFunc) timerFunc = @common.globalTimerProc
+			not(typeof(timerFunc,'function')) {
+				timerFunc = @common.globalTimerProc
+			}
 			System.globalTimer(500)
 		}
 		global=Cf.rootNode()
