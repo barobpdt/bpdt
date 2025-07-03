@@ -2,38 +2,41 @@
 공통 객체처리 함수
 */
 <script>
-	globalTimeout(obj, callback) {
-		root = Cf.rootNode()
-		arr = root.addArray('@timerObjects')
+	globalJobAdd(obj, callback) {
+		not(System.globalTimer()) {
+			@common.globalTimer()
+		}
+		global = Cf.rootNode()
+		arr = global.addArray('@timerObjects')
 		if(arr.find(obj) ) return print("이미등록된 타이머 객체입니다", obj);
 		arr.add(obj)
-		not(System.globalTimer()) {
-			not(typeof(callback,'function')) {
-				callback = @common.globalTimerProc
-			}
-			@common.globalTimer(callback)
-		} else if(typeof(callback,'function')) {
-			@common.globalTimer(callback)
+		if(typeof(callback,'function')) {
+			setEvent(global,'onTimeout', callback)
 		}
 	}
-	globalTimerWork(cur) {
-		cur.inject(@workType, @workUrl, @timerFunc)
-		fc = call(timerFunc)
+	globalJobProc(cur) {
+		cur.inject(@jobType, @jobUrl, @jobFunc)
+		if(typeof(jobFunc,'string') ) {
+			fc = call(jobFunc)
+		} else {
+			fc = jobFunc
+		}
+		worker = null
 		not(typeof(fc,'func')) {
-			return print("$timerFunc 타이머 함수가 정의되지 않았습니다")
+			return print("globalJobAdd 노드 타이머 함수가 정의되지 않았습니다 [노드:$cur]")
 		}
-		if( workType=='webscrap') {
-			not(workUrl) return print("웹스크랩 URL 미정의")	
-			fc(workUrl)
+		if( jobType=='webscrap') {
+			not(jobUrl) return print("웹스크랩 URL 미정의")	
+			worker = fc(jobUrl)
 		}
-		return true;
+		return when(worker, true, false);
 	}
 	@common.globalTimerProc() {
 		arr = this.get('@timerObjects')
 		not(typeof(arr,'array')) return false;
 		cur = arr.pop()
 		not(cur) return false;
-		return globalTimerWork(cur);
+		return globalJobProc(cur);
 	}
 	
 	@common.globalTimer(timerFunc, addMode) {

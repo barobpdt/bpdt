@@ -1,10 +1,10 @@
 test(req, param, uri) {
-	param.set('@workType','webscrap')
-	param.set('@workUrl','https://wikidocs.net/book/14452')
-	param.set('@timerFunc','@wc.wikidocs')
+	param.set('@jobType','webscrap')
+	param.set('@jobUrl','https://wikidocs.net/book/14452')
+	param.set('@jobrFunc','@wc.wikidocs')
 	
 	param.set('@apiResult','')
-	globalTimeout(param)
+	globalJobAdd(param)
 	tick = System.tick()
 	System.sleep(200)
 	while(n=0, 10) {
@@ -58,11 +58,12 @@ test(req, param, uri) {
 		worker = Baro.worker(id)
 		map=worker.addNode("@docsMap")
 		map.removeAll(true)
-		map.webCallback = callback
+		map.set('webCallback', callback)
+		map.set('currentId',id)
 		@wc.setCallback(worker, @wc.callWorkerProc)
 		web = @wc.getWebProxy(worker, map.webCallback)
 		web.call(url)
-		return map;
+		return worker;
 	}
 	@wc.wikidocs(url) {
 		not(url) url='https://wikidocs.net/book/14285'
@@ -126,12 +127,19 @@ test(req, param, uri) {
 		prop = content.findPos('>')		
 	}
 	
-	 
+	@wc.htmlTitle(map,&s) {
+		s.findPos('<title>') not(s.ch()) return print("")
+		title = s.findPos('</title>').trim()
+		map.set('htmlTitle', title)
+		return s.cur()
+	}
 	@wc.wikidocsParse(s, worker) {
 		not(worker) worker = this.get("@target")
 		map = worker.get('@docsMap')
 		not(typeof(map,'node')) return print("@@ wikidocs parse error [map노드 미정의]", this);
-		print("@@ wikidocs parse start ", s.size(), map)
+		ep = @wc.htmlTitle(map, s)
+		if(ep) s.pos(ep)
+			
 		s.findPos('<div class="list-group',0,1)
 		ss=s.match('<div','</div>',8)
 		ss.findPos('>')

@@ -5,7 +5,7 @@ test1(req, param, uri) {
 	param.set('@timerFunc','@wc.wikidocs')
 	
 	param.set('@apiResult','')
-	globalTimeout(param)
+	globalJobAdd(param)
 	tick = System.tick()
 	System.sleep(200)
 	while(n=0, 10) {
