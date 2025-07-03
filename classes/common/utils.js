@@ -20,7 +20,7 @@
 		cur.inject(@workType, @workUrl, @timerFunc)
 		fc = call(timerFunc)
 		not(typeof(fc,'func')) {
-			return print("타이머 함수가 정의되지 않았습니다")
+			return print("$timerFunc 타이머 함수가 정의되지 않았습니다")
 		}
 		if( workType=='webscrap') {
 			not(workUrl) return print("웹스크랩 URL 미정의")	
@@ -44,7 +44,7 @@
 			not(typeof(timerFunc,'function')) {
 				timerFunc = @common.globalTimerProc
 			}
-			System.globalTimer(500)
+			System.globalTimer(250)
 		}
 		global=Cf.rootNode()
 		if( addMode ) {

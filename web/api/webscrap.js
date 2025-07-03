@@ -1,15 +1,18 @@
 test(req, param, uri) {
-	a=uri.findPos('/')
 	param.set('@workType','webscrap')
 	param.set('@workUrl','https://wikidocs.net/book/14452')
 	param.set('@timerFunc','@wc.wikidocs')
 	
 	param.set('@apiResult','')
 	globalTimeout(param)
-	while(n=0,20) {
-		if(param.get('@apiResult')) break;
-		System.sleep(500)
+	tick = System.tick()
+	System.sleep(200)
+	while(n=0, 10) {
+		if( param.get('@apiResult') ) break;
+		System.sleep(250)
 	}
+	dist = System.tick() - tick;
+	print("수행시간 ($dist)ms")
 	result = param.get('@apiResult')
 	not(result) result='호출결과가 없습니다'
 	req.send(result)
@@ -151,13 +154,15 @@ test(req, param, uri) {
 			sa.findPos('<span',0,1)
 			sss=sa.match('<span','</span>',8) if(typeof(sss,'bool')) break;
 			if(sss.find('<span')) {
+				sss.findPos('<span')
 				prop=sss.findPos('>')
 				prop.findPos('style=')
 				if(prop.ch()) pading=prop.match()
+				title=sss.findPos('</span>').trim()
 			} else if(sss.find('<strong')) {
 				sss.findPos('<strong')
 				sss.findPos('>')
-				title = sss.findPos('</strong>')
+				title = sss.findPos('</strong>').trim()
 				padding='strong'
 			}
 			print("@@ title=$title, href=$href")
@@ -187,7 +192,7 @@ test(req, param, uri) {
 	}
 	@wc.htmlDownloadImage(&s, worker) {
 		not(worker) worker=this.get('@target')
-		map = worker.get('@wikidocsMap')
+		map = worker.get('@docsMap')
 		while(s.valid()) {
 			left = s.findPos('<img')
 			prop = s.findPos('>')

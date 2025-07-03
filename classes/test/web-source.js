@@ -1,178 +1,3 @@
-<script>
-	
-
-	wikidocs('https://wikidocs.net/book/14285') 
-	getWebProxy(callback) {
-		proxys = _arr('user.webProxys')
-		webProc = func(type, data) {
-			switch(type) {
-			case read: this.appendText('@webResult',data)
-			case error: this.set('@error', data)
-			case finish:
-				fn = this.onResult
-				if(typeof(fn,'func')) {
-					print("@@ web result callback not define")
-					rturn;
-				}
-				data = this.ref('@webResult')
-				fn.callFuncParams(data)
-				fn.callFuncSrc()
-			default:
-			}
-		};
-		addWeb = func(idx) {
-			not(idx) idx= proxys.size()+1;
-			web=proxys.add(Baro.web("webProxy$idx"))
-			fn=Cf.funcNode(webProc, web)
-			web.set('@callback', fn)
-		};
-		not(proxys.size()) {
-			while(n=1,5) addWeb(n)
-		}
-		web=null
-		while(cur, proxys) {
-			if(cur.is('run')) continue;
-			web=cur
-			break;
-		}
-		not(web) {
-			web=addWeb()
-		}
-		if(callback) {
-			if( web.onResult ) {
-				setEvent(web, 'onResult', true)
-			}
-			setEvent(web,'onResult',callback)
-		}
-		return web;
-	}
-
-	wikidocs(&url) {
-		id=right(url,'/')
-		worker = Baro.worker(id) 
-		map = object("wikidocs.$id")
-		web = Bar
-		global('currentWikidocsWorker', map)
-
-		
-	}
-	@wikidocs.webResult(&s){
-		s.findPos('<div class="list-group',0,1)
-		ss=s.match('<div','</div>',8)
-		ss.findPos('>')
-		while(ss.valid()) {
-			ss.findPos('<a')
-			ss.findPos('href=')
-			c=ss.ch()
-			href='', padding='', title=''
-			if(c.eq()) {
-				href=ss.match()
-				if(href.start('javascript:page',true)) {
-					href=href.match()
-				}
-			}
-			ss.findPos('<span',0,1)
-			sss=ss.match('<span','</span>',8)
-			if(sss.find('<span')) {
-				prop=sss.findPos('>')
-				prop.findPos('style=')
-				if(prop.ch()) pading=prop.match()
-			} else if(sss.find('<strong')) {
-				sss.findPos('<strong')
-				sss.findPos('>')
-				title = sss.findPos('</strong>')
-				padding='strong'
-			}
-			if(href && title) {
-				not(map.isVar(href)) {
-					cur=map.addNode(href).with(href, title, padding)
-				}
-			}
-		}
-		s.findPos('<div class="clearfix',0,1)
-		ss=s.match('<div','</div>',8)
-		ss.findPos('<ol')
-		ss.findPos('>')
-		sss=ss.findPos('</ol>')
-		docNav = parseTagTitle(sss,'li','/')
-
-		s.findPos('<h1 class="page-subject">')
-		docTitle = s.findPos('</h1>').trim()
-		s.findPos('<div class="page-content',0,1)
-		ss=s.match('<div','</div>',8)
-		ss.findPos('>')
-		
-		docBody = htmlDownloadImage(ss)
-		cur.with(docNav, docTitle, docBody)	
-	} 
-
-	
-	
-
-
-	parseTagTitle(&s,tag,sep) {
-		rst=''
-		while(s.valid()) {
-			s.findPos("<$tag",0,1)
-			ss=s.match("<$tag","</$tag>",8)
-			ss.findPos('>')
-			a=stripTag(ss)
-			not(a) break;
-			if(rst) rst.add(sep)
-			rst.add(a)
-		}
-	}
-	stripTag(&s) {
-		rst=''
-		while(s.valid()) {
-			left=s.findPos('<')
-			if(s.start('!--')) {
-				s.match('<!--','-->')
-				continue;
-			}
-			tag=s.move()
-			if(tag.eq('script','style')) {
-				s.findPos("</$tag>")
-				continue;
-			}
-			if(left.ch()) rst.add(left)
-			not(s.ch()) break;
-			s.findPos('>')
-		}
-		return rst;
-	}
-
-	isSingleTag(tag, &s) {
-		if(tag.eq('link','img','br') ) return true;
-		a=s.findPos('>')
-		c=a.ch(-1)
-		if(c.eq('/')) return true;
-		return false;
-	}
-	htmlDownloadImage(&s,map) {
-		while(s.valid()) {
-			left = s.findPos('<img')
-			prop = s.findPos('>')
-			if( prop.find('src=') ) {
-				prop.findPos('src=')
-				isrc = prop.match()
-				not(map.isVar(isrc)) {
-					iidx=map.incrNum('docImageIndex')
-					cur=map.addNode(isrc)
-					ext=right(isrc,'.')
-					cur.type='image'
-					cur.name="images/doc_img_${iidx}.${ext}"
-				}
-			}
-		} 
-	}
-
-</script>
-~~
-include('classes/common/json')
-@ws.addUrl('/pages/app', @ws.page)
- 
-~~
 <func>
 	pushArray(a,b) {
 		if(a.size()) a.insert(0,b) else a.add(b)
@@ -181,6 +6,48 @@ include('classes/common/json')
 	log(&a) {
 		line = a.findPos("\n")
 	}
+	@ws.pushIncVars(param, code) {
+		param.inject(@incStack, @incMap)
+		if( incMap.isVar(code) ) {
+			return print("$code 컨포넌트가 이미 등록되었습니다");
+		}
+		cur = incMap.addNode(code)
+		not( incStack.size() ) {
+			while(key, param.keys()) {
+				cur.set(key, param.get(key))
+			}
+		}
+		parent = incStack.get(0) not(parent) parent=incMap
+		cur.set('@parentIncNode', parent)
+		cur.set('@incCode', code)
+		cur.set('@incIndex', iidx)
+		cur.set('@incFuncName', @ws.getFnm())
+		cur.set('@incFuncSrc','')
+		print("@@ push inc vars cur ==> $cur")
+		return pushArray(incStack, cur);
+	}
+	@ws.page(req, param) {
+		end=";\n"
+		ln="\n"
+		param.set('@funcNode', Cf.funcNode())
+		param.addArray('@srcStack')
+		param.addArray('@incStack')
+		param.addNode('@incMap')
+		param.set('@js', '')
+		param.set('@jsRady', '')
+		
+		srcPath = @ws.pagePath(req.getValue('url'))
+		log("web page path => $srcPath")
+		src=fileRead(srcPath)
+		param.set('@srcPath', srcPath)
+		src = @ws.parseTemplate(src, param)
+		param.inject(@incStack, @srcStack)
+		cur=incStack.pop()
+		cur.inject(@parentIncNode, @incFuncName, @incFuncSrc)
+		fsrc = srcStack.pop()
+		param.appendText('@jsScript', "const ${incFuncName} = ()=>{$fsrc}",ln)
+		req.send(src) 
+	} 
 	@ws.parseText(param, &s, parentEl) {
 		ss='', sp=0
 		while(s.valid()) {
@@ -346,16 +213,7 @@ include('classes/common/json')
 			return Cf.val(home, a,".htm")
 		}
 		return Cf.val(home, s,".htm");
-	}
-	@ws.page(req, param) {
-		end=";\n"
-		ln="\n"
-		srcPath = @ws.pagePath(req.getValue('url'))
-		log("web page path => $srcPath")
-		src=fileRead(srcPath)
-		param.set('@srcPath', srcPath)
-		req.send(@ws.parseTemplate(src, param)) 
-	} 
+	}	
 	
 	@ws.addUrl(url, fc) {
 		map = Baro.was().uriMap()
@@ -381,30 +239,8 @@ include('classes/common/json')
 		not(prefix) prefix='incfc'
 		return "${prefix}_${idx}";
 	}
-	@ws.pushIncVars(param, code) {
-		param.inject(@incStack, @incMap)
-		if( incMap.isVar(code) ) {
-			return print("$code 컨포넌트가 이미 등록되었습니다");
-		}
-		cur = incMap.addNode(code)
-		not( incStack.size() ) {
-			while(key, param.keys()) {
-				cur.set(key, param.get(key))
-			}
-		}
-		cur.set('@incCode', code)
-		cur.set('@incIndex', iidx)
-		cur.set('@incFuncName', @ws.getFnm())
-		cur.set('@incFuncSrc','')
-		print("@@ push inc vars cur ==> $cur")
-		return pushArray(incStack, cur);
-	}
+	
 	@ws.parseTemplate(&s, param) {
-		param.set('@funcNode', Cf.funcNode())
-		param.addArray('@srcStack')
-		param.addArray('@incStack')
-		param.addNode('@incMap')
-		param.set('@jsRady', '')
 		@ws.pushIncVars(param,"index")
 		ss='', sp=0
 		while(s.valid()) {
