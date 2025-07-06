@@ -1,0 +1,224 @@
+
+
+uaeEffect(()=>{
+
+},[])
+
+return (
+	<Container>
+		{global.routeCode=='root' && <Containser_root/>
+	</Container>
+);
+
+##
+const Containser_root = () => {
+<Stack>
+	<TopMenuBar menuList="global.menuItem">
+	<Content>
+		<Tabs/>
+		<SplitHandle import="components/SplitHandle"/>
+		<ContentArea>
+			<panel></panel>
+			<SplitHandle/>
+			<panel></panel>
+		</ContentArea import="components/SplitHandle"/>
+	</Content>
+</Stack>
+}
+
+
+## 
+const SplitHandle = (prop) => {
+	return (
+		<div class="drag-handle">
+			<button class="drag-handle-button">
+				<i class="fas fa-chevron-left"></i>
+			</button>
+		</div>	
+	)
+}
+
+## 
+const TopMenuBar = ({menuList}) => 
+	<div class="menubar">
+	{menuList.map(item=>
+		<TopMenuBar.menu item={sub}/>
+	)}
+	</div>
+
+TopMenuBar.menu = ({item}) => 
+	<div tag={TopMenuBar.Menu}
+		click={e=>{
+			global.setCurrentOpenMenu(item)
+		}} 
+		active={global.currentOpenMenu == item}
+		isSubMenu={item.chidren && item.chidren.length}
+		class="menu-item"
+		data-menu="file"
+	>
+		<span>{item.name}</span>
+		{item.children && item.children.length>0 &&
+		item.children.map(sub=>
+			<TopMenuBar.submenu sub={sub}/>
+		)}
+	</div>
+TopMenuBar.submenu = ({sub})=>
+	<div class="submenu">
+		{sub.children && sub.children.length &&
+		<div class="submenu-item has-submenu">
+			<span style="flex:1;">{item.name}</span>
+			<span class="submenu-arrow">▶</span>
+			<div class="sub-submenu">
+				{sub.children.map(ssub=>
+				<div class="submenu-item">{ssub.name}</div>
+				)}
+			</div>
+		</div>
+		}
+		<div class="submenu-item">{sub.name}</div>
+	</div>
+
+
+global[
+	menuItems = []
+	menuData = 
+<treenode>
+파일
+	새로만들기
+		소스
+		스타일
+		스크립트
+	열기
+	저장
+	-
+	종료
+편집
+	실행취소
+	다시실행
+	-
+	찾기
+보기
+	확대
+	축소
+	-
+	미리보기
+</treenode>			
+]
+<div page="appMain" class="window-container"
+	ready=[
+		
+	]
+	effect=[global.menuItem {
+	
+	}]
+	effect=[global.pageCode {
+	
+	}]
+	 
+>
+	<!-- 메뉴바 -->
+	<div tag={TopMenuBar} menuList={global.menuItem} class="menu-bar">
+		{menuList.map((item)=>
+		<div tag={TopMenuBar.Menu}
+			click={e=>{
+				global.setCurrentOpenMenu(item)
+			}} 
+			active={global.currentOpenMenu == item}
+			isSubMenu={item.chidren && item.chidren.length}
+			class="menu-item"
+			data-menu="file"
+		>
+			<span>{item.name}</span>
+			{item.children && item.children.length>0 &&
+			item.children.map(sub=>
+			<div tag={TopMenuBar.SubMenu} sub={sub} class="submenu">
+				{sub.children && sub.children.length &&
+				<div class="submenu-item has-submenu">
+					<span style="flex:1;">{item.name}</span>
+					<span class="submenu-arrow">▶</span>
+					<div class="sub-submenu">
+						{sub.children.map(ssub=>
+						<div class="submenu-item">{ssub.name}</div>
+						)}
+					</div>
+				</div>
+				}
+				<div class="submenu-item">{sub.name}</div>
+			</div>
+			)}
+		</div>
+		)}
+	</div>
+
+	<!-- 메인 컨텐츠 영역 -->
+	<div stag="Content" routeCode="/" class="main-content">
+		<!-- 왼쪽 사이드 패널 -->
+		<div tag={TabPanel} item={global.leftSideTabs} class="side-panel">
+			<div tag={TabPanel.tabs} class="tab-container">
+				{item.map(item=>
+				<div tag={TabPanel.tab} active={item.active} class="tab" data-tab="tab1">{item.name}</div>
+				)}"tab3">탭 3</div>
+			</div>
+			<div tag={TabPanel.content} class="tab-content">
+				<div class="tab-pane active" id="tab1">
+					<h3>탭 1 내용</h3>
+					<p>탭 1의 내용이 여기에 표시됩니다.</p>
+				</div>
+				<div class="tab-pane" id="tab2">
+					<h3>탭 2 내용</h3>
+					<p>탭 2의 내용이 여기에 표시됩니다.</p>
+				</div>
+				<div class="tab-pane" id="tab3">
+					<h3>탭 3 내용</h3>
+					<p>탭 3의 내용이 여기에 표시됩니다.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div tag="SplitHandle" import={components/SplitHandle} class="drag-handle">
+			<button class="drag-handle-button">
+				<i class="fas fa-chevron-left"></i>
+			</button>
+		</div>
+
+		<!-- 오른쪽 컨텐츠 영역 -->
+		<div class="content-area">
+			<div class="content-layout full">  
+				<div class="up-panel" style="flex:1">
+					1
+				</div>
+				<div tag="SplitHandle" import={components/SplitHandle} class="splitter">
+					<div class="mover"></div>
+				</div>
+				<div class="bottom-panel">
+					2
+				</div>
+			</div>
+		</div>
+	</div>
+	}
+</div>
+<!-- 도움말 팝업 -->
+<div class="help-popup" id="helpPopup">
+	<div class="help-popup-header">
+		<h3>도움말</h3>
+		<button class="close-button" id="closeHelpPopup">×</button>
+	</div>
+	<div class="help-popup-content">
+		<h4>사용 방법</h4>
+		<p>이 웹페이지는 윈도우스타일의 레이아웃을 가지고 있습니다.</p>
+		<ul>
+			<li>상단 메뉴바에서 다양한 기능을 사용할 수 있습니다.</li>
+			<li>왼쪽 사이드 패널의 탭을 클릭하여 다른 내용을 볼 수 있습니다.</li>
+			<li>오른쪽 컨텐츠 영역에 메인 내용이 표시됩니다.</li>
+		</ul>
+		<h4>단축키</h4>
+		<ul>
+			<li>Ctrl + N: 새로 만들기</li>
+			<li>Ctrl + O: 열기</li>
+			<li>Ctrl + S: 저장</li>
+			<li>Ctrl + Z: 실행 취소</li>
+			<li>Ctrl + Y: 다시 실행</li>
+		</ul>
+	</div>
+</div>

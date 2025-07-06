@@ -378,8 +378,8 @@ body {
 }
 
 	</style>
-	<script src="assets/js/jquery.js"></script>
-	<script src="assets/js/common.js"></script>
+	<script src="/js/jquery.js"></script>
+	<script src="/js/common.js"></script>
 </head>
 <body>
     <div class="window-container">
