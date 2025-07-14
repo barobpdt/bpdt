@@ -1,3 +1,37 @@
+## Fast API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 출처 허용
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
+)
+## 회원 테이블
+from sqlalchemy import Column, String, JSON
+from app.db import Base
+
+class User(Base):
+    __tablename__ = 'user_info'
+    
+    id = Column(String, primary_key=True)
+    email = Column(String, unique=True, index=True)
+    password = Column(String)
+    friends = Column(JSON, nullable=True)
+
+## 회원가입 처리
+from sqlalchemy import Column, String, JSON
+from app.db import Base
+
+class User(Base):
+    __tablename__ = 'user_info'
+    
+    id = Column(String, primary_key=True)
+    email = Column(String, unique=True, index=True)
+    password = Column(String)
+    friends = Column(JSON, nullable=True)
+
+
+##
 x=conf('#confMap')
 x=System.driveList()
 
