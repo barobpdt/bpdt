@@ -1,3 +1,50 @@
+
+	@job.timerJob(node) {
+		global=Cf.rootNode() 
+		global.inject(@timerObjects)
+		not(timerObjects) print("@@ timer job add error", global)
+		timerObjects.add(node)
+		print("xxxxxxxxxx timer job add xxxxxxxxxx", node, timerObjects)
+	} 
+	@job.timer() {
+		if(System.globalTimer()) {
+			print("timer 이미 설정됨")
+		}
+		global=Cf.rootNode()
+		global.addArray('@timerObjects')
+		setEvent(global,'onTimeout', @job.timerProc) 
+		System.globalTimer(250)
+	}
+	@job.timerProc() {
+		this.inject(@timerObjects)
+		job = timerObjects.pop() not(job) return;
+		cmd = job.command
+		print("@@ job timer proc start" , cmd)
+		if(cmd ) {
+			c=cmd()
+			c.cmdCallback(cmd, func(&s) {
+				print("cmd result == $s")
+			}, job)
+		}
+		print("@@ job timer proc end") 
+	} 
+	@job.proc(node) {
+		print("job => $node")
+		not(node) return print("xxxx job end xxxx")
+		node.inject(type, param)
+		fc = call("@job.fc_$type")
+		print("xxxxxxxxxx", fc, type)
+		if(typeof(fc,'func')) {
+			call(fc, this, node)
+		}
+	} 
+	@job.fc_test(node) {
+		print("xxxxxxx")
+		@job.timerJob(node)
+
+
+	}
+	
 <script>
 	
 	@web.parseTemplate(&s, fn, param) {
