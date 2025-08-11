@@ -1,5 +1,24 @@
-
-	@job.timerJob(node) {
+// cmd
+	cmdNode(node, cmd, fc, target) {
+		not(typeof(node,'node')) return print("@@ cmd add error [$node]");
+		if(cmd) {
+			node.set('cmd', cmd)
+		}
+		if(typeof(fc,'func') ) {
+			node.set('callback', fc)			
+		}
+		cmdList.add(node)		
+		if( status.eq('first','stay')) {
+			this.run()
+		}
+	}
+	cmdCallback(cmd, callback, target) {
+		node=this.addNode().with(cmd, callback, target)
+		cmdNode(node)
+	}
+<func>
+	@job.addTimerJob(node) {
+		not(System.globalTimer()) @job.timer();
 		global=Cf.rootNode() 
 		global.inject(@timerObjects)
 		not(timerObjects) print("@@ timer job add error", global)
@@ -9,25 +28,31 @@
 	@job.timer() {
 		if(System.globalTimer()) {
 			print("timer 이미 설정됨")
+			return;
 		}
 		global=Cf.rootNode()
-		global.addArray('@timerObjects')
-		setEvent(global,'onTimeout', @job.timerProc) 
+		global.addArray('@timerObjects') 
+		@job.event(global,'onTimeout', @job.timerProc)
 		System.globalTimer(250)
 	}
 	@job.timerProc() {
 		this.inject(@timerObjects)
+		print("timerProc ...")
 		job = timerObjects.pop() not(job) return;
-		cmd = job.command
-		print("@@ job timer proc start" , cmd)
-		if(cmd ) {
-			c=cmd()
-			c.cmdCallback(cmd, func(&s) {
-				print("cmd result == $s")
-			}, job)
+		fc=call("@job.tm_${job.type")
+		if(typeof(fc,'function') ) {
+			call(fc, job, this)
+		} else {
+			print("@@ timer job function not defined node==>$node")
 		}
-		print("@@ job timer proc end") 
-	} 
+	}
+	@job.start() {
+		jobs=Baro.worker('jobs')
+		not(jobs.is('start')) {			
+			jobs.start(@job.proc)
+		}
+		return jobs;
+	}
 	@job.proc(node) {
 		print("job => $node")
 		not(node) return print("xxxx job end xxxx")
@@ -37,13 +62,40 @@
 		if(typeof(fc,'func')) {
 			call(fc, this, node)
 		}
+	}
+	@job.addJob(node) {
+		jobs=Baro.worker('jobs')
+		if(jobs.is('start')) {			
+			jobs.push(node)
+		} else {
+			print("@@ 작업이 시작되지 않았습니다 job addNode 오류")
+		}
+	} 
+	@job.timerProc() {
+		this.inject(@timerObjects)
+		job = timerObjects.pop() not(job) return;
+		print("timer job == $job")
+		fc=call("@job.tm_${job.type}")
+		if(typeof(fc,'function') ) {
+			call(fc, job, this)
+		} else {
+			print("@@ timer job function not defined node==>$job")
+		}
 	} 
 	@job.fc_test(node) {
-		print("xxxxxxx")
-		@job.timerJob(node)
-
-
+		@job.addTimerJob(node)		
 	}
+	@job.tm_test(node) {
+		cmd=node.command
+		not(cmd) cmd='dir'
+		cmd().cmdNode(node, cmd, @job.test_callback )
+		print("@@ tm_test call end", node)
+	}
+	@job.test_callback(&s) {
+		print("test callback s==$s")
+	}
+
+</func>
 	
 <script>
 	
