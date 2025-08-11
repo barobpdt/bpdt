@@ -1,7 +1,22 @@
 // job 호출예
 	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
+	@job.addJob('gunguInfo', node)
 
-
+	@job.fc_gungoInfo(node) {
+		url="https://new.land.naver.com/api/regions/list?cortarNo=${node.cortarNo}"
+		web=@job.webObject()
+		not(web) {
+			while(n=0,10) {
+				web=@job.webObject() if(web) break;
+				System.sleep(500)
+			}
+		}
+		@job.webResult(web,'gunguInfo', url, node)
+	}
+	@job.web_gunguInfo(s, target) {
+		
+	}
+	
 // cmd
 	cmdNode(node, cmd, fc, target) {
 		not(typeof(node,'node')) return print("@@ cmd add error [$node]");
@@ -21,6 +36,7 @@
 		cmdNode(node)
 	}
 <func>
+	
 	@job.event(obj, eventName, fc, reset) {		
 		not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
 		fn = obj.get(eventName)
@@ -70,6 +86,7 @@
 		}
 	} 
 	@job.start() {
+		conf('job.webMaxNum', 10)
 		jobs=Baro.worker('jobs')
 		not(jobs.is('start')) {			
 			jobs.start(@job.proc)
@@ -79,17 +96,19 @@
 	@job.proc(node) {
 		print("@@ 작업시작 => ", node)
 		not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
-		node.inject(type, param, jobType)
-		not(type) {
-			type=jobType			
-			not(type) type='test'
-		}
-		fc = call("@job.fc_$type")
+		not(node.jobType) node.jobType='test'
+		fc = call("@job.fc_${node.jobType}")
 		if(typeof(fc,'func')) {
 			call(fc, this, node)
 		}
 	}
-	@job.addJob(node) {
+	@job.addJob(param) {
+		if(typeof(param,'node')) {
+			args(node)
+		} else {
+			args(jobType, node)
+			node.jobType=jobType
+		}
 		jobs=Baro.worker('jobs')
 		if(jobs.is('start')) {			
 			jobs.push(node)
@@ -128,6 +147,9 @@
 		}
 		not( obj ) {
 			idx = arr.size()+1;
+			if( idx > conf('job.webMaxNum') ) {
+				return null;
+			}
 			cur = arr.add(Baro.web("webObject_$idx"))
 			@job.event(cur, '@callback', @job.webTypeResult)
 			obj = cur
@@ -141,7 +163,8 @@
 		if(type=='finish') {
 			fc = call("@job.web_${this.resultType}")
 			if(typeof(fc,'function')) {
-				call(fc, this, this.ref(result))
+				target = this.get('@target')
+				call(fc, this, this.ref(result), target)
 			} else {
 				print("@@ webTypeResult 콜백 함수 미정의 : job.web_${this.resultType}")
 			}
@@ -150,23 +173,30 @@
 	
 	@job.webResult(param) {
 		if( typeof(param,'node') ) {
-			args(wo,resultType,url)
+			args(wo,resultType,url,target)
 		} else {
-			args(resultType, url)
+			args(resultType, url,target)
 			wo=@job.webObject()
-		}
+			not(wo) return;
+		}		
 		not(resultType) resultType='default'
 		not(url) url = wo.url
+		wo.set('@target', target)
 		wo.set('result','')
 		wo.resultType=resultType
-		wo.call(url)		
+		wo.call(url)
+		return true;
 	}
 
-	@job.web_default(&s) {
+	@job.web_default(&s, target) {
 		print("## web result ==> $s")
 	}
-	@job.web_sido_info(s) {
-		print("## sido_info : $s")
+	@job.web_sido_info(s, target) {
+		node=object('naver.sidoInfo')
+		node.parseJson(s)
+		while(cur,node.regionList) { 
+			@job.addJob('gungoInfo', cur)
+		}
 	}
 
 	// 작업추가
