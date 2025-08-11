@@ -1,0 +1,5229 @@
+##네이버
+https://new.land.naver.com/complexes?ms=37.563485,126.980018,17&a=APT:ABYG:JGC&e=RETAIL
+
+## 공공데이터 
+h=web.addNode('@header')
+h.set('authorization', 'bearer rm6sMdZaSWofr24rZHK0G6if4PD/L4lRWG6JF0TGMGW1dJXYNp0vsU6l8ssqUU+buWtGim5R13VqjTVotbKFIw==')
+url='https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade'
+web.call(url, 'GET')
+
+## 직방
+https://apis.zigbang.com/apt/locals/polygon?geohash=wydt600&level=local1&polygon=false
+
+https://apis.zigbang.com/apt/locals/prices/on-locals?geohash=wyd&localLevel=2&comparingPeriod=1
+
+
+https://apis.zigbang.com/apt/locals/prices/on-danjis?minPynArea=10%ED%8F%89%EC%9D%B4%ED%95%98&maxPynArea=60%ED%8F%89%EB%8C%80%EC%9D%B4%EC%83%81&geohash=wydmd
+
+{
+    "filtered": [
+        {
+            "id": 10955,
+            "name": "삼성파크빌",
+            "lat": 37.56727119228167,
+            "lng": 127.00276639403546,
+            "총세대수": 43,
+            "사용승인일": "20060202",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "을지로5가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/10955-484f34cdce92482e99ff47498517faa2_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 76000,
+                    "max": 78000,
+                    "avg": 77209,
+                    "perArea": 2505
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 22416,
+            "name": "한남파라곤",
+            "lat": 37.53913841779035,
+            "lng": 127.00328583839294,
+            "총세대수": 42,
+            "사용승인일": "20111223",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/22416-d5649c9fe7914493a10c2c624edea946_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 144000,
+                    "max": 178000,
+                    "avg": 154571,
+                    "perArea": 4606
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 84893,
+            "name": "디에이치한남",
+            "lat": 37.5306086,
+            "lng": 127.003286,
+            "총세대수": 5816,
+            "사용승인일": "",
+            "서비스구분": "분양예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "view_sources": {
+                "sub_title_2": "분양예정",
+                "info_text_1": "분양시기",
+                "info_text_2": "미정",
+                "분양년월마커": "미정",
+                "분양년월마커길이lv": 1
+            },
+            "is후분양": false
+        },
+        {
+            "id": 59098,
+            "name": "한남해피트리",
+            "lat": 37.5394627,
+            "lng": 127.003289,
+            "총세대수": 68,
+            "사용승인일": "20160929",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/59098-dd3ca3dce7294492bc30b9944d15ca62_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 136000,
+                    "max": 140000,
+                    "avg": 137882,
+                    "perArea": 5369
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19024,
+            "name": "이태리하우스",
+            "lat": 37.53877080742741,
+            "lng": 127.0033672889294,
+            "총세대수": 49,
+            "사용승인일": "20060725",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/19024-06ccd955bd6d49a3928b75f843475c24_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 121000,
+                    "max": 293000,
+                    "avg": 181857,
+                    "perArea": 4872
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 80045,
+            "name": "나인원한남",
+            "lat": 37.5363565,
+            "lng": 127.003708,
+            "총세대수": 341,
+            "사용승인일": "20191113",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/80045-ee564d08af634569a6bbe68a5f2980f3_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 1497000,
+                    "max": 2536000,
+                    "avg": 1670838,
+                    "perArea": 20005
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 59095,
+            "name": "태성",
+            "lat": 37.5328794078022,
+            "lng": 127.004200520884,
+            "총세대수": 40,
+            "사용승인일": "19750731",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/59095-36c562a5093b4114a803c4bf03fef8e4_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 82000,
+                    "max": 84000,
+                    "avg": 83500,
+                    "perArea": 4285
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 25460,
+            "name": "한남힐사이드",
+            "lat": 37.542533298324585,
+            "lng": 127.00559885177071,
+            "총세대수": 49,
+            "사용승인일": "20050527",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/25460-ddb08365aaf34dc8be517db8c72dd700_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 124000,
+                    "max": 407000,
+                    "avg": 350489,
+                    "perArea": 5417
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 59383,
+            "name": "푸른마을",
+            "lat": 37.5508715,
+            "lng": 127.005912,
+            "총세대수": 47,
+            "사용승인일": "20000819",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/59383-73a24849c21c42d5ad28ac38dd35b462_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 11500,
+                    "max": 26000,
+                    "avg": 22457,
+                    "perArea": 1171
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 27845,
+            "name": "남산프라임",
+            "lat": 37.548869104429805,
+            "lng": 127.0060021873868,
+            "총세대수": 30,
+            "사용승인일": "20031013",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/27845-05845be4f1e24c16b3409bdf28d10e24_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 65000,
+                    "max": 83000,
+                    "avg": 80166,
+                    "perArea": 2965
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 81955,
+            "name": "글로리안",
+            "lat": 37.5507251,
+            "lng": 127.006456,
+            "총세대수": 30,
+            "사용승인일": "20020202",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/81955-bf796f9c48f94cfbb0ffd3d09faab92a_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 35000,
+                    "max": 35000,
+                    "avg": 35000,
+                    "perArea": 1720
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21030,
+            "name": "한남동신성미소시티",
+            "lat": 37.5315653,
+            "lng": 127.007003,
+            "총세대수": 35,
+            "사용승인일": "20060223",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/21030-a28798344bea46888b42e0cefb4eaabc_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 219000,
+                    "max": 219000,
+                    "avg": 219000,
+                    "perArea": 4456
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2817,
+            "name": "남산타운",
+            "lat": 37.546580510456096,
+            "lng": 127.00703402265032,
+            "총세대수": 5152,
+            "사용승인일": "20020525",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9d1c5891b7220d688ca2be101b7a8bff1d8d9fd8.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 117000,
+                    "max": 165000,
+                    "avg": 86257,
+                    "perArea": 3294
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21330,
+            "name": "동원베네스트",
+            "lat": 37.530297589964405,
+            "lng": 127.00773845785234,
+            "총세대수": 129,
+            "사용승인일": "20100302",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/21330/2b3085146dc7d688447fb448c4262acc1875abe9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 103000,
+                    "max": 168000,
+                    "avg": 141620,
+                    "perArea": 4719
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6473,
+            "name": "한남리첸시아",
+            "lat": 37.534471016572,
+            "lng": 127.0079018130421,
+            "총세대수": 371,
+            "사용승인일": "20040409",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6473/77d3bdc94e02dd8074ae9d8f6db2bec2ba9fd0c3.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 73000,
+                    "max": 208000,
+                    "avg": 118606,
+                    "perArea": 5104
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10956,
+            "name": "남산정은스카이",
+            "lat": 37.548854572860215,
+            "lng": 127.00795764960311,
+            "총세대수": 102,
+            "사용승인일": "20051220",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/10956/a4f4464fdb8d0b4791e1be94883be44dcc8f8e0d.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 126000,
+                    "max": 149000,
+                    "avg": 143480,
+                    "perArea": 3128
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14142,
+            "name": "리버탑",
+            "lat": 37.52972090865422,
+            "lng": 127.00833122293722,
+            "총세대수": 119,
+            "사용승인일": "20010403",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/14142/7820b34c560c457b5e0f146ac76065f6b8553a30.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 116000,
+                    "max": 160000,
+                    "avg": 134445,
+                    "perArea": 4493
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4375,
+            "name": "성아",
+            "lat": 37.5342114769915,
+            "lng": 127.00863494102754,
+            "총세대수": 94,
+            "사용승인일": "19701027",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/4375-3b1ad4ca32934f5c902a349cff77e21d_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 43000,
+                    "max": 116000,
+                    "avg": 82797,
+                    "perArea": 3565
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 7171,
+            "name": "현대리버티하우스",
+            "lat": 37.53357716901765,
+            "lng": 127.00868012401594,
+            "총세대수": 80,
+            "사용승인일": "20010207",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/7171-38d89aa5668a4b76b3bbe1bfc2da5448_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 78000,
+                    "max": 200000,
+                    "avg": 143150,
+                    "perArea": 2697
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 7170,
+            "name": "한성",
+            "lat": 37.53455022005179,
+            "lng": 127.00907849583146,
+            "총세대수": 125,
+            "사용승인일": "19740808",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/7170/2da78293b687d03388302349c3a1b4b008b9b769.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 49000,
+                    "max": 256000,
+                    "avg": 89072,
+                    "perArea": 5683
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 22655,
+            "name": "한남더힐",
+            "lat": 37.5370207,
+            "lng": 127.00943,
+            "총세대수": 600,
+            "사용승인일": "20110107",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/22655/ad88fcce77cebb60777c4aee260678d56f4c9999.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 432000,
+                    "max": 1983000,
+                    "avg": 1042616,
+                    "perArea": 14831
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2906,
+            "name": "극동그린",
+            "lat": 37.5419563,
+            "lng": 127.009989,
+            "총세대수": 583,
+            "사용승인일": "19971002",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/2906/19f74a0d5d76af5f41edb466f761f8cc622fd358.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 110000,
+                    "max": 157000,
+                    "avg": 100065,
+                    "perArea": 3432
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 74410,
+            "name": "한남하이츠",
+            "lat": 37.540075,
+            "lng": 127.010353,
+            "총세대수": 66,
+            "사용승인일": "19870609",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/74410-e916dcf9a215488b94cbadffd46eeb85_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 197000,
+                    "max": 419000,
+                    "avg": 327227,
+                    "perArea": 6765
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 90163,
+            "name": "한남리버힐",
+            "lat": 37.5317407,
+            "lng": 127.010465,
+            "총세대수": 32,
+            "사용승인일": "19990714",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 437000,
+                    "max": 468000,
+                    "avg": 452500,
+                    "perArea": 5744
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21653,
+            "name": "트윈빌",
+            "lat": 37.5341058,
+            "lng": 127.010638,
+            "총세대수": 38,
+            "사용승인일": "20081208",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/21653-0a26226548ff470ebc0aff6b014f4f06_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 221000,
+                    "max": 334000,
+                    "avg": 281552,
+                    "perArea": 4797
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5058,
+            "name": "동대문맨션",
+            "lat": 37.57239917632008,
+            "lng": 127.01102105519522,
+            "총세대수": 53,
+            "사용승인일": "19730125",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "창신동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/5058-3e5978c675cd4068ad5ce73306842afc_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 35000,
+                    "max": 71000,
+                    "avg": 47547,
+                    "perArea": 1570
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14076,
+            "name": "약수",
+            "lat": 37.55362240689339,
+            "lng": 127.01104997729009,
+            "총세대수": 44,
+            "사용승인일": "19680904",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14076-423750ac6fbd4dfebb0596c0159c8ff6_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 40000,
+                    "max": 45000,
+                    "avg": 42636,
+                    "perArea": 2754
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 124,
+            "name": "옥수극동",
+            "lat": 37.5432779,
+            "lng": 127.011547,
+            "총세대수": 900,
+            "사용승인일": "19861224",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/124/7cd631df323697549c21dad981e050ce409a5cb1.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 138000,
+                    "max": 259000,
+                    "avg": 200066,
+                    "perArea": 5432
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 12304,
+            "name": "동대문상가",
+            "lat": 37.570088934299456,
+            "lng": 127.01194891794758,
+            "총세대수": 143,
+            "사용승인일": "19680913",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "창신동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/12304/6b5f61e839c86f5e5f514a6ad46b8d33eee3af78.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 36000,
+                    "max": 67000,
+                    "avg": 50475,
+                    "perArea": 3645
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 13860,
+            "name": "시범",
+            "lat": 37.5391107,
+            "lng": 127.012502,
+            "총세대수": 120,
+            "사용승인일": "19701010",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/13860/2398a5e380e8642a6d8abda28fcc9304ed46f841.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 91000,
+                    "max": 98000,
+                    "avg": 92750,
+                    "perArea": 3602
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 36223,
+            "name": "e편한세상옥수파크힐스",
+            "lat": 37.5473908,
+            "lng": 127.013132,
+            "총세대수": 1976,
+            "사용승인일": "20161109",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/36223/ec3d78de98f1260499616a9c9b93bce2a4379080.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 206000,
+                    "max": 381000,
+                    "avg": 200161,
+                    "perArea": 7191
+                },
+                "offer": {
+                    "min": 71222,
+                    "max": 89708,
+                    "avg": 80325,
+                    "perArea": 2146
+                }
+            }
+        },
+        {
+            "id": 14165,
+            "name": "힐탑트레져",
+            "lat": 37.53846732258501,
+            "lng": 127.0137180260168,
+            "총세대수": 84,
+            "사용승인일": "20031205",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14165-7745268e119349b0aedd12cbb10e8c28_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 119000,
+                    "max": 528000,
+                    "avg": 428190,
+                    "perArea": 6058
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5069,
+            "name": "극동옥정",
+            "lat": 37.54051439103745,
+            "lng": 127.01375008327052,
+            "총세대수": 72,
+            "사용승인일": "19981130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/5069-adb1471b5699456b879b5c293d6c6e89_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 81000,
+                    "max": 113000,
+                    "avg": 98708,
+                    "perArea": 3560
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14069,
+            "name": "동평화",
+            "lat": 37.56934631527341,
+            "lng": 127.01377349279626,
+            "총세대수": 35,
+            "사용승인일": "19681230",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14069-aa626ec0648a45feb3998a766babc4f5_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 25000,
+                    "max": 48000,
+                    "avg": 40914,
+                    "perArea": 2253
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19931,
+            "name": "래미안옥수리버젠",
+            "lat": 37.5449806,
+            "lng": 127.013839,
+            "총세대수": 1511,
+            "사용승인일": "20121228",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/b/b4d7f7defe23d2fb75ea1bb9ee111d66d48caa0c.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 186000,
+                    "max": 329000,
+                    "avg": 226450,
+                    "perArea": 7261
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2907,
+            "name": "옥수삼성",
+            "lat": 37.542363208463854,
+            "lng": 127.0140400959574,
+            "총세대수": 1444,
+            "사용승인일": "19990420",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/b/b382208e6fce1a5f1becd966db9d352308c442cc.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 154000,
+                    "max": 238000,
+                    "avg": 145382,
+                    "perArea": 5110
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 25448,
+            "name": "상월대",
+            "lat": 37.53527053464848,
+            "lng": 127.01404329186052,
+            "총세대수": 34,
+            "사용승인일": "20131121",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "용산구",
+            "dong": "한남동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/25448-64713d5bcc21497e870ebf513c949d68_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 451000,
+                    "max": 975000,
+                    "avg": 584029,
+                    "perArea": 10352
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2909,
+            "name": "한남하이츠",
+            "lat": 37.53973948293765,
+            "lng": 127.0141572795753,
+            "총세대수": 535,
+            "사용승인일": "19820918",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/f/f804ef4726a8f707afdae106a04966a756807508.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 251000,
+                    "max": 499000,
+                    "avg": 358480,
+                    "perArea": 8436
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2818,
+            "name": "약수하이츠",
+            "lat": 37.55506002671394,
+            "lng": 127.01449516875203,
+            "총세대수": 2282,
+            "사용승인일": "19990729",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/94f04723a81e9501fabeb2b6c98707243d3bec3c.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 102000,
+                    "max": 152000,
+                    "avg": 89030,
+                    "perArea": 3391
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 80058,
+            "name": "신당8구역주택재개발",
+            "lat": 37.5592658,
+            "lng": 127.014866,
+            "총세대수": 1213,
+            "사용승인일": "",
+            "서비스구분": "분양예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/80058-f8f0b9b434444fe080d637caf1d5b88d_j.jpg",
+            "view_sources": {
+                "sub_title_2": "분양예정",
+                "info_text_1": "분양시기",
+                "info_text_2": "미정",
+                "분양년월마커": "미정",
+                "분양년월마커길이lv": 1
+            },
+            "is후분양": false
+        },
+        {
+            "id": 12472,
+            "name": "동대문",
+            "lat": 37.572268970644,
+            "lng": 127.0151867521438,
+            "총세대수": 131,
+            "사용승인일": "19660316",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "창신동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/12472/ab930e6fd40bdbe0682f6fe889d434275a8b52fa.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 35000,
+                    "max": 37000,
+                    "avg": 36000,
+                    "perArea": 4132
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 20044,
+            "name": "브라운스톤금호2차",
+            "lat": 37.54758523832312,
+            "lng": 127.0153401690201,
+            "총세대수": 86,
+            "사용승인일": "20100120",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/20044-ea4fc8d444ac4336877b0c1f416862ad_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 154000,
+                    "max": 154000,
+                    "avg": 154000,
+                    "perArea": 4638
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10042,
+            "name": "브라운스톤금호1차",
+            "lat": 37.546745465179946,
+            "lng": 127.01566137190224,
+            "총세대수": 217,
+            "사용승인일": "20070330",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/b/bcbecb34914adfbf334392803f5c54b148dd43a8.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 160000,
+                    "max": 160000,
+                    "avg": 160000,
+                    "perArea": 4969
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21321,
+            "name": "옥수",
+            "lat": 37.54325679203408,
+            "lng": 127.01569232547536,
+            "총세대수": 50,
+            "사용승인일": "19751122",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/21321-ff8a0383cf8b45e68460e08fa48b9148_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 36000,
+                    "max": 50000,
+                    "avg": 47020,
+                    "perArea": 2779
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21323,
+            "name": "삼성V",
+            "lat": 37.5614078,
+            "lng": 127.015947,
+            "총세대수": 30,
+            "사용승인일": "20070425",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/21323-9409b51f225843368af517a6f754ffc4_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 60000,
+                    "max": 118000,
+                    "avg": 80000,
+                    "perArea": 2871
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14081,
+            "name": "청구",
+            "lat": 37.55764389038086,
+            "lng": 127.01620483398438,
+            "총세대수": 76,
+            "사용승인일": "20000501",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14081-28cf1ad0220c427a942e8a3b266584e3_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 28000,
+                    "max": 42000,
+                    "avg": 37460,
+                    "perArea": 2004
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2908,
+            "name": "옥수하이츠",
+            "lat": 37.540023930362445,
+            "lng": 127.01624382013225,
+            "총세대수": 774,
+            "사용승인일": "19980330",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4/4e99e0b2db67c9c9e55a171d353726b8d82d0e05.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 236000,
+                    "max": 298000,
+                    "avg": 185490,
+                    "perArea": 6122
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2933,
+            "name": "두산",
+            "lat": 37.5499853,
+            "lng": 127.016425,
+            "총세대수": 1267,
+            "사용승인일": "19940916",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동3가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6/67ba999deebeb91b49ddea06f8f1df307855c448.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 119000,
+                    "max": 177000,
+                    "avg": 139660,
+                    "perArea": 4281
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 81968,
+            "name": "현대우일타운",
+            "lat": 37.5674299944468,
+            "lng": 127.016528447054,
+            "총세대수": 86,
+            "사용승인일": "19940708",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "흥인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/81968-07b030fd5ab04613a7ba3b1745fa2500_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 38000,
+                    "max": 76000,
+                    "avg": 58825,
+                    "perArea": 1854
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19923,
+            "name": "청구e편한세상",
+            "lat": 37.56044769457753,
+            "lng": 127.01673266742893,
+            "총세대수": 895,
+            "사용승인일": "20111213",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/d/da8afa3c422d7895837c3e9527297f4cf8677e7e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 138000,
+                    "max": 220000,
+                    "avg": 142234,
+                    "perArea": 4422
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14071,
+            "name": "삼성홈타운",
+            "lat": 37.56273981012215,
+            "lng": 127.01687352869214,
+            "총세대수": 63,
+            "사용승인일": "20040419",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14071-f2d2a332035c48809eb80a3e32364ee4_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 69000,
+                    "max": 133000,
+                    "avg": 96253,
+                    "perArea": 3009
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 22580,
+            "name": "청계천두산위브더제니스",
+            "lat": 37.566880761203535,
+            "lng": 127.01706462301266,
+            "총세대수": 295,
+            "사용승인일": "20141222",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "흥인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/22580/1e72ed396d083b045b2d3f02c3a6be9d9bfcd344.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 130000,
+                    "max": 261000,
+                    "avg": 172281,
+                    "perArea": 3186
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 11885,
+            "name": "신당동파라다이스",
+            "lat": 37.56239737250963,
+            "lng": 127.01728091339308,
+            "총세대수": 132,
+            "사용승인일": "20000710",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/11885/a23e04c66a36aac51e2d8053a8dd4373c7a11e07.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 76000,
+                    "max": 93000,
+                    "avg": 87590,
+                    "perArea": 2906
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6158,
+            "name": "금호롯데",
+            "lat": 37.5470623781366,
+            "lng": 127.01736790125612,
+            "총세대수": 249,
+            "사용승인일": "20030109",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/0/04532d39efa7addf6569479e021d0667d1310cea.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 138000,
+                    "max": 142000,
+                    "avg": 138369,
+                    "perArea": 3990
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 7625,
+            "name": "동인샤인빌",
+            "lat": 37.5449215621088,
+            "lng": 127.01765256134864,
+            "총세대수": 68,
+            "사용승인일": "20030130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/7625-00fdb4dab3f24a20b753cbee0a157e44_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 95000,
+                    "max": 100000,
+                    "avg": 96764,
+                    "perArea": 3891
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2819,
+            "name": "신당동삼성",
+            "lat": 37.5581391,
+            "lng": 127.01789,
+            "총세대수": 1434,
+            "사용승인일": "19991222",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/0/0f50076906b4ed158f04cce0f31cbe8f872fbc2a.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 105000,
+                    "max": 135000,
+                    "avg": 83330,
+                    "perArea": 3088
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6644,
+            "name": "금호한신휴플러스",
+            "lat": 37.55015812009477,
+            "lng": 127.0179661326552,
+            "총세대수": 323,
+            "사용승인일": "20050729",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동3가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/e/e7fd45e9f9570b6a2ef576cb9e87cfe1b4b39ceb.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 109000,
+                    "max": 157000,
+                    "avg": 125662,
+                    "perArea": 4094
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 92498,
+            "name": "금호16구역",
+            "lat": 37.5514172415917,
+            "lng": 127.018121134539,
+            "총세대수": 595,
+            "사용승인일": "",
+            "서비스구분": "분양예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동2가",
+            "isNewStay": false,
+            "view_sources": {
+                "sub_title_2": "분양예정",
+                "info_text_1": "분양시기",
+                "info_text_2": "미정",
+                "분양년월마커": "미정",
+                "분양년월마커길이lv": 1
+            },
+            "is후분양": false
+        },
+        {
+            "id": 21806,
+            "name": "옥수어울림",
+            "lat": 37.542308582071065,
+            "lng": 127.01819055589412,
+            "총세대수": 297,
+            "사용승인일": "20111230",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6/62803f4d68997ea9a965c61b2b958b74b76df634.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 142000,
+                    "max": 308000,
+                    "avg": 221124,
+                    "perArea": 6383
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1392,
+            "name": "옥수현대",
+            "lat": 37.54360591337897,
+            "lng": 127.0188788562674,
+            "총세대수": 566,
+            "사용승인일": "19900525",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1392/5c80f0d7a115b926e88ab49992539dec016e552d.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 125000,
+                    "max": 225000,
+                    "avg": 187978,
+                    "perArea": 5838
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 33342,
+            "name": "신금호파크자이",
+            "lat": 37.55540084838867,
+            "lng": 127.0189971923828,
+            "총세대수": 1156,
+            "사용승인일": "20160420",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동2가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/33342/19938b0e0bb242e1e2a75ce2915d1149f24d139d.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 166000,
+                    "max": 263000,
+                    "avg": 152076,
+                    "perArea": 5916
+                },
+                "offer": {
+                    "min": 57300,
+                    "max": 82000,
+                    "avg": 69763,
+                    "perArea": 2051
+                }
+            }
+        },
+        {
+            "id": 27242,
+            "name": "동일상가",
+            "lat": 37.57156922524531,
+            "lng": 127.01913041961114,
+            "총세대수": 66,
+            "사용승인일": "19710224",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "숭인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/27242-54eb7a93e5984a60a8bd355e1b7657bc_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 15500,
+                    "max": 42000,
+                    "avg": 24500,
+                    "perArea": 1547
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 15041,
+            "name": "옥수강변풍림아이원",
+            "lat": 37.54217143555568,
+            "lng": 127.01941257807164,
+            "총세대수": 269,
+            "사용승인일": "20041029",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "옥수동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/b/ba8a2fc526e2a9e2abbb9360f6928b1f085ba801.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 198000,
+                    "max": 202000,
+                    "avg": 198208,
+                    "perArea": 6190
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 9867,
+            "name": "신당푸르지오",
+            "lat": 37.559202,
+            "lng": 127.019512,
+            "총세대수": 461,
+            "사용승인일": "20051228",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/18a0f8f6f4208a18dc8553a67f868cb03a06b82f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 108000,
+                    "max": 163000,
+                    "avg": 132646,
+                    "perArea": 3699
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 3940,
+            "name": "금호대우",
+            "lat": 37.5461195,
+            "lng": 127.020077,
+            "총세대수": 1181,
+            "사용승인일": "20010503",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/8/836b1177b6201456bc52351027ddbcebf3782e47.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 126000,
+                    "max": 216000,
+                    "avg": 164811,
+                    "perArea": 4966
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 87730,
+            "name": "청계노르웨이숲",
+            "lat": 37.5693223,
+            "lng": 127.020321,
+            "총세대수": 404,
+            "사용승인일": "20280701",
+            "서비스구분": "입주예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/87730-478cf485accc49b1b16317e643cd0258_j.jpg",
+            "view_sources": {
+                "info_text_1": "최고 경쟁률",
+                "sub_title_2": "2028. 7 입주 (2025. 4 분양)",
+                "info_text_2": "46.1 : 1"
+            },
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                },
+                "offer": {
+                    "min": 76112,
+                    "max": 111395,
+                    "avg": 85979,
+                    "perArea": 4385
+                }
+            }
+        },
+        {
+            "id": 6427,
+            "name": "금호1차푸르지오",
+            "lat": 37.5496062,
+            "lng": 127.020539,
+            "총세대수": 336,
+            "사용승인일": "20050531",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동3가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/7/73a2957f79a8ef742896bab84400e8305c04c2d5.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 119000,
+                    "max": 172000,
+                    "avg": 140223,
+                    "perArea": 4727
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14039,
+            "name": "숭인상가",
+            "lat": 37.57213120485496,
+            "lng": 127.02056592158696,
+            "총세대수": 109,
+            "사용승인일": "19791022",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "숭인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14039-38dc29af75e7411bb1f9ff9e862b1445_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 44000,
+                    "max": 77000,
+                    "avg": 58275,
+                    "perArea": 2106
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 69777,
+            "name": "청계리버팰리스",
+            "lat": 37.5697457,
+            "lng": 127.020742,
+            "총세대수": 81,
+            "사용승인일": "20190115",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/69777-39f92cdf51eb448881704e12ff1cf2d1_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 26000,
+                    "max": 31000,
+                    "avg": 27888,
+                    "perArea": 2600
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 92318,
+            "name": "블루버드숭인",
+            "lat": 37.5731485665215,
+            "lng": 127.020804940441,
+            "총세대수": 48,
+            "사용승인일": "20230908",
+            "서비스구분": "입주2년내",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "숭인동",
+            "isNewStay": false,
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 39000,
+                    "max": 40000,
+                    "avg": 39500,
+                    "perArea": 3269
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 68827,
+            "name": "골드캐슬III",
+            "lat": 37.570234310738,
+            "lng": 127.021214405319,
+            "총세대수": 40,
+            "사용승인일": "20171221",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/68827-f94b38ccbf344e90be72feb3cf700736_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 29000,
+                    "max": 34000,
+                    "avg": 31800,
+                    "perArea": 2754
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 79297,
+            "name": "위너빌",
+            "lat": 37.5676576,
+            "lng": 127.021356,
+            "총세대수": 42,
+            "사용승인일": "20180920",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/79297-460a44f9c98745928dbcaddf1899578e_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 31000,
+                    "max": 38000,
+                    "avg": 35500,
+                    "perArea": 3562
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 17838,
+            "name": "롯데캐슬베네치아",
+            "lat": 37.5711489,
+            "lng": 127.021589,
+            "총세대수": 1870,
+            "사용승인일": "20081222",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/17838/1151a0143d5c5c0f597157db6935b7bf4a9d50e9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 88000,
+                    "max": 141000,
+                    "avg": 90937,
+                    "perArea": 3041
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1367,
+            "name": "신당현대",
+            "lat": 37.55997114911229,
+            "lng": 127.02175776171067,
+            "총세대수": 942,
+            "사용승인일": "19930917",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/50c40fb1f7d3762503cd553b92b43845514c7677.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 86000,
+                    "max": 120000,
+                    "avg": 102522,
+                    "perArea": 2821
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19990,
+            "name": "금호자이2차",
+            "lat": 37.5503538,
+            "lng": 127.021976,
+            "총세대수": 403,
+            "사용승인일": "20120705",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동3가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/b/bfcce82053ef98d63bd31cc265822e1edcb5b738.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 121000,
+                    "max": 179000,
+                    "avg": 115471,
+                    "perArea": 4065
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 86489,
+            "name": "에비뉴청계I",
+            "lat": 37.5732367185579,
+            "lng": 127.022101221273,
+            "총세대수": 99,
+            "사용승인일": "20230628",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "숭인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/86489-266bf0dc17cd4d78b84989f712fcf8ef_j.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 16500,
+                    "max": 24000,
+                    "avg": 19025,
+                    "perArea": 2169
+                },
+                "offer": {
+                    "min": 26100,
+                    "max": 43800,
+                    "avg": 30089,
+                    "perArea": 3431
+                }
+            }
+        },
+        {
+            "id": 18727,
+            "name": "황학아크로타워",
+            "lat": 37.5660798324391,
+            "lng": 127.0221489099916,
+            "총세대수": 263,
+            "사용승인일": "20100331",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/18727/a780ba0805fcc9664a5e681026a12ebf19fa785e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 113000,
+                    "max": 147000,
+                    "avg": 122741,
+                    "perArea": 2922
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 11010,
+            "name": "신금호두산위브",
+            "lat": 37.555967012809646,
+            "lng": 127.02231794121602,
+            "총세대수": 169,
+            "사용승인일": "20060331",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/11010/c4f6be358d87f0618b7be8475aafd82247975f20.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 103000,
+                    "max": 156000,
+                    "avg": 123514,
+                    "perArea": 3720
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 86875,
+            "name": "에비뉴청계Ⅱ",
+            "lat": 37.5732165,
+            "lng": 127.022351,
+            "총세대수": 81,
+            "사용승인일": "20250430",
+            "서비스구분": "입주2년내",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "종로구",
+            "dong": "숭인동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/86875-c2027183428d4f79adc1f206b01547b9_j.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 26000,
+                    "max": 42000,
+                    "avg": 27777,
+                    "perArea": 3161
+                },
+                "offer": {
+                    "min": 26300,
+                    "max": 40900,
+                    "avg": 29722,
+                    "perArea": 3382
+                }
+            }
+        },
+        {
+            "id": 19892,
+            "name": "래미안신당하이베르",
+            "lat": 37.56136577190546,
+            "lng": 127.02240104277752,
+            "총세대수": 784,
+            "사용승인일": "20111028",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9c141e11c1ad21031bb23133cb899a9792b77fcb.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 120000,
+                    "max": 153000,
+                    "avg": 132639,
+                    "perArea": 4154
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19929,
+            "name": "금호자이1차",
+            "lat": 37.55283872292237,
+            "lng": 127.02245281162593,
+            "총세대수": 401,
+            "사용승인일": "20120518",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동2가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/8/8d6fa75b7d4d70c73cde690d87fd35f5fffa4b9e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 145000,
+                    "max": 210000,
+                    "avg": 165092,
+                    "perArea": 5247
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19300,
+            "name": "황학코아루",
+            "lat": 37.5667428995018,
+            "lng": 127.02249773288362,
+            "총세대수": 112,
+            "사용승인일": "20101029",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/19300/2373ff07bdc35f39de8076e154a281805f05727a.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 83000,
+                    "max": 176000,
+                    "avg": 101383,
+                    "perArea": 2873
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 11081,
+            "name": "중구리버빌",
+            "lat": 37.56719339309214,
+            "lng": 127.02252050659712,
+            "총세대수": 39,
+            "사용승인일": "20031230",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/11081-06e64d0bd84443129d2924c6bd9c4866_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 44000,
+                    "max": 63000,
+                    "avg": 50820,
+                    "perArea": 1430
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 59394,
+            "name": "동광팰리스",
+            "lat": 37.569541551531,
+            "lng": 127.022606449171,
+            "총세대수": 40,
+            "사용승인일": "20180516",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "황학동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/59394-e2ae8838d62f4c379ac8214f6dfed4bc_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 16500,
+                    "max": 27000,
+                    "avg": 23500,
+                    "perArea": 2374
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 37354,
+            "name": "e편한세상금호파크힐스",
+            "lat": 37.5546019,
+            "lng": 127.022719,
+            "총세대수": 1330,
+            "사용승인일": "20190509",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/37354/ebb010630e366b47dcf3263ef75962b9c82cee9f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 169000,
+                    "max": 265000,
+                    "avg": 176274,
+                    "perArea": 5926
+                },
+                "offer": {
+                    "min": 56900,
+                    "max": 85800,
+                    "avg": 73245,
+                    "perArea": 1982
+                }
+            }
+        },
+        {
+            "id": 80707,
+            "name": "서울숲르씨엘",
+            "lat": 37.5472317,
+            "lng": 127.022852,
+            "총세대수": 108,
+            "사용승인일": "20221130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/80707-7923ff389a954a6b893d33c87d86061a_j.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 120000,
+                    "max": 154000,
+                    "avg": 129444,
+                    "perArea": 4921
+                },
+                "offer": {
+                    "min": 99800,
+                    "max": 125000,
+                    "avg": 107000,
+                    "perArea": 4055
+                }
+            }
+        },
+        {
+            "id": 12313,
+            "name": "서울숲1차푸르지오",
+            "lat": 37.544733216499736,
+            "lng": 127.02308858683004,
+            "총세대수": 888,
+            "사용승인일": "20070731",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/5f1a7675c43f3d8eb1606aaa377adbee2692dadd.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 148000,
+                    "max": 270000,
+                    "avg": 202227,
+                    "perArea": 6862
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5665,
+            "name": "하왕십리극동미라주",
+            "lat": 37.55878511922908,
+            "lng": 127.02341887581868,
+            "총세대수": 605,
+            "사용승인일": "20011214",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/7/7806027296f96286f654c0141629ff04be59f22b.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 95000,
+                    "max": 127000,
+                    "avg": 76284,
+                    "perArea": 2812
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 18232,
+            "name": "청계천대성스카이렉스1",
+            "lat": 37.57200083122675,
+            "lng": 127.02391203046308,
+            "총세대수": 56,
+            "사용승인일": "20070123",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "신설동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/18232-8eb711465f1743688fb58e8b2843a987_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 76000,
+                    "max": 81000,
+                    "avg": 77250,
+                    "perArea": 2538
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 20022,
+            "name": "서울숲2차푸르지오",
+            "lat": 37.5464431,
+            "lng": 127.024001,
+            "총세대수": 586,
+            "사용승인일": "20120816",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9879ec4adfa4fac343454c03019712cc65b28444.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 173000,
+                    "max": 290000,
+                    "avg": 207614,
+                    "perArea": 6969
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19722,
+            "name": "래미안하이리버",
+            "lat": 37.5512633,
+            "lng": 127.024545,
+            "총세대수": 847,
+            "사용승인일": "20120518",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동2가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/12497d41fa07c00ab08f3ef217829a2b294c5e29.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 154000,
+                    "max": 230000,
+                    "avg": 175839,
+                    "perArea": 5544
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 22637,
+            "name": "텐즈힐2단지",
+            "lat": 37.57046508789063,
+            "lng": 127.02467346191406,
+            "총세대수": 1148,
+            "사용승인일": "20140626",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "상왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/c/c6ae48fb4b9c2f6b9da182c2f707862ee6c45cd4.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 129000,
+                    "max": 240000,
+                    "avg": 146187,
+                    "perArea": 4504
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6323,
+            "name": "왕십리풍림아이원",
+            "lat": 37.5586154697619,
+            "lng": 127.02470452648248,
+            "총세대수": 758,
+            "사용승인일": "20041130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9dffa5698f0b3dfed102ded70989753288cf9494.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 112000,
+                    "max": 147000,
+                    "avg": 125067,
+                    "perArea": 4191
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 36892,
+            "name": "왕십리자이",
+            "lat": 37.5607485,
+            "lng": 127.024713,
+            "총세대수": 713,
+            "사용승인일": "20170728",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/36892/5db2ca5ea3197dc1d3ef9171e6242ab70ace564e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 113000,
+                    "max": 158000,
+                    "avg": 110506,
+                    "perArea": 4331
+                },
+                "offer": {
+                    "min": 41200,
+                    "max": 64400,
+                    "avg": 55070,
+                    "perArea": 2012
+                }
+            }
+        },
+        {
+            "id": 16466,
+            "name": "삼산",
+            "lat": 37.5475094708254,
+            "lng": 127.02483529647338,
+            "총세대수": 75,
+            "사용승인일": "19751223",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/16466-476a52af9e7d42f29f5bcd48d91e56f1_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 58000,
+                    "max": 63000,
+                    "avg": 62133,
+                    "perArea": 4153
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 38132,
+            "name": "신당KCC스위첸",
+            "lat": 37.5632105,
+            "lng": 127.024917,
+            "총세대수": 176,
+            "사용승인일": "20190610",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "중구",
+            "dong": "신당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/38132/70f932f54a32b391d4264013812babdfa8e875e5.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 92000,
+                    "max": 137000,
+                    "avg": 119903,
+                    "perArea": 4360
+                },
+                "offer": {
+                    "min": 39930,
+                    "max": 61360,
+                    "avg": 56143,
+                    "perArea": 2025
+                }
+            }
+        },
+        {
+            "id": 4552,
+            "name": "왕십리금호베스트빌",
+            "lat": 37.5613902,
+            "lng": 127.025839,
+            "총세대수": 458,
+            "사용승인일": "20011005",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/58f7ccd2979ecb6f746e7f8cd7975e287c91dee1.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 86000,
+                    "max": 116000,
+                    "avg": 101657,
+                    "perArea": 2926
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 26568,
+            "name": "현대10차",
+            "lat": 37.5314743,
+            "lng": 127.025977,
+            "총세대수": 144,
+            "사용승인일": "19820614",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/26568/45ca66a470ba3498f5faa560140d44517e3c22be.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 462000,
+                    "max": 654000,
+                    "avg": 526000,
+                    "perArea": 13193
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 16154,
+            "name": "현대14차",
+            "lat": 37.5306265193774,
+            "lng": 127.02613890553822,
+            "총세대수": 388,
+            "사용승인일": "19870421",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/d/d281dd95008ab235e189d430e9b1065b84152f9e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 609000,
+                    "max": 619000,
+                    "avg": 615211,
+                    "perArea": 19764
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 3730,
+            "name": "한진해모로",
+            "lat": 37.5631381,
+            "lng": 127.026417,
+            "총세대수": 362,
+            "사용승인일": "20010618",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/3730/83286cf21e2281312de551ff77729804b6582278.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 87000,
+                    "max": 109000,
+                    "avg": 67301,
+                    "perArea": 2518
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 37269,
+            "name": "힐스테이트서울숲리버",
+            "lat": 37.5466768,
+            "lng": 127.026643,
+            "총세대수": 606,
+            "사용승인일": "20180219",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동4가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/37269/d4d229dc52b98acef2199fbb1e2a95a4728fbc92.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 163000,
+                    "max": 312000,
+                    "avg": 180320,
+                    "perArea": 5860
+                },
+                "offer": {
+                    "min": 69344,
+                    "max": 120123,
+                    "avg": 91170,
+                    "perArea": 2133
+                }
+            }
+        },
+        {
+            "id": 3956,
+            "name": "벽산",
+            "lat": 37.5525242,
+            "lng": 127.026719,
+            "총세대수": 1707,
+            "사용승인일": "20011203",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/19a1025d65a15e9ab069c097737ce17d15f7203f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 114000,
+                    "max": 163000,
+                    "avg": 139066,
+                    "perArea": 4133
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 33272,
+            "name": "왕십리KCC스위첸",
+            "lat": 37.56062002,
+            "lng": 127.0269225,
+            "총세대수": 272,
+            "사용승인일": "20160428",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/33272/86a533b2792546e7cf1e84dbe3c6d0e84987d753.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 104000,
+                    "max": 139000,
+                    "avg": 118371,
+                    "perArea": 4166
+                },
+                "offer": {
+                    "min": 39850,
+                    "max": 50950,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 33613,
+            "name": "센트라스",
+            "lat": 37.5655391,
+            "lng": 127.027069,
+            "총세대수": 2529,
+            "사용승인일": "20161129",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/33613/5ec5f084e734865bf3026aeeca5a133f07be243a.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 106000,
+                    "max": 258000,
+                    "avg": 162635,
+                    "perArea": 5620
+                },
+                "offer": {
+                    "min": 33580,
+                    "max": 81630,
+                    "avg": 58551,
+                    "perArea": 1926
+                }
+            }
+        },
+        {
+            "id": 5361,
+            "name": "행당대림",
+            "lat": 37.5578941,
+            "lng": 127.027111,
+            "총세대수": 3404,
+            "사용승인일": "20001230",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4/4c6ea5334b3afe5d401677087368d324fdea3a3a.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 121000,
+                    "max": 175000,
+                    "avg": 103947,
+                    "perArea": 3738
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5646,
+            "name": "금호삼성래미안",
+            "lat": 37.54910034615845,
+            "lng": 127.02736299736137,
+            "총세대수": 582,
+            "사용승인일": "20011031",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "금호동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/5f87351fcf0d81764242fec0c0fedccc91fd9aa9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 120000,
+                    "max": 176000,
+                    "avg": 138735,
+                    "perArea": 4531
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21288,
+            "name": "현대13차",
+            "lat": 37.5293684,
+            "lng": 127.027491,
+            "총세대수": 234,
+            "사용승인일": "19831109",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/17fc36e5410746a9e22eff1f8fcd950033db313e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 625000,
+                    "max": 639000,
+                    "avg": 627948,
+                    "perArea": 17595
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 394,
+            "name": "무학현대",
+            "lat": 37.56115917822313,
+            "lng": 127.02787898949596,
+            "총세대수": 277,
+            "사용승인일": "19960315",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/394/35c1b9a3b137985f245732e2e9a4d8a93346f8be.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 94000,
+                    "max": 94000,
+                    "avg": 94000,
+                    "perArea": 3167
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 24894,
+            "name": "텐즈힐1단지",
+            "lat": 37.5688608776878,
+            "lng": 127.02794524824768,
+            "총세대수": 1702,
+            "사용승인일": "20150424",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/e/ef2124342a65f0aecf9965f837004b3d1e891a58.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 156000,
+                    "max": 256000,
+                    "avg": 153944,
+                    "perArea": 4741
+                },
+                "offer": {
+                    "min": 47319,
+                    "max": 93936,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 92,
+            "name": "현대1,2차",
+            "lat": 37.53291820990587,
+            "lng": 127.02812643149436,
+            "총세대수": 960,
+            "사용승인일": "19760607",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/c/c0d905719884dfdfac4c6cd02fef51c7fad04e16.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 691000,
+                    "max": 1127000,
+                    "avg": 938898,
+                    "perArea": 17342
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1315,
+            "name": "한신무학",
+            "lat": 37.56235197903796,
+            "lng": 127.02837744267914,
+            "총세대수": 480,
+            "사용승인일": "19890330",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/d/d45c71f029631e1b73fcfdb866e00ac7ac7cac75.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 92000,
+                    "max": 130000,
+                    "avg": 112329,
+                    "perArea": 3447
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10778,
+            "name": "현대5차",
+            "lat": 37.531901774253605,
+            "lng": 127.02856954984676,
+            "총세대수": 224,
+            "사용승인일": "19771221",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/52e3a489b6b245ad515f08ee8bf6feb346612eae.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 556000,
+                    "max": 556000,
+                    "avg": 556000,
+                    "perArea": 16129
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1349,
+            "name": "행당한진타운",
+            "lat": 37.55593318683651,
+            "lng": 127.02874621948274,
+            "총세대수": 2123,
+            "사용승인일": "20001107",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/170fe0f566999488149a61ca846fc05781bd70e9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 125000,
+                    "max": 176000,
+                    "avg": 148551,
+                    "perArea": 4443
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10779,
+            "name": "현대6,7차",
+            "lat": 37.5299447,
+            "lng": 127.028905,
+            "총세대수": 1288,
+            "사용승인일": "19780921",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9ccd331129f43deca7e815113759b86ddbcb5155.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 740000,
+                    "max": 1336000,
+                    "avg": 868626,
+                    "perArea": 16254
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 51421,
+            "name": "e편한세상청계센트럴포레",
+            "lat": 37.5717149,
+            "lng": 127.029222,
+            "총세대수": 823,
+            "사용승인일": "20211130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "용두동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/51421-adfd01d865974782a47885c66832d74c_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 96000,
+                    "max": 168000,
+                    "avg": 122072,
+                    "perArea": 4529
+                },
+                "offer": {
+                    "min": 52661,
+                    "max": 93235,
+                    "avg": 79622,
+                    "perArea": 2770
+                }
+            }
+        },
+        {
+            "id": 728,
+            "name": "신동아",
+            "lat": 37.550253109685286,
+            "lng": 127.02949998343615,
+            "총세대수": 434,
+            "사용승인일": "19960409",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/728/6e69e989927b1f8f34b4b0e69394c369f5e25346.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 84000,
+                    "max": 123000,
+                    "avg": 96470,
+                    "perArea": 3377
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6259,
+            "name": "행당브라운스톤",
+            "lat": 37.55854941333123,
+            "lng": 127.02983373377296,
+            "총세대수": 208,
+            "사용승인일": "20050901",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9906688afe9d4dbdb7c3f778866d7947adc26c92.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 113000,
+                    "max": 162000,
+                    "avg": 129817,
+                    "perArea": 4445
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 17336,
+            "name": "청계천대성스카이렉스2",
+            "lat": 37.57033802972614,
+            "lng": 127.02990635282453,
+            "총세대수": 112,
+            "사용승인일": "20070604",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "용두동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/17336/965ec189fe7f1be95dab1367ec4010ab2aa2fb5d.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 86000,
+                    "max": 86000,
+                    "avg": 86000,
+                    "perArea": 2593
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10777,
+            "name": "현대4차",
+            "lat": 37.53237697970207,
+            "lng": 127.03065600478828,
+            "총세대수": 170,
+            "사용승인일": "19770712",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/10777/d39cda6a9bed48f10f034fd82dd11a87659d885c.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 709000,
+                    "max": 709000,
+                    "avg": 709000,
+                    "perArea": 16710
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1393,
+            "name": "금호현대",
+            "lat": 37.55104561618209,
+            "lng": 127.0309533562011,
+            "총세대수": 644,
+            "사용승인일": "19900920",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/f/f4657510f6cca2309a7549fe2574bd4cd94fa822.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 113000,
+                    "max": 154000,
+                    "avg": 132360,
+                    "perArea": 4120
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19225,
+            "name": "하왕십리신영지웰",
+            "lat": 37.56084482504286,
+            "lng": 127.03110680927836,
+            "총세대수": 82,
+            "사용승인일": "20091001",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/19225-c007b989b87d402da4ec0252f58b1d10_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 105000,
+                    "max": 145000,
+                    "avg": 108390,
+                    "perArea": 3136
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 15973,
+            "name": "청계대주파크빌",
+            "lat": 37.56747247983817,
+            "lng": 127.03138575255244,
+            "총세대수": 101,
+            "사용승인일": "20051123",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "홍익동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/15973/b80d5fc9faafe24bcac932df9009a96535614278.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 85000,
+                    "max": 89000,
+                    "avg": 88762,
+                    "perArea": 2877
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 18421,
+            "name": "행당두산위브",
+            "lat": 37.5566045,
+            "lng": 127.031756,
+            "총세대수": 465,
+            "사용승인일": "20091203",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/18421/5b8fec1e2521457ed14e6e1628b0a9a0439fae5f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 136000,
+                    "max": 184000,
+                    "avg": 112761,
+                    "perArea": 4297
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 2935,
+            "name": "청계벽산",
+            "lat": 37.56887789578605,
+            "lng": 127.03189797765464,
+            "총세대수": 1332,
+            "사용승인일": "19960607",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "하왕십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4/460653914fc548fddd5c609c9249b627e5656562.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 102000,
+                    "max": 135000,
+                    "avg": 76288,
+                    "perArea": 2874
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10531,
+            "name": "현대65동(대림아크로빌)",
+            "lat": 37.531493565715294,
+            "lng": 127.03228029269827,
+            "총세대수": 56,
+            "사용승인일": "19790628",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/10531-35c8748a529f46318c5f52540d992d93_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 875000,
+                    "max": 950000,
+                    "avg": 941392,
+                    "perArea": 11061
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5031,
+            "name": "신동아",
+            "lat": 37.57269800195871,
+            "lng": 127.03231618087726,
+            "총세대수": 772,
+            "사용승인일": "19941014",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "용두동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/3/397d3dbde488a92bf3af068735501b72ab92d297.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 60000,
+                    "max": 81000,
+                    "avg": 72940,
+                    "perArea": 2841
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19589,
+            "name": "서울숲행당푸르지오",
+            "lat": 37.555200612275385,
+            "lng": 127.0324670657178,
+            "총세대수": 457,
+            "사용승인일": "20110502",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/2/27a49f02af93d6280e64d5e84dc9829692fb4a13.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 124000,
+                    "max": 184000,
+                    "avg": 142890,
+                    "perArea": 4630
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 214,
+            "name": "대림2차",
+            "lat": 37.5528877,
+            "lng": 127.032468,
+            "총세대수": 410,
+            "사용승인일": "19890921",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/2/2d3db804ff5a3de486d0d6de961ce875a0e9ac44.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 102000,
+                    "max": 125000,
+                    "avg": 116248,
+                    "perArea": 3820
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 10776,
+            "name": "현대3차",
+            "lat": 37.5323584,
+            "lng": 127.0326,
+            "총세대수": 432,
+            "사용승인일": "19761104",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/c/c706b8598de4c9423e0f81846f8c6081f233bba2.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 497000,
+                    "max": 516000,
+                    "avg": 497439,
+                    "perArea": 15103
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 729,
+            "name": "신동아",
+            "lat": 37.55437159182884,
+            "lng": 127.03283790932718,
+            "총세대수": 636,
+            "사용승인일": "19950522",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/e/e506a0ae0b9355c67778df7882be694b8815e7c2.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 99000,
+                    "max": 146000,
+                    "avg": 114501,
+                    "perArea": 3983
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 211,
+            "name": "대림1차",
+            "lat": 37.5519369,
+            "lng": 127.03326,
+            "총세대수": 855,
+            "사용승인일": "19861023",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6/606102247f522c2ce707d37dc268ba02a11a8e9f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 142000,
+                    "max": 211000,
+                    "avg": 178526,
+                    "perArea": 4964
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 14929,
+            "name": "홍익한신",
+            "lat": 37.56663208561626,
+            "lng": 127.03379861657892,
+            "총세대수": 95,
+            "사용승인일": "19750624",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "홍익동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/14929-abc8e50d1db9416eb89c33eb1c4d85d6_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 47000,
+                    "max": 63000,
+                    "avg": 57389,
+                    "perArea": 2630
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 17384,
+            "name": "성동삼성쉐르빌",
+            "lat": 37.56439367955835,
+            "lng": 127.03493852908689,
+            "총세대수": 342,
+            "사용승인일": "20060913",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "도선동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/17384/9f89000f8e2f2c95497621b7d22bac73c58c8bd9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 86000,
+                    "max": 105000,
+                    "avg": 100786,
+                    "perArea": 3183
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4187,
+            "name": "현대8차",
+            "lat": 37.53080796819536,
+            "lng": 127.03520795987286,
+            "총세대수": 515,
+            "사용승인일": "19800915",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1/1e7f8fce0c55c6ddafc56febba4ca4e90f9d6f07.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 536000,
+                    "max": 809000,
+                    "avg": 642240,
+                    "perArea": 15863
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6021,
+            "name": "서울숲한신더휴",
+            "lat": 37.55559257829403,
+            "lng": 127.0354867067092,
+            "총세대수": 1410,
+            "사용승인일": "20031223",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6/655a4be4fcede5a9b4938510351010b45a1c2dc7.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 129000,
+                    "max": 184000,
+                    "avg": 155096,
+                    "perArea": 4798
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5645,
+            "name": "대림강변타운",
+            "lat": 37.553430107559,
+            "lng": 127.0357391828018,
+            "총세대수": 1150,
+            "사용승인일": "20011026",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/2/26fe2bfbef6004e5ae2341883a50c9adb9f373f6.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 134000,
+                    "max": 208000,
+                    "avg": 161033,
+                    "perArea": 5173
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4216,
+            "name": "한양6차",
+            "lat": 37.52979498739954,
+            "lng": 127.03605373041997,
+            "총세대수": 228,
+            "사용승인일": "19801230",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4216/fea6e87c083061a71874eff6ed952fff66fc566b.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 518000,
+                    "max": 747000,
+                    "avg": 617736,
+                    "perArea": 15474
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 5346,
+            "name": "한양4차",
+            "lat": 37.5310777,
+            "lng": 127.036978,
+            "총세대수": 286,
+            "사용승인일": "19781228",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5346/caacca14564ead4a59d8ada98534c452848a1a43.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 381000,
+                    "max": 981000,
+                    "avg": 699842,
+                    "perArea": 15271
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 82080,
+            "name": "라체르보푸르지오써밋",
+            "lat": 37.5571436,
+            "lng": 127.037008,
+            "총세대수": 958,
+            "사용승인일": "20250731",
+            "서비스구분": "입주2년내",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/82080-3f552e541dda4f30ad6ef329f0896cc9_j.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 113000,
+                    "max": 298000,
+                    "avg": 168389,
+                    "perArea": 6511
+                },
+                "offer": {
+                    "min": 90360,
+                    "max": 164680,
+                    "avg": 113293,
+                    "perArea": 5325
+                }
+            }
+        },
+        {
+            "id": 5993,
+            "name": "서울숲리버그린동아",
+            "lat": 37.55306563712833,
+            "lng": 127.03725095663398,
+            "총세대수": 375,
+            "사용승인일": "20030607",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "응봉동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/2/25b872c93a1d7b43d2c6bfb49b0c649a6e85448f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 128000,
+                    "max": 189000,
+                    "avg": 150029,
+                    "perArea": 4813
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 3767,
+            "name": "두산",
+            "lat": 37.56471009997542,
+            "lng": 127.0373246665036,
+            "총세대수": 251,
+            "사용승인일": "19970704",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/3/32a401f1c481aa34e89f31c533303fd573bd9772.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 97000,
+                    "max": 111000,
+                    "avg": 104306,
+                    "perArea": 3738
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 494,
+            "name": "서울숲삼부",
+            "lat": 37.5599996,
+            "lng": 127.037449,
+            "총세대수": 498,
+            "사용승인일": "19980715",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/494/e5f1ecda79363c48860c54ee783b426b64d2e2c9.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 128000,
+                    "max": 213000,
+                    "avg": 187638,
+                    "perArea": 5470
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 13748,
+            "name": "신명스카이뷰",
+            "lat": 37.565531525883415,
+            "lng": 127.03820794747236,
+            "총세대수": 52,
+            "사용승인일": "20051227",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/13748-2cd30f2b14334ca68eb88a689e67df4c_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 99000,
+                    "max": 99000,
+                    "avg": 99000,
+                    "perArea": 3041
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 38478,
+            "name": "서울숲리버뷰자이",
+            "lat": 37.5555529,
+            "lng": 127.03832,
+            "총세대수": 1034,
+            "사용승인일": "20180622",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/38478/b3d0b1e4b7220047b31cfd47fff52da4a1764c3e.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 177000,
+                    "max": 402000,
+                    "avg": 201607,
+                    "perArea": 6476
+                },
+                "offer": {
+                    "min": 61531,
+                    "max": 150253,
+                    "avg": 77440,
+                    "perArea": 2216
+                }
+            }
+        },
+        {
+            "id": 6687,
+            "name": "왕십리대성유니드",
+            "lat": 37.56682882133314,
+            "lng": 127.03863420662242,
+            "총세대수": 248,
+            "사용승인일": "20041130",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/5/51c86310af23d2d03e86043eb922714b8d6ed926.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 93000,
+                    "max": 132000,
+                    "avg": 108725,
+                    "perArea": 3632
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1621,
+            "name": "한양1차",
+            "lat": 37.530316697644,
+            "lng": 127.03880090835268,
+            "총세대수": 936,
+            "사용승인일": "19771226",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/a/a4d5ad61bef816bc5b7ea58e6f14b9d4aa717a7c.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 355000,
+                    "max": 783000,
+                    "avg": 542207,
+                    "perArea": 18947
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 58732,
+            "name": "우성에비뉴",
+            "lat": 37.5707988,
+            "lng": 127.038978,
+            "총세대수": 60,
+            "사용승인일": "20171019",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 71000,
+                    "max": 91000,
+                    "avg": 74066,
+                    "perArea": 2834
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4100,
+            "name": "왕십리중앙하이츠",
+            "lat": 37.56542311435469,
+            "lng": 127.03909981702712,
+            "총세대수": 170,
+            "사용승인일": "19990531",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4100/fa963e21a871ffc5b2f0c788c4546bc239a31dae.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 89000,
+                    "max": 104000,
+                    "avg": 96852,
+                    "perArea": 3237
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4054,
+            "name": "왕십리삼성",
+            "lat": 37.56616158609928,
+            "lng": 127.04012796420665,
+            "총세대수": 430,
+            "사용승인일": "19961214",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/d/d12ddcdc5aa2ba84f68e58fbaad28d0e8fb47792.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 96000,
+                    "max": 139000,
+                    "avg": 110158,
+                    "perArea": 3362
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 21793,
+            "name": "서울숲더샵",
+            "lat": 37.55680921471007,
+            "lng": 127.0402044348319,
+            "총세대수": 495,
+            "사용승인일": "20140916",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "행당동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/21793-bb74c2e9e32d4a4e94b401db8c62d525_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 177000,
+                    "max": 312000,
+                    "avg": 205117,
+                    "perArea": 4981
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4009,
+            "name": "한양2차",
+            "lat": 37.52982237763785,
+            "lng": 127.04050219703764,
+            "총세대수": 296,
+            "사용승인일": "19780916",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/c/cd5f688d8a3afb2bd2a512cfc108f5ab37f081df.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 739000,
+                    "max": 1026000,
+                    "avg": 773047,
+                    "perArea": 14448
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 640,
+            "name": "현대",
+            "lat": 37.5481549,
+            "lng": 127.04084,
+            "총세대수": 217,
+            "사용승인일": "19900922",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/640/ec59e4ce13fb7d19676a3524390a986d4283ae23.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 118000,
+                    "max": 160000,
+                    "avg": 142972,
+                    "perArea": 4977
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6293,
+            "name": "왕십리금호어울림",
+            "lat": 37.5629131,
+            "lng": 127.041029,
+            "총세대수": 367,
+            "사용승인일": "20060927",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/6/6c01ace9dd0f23c8251c300c1e153f4a1e623fce.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 100000,
+                    "max": 163000,
+                    "avg": 143329,
+                    "perArea": 4268
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4039,
+            "name": "한양8차",
+            "lat": 37.530095729835686,
+            "lng": 127.04208170995024,
+            "총세대수": 90,
+            "사용승인일": "19840614",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "강남구",
+            "dong": "압구정동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/4039/7fd06056d898120e0327f547d900081cb2edd433.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 806000,
+                    "max": 924000,
+                    "avg": 904555,
+                    "perArea": 13533
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 19222,
+            "name": "갤러리아포레",
+            "lat": 37.54578380383026,
+            "lng": 127.04247979310723,
+            "총세대수": 230,
+            "사용승인일": "20110729",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/19222/6f254280181a25f32686d8cf469d0c24d65bf37c.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 685000,
+                    "max": 1547000,
+                    "avg": 951795,
+                    "perArea": 11346
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1391,
+            "name": "청계현대",
+            "lat": 37.5694493,
+            "lng": 127.042583,
+            "총세대수": 1017,
+            "사용승인일": "19980414",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/1391/bbb5048f7be256e578273b68b8a5e976cc27de8a.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 86000,
+                    "max": 163000,
+                    "avg": 106474,
+                    "perArea": 3236
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 80378,
+            "name": "서울숲아이파크리버포레1차",
+            "lat": 37.5505905,
+            "lng": 127.043072,
+            "총세대수": 825,
+            "사용승인일": "20241231",
+            "서비스구분": "입주2년내",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/80378-5da8633d8a8246d7b849f68246b9c290_j.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 225000,
+                    "max": 328000,
+                    "avg": 270699,
+                    "perArea": 9566
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 86525,
+            "name": "서울숲아이파크리버포레2차",
+            "lat": 37.5491451,
+            "lng": 127.043279,
+            "총세대수": 528,
+            "사용승인일": "20251130",
+            "서비스구분": "입주예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "view_sources": {
+                "info_text_1": "최고 경쟁률",
+                "sub_title_2": "2025. 11 입주 ",
+                "info_text_2": "확인중"
+            },
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6274,
+            "name": "청계미소지움",
+            "lat": 37.56892817949718,
+            "lng": 127.04369278746428,
+            "총세대수": 286,
+            "사용승인일": "20040604",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/7/7f452e6c1af4bdc7b4fac3663e5e171d0d5fafa7.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 90000,
+                    "max": 109000,
+                    "avg": 104083,
+                    "perArea": 3484
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 38299,
+            "name": "아크로서울포레스트",
+            "lat": 37.5444372,
+            "lng": 127.043848,
+            "총세대수": 280,
+            "사용승인일": "20201112",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/38299-6ebddb2dc9ea43acb81f8e4e4a24758f_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 742000,
+                    "max": 2713000,
+                    "avg": 1412707,
+                    "perArea": 22391
+                },
+                "offer": {
+                    "min": 169800,
+                    "max": 625410,
+                    "avg": 307268,
+                    "perArea": 4881
+                }
+            }
+        },
+        {
+            "id": 90261,
+            "name": "신답극동리모델링",
+            "lat": 37.5726924675573,
+            "lng": 127.044123220013,
+            "총세대수": 255,
+            "사용승인일": "",
+            "서비스구분": "분양예정",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "답십리동",
+            "isNewStay": false,
+            "view_sources": {
+                "sub_title_2": "분양예정",
+                "info_text_1": "분양시기",
+                "info_text_2": "미정",
+                "분양년월마커": "미정",
+                "분양년월마커길이lv": 1
+            },
+            "is후분양": false
+        },
+        {
+            "id": 121,
+            "name": "신답극동",
+            "lat": 37.57269417873408,
+            "lng": 127.04412514541286,
+            "총세대수": 225,
+            "사용승인일": "19870804",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "동대문구",
+            "dong": "답십리동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/0/0842e224532495997eb7b49501c61a8678a9de8f.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 51000,
+                    "max": 80000,
+                    "avg": 63533,
+                    "perArea": 2373
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 12281,
+            "name": "장원",
+            "lat": 37.56917650360644,
+            "lng": 127.04463017983248,
+            "총세대수": 38,
+            "사용승인일": "20021224",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/12281-649a5e8d0ba5438d97df05719e758334_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 68000,
+                    "max": 125000,
+                    "avg": 73210,
+                    "perArea": 2364
+                },
+                "offer": {
+                    "min": 22000,
+                    "max": 22000,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 36524,
+            "name": "트리마제",
+            "lat": 37.5387425,
+            "lng": 127.0448,
+            "총세대수": 688,
+            "사용승인일": "20170529",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/area/danji/36524-f4fe664a87f34527b0d23a29824645f6_r.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 112000,
+                    "max": 1225000,
+                    "avg": 466130,
+                    "perArea": 12121
+                },
+                "offer": {
+                    "min": 37900,
+                    "max": 428200,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 90332,
+            "name": "미성",
+            "lat": 37.5685542,
+            "lng": 127.044816,
+            "총세대수": 36,
+            "사용승인일": "19851220",
+            "서비스구분": "입주2년후",
+            "real_type": "연립",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 91000,
+                    "max": 92000,
+                    "avg": 91333,
+                    "perArea": 3072
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 6394,
+            "name": "강변건영",
+            "lat": 37.54036962494372,
+            "lng": 127.0451063402216,
+            "총세대수": 580,
+            "사용승인일": "20020219",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/9a346512aaf885e0cac7ce8dd19384dd6d0c7198.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 200000,
+                    "max": 247000,
+                    "avg": 242465,
+                    "perArea": 7371
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 663,
+            "name": "마장세림",
+            "lat": 37.565294802882086,
+            "lng": 127.04518475011572,
+            "총세대수": 811,
+            "사용승인일": "19861227",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "마장동",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/e/eb26dc83ce91dbedc478481f4815755e33ab6ae5.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 82000,
+                    "max": 127000,
+                    "avg": 105970,
+                    "perArea": 4056
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 4058,
+            "name": "서울숲대림",
+            "lat": 37.54212831368749,
+            "lng": 127.04527034034896,
+            "총세대수": 372,
+            "사용승인일": "20001027",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/9/97b7a4a7d858c78b38cb62fc547af2bdc1267a16.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 145000,
+                    "max": 201000,
+                    "avg": 174026,
+                    "perArea": 6175
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        },
+        {
+            "id": 1351,
+            "name": "한진타운",
+            "lat": 37.54111197586196,
+            "lng": 127.04529688224926,
+            "총세대수": 378,
+            "사용승인일": "19940404",
+            "서비스구분": "입주2년후",
+            "real_type": "아파트",
+            "sido": "서울특별시",
+            "gugun": "성동구",
+            "dong": "성수동1가",
+            "isNewStay": false,
+            "image": "https://ic.zigbang.com/vp/BigData/7/724d61d5e300190141f2054ed3e38466d43c8829.jpg",
+            "view_sources": {},
+            "is후분양": false,
+            "price": {
+                "sales": {
+                    "min": 173000,
+                    "max": 210000,
+                    "avg": 191402,
+                    "perArea": 6744
+                },
+                "offer": {
+                    "min": null,
+                    "max": null,
+                    "avg": null,
+                    "perArea": null
+                }
+            }
+        }
+    ],
+    "unfiltered": []
+}
