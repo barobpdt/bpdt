@@ -17,6 +17,25 @@
 		cmdNode(node)
 	}
 <func>
+	@job.event(obj, eventName, fc, reset) {		
+		not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
+		fn = obj.get(eventName)
+		if( typeof(fn,'func')) {
+			print("xxxxxxxx", args())
+			not(reset) {
+				print("＠＠ $eventName 함수가 이미등록되었습니다")
+				return fn;
+			}
+		}
+		fcType = typeof(fc)
+		not( fcType.eq('funcRef') ) {		
+			if(fc) print("@@ job event  함수타입 오류 (타입:$fcType)")
+			return;
+		}
+		fn=Cf.funcNode(fc, obj)
+		obj.set(eventName, fn) 
+		return fn;		
+	}
 	@job.addTimerJob(node) {
 		not(System.globalTimer()) @job.timer();
 		global=Cf.rootNode() 
@@ -37,15 +56,15 @@
 	}
 	@job.timerProc() {
 		this.inject(@timerObjects)
-		print("timerProc ...")
 		job = timerObjects.pop() not(job) return;
-		fc=call("@job.tm_${job.type")
+		print("timer job == $job")
+		fc=call("@job.tm_${job.type}")
 		if(typeof(fc,'function') ) {
-			call(fc, job, this)
+			call(fc, this, job)
 		} else {
-			print("@@ timer job function not defined node==>$node")
+			print("@@ timer job function not defined node==>$job")
 		}
-	}
+	} 
 	@job.start() {
 		jobs=Baro.worker('jobs')
 		not(jobs.is('start')) {			
@@ -86,9 +105,9 @@
 		@job.addTimerJob(node)		
 	}
 	@job.tm_test(node) {
-		cmd=node.command
-		not(cmd) cmd='dir'
-		cmd().cmdNode(node, cmd, @job.test_callback )
+		command=node.command
+		not(command) command='dir'
+		cmd().cmdNode(node, command, @job.test_callback )
 		print("@@ tm_test call end", node)
 	}
 	@job.test_callback(&s) {
