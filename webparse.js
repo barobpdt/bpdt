@@ -1,3 +1,7 @@
+// job 호출예
+	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
+
+
 // cmd
 	cmdNode(node, cmd, fc, target) {
 		not(typeof(node,'node')) return print("@@ cmd add error [$node]");
@@ -73,11 +77,14 @@
 		return jobs;
 	}
 	@job.proc(node) {
-		print("job => $node")
-		not(node) return print("xxxx job end xxxx")
-		node.inject(type, param)
+		print("@@ 작업시작 => ", node)
+		not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
+		node.inject(type, param, jobType)
+		not(type) {
+			type=jobType			
+			not(type) type='test'
+		}
 		fc = call("@job.fc_$type")
-		print("xxxxxxxxxx", fc, type)
 		if(typeof(fc,'func')) {
 			call(fc, this, node)
 		}
@@ -101,6 +108,70 @@
 			print("@@ timer job function not defined node==>$job")
 		}
 	} 
+	@job.webObject() {
+		ws=object('baro.webObjectMap')
+		arr = ws.get('@webObjects')
+		cnt = 0
+		if( typeof(arr,'array') ) cnt=arr.size()
+		print("@@ web object size: ", cnt)
+		not(cnt) {			
+			arr=ws.addArray('@webObjects')
+			while(n=1,5) {
+				cur = arr.add(Baro.web("webObject_$n"))
+				@job.event(cur, '@callback', @job.webTypeResult)
+			}
+		}
+		obj=null
+		while(cur, arr) {
+			if(cur.is('run')) continue;
+			obj = cur;
+		}
+		not( obj ) {
+			idx = arr.size()+1;
+			cur = arr.add(Baro.web("webObject_$idx"))
+			@job.event(cur, '@callback', @job.webTypeResult)
+			obj = cur
+		}
+		print("obj==>$obj")
+		return obj;
+	}
+	
+	@job.webTypeResult(type, data) {
+		if(type=='read') this.appendText('result', data)
+		if(type=='finish') {
+			fc = call("@job.web_${this.resultType}")
+			if(typeof(fc,'function')) {
+				call(fc, this, this.ref(result))
+			} else {
+				print("@@ webTypeResult 콜백 함수 미정의 : job.web_${this.resultType}")
+			}
+		}		
+	}
+	
+	@job.webResult(param) {
+		if( typeof(param,'node') ) {
+			args(wo,resultType,url)
+		} else {
+			args(resultType, url)
+			wo=@job.webObject()
+		}
+		not(resultType) resultType='default'
+		not(url) url = wo.url
+		wo.set('result','')
+		wo.resultType=resultType
+		wo.call(url)		
+	}
+
+	@job.web_default(&s) {
+		print("## web result ==> $s")
+	}
+	@job.web_sido_info(s) {
+		print("## sido_info : $s")
+	}
+
+	// 작업추가
+	// @job.addJob(node) 
+	// 
 	@job.fc_test(node) {
 		@job.addTimerJob(node)		
 	}
@@ -113,7 +184,6 @@
 	@job.test_callback(&s) {
 		print("test callback s==$s")
 	}
-
 </func>
 	
 <script>
