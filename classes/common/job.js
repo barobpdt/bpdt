@@ -1,3 +1,12 @@
+@job.start() {
+	conf('job.webMaxNum', 10)
+	jobs=Baro.worker('jobs')
+	not(jobs.is('start')) {			
+		jobs.start(@job.proc)
+	}
+	return jobs;
+}
+
 @job.event(obj, eventName, fc, reset) {		
 	not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
 	fn = obj.get(eventName)
@@ -52,29 +61,29 @@
 		print("@@ timer job function not defined node==>$job")
 	}
 } 
-@job.start() {
-	conf('job.webMaxNum', 10)
-	jobs=Baro.worker('jobs')
-	not(jobs.is('start')) {			
-		jobs.start(@job.proc)
-	}
-	return jobs;
-}
+
 @job.proc(node) {
 	print("@@ 작업시작 => ", node)
 	not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
-	not(node.jobType) node.jobType='test'
-	fc = call("@job.fc_${node.jobType}")
+	type = node.jobType
+	not(type) {
+		type=node.type
+		not(type) type='test'
+	}
+	fc = call("@job.fc_${type}")
 	if(typeof(fc,'func')) {
 		call(fc, this, node)
+	} else {
+		return print("@@ 작업 처리 함수 오류(node:$node)")
 	}
 }
 @job.addJob(param) {
 	if(typeof(param,'node')) {
 		args(node)
 	} else {
-		args(jobType, node)
-		node.jobType=jobType
+		args(type, node)
+		not(typeof(node,'node')) node=_node()
+		node.jobType=type
 	}
 	jobs=Baro.worker('jobs')
 	if(jobs.is('start')) {			
@@ -83,6 +92,50 @@
 		print("@@ 작업이 시작되지 않았습니다 job addNode 오류")
 	}
 }
+@job.addWorker(param) {
+	if(typeof(param,'node')) {
+		args(node)
+	} else {
+		args(type, node)
+		not(typeof(node,'node')) node=_node()
+		node.jobType=type
+	}
+	jobs=Baro.worker('jobs')
+	cnt=jobs.get('@subWorkerCount')
+	subWorker = null
+	if(cnt) {
+		while(n=0, cnt) {
+			cur=Baro.worker("jobs_$n")
+			if(cur.get('@workerStartTick')) continue;
+			subWorker = cur
+		}
+	}
+	not(subWorker) {
+		idx=jobs.incrNum('@subWorkerCount')
+		subWorker=Baro.worker("jobs_$idx")
+		subWorker.start(@job.workerProc)
+	}
+	subWorker.push(node)
+	return subWorker;
+}
+@job.workerProc(node) {
+	print("@@ job worker start => ", node)
+	not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
+	type = node.jobType
+	not(type) {
+		type=node.type
+		not(type) type='test'
+	}
+	fc = call("@job.worker_${type}")
+	if(typeof(fc,'func')) {
+		this.set('@workerStartTick', System.tick())
+		call(fc, this, node)
+		this.set('@workerStartTick', 0)
+	} else {
+		return print("@@ worer 처리 함수 오류(node:$node)")
+	}
+}
+
 @job.webObject() {
 	ws=object('baro.webObjectMap')
 	arr = ws.get('@webObjects')
@@ -155,18 +208,56 @@
 	}
 }
 
-// 작업추가
-// @job.addJob(node) 
-// 
+/* ## 테스트 작업추가
+	@job.addJob(node) 
+*/
 @job.fc_test(node) {
-	@job.addTimerJob(node)		
+	@job.addWorker(node)
 }
-@job.post_test(node) {
-	command=node.command
-	not(command) command='dir'
-	cmd().cmdNode(node, command, @job.test_callback )
-	print("@@ post_test call end", node)
+@job.worker_test(node) {
+	print("test worker start node=>", node)
+} 
+/* ## 파이션 eval 처리 실행
+	@job.start()
+	@job.addPost('pythonTest')
+*/
+@job.setPythonPath(&s) {
+		s.findPos("\n")
+		s.ch()
+		print("s==$s")
+		if(lineCheck(s,'>')) {
+			ss=s.findPos('>').trim()
+			path = ss.replace('\','/')
+			pp=pythonPath("$path/AppData/Local/Programs/Python")
+			print("@@ python path == $pp", path)
+			if(pp ) {
+				conf('python.path', pp, true)
+			}
+		}
+		pythonPath = func(basePath) {
+			pp=''
+			fo=Baro.file('jobs')
+			print("xxxxxxxxxxxxxx python path start : $basePath")
+			fo.list(basePath,func(info) {
+				while(info.next()) {
+					info.inject(type, name, fullPath)
+					print("@@ name==$name $type")
+					if(type=='folder') {
+						ss=name.lower()
+						if(ss.start('python')) {
+							return pp.add(fullPath)
+						}
+					}
+				}
+			});
+			return pp;
+		};
 }
-@job.test_callback(&s) {
-	print("test callback s==$s")
-}
+
+@job.post_pythonTest(node) {
+	not( isFolder(conf('python.path')) ) {
+		c=cmd()
+		c.cmdAdd('c:')
+		c.cmdNode(node, 'cd %userprofile%', @job.setPythonPath)	
+	}
+}	
