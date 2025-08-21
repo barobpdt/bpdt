@@ -1,3 +1,53 @@
+getVarValue(&s,fn) {
+	not(fn) fn=Cf.funcNode('parent')
+	isVar = func(s) {
+		c=s.next().ch()
+		not(c) return true;
+		while(c.eq('.')) {
+			c=s.next().ch()
+		}
+		return when(c,false,true);
+	};
+	not( isVar(s) ) return eval(s);
+	k=s.move(), ss=fn.get(k)
+	c=s.ch()
+	while(c.eq('.')) {
+		not(typeof(ss,'node')) return '';
+		k=s.incr().move()
+		c=s.ch()
+		not(c) {
+			v=ss.member("$k")
+			not(v) v=ss.get(k)
+			return v;
+		}
+		ss=ss.get(k)
+	}
+	return ss;
+}
+sv(&s, node) {
+	fn=Cf.funcNode('parent')
+	ss=''
+	while(s.valid()) {
+		left = s.findPos('$')
+		ss.add(left)
+		c=s.ch() not(c) break;
+		if(c.eq('{')) {
+			src=s.match(1)
+			if(typeof(src,'bool')) break;
+			ss.add(getVarValue(src,fn))
+			continue;
+		}
+		k=s.move()
+		v=''
+		if(fn.isset(k)) {
+			v=fn.get(k)
+		} else if(node && node.isVar(k)) {
+			v=node.get(k)
+		}
+		if(v) ss.add(v)
+	}
+	return ss;
+}
 @job.start() {
 	conf('job.webMaxNum', 10)
 	jobs=Baro.worker('jobs')
@@ -261,3 +311,4 @@
 		c.cmdNode(node, 'cd %userprofile%', @job.setPythonPath)	
 	}
 }	
+
