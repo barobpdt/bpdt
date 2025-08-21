@@ -1,53 +1,3 @@
-getVarValue(&s,fn) {
-	not(fn) fn=Cf.funcNode('parent')
-	isVar = func(s) {
-		c=s.next().ch()
-		not(c) return true;
-		while(c.eq('.')) {
-			c=s.next().ch()
-		}
-		return when(c,false,true);
-	};
-	not( isVar(s) ) return eval(s);
-	k=s.move(), ss=fn.get(k)
-	c=s.ch()
-	while(c.eq('.')) {
-		not(typeof(ss,'node')) return '';
-		k=s.incr().move()
-		c=s.ch()
-		not(c) {
-			v=ss.member("$k")
-			not(v) v=ss.get(k)
-			return v;
-		}
-		ss=ss.get(k)
-	}
-	return ss;
-}
-sv(&s, node) {
-	fn=Cf.funcNode('parent')
-	ss=''
-	while(s.valid()) {
-		left = s.findPos('$')
-		ss.add(left)
-		c=s.ch() not(c) break;
-		if(c.eq('{')) {
-			src=s.match(1)
-			if(typeof(src,'bool')) break;
-			ss.add(getVarValue(src,fn))
-			continue;
-		}
-		k=s.move()
-		v=''
-		if(fn.isset(k)) {
-			v=fn.get(k)
-		} else if(node && node.isVar(k)) {
-			v=node.get(k)
-		}
-		if(v) ss.add(v)
-	}
-	return ss;
-}
 @job.start() {
 	conf('job.webMaxNum', 10)
 	jobs=Baro.worker('jobs')
@@ -84,11 +34,11 @@ sv(&s, node) {
 	if( typeof(param,'node')) {
 		node=param;
 	} else {
-		node=_node()
-		node.type=param
+		args(type,node)
+		not( typeof(node,'node')) node=_node()
+		node.jobType=type
 	}
 	timerPostList.add(node)
-	print("xxxxxxxxxx timer job add xxxxxxxxxx", node, timerPostList)
 } 
 @job.timer() {
 	if(System.globalTimer()) {
@@ -272,36 +222,36 @@ sv(&s, node) {
 	@job.addPost('pythonTest')
 */
 @job.setPythonPath(&s) {
-		s.findPos("\n")
-		s.ch()
-		print("s==$s")
-		if(lineCheck(s,'>')) {
-			ss=s.findPos('>').trim()
-			path = ss.replace('\','/')
-			pp=pythonPath("$path/AppData/Local/Programs/Python")
-			print("@@ python path == $pp", path)
-			if(pp ) {
-				conf('python.path', pp, true)
-			}
+	s.findPos("\n")
+	s.ch()
+	print("s==$s")
+	if(lineCheck(s,'>')) {
+		ss=s.findPos('>').trim()
+		path = ss.replace('\','/')
+		pp=pythonPath("$path/AppData/Local/Programs/Python")
+		print("@@ python path == $pp", path)
+		if(pp ) {
+			conf('python.path', pp, true)
 		}
-		pythonPath = func(basePath) {
-			pp=''
-			fo=Baro.file('jobs')
-			print("xxxxxxxxxxxxxx python path start : $basePath")
-			fo.list(basePath,func(info) {
-				while(info.next()) {
-					info.inject(type, name, fullPath)
-					print("@@ name==$name $type")
-					if(type=='folder') {
-						ss=name.lower()
-						if(ss.start('python')) {
-							return pp.add(fullPath)
-						}
+	}
+	pythonPath = func(basePath) {
+		pp=''
+		fo=Baro.file('jobs')
+		print("xxxxxxxxxxxxxx python path start : $basePath")
+		fo.list(basePath,func(info) {
+			while(info.next()) {
+				info.inject(type, name, fullPath)
+				print("@@ name==$name $type")
+				if(type=='folder') {
+					ss=name.lower()
+					if(ss.start('python')) {
+						return pp.add(fullPath)
 					}
 				}
-			});
-			return pp;
-		};
+			}
+		});
+		return pp;
+	};
 }
 
 @job.post_pythonTest(node) {
@@ -312,3 +262,105 @@ sv(&s, node) {
 	}
 }	
 
+/*
+
+*/
+firstLine(&s) {
+	not(s.ch()) return '[null]';
+	return s.findPos("\n").trim();
+}
+
+_getVarValue(&s,fn) {
+	isVar = func(s) {
+		c=s.next().ch() not(c) return true;
+		while(c.eq('.')) c=s.next().ch()
+		return when(c,false,true);
+	};
+	c=s.ch() not(c) return; 
+	if(c.eq('=')) {
+		k=s.incr().trim()
+		v=conf(k) not(v) v="[conf $k 미정의]";
+		return v;
+	}
+	not(fn) fn=Cf.funcNode('parent')
+	not( isVar(s) ) return eval(s);
+	k=s.move(), c=s.ch()
+	not(c) {
+		if( fn.isset(k)) {
+			v=fn.get(k)	
+		} else { 
+			if(k.eq('nl')) v="\n"
+			else if(k.eq('tab')) v="\t"
+			else v=' ';
+		}
+		return v;
+	}
+	ss=fn.get(k)
+	while(c.eq('.')) {
+		not(typeof(ss,'node')) return '';
+		k=s.incr().move()
+		c=s.ch()
+		not(c) {
+			v=ss.member("$k")
+			not(v) v=ss.get(k)
+			return v;
+		}
+		ss=ss.get(k)
+	}
+	return ss;
+}
+_sv(&s, node) {
+	fn=Cf.funcNode('parent')
+	ss=''
+	while(s.valid()) {
+		left = s.findPos('$')
+		ss.add(left)
+		c=s.ch() not(c) break;
+		if(c.eq('{')) {
+			src=s.match(1)
+			if(typeof(src,'bool')) break;
+			ss.add(_getVarValue(src,fn))
+			continue;
+		}
+		k=s.move()
+		v=''
+		if(fn.isset(k)) {
+			v=fn.get(k)
+		} else if(node && node.isVar(k)) {
+			v=node.get(k)
+		}
+		if(v) ss.add(v)
+	}
+	return ss;
+} 
+_confInfo(&s) {
+	db=Baro.db('config')
+	a=s.move(), filter=''
+	if(a.eq('*') ) {
+		c=s.ch()
+		not(c.eq('.')) return print("@@ error conf list $a 하위 정보 오류");
+		b=s.incr().trim()
+		print("b==$b")
+		if(b.find('%')) {
+			filter = "and cd like '$b'"
+		} else {
+			filter = "and cd='$b' "
+		}
+	} else {
+		c=s.ch()
+		if(c.eq('.')) {
+			b=s.incr().trim()
+			filter = "and grp='$a' and cd like '$b'"
+		} else {
+			filter = "and grp='$a'"
+		}
+	}
+	node=db.fetchAll("select grp, cd, data from conf_info where 1=1 $filter")
+	ss=''
+	while(cur, node) {
+		cur.inject(grp, cd, data)
+		line=sv('$grp.$cd ${firstLine(data)} ${nl}')
+		ss.add(line)
+	}
+	return ss;
+}
