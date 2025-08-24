@@ -1,3 +1,4 @@
+<script module="sourceRun:editPanel">
 initPage() {
 	@editor=widget('editor')
 	@editorTitle=widget('editorTitle')
@@ -178,4 +179,5 @@ sourcerRunRange(sp) {
 		}
 		return point(sa, ea)
 	};
-}	
+}
+</script>

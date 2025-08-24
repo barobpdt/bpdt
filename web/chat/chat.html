@@ -137,7 +137,7 @@
 </div>
 
 	<script src="/assets/js/chat.js"></script>
-
+	<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 	<script>
 		const ws=websocketConnect()
 		const upload=wsChunkUploadFiles(ws)
@@ -146,8 +146,6 @@
 			const chatMessages = document.getElementById('chat-messages');
 			const messageElement = document.createElement('div');
 			const messageText ='안녕하세요'
-			let messageContent = `<div class="message-content">`; 
-			messageContent += `<p>${messageText}</p>`;
 			messageElement.className = 'message sent';
 			messageElement.innerHTML = messageContent;
 			
@@ -155,6 +153,7 @@
 			chatMessages.appendChild(messageElement);
 
 		}
+		var bridge=null;
 		$(document).ready(function() {
 			initChat()
 			initUpload()
@@ -163,12 +162,14 @@
 			$('#cancleButton').on('click', ()=>togglePage('chat'))
 			$('#uploadButton').on('click', ()=>uploadStart())
 			// 웹소켓 연결시작
-			ws.connect()
+			// ws.connect()
+			new QWebChannel(qt.webChannelTransport, function(channel) {
+				bridge = channel.objects.bridge;
+			});
 		})
 		$(document).on('click', e=>{
-			console.log('click e=>',e)
 			if(e.target.id=='message-input') return;
-			ws.sendData('pageActive','',{pageId:'test:webviewLog',logId:'webview-in'})
+			if(bridge) bridge.logAppend('pageActivate');
 		})
 		/*
 		$(document).on('mousemove', e=> {

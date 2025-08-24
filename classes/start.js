@@ -15,6 +15,212 @@ _node(code, reuse) {
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
+_log(&s) {
+	dt = System.date('hh:mm:ss')
+	line=firstLine(s)
+	print("$dt> $line")
+}
+_sender() {
+	fn=Cf.funcNode('parent')
+	return fn.get('@sender');
+}
+_run(cmd, line) {
+	cmd.run(_s(line))
+} 
+_event(obj, eventName, fc, target, reset) {		
+	not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
+	fn = obj.get(eventName)
+	if( typeof(fn,'func')) {
+		print("xxxxxxxx", args())
+		not(reset) {
+			print("＠＠ $eventName 함수가 이미등록되었습니다")
+			return fn;
+		}
+	}
+	fcType = typeof(fc)
+	not( fcType.eq('funcRef') ) {		
+		if(fc) print("@@ job event  함수타입 오류 (타입:$fcType)")
+		return;
+	}
+	fn=Cf.funcNode(fc, obj)
+	if( typeof(target,'node')) {
+		fn.set('@sender', obj);
+		fn.set('@this',target)
+	}
+	obj.set(eventName, fn) 
+	return fn;		
+}
+_page(pcode,src) {
+	p = Cf.getObject('page', pcode)
+	s=stripJsComment(src)
+	s.ref()
+	c=s.ch()
+	if(p) {
+		not(c.eq('<')) p[$s]
+		return p;
+	}
+	not(c.eq('<')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
+	if(pcode.find(':')) {
+		pcode.split(':').inject(base, name)
+	} else {
+		base='test'
+		name=pcode
+	}
+	
+	sp=s.cur()
+	tag=s.incr().move()
+	s.pos(sp)
+	ss=s.match("<$tag", "</$tag>")
+	if(typeof(ss,'bool')) return print("$pcode 페이지 태그 매칭오류")
+	prop=ss.findPos('>')
+	src=_s('<widgets base="$base"><$tag id="$name" $prop>$ss</$tag></widgets>')
+	Cf.sourceApply(src)
+	p = Cf.getObject('page', "$base:$name")
+	not(typeof(p,'widget')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
+	if(s.ch()) {
+		p[$s]
+	}
+	if(p.init ) {
+		p.init()
+	}
+	return p;
+}
+_valid(v) {
+	chk = typeof(v,'num') || v;
+	return chk;
+}
+_varValue(k, fn) {
+	not(fn) fn=Cf.funcNode('parent')
+	if(fn.isset(k)) return fn.get(k);
+	node=fn.get('@this')
+	if(typeof(node,'node')) {
+		fn=Cf.funcNode(node)
+		if(fn && fn.isset(k)) return fn.get(k);
+	}
+	if(k.eq('nl')) v="\r\n";
+	else if(k.eq('tab')) v="\t";
+	else v="[$k 미정의]"
+	return v;
+}
+_getVarValue(&s,fn) {
+	isVar = func(s) {
+		c=s.next().ch() not(c) return true;
+		while(c.eq('.')) c=s.next().ch()
+		return when(c,false,true);
+	};
+	c=s.ch() not(c) return; 
+	if(c.eq('@')) {
+		k=s.incr().trim()
+		v=conf(k) not(v) v="[conf $k 미정의]";
+		return v;
+	}
+	not(fn) fn=Cf.funcNode('parent')
+	not( isVar(s) ) return eval(s);
+	if(c.eq(':')) {
+		k='int'
+	} else {
+		k=s.move()
+		c=s.ch()
+	}
+	if(c.eq(':')) {
+		type=k
+		k=s.incr().move()
+		v=_varValue(k,fn)
+		if(type.eq('int')) {
+			if(typeof(v,'num')) {
+				v=v.toInt()
+			} else {
+				v=0
+			}
+		}
+	} else {
+		v=_varValue(k,fn)
+	}
+		
+	ss=_varValue(k, fn)
+	c=s.ch()
+	not(c) return ss;
+	while(c.eq('.')) {
+		not(typeof(ss,'node')) return '';
+		k=s.incr().move()
+		c=s.ch()
+		not(c) {
+			v=ss.get(k)
+			not(_valid(v)) v=ss.member("$k")
+			return v;
+		}
+		ss=ss.get(k)
+	}
+	return ss;
+}
+_s(&s, fn) {
+	not(fn) fn=Cf.funcNode('parent')
+	ss=''
+	while(s.valid()) {
+		left = s.findPos('$')
+		ss.add(left)
+		c=s.ch() not(c) break;
+		if(c.eq('{')) {
+			src=s.match(1)
+			if(typeof(src,'bool')) break;
+			ss.add(_getVarValue(src,fn))
+			continue;
+		}
+		if(c.eq(':')) {
+			k='int'
+		} else {
+			k=s.move()
+			c=s.ch(1)
+		}
+		if(c.eq(':')) {
+			type=k
+			k=s.incr().move()
+			v=_varValue(k,fn)
+			if(type.eq('int')) {
+				if(typeof(v,'num')) {
+					v=v.toInt()
+				} else {
+					v=0
+				}
+			}
+		} else {
+			v=_varValue(k,fn)
+		}
+		if(_valid(v)) ss.add(v)
+	}
+	return ss;
+} 
+_confInfo(&s) {
+	db=Baro.db('config')
+	a=s.move(), filter=''
+	if(a.eq('*') ) {
+		c=s.ch()
+		not(c.eq('.')) return print("@@ error conf list $a 하위 정보 오류");
+		b=s.incr().trim()
+		print("b==$b")
+		if(b.find('%')) {
+			filter = "and cd like '$b'"
+		} else {
+			filter = "and cd='$b' "
+		}
+	} else {
+		c=s.ch()
+		if(c.eq('.')) {
+			b=s.incr().trim()
+			filter = "and grp='$a' and cd like '$b'"
+		} else {
+			filter = "and grp='$a'"
+		}
+	}
+	node=db.fetchAll("select grp, cd, data from conf_info where 1=1 $filter")
+	ss=''
+	while(cur, node) {
+		cur.inject(grp, cd, data)
+		line=_s('$grp.$cd ${firstLine(data)} ${nl}')
+		ss.add(line)
+	}
+	return ss;
+}
 global(code) {
 	root=Cf.rootNode("@global", true)
 	result = ''
@@ -340,11 +546,11 @@ parseSource(&s, base, subName) {
 		not(c.eq('<')) {
 			if( map ) break;
 			if( base && subName ) {
-				module = "${base}:${subName}"
+				applyFunc(s, "${base}:${subName}")
 			} else {
-				module = base
+				applyFunc(s)
 			}
-			return applyFunc(s, module)
+			return 
 		}
 		if( s.start('<!--')) {
 			s.match('<!--', '-->')
@@ -356,54 +562,29 @@ parseSource(&s, base, subName) {
 		if(typeof(ss,'bool')) return print("parseSource 함수오류 ($tab 태그 매칭오류)")
 		prop=ss.findPos('>')
 		if( tag.eq('widgets','pages') ) {
-			if( base ) {
-				prop = Cf.val('base=',Cf.jsValue(base) )
-				pageBase = propVal(prop,'base')
-			} else {
+			not(base) {
 				base = propVal(prop,'base') not(base) base ='test'
-				pageBase = base
 			}
-			widgetSource.add("<widgets $prop>$ss</widgets>")
+			widgetSource.add(_s('<widgets base="$base">$ss</widgets>'))
 		} else if( tag.eq('script') ) {
 			module=propVal(prop, 'module')
-			if( module ) {
+			if( module ) { 
 				if( module.ch('@') ) {
 					module=module.value(1)
 				} else {
-					if( module.find(':') ) {
-						split(module,':').inject(base,subName)
-					} else if( module.find('#') ) {
-						split(module,'#').inject(base,subName)
-					} else {
-						subName=module
+					subName=module
+					not(module.find(':')) {
+						module = "${base}:${subName}"
 					}
-					module = "${base}:${subName}"
-				}			
-			} else if( base && subName ) {
-				module = "${base}:${subName}"
-			}
+				}	
+			} 
 			applyFunc(ss, module)		
-		} else if( tag.eq('conf') ) {
-			name=propVal(prop, 'name')
-			not(name) name=propVal(prop, 'id')
-			not(name) name='common'
-			parseConf(name, ss)
-		} else if( tag.eq('sql','text') ) {
-			id=propVal(prop, 'id')
-			if(id) {
-				not(pageBase) {
-					pageBase=base not(pageBase) pageBase='common'
-				}
-				conf("${tag}.${pageBase}:${id}", ss, true)
-			}
-		} else if( tag.eq('example') ) {
-			print("[사용예제]", ss)
 		} else {
 			print("parseSource 오류 태그 $tag 가 정의되지 않았습니다")
 		}
 	}
 	if( widgetSource ) {
-		Cf.rootNode('@funcInfo').set('pageBase', pageBase)
+		Cf.rootNode('@funcInfo').set('pageBase', base)
 		Cf.sourceApply(widgetSource)
 		Cf.rootNode('@funcInfo').set('pageBase', '')
 	}
