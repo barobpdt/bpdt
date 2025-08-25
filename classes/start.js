@@ -247,7 +247,11 @@ object(code, newCheck) {
 	code.split('.').inject(a,b);
 	return Cf.getObject(a,b,true);
 } 
-
+firstLine(&s) {
+	not(typeof(s,'string')) return "$s";
+	not(s.ch()) return "[NULL]";
+	return s.findPos("\n").trim();
+}
 stripComment(&s, mode) {
 	not(mode) mode=1;
 	rst='';
