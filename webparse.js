@@ -1,3 +1,11 @@
+## 미디파일 목록
+	https://songs.bardmusicplayer.com/ 
+	
+## 미디툴	
+	https://github.com/ldrolez/free-midi-chords/releases
+
+	
+
 // job 호출예
 	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
 	@job.addJob('gunguInfo', node)
