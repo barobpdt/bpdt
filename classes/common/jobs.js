@@ -143,31 +143,62 @@
 @job.webTypeResult(type, data) {
 	if(type=='read') this.appendText('result', data)
 	if(type=='finish') {
-		fc = call("@job.web_${this.resultType}")
+		type=this.jobType not(type) type='test'
+		fc = call("@job.web_${type}")
 		if(typeof(fc,'function')) {
-			target = this.get('@target')
-			call(fc, this, this.ref(result), target)
+			call(fc, this, this.ref(result), target )
 		} else {
-			print("@@ webTypeResult 콜백 함수 미정의 : job.web_${this.resultType}")
+			print("@@ webTypeResult 콜백 함수 미정의 : job.web_${type}")
 		}
-	}		
+	}
 }
 
-@job.webResult(param) {
-	if( typeof(param,'node') ) {
-		args(wo,resultType,url,target)
-	} else {
-		args(resultType, url,target)
-		wo=@job.webObject()
-		not(wo) return;
-	}		
-	not(resultType) resultType='default'
-	not(url) url = wo.url
+@job.addWebJob(jobType, url, target) {
+	wo=@job.webObject()
+	not(wo) return;
+	not(jobType) jobType='test'
+	wo.jobType=jobType
+	hh=wo.get('@header')
+	if( typeof(hh,'node')) {
+		hh.removeAll(true)
+	}
+	if( wo.get('data')) {
+		wo.set('data','')
+	}
+	method='GET'
+	if( target ) {
+		target.inject(@method, @data, @header)
+		if(header) {
+			not(hh) hh=wo.addNode('@header')
+			if(typeof(header,'node')) {
+				hh.copyNode(header)
+			} else {
+				setHeader(header)
+			}
+		}
+		if( data) {
+			wo.set('data', data)
+		}
+		target.set('@webObject', wo)
+	}
 	wo.set('@target', target)
 	wo.set('result','')
-	wo.resultType=resultType
-	wo.call(url)
+	wo.call(url, method)
 	return true;
+	
+	setHeader = func(&s) {
+		while(s.valid()) {
+			line=s.findPos("\n");
+			not(line.ch()) continue;
+			k=line.findPos(':').trim()
+			if(lineCheck(line,';')) {
+				v=line.findPos(';').trim()
+			} else {
+				v=line.trim()
+			}
+			hh.set(k,v)
+		}
+	};
 }
 
 @job.web_default(&s, target) {
@@ -226,7 +257,21 @@
 		return pp;
 	};
 }
-
+/* 웹url 호출후 노트패드에서 열기
+	node=_node()
+	@job.addWebJob('openUrl', 'https://www.tjmedia.com/chart/top100', node)
+*/
+@job.post_openUrl(node) {
+	print("@@ post test", node)
+	node.inject(@saveFileName)
+	cmd().run( _s('notepad "$saveFileName" '))
+} 
+@job.web_openUrl(&s, node) {
+	path=_s('c:/temp/${System.date("yyyyMMdd")}.html')
+	fileWrite(path,s)
+	node.set('@saveFileName', path)
+	@job.addPost('openUrl', node)
+}	
 @job.post_pythonTest(node) {
 	not( isFolder(conf('python.path')) ) {
 		c=cmd()
