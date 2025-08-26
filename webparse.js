@@ -4,7 +4,11 @@
 ## 미디툴	
 	https://github.com/ldrolez/free-midi-chords/releases
 
-	
+## 파이션 노래방 프로그
+	https://github.com/giantdwarf17/KaraokeTube
+
+## 유사도 벡터추출
+	https://wikidocs.net/blog/@TryOncePythonProject/880/
 
 // job 호출예
 	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
