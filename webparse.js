@@ -22,6 +22,9 @@
 	https://42morrow.tistory.com/entry/%EC%9E%90%EC%9E%91-%EB%85%B8%EB%9E%98%EB%B0%A9-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8-%EA%B0%80%EC%82%AC%EB%B3%B4%EB%A9%B0-%EB%85%B8%EB%9E%98-%EB%94%B0%EB%9D%BC-%EB%B6%80%EB%A5%B4%EA%B8%B0
 ## 반주와 음성분리하기
 	https://blog.naver.com/kayoko79/223806280157
+## moviepy 자막
+	https://github.com/Anil-matcha/Free-Video-Tools/blob/main/Hardcode_subtitles_on_video.ipynb
+	https://github.com/unconv/captacity
 	
 // job 호출예
 	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
