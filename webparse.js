@@ -10,6 +10,16 @@
 ## 유사도 벡터추출
 	https://wikidocs.net/blog/@TryOncePythonProject/880/
 
+## 유튜브 콘솔
+	https://console.cloud.google.com/apis/dashboard?project=bpdt-de20b
+	API 키: AIzaSyD8YZkO-B2Mu6SJQnuwqbAvPqNZV7d zmM
+## 유튜브 다운로드
+	https://github.com/yt-dlp/yt-dlp
+## 자작 노래방 
+	https://42morrow.tistory.com/entry/%EC%9E%90%EC%9E%91-%EB%85%B8%EB%9E%98%EB%B0%A9-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8-%EA%B0%80%EC%82%AC%EB%B3%B4%EB%A9%B0-%EB%85%B8%EB%9E%98-%EB%94%B0%EB%9D%BC-%EB%B6%80%EB%A5%B4%EA%B8%B0
+## 반주와 음성분리하기
+	https://blog.naver.com/kayoko79/223806280157
+	
 // job 호출예
 	@job.webResult('sido_info', 'https://new.land.naver.com/api/regions/list?cortarNo=0000000000')
 	@job.addJob('gunguInfo', node)
