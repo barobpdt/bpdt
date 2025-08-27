@@ -6,10 +6,13 @@
 
 ## 파이션 노래방 프로그
 	https://github.com/giantdwarf17/KaraokeTube
+## webRTC를 이용한 실시간 영상 처
+	https://railly-linker.tistory.com/134
 
 ## 유사도 벡터추출
 	https://wikidocs.net/blog/@TryOncePythonProject/880/
-
+## 유튜브 영상 mp3로 저장하기
+	https://expertpro.tistory.com/38#google_vignette	
 ## 유튜브 콘솔
 	https://console.cloud.google.com/apis/dashboard?project=bpdt-de20b
 	API 키: AIzaSyD8YZkO-B2Mu6SJQnuwqbAvPqNZV7d zmM
