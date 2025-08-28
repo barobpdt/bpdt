@@ -35,7 +35,7 @@
 	this.inject(@timerPostList)
 	job = timerPostList.pop() not(job) return;
 	type=job.jobType not(type) type='test'; 
-	fc=call("@job.post_${type}")
+	fc=call("@job.${type}#post")
 	if(typeof(fc,'function') ) {
 		call(fc, this, job)
 	} else {
@@ -47,7 +47,7 @@
 	print("@@ 작업시작 => ", node)
 	not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
 	type = node.jobType not(type) type='test';
-	fc = call("@job.fc_${type}")
+	fc = call("@job.${type}#job")
 	if(typeof(fc,'func')) {
 		call(fc, this, node)
 	} else {
@@ -99,7 +99,7 @@
 	print("@@ job worker start => ", node)
 	not(node) return print("@@ 작업시작오류 (작업노드 미정의)")
 	type = node.jobType not(type) type='test';
-	fc = call("@job.worker_${type}")
+	fc = call("@job.${type}#worker")
 	if(typeof(fc,'func')) {
 		this.set('@workerStartTick', System.tick())
 		call(fc, this, node)
@@ -144,11 +144,11 @@
 	if(type=='read') this.appendText('result', data)
 	if(type=='finish') {
 		type=this.jobType not(type) type='test'
-		fc = call("@job.web_${type}")
+		fc = call("@job.${type}#web")
 		if(typeof(fc,'function')) {
 			call(fc, this, this.ref(result), target )
 		} else {
-			print("@@ webTypeResult 콜백 함수 미정의 : job.web_${type}")
+			print("@@ webTypeResult 콜백 함수 미정의 : job.${type}#web")
 		}
 	}
 }
@@ -215,10 +215,10 @@
 /* ## 테스트 작업추가
 	@job.addJob(node) 
 */
-@job.fc_test(node) {
+@job.test#job(node) {
 	@job.addWorker(node)
 }
-@job.worker_test(node) {
+@job.test#worker(node) {
 	print("test worker start node=>", node)
 } 
 /* ## 파이션 eval 처리 실행
@@ -261,22 +261,55 @@
 	node=_node()
 	@job.addWebJob('openUrl', 'https://www.tjmedia.com/chart/top100', node)
 */
-@job.post_openUrl(node) {
+@job.openUrl#post(node) {
 	print("@@ post test", node)
 	node.inject(@saveFileName)
 	cmd().run( _s('notepad "$saveFileName" '))
 } 
-@job.web_openUrl(&s, node) {
+@job.openUrl#web(&s, node) {
 	path=_s('c:/temp/${System.date("yyyyMMdd")}.html')
 	fileWrite(path,s)
 	node.set('@saveFileName', path)
 	@job.addPost('openUrl', node)
 }	
-@job.post_pythonTest(node) {
+@job.pythonTest#post(node) {
 	not( isFolder(conf('python.path')) ) {
 		c=cmd()
 		c.cmdAdd('c:')
 		c.cmdNode(node, 'cd %userprofile%', @job.setPythonPath)	
+	}
+}
+/*
+month='01'
+days=System.date(System.localtime("2025-$month-01"),'daysInMonth')
+data = _s('chartType=TOP&searchStartDate=2025-$month-01&searchEndDate=2025-$month-$days&strType=')
+node.set('work_month', month)
+node.set('@method','POST')
+node.set('@data', data)
+@job.addWebJob('apiCall_tjTop1000', 'https://www.tjmedia.com/legacy/api/topAndHot100', node)
+*/
+@job.apiCall_tjTop1000#web(&s, node) {
+	node.inject(apiName, work_month)
+	cur=node.addNode('@current').removeAll(true)
+	cur.parseJson(s)
+	items = cur.resultData.items
+	row=items.get(0)
+	keys=row.keys()
+	tm=System.localtime()
+	db=Baro.db('tj')
+	db.open('tj_info.db')
+	not(db.open()) db.exec('create table top100 (work_month, tm, indexTitle, indexSong, word, mv_yn, imgthumb_path, rank, pro, com, icongubun)')
+	sql = #[
+		insert into top100 (
+			work_month, tm,
+			indexTitle, indexSong, word, mv_yn, imgthumb_path, rank, pro, com, icongubun
+		) values(
+			${work_month}, ${tm},
+			#{indexTitle}, #{indexSong}, #{word}, #{mv_yn}, #{imgthumb_path}, #{rank}, #{pro}, #{com}, #{icongubun}
+		)
+	]
+	while(row, items) {
+		db.exec(sql, row)
 	}
 }
 
