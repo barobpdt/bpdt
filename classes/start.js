@@ -102,20 +102,38 @@ _varValue(k, fn) {
 	else v="[$k 미정의]"
 	return v;
 }
-_getVarValue(&s,fn) {
-	isVar = func(s) {
-		c=s.next().ch() not(c) return true;
-		while(c.eq('.')) c=s.next().ch()
-		return when(c,false,true);
-	};
-	c=s.ch() not(c) return; 
+_userVal(&s) {
+	c=s.ch() not(c) return ' ';
 	if(c.eq('@')) {
 		k=s.incr().trim()
 		v=conf(k) not(v) v="[conf $k 미정의]";
 		return v;
 	}
+	if(c.eq('#')) {
+		ss=''
+		k=s.incr().trim()
+		v=_varValue(k,fn)
+		v.ref()
+		while(v.valid()) {
+			k=v.findPos(',').trim()
+			not(k) break;
+			if(ss) ss.add(', ')
+			ss.add("#{$k}")
+		}
+		return ss;
+	}
+	return;
+}
+_getVarValue(&s,fn) {
 	not(fn) fn=Cf.funcNode('parent')
-	not( isVar(s) ) return eval(s);
+	isVar = func(s) {
+		c=s.next().ch() not(c) return true;
+		while(c.eq('.')) c=s.next().ch()
+		return when(c,false,true);
+	};
+	not(isVar(s)) return eval(s, fn);
+	v=_userVal(s,fn) if(_valid(v)) return v;
+	c=s.ch()
 	if(c.eq(':')) {
 		k='int'
 	} else {

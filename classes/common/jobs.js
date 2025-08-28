@@ -146,6 +146,7 @@
 		type=this.jobType not(type) type='test'
 		fc = call("@job.${type}#web")
 		if(typeof(fc,'function')) {
+			target=this.get('@target')
 			call(fc, this, this.ref(result), target )
 		} else {
 			print("@@ webTypeResult 콜백 함수 미정의 : job.${type}#web")
@@ -260,6 +261,42 @@
 /* 웹url 호출후 노트패드에서 열기
 	node=_node()
 	@job.addWebJob('openUrl', 'https://www.tjmedia.com/chart/top100', node)
+## 유튜브 노래조회
+node=_node('test')
+db=Baro.db('media_info') not(db.open()) {
+	dbFile = _s('${@classes.path}/data/tj_info.db')
+	db.open(dbFile)
+}
+not(db.count("select count(1) from sqlite_master where name='music_info' ")) {
+	sql = _s('create music_info (${node.fields}) values(${#node.fields})')
+	db.exec(sql)
+}
+node.name = '185815'
+node.url = 'https://www.lyrics.co.kr/main/youtube_list_do'
+node.fields = 'description,thumbnails_default,thumbnails_high, thumbnails_medium, title, yid, tm'
+node.data = 'search_word=(+) 이문세 - 그대와 영원히&p=185815'
+node.set('@method','POST')
+node.set('@data',  data)
+not(node.parseResult) node[
+	parseResult(&s, node) {
+		db=sqlite('media_info')
+		not(db.isTable(
+		ss=s.decode('unicode')
+		cur = node.addNode('musicInfo')
+		cur.parseJson(ss)
+		search = cur.data.search_list
+		if(search) {
+			tm = System.localtime()
+			sql = _s('insert into music_info (${node.fields}) values (${#node.fields})')
+			while(row, search ) {
+				row.with(tm)
+				db.exec(sql, row)
+			}
+		}
+	}
+]
+@job.addWebJob('openUrl',node.url, node)	
+	
 */
 @job.openUrl#post(node) {
 	print("@@ post test", node)
