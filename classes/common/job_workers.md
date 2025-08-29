@@ -1,5 +1,4 @@
-## 노래방책 조회
-'''javascript
+## 노래방책 조회 
 node=_node('sample')
 node.url='https://kysing.kr/karaoke-book/'
 node.name='kybook01'
@@ -44,11 +43,9 @@ not(node.parseResult) node[
 	}	
 ]
 print("@@ [web job start]")
-@job.addWebJob('openUrl', node.url, node)
-'''
+@job.addWebJob('openUrl', node.url, node) 
 
 ## 태진 top100 조회
-'''javascript
 while(y=0,9) {
 	year="201$y"
 	root = _node('top100').removeAll(true)
@@ -89,9 +86,8 @@ while(y=0,9) {
 		db.exec(sql, row)
 	}
 }
-'''
+
 ## 유튜브 가요정보 조회 
-'''javascript
 node=_node('test')
 db=Baro.db('media_info') not(db.open()) {
 	dbFile = _s('${@classes.path}/data/tj_info.db')
@@ -126,5 +122,3 @@ not(node.parseResult) node[
 	}
 ]
 @job.addWebJob('openUrl',node.url, node)	
-'''
-
