@@ -3,9 +3,11 @@
 node=_node('sample')
 node.url='https://kysing.kr/karaoke-book/'
 node.name='kybook01'
+node.db=Baro.db('tj')
 not(node.parseResult) node[
 	parseResult(&s) {
 		node=this;
+		node.inject(db,name)
 		print("@@ parse result start ",  s.size())
 		s.findPos('<div class="index_daily_search_wrap',0,1)
 		not(s.ch()) {
@@ -21,6 +23,7 @@ not(node.parseResult) node[
 			not(node.baseUrl ) node.baseUrl = node.url
 			node.url = _s('${node.baseUrl}${href}')
 			print("@@ next xxxxx ${node.url} xxxx")
+			if(node.uirl) @job.addWebJob('openUrl', node.url, node)
 		}
 		parse = func(&s) {
 			while(s.valid(), n) {
@@ -72,9 +75,11 @@ while(y=0,9) {
 	row=items.get(0)
 	keys=row.keys()
 	tm=System.localtime()
-	db=Baro.db('tj')
-	db.open('tj_info.db')
-	not(db.open()) db.exec('create table top100 (work_month, tm, indexTitle, indexSong, word, mv_yn, imgthumb_path, rank, pro, com, icongubun)')
+	db=Baro.db('tj')	
+	not(db.open()) {
+		db.open('tj_info.db')
+		db.exec('create table top100 (work_month, tm, indexTitle, indexSong, word, mv_yn, imgthumb_path, rank, pro, com, icongubun)')
+	}
 	sql = #[
 		insert into top100 (
 			work_month, tm,
