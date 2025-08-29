@@ -1,3 +1,42 @@
+## 노래목록 저장
+```javascript
+node=_node('test1')
+node.set('page', '1')
+node.urlTemplate='https://www.lyrics.co.kr/?&paged=${node.page}#gsc.tab=0'
+node.name='test1'
+not(node.parseResult) node[
+	parseResult(&s, node) {
+		not(node) node=this;
+		db=Baro.db('tj')
+		cnt=0
+		fields = 'key, title, date, summary'
+		tm=System.localtime()
+		while(s.valid(), n) {
+			s.findPos('<div class="single-post-area style-2">') not(s.ch()) break;
+			s.findPos('<div class="post-content mt-0">',0,1) not(s.ch()) break;
+			ss=s.match('<div','</div>') if(typeof(ss,'bool')) break;
+			ss.findPos('?p=') not(s.ch()) break;
+			key=ss.move()
+			ss.findPos('>')
+			title=ss.findPos('</a>').trim()
+			ss.findPos('class="post-date">')
+			date=ss.findPos('</a>').trim()
+			ss.findPos('<a') not(s.ch()) break;
+			summary = ss.findPos('</a>').trim()
+			print("xxxxx[$n]xxxxxx", key, title, date, summary)
+			cnt++;
+		}
+		if(cnt) {
+			print("xxxxxxx", cnt, node)
+			node.incrNum('page')
+			@job.addWebJob('openUrl',_s(node.urlTemplate), node)
+		}
+	}
+]
+print("@@ [ web job start ]")
+@job.addWebJob('openUrl',_s(node.urlTemplate), node)
+```
+
 ## 노래방책 조회 
 ```javascript
 node=_node('sample')
