@@ -32,7 +32,10 @@
 	System.globalTimer(250)
 }
 @job.timerProc() {
-	this.inject(@timerPostList)
+	this.inject(@timerPostList,@timerProc)
+	if( typeof(timerProc,'func')) {
+		if(timerProc()) return;
+	}
 	job = timerPostList.pop() not(job) return;
 	type=job.jobType not(type) type='test'; 
 	fc=call("@job.${type}#post")
@@ -109,40 +112,158 @@
 	}
 }
 
+@job.cmdObject(resultFunc) {
+	map=object('baro.objectMap')
+	arr = map.get('@cmdObjects')
+	cnt = 0 if( typeof(arr,'array') ) cnt=arr.size()
+	addCmd = func(n) {
+		cur = arr.add(Baro.process("cmdObject_$n"))
+		cur.set('@firstCall', true)
+		cmdList = cur.addArray('cmdList').reuse()
+		cmdList.add('chcp 65001');
+		_event(cur, '@callback', @job.cmdProc)
+		cur.run('cmd', 0x801)
+		return cur;
+	};
+	not(cnt) {
+		arr=map.addArray('@cmdObjects')
+		while(n=1,8) addCmd(n)
+	}
+	obj=null
+	while(cur, arr) {
+		not(cur.run()) {
+			cur.run('cmd', 0x801)
+			continue;
+		}
+		if(cur.cmp('@mode', 'presist')) continue;
+		if(cur.cmp('@status','start')) continue;
+		tick=cur.get('@endTick')
+		if(tick) {
+			dist=System.tick() - tick;
+			if( dist < 500 ) {
+				continue;
+			}
+		}
+		obj = cur;
+		break;
+	}
+	not( obj ) {
+		obj = addCmd(arr.size()+1)
+	}
+	if( typeof(resultFunc,'func')) {
+		obj.set('@callbackResult', resultFunc)
+	}
+	print("@@ cmdObject ok => ", obj.id)
+	return obj;
+}
+
+@job.cmdRun(param) {
+	if(_tagCheck(param,'process')) {
+		args(cmd,command,callback)
+		if(typeof(callback,'func')) {
+			cmd.set('@callbackResult', callback)
+		}
+	} else {
+		args(command, callback)
+		cmd=@job.cmdObject(callback)
+	}
+	not(_tagCheck(cmd,'process')) return print("@@ cmdRun 오류 $cmd 객체오류");
+	isRun = cmd.run()
+	if( isRun) {
+		cmd.cmdList.add(command)
+		@job.cmdNext(cmd)
+	} else {
+		not(cmd.cmdList.size()) {
+			cmd.cmdList.add('chcp 65001')
+		}
+		cmd.cmdList.add(command)
+		cmd.run('cmd', 0x801)
+	}
+	print("@@ job.cmdRun COMMAND:$command")
+	return cmd;
+}
+@job.cmdNext(cmd) {
+	not(cmd.cmdList) return print("cmd 프로세스 실행배열 미설정");
+	command=cmd.cmdList.pop()
+	if(command) {
+		cmd.set('cmdResult', '')
+		cmd.set('@status', 'start')
+		cmd.write(command)
+	} else {
+		cmd.set('@status', 'stay')
+	}
+}
+@job.cmdStop(cmd) {
+	cmd.cmdList.reuse()
+	cmd.set('@status', 'stop')
+	cmd.set('@firstCall', true)
+	not(cmd.run()) {
+		print("@@ ${cmd.id}가 이미 중지된 상태입니다")
+	}
+	cmd.stop()
+}
+@job.cmdProc(type,data) {
+	if(type=='read') {
+		this.appendText('cmdResult', data);
+		c=data.ch(-1,true);
+		if(c=='>') {
+			if( this.get('@firstCall') ) {
+				this.set('@firstCall', false)
+			} else {
+				cb=this.get('@callbackResult')
+				print("@@ cmd result callbackResult:$cb")
+				if(typeof(cb,'func')) {
+					call(cb, this, this.ref(cmdResult))
+				} else {
+					print(">> cmd proc 결과:", this.cmdResult )
+				}
+			}
+			@job.cmdNext(this)
+		}
+	}
+}
 @job.webObject() {
-	ws=object('baro.webObjectMap')
-	arr = ws.get('@webObjects')
+	map=object('baro.objectMap')
+	arr = map.get('@webObjects')
 	cnt = 0
 	if( typeof(arr,'array') ) cnt=arr.size()
-	print("@@ web object size: ", cnt)
 	not(cnt) {			
-		arr=ws.addArray('@webObjects')
-		while(n=1,5) {
+		arr=map.addArray('@webObjects')
+		while(n=1,8) {
 			cur = arr.add(Baro.web("webObject_$n"))
-			@job.event(cur, '@callback', @job.webTypeResult)
+			_event(cur, '@callback', @job.webTypeResult)
 		}
 	}
 	obj=null
 	while(cur, arr) {
 		if(cur.is('run')) continue;
+		tick=cur.get('@endTick')
+		if(tick) {
+			dist=System.tick() - tick;
+			if( dist < 1000 ) {
+				continue;
+			}
+		}
 		obj = cur;
+		break;
 	}
 	not( obj ) {
 		idx = arr.size()+1;
 		if( idx > conf('job.webMaxNum') ) {
 			return null;
 		}
-		cur = arr.add(Baro.web("webObject_$idx"))
-		@job.event(cur, '@callback', @job.webTypeResult)
-		obj = cur
+		obj = arr.add(Baro.web("webObject_$idx"))
+		print("@@ new web object size: ", obj)
+		_event(obj, '@callback', @job.webTypeResult)
 	}
-	print("obj==>$obj")
+	print("@@ webObject ok => ", obj.id)
 	return obj;
 }
 
 @job.webTypeResult(type, data) {
 	if(type=='read') this.appendText('result', data)
 	if(type=='finish') {
+		this.set('@endTick',System.tick())
 		type=this.jobType not(type) type='test'
 		fc = call("@job.${type}#web")
 		if(typeof(fc,'function')) {
@@ -151,6 +272,9 @@
 		} else {
 			print("@@ webTypeResult 콜백 함수 미정의 : job.${type}#web")
 		}
+	}
+	if(type=='error') {
+		this.set('@error', data)
 	}
 }
 
@@ -189,28 +313,13 @@
 	
 	setHeader = func(&s) {
 		while(s.valid()) {
-			line=s.findPos("\n");
-			not(line.ch()) continue;
-			k=line.findPos(':').trim()
-			if(lineCheck(line,';')) {
-				v=line.findPos(';').trim()
-			} else {
-				v=line.trim()
-			}
+			line=s.findPos("\n") not(line.ch()) continue;
+			k=line.trim()
+			v=s.findPos("\n").trim()
 			hh.set(k,v)
 		}
+		print("@@ set http header => ", hh)
 	};
-}
-
-@job.web_default(&s, target) {
-	print("## web result ==> $s")
-}
-@job.web_sido_info(s, target) {
-	node=object('naver.sidoInfo')
-	node.parseJson(s)
-	while(cur,node.regionList) { 
-		@job.addJob('gungoInfo', cur)
-	}
 }
 
 /* ## 테스트 작업추가
@@ -257,58 +366,35 @@
 		});
 		return pp;
 	};
-}
-/* 웹url 호출후 노트패드에서 열기
-	node=_node()
-	@job.addWebJob('openUrl', 'https://www.tjmedia.com/chart/top100', node)
-## 유튜브 노래조회
-node=_node('test')
-db=Baro.db('media_info') not(db.open()) {
-	dbFile = _s('${@classes.path}/data/tj_info.db')
-	db.open(dbFile)
-}
-not(db.count("select count(1) from sqlite_master where name='music_info' ")) {
-	sql = _s('create music_info (${node.fields}) values(${#node.fields})')
-	db.exec(sql)
-}
-node.name = '185815'
-node.url = 'https://www.lyrics.co.kr/main/youtube_list_do'
-node.fields = 'description,thumbnails_default,thumbnails_high, thumbnails_medium, title, yid, tm'
-node.data = 'search_word=(+) 이문세 - 그대와 영원히&p=185815'
-node.set('@method','POST')
-node.set('@data',  data)
-not(node.parseResult) node[
-	parseResult(&s, node) {
-		db=sqlite('media_info')
-		not(db.isTable(
-		ss=s.decode('unicode')
-		cur = node.addNode('musicInfo')
-		cur.parseJson(ss)
-		search = cur.data.search_list
-		if(search) {
-			tm = System.localtime()
-			sql = _s('insert into music_info (${node.fields}) values (${#node.fields})')
-			while(row, search ) {
-				row.with(tm)
-				db.exec(sql, row)
-			}
-		}
-	}
-]
-@job.addWebJob('openUrl',node.url, node)	
-	
-*/
-@job.openUrl#post(node) {
-	print("@@ post test", node)
-	node.inject(@saveFileName)
-	cmd().run( _s('notepad "$saveFileName" '))
 } 
+
 @job.openUrl#web(&s, node) {
-	path=_s('c:/temp/${System.date("yyyyMMdd")}.html')
+	not(s.size()) {
+		print("@@ openUrl 응답결과가 없습니다", node, this)
+		return;
+	}
+	
+	not(node) node=_node()
+	if( node.parseResult ) {
+		return node.parseResult(s);
+	}
+	name=node.name not(name) name=System.date("yyyyMMdd");
+	path=_s('c:/temp/${name}.html')
 	fileWrite(path,s)
 	node.set('@saveFileName', path)
 	@job.addPost('openUrl', node)
-}	
+}
+@job.openUrl#post(node) {
+	if( node.nextUrl ) {
+		@job.addWebJob('openUrl', node.nextUrl, node)
+	} else {
+		print("@@ post test", node)
+		fileName = node.get('@saveFileName')
+		program=conf('job.sourceEditor') not(program) program='code'
+		cmd().run( _s('$program "$fileName" '))
+	}
+}
+
 @job.pythonTest#post(node) {
 	not( isFolder(conf('python.path')) ) {
 		c=cmd()
@@ -350,97 +436,107 @@ node.set('@data', data)
 	}
 }
 
-/* 
-page test 
-ghp_ h3x1xuT3vc22T9RuocAPFUsg3yaHvj1 soqT4
-*/
-@baro.main() {
-	p = _page('app:main', V[
-		<page margin="0">
-			<div id="container">
-		</page>
-		init() {
-			@container= this.get('container')
-			this.size(800,600)
-			this.open()
-		}
-		addStack(page) {
-			container.addPage(page, true)
-		}
-	])
-	p.addStack( @baro.pageChatbot() )
-	return p;
+_tagCheck(obj, type) {
+	if(obj.cmp('tag',type)) return true;
+	tag=obj.get('@tag')
+	chk = tag && tag.start(type)
+	return chk;
+	
 }
-@baro.pageChatbot() {
-	p =_page('app:chatbot', V[
-		<page>
-			<canvas id="c">
-			<hbox>
-				<button id="ok" text="ok">
-				<space>
-			</hbox>
-		</page>
-		
-		init() {
-			@cmd = cmd('python')
-			@in = logWriter('webvew-in')
-			@out = logReader('webview-out')
-			@python = _s('${@python.path}/python')
-			@srcPath = _s('${@sample.path}/apps')
-			@canvas = this.get('c')
-			@btnOk = this.get('ok')
-			print("## init line==>",python,srcPath)	
-			this.setPage()
-			this.setPageEvent()
-			this.setWebview()
-			this.timer(50)
+_dbFetch(db, sql, node, filter) {
+	type=typeof(db) not(type.eq('node(db)')) return print("@@ _dbFetch 데이터베이스 객체오류 SQL:$sql");
+	not(node) node=_node()
+	not(filter) filter=''
+	if(filter) {
+		fn=Cf.funcNode()
+		query=_s(sql,fn)
+	} else {
+		query=sql
+	}
+	return db.fetchAll(query,node,true);
+}
+_dbFetchStr(db, sql, node, filter) {
+	root=_dbFetch(db,sql,node,filter)
+	fa=root.get('@fields')
+	ss=''
+	while(c,fa,n) {
+		if(n)ss.add(',')
+		ss.add(c)
+	}
+	while(cur, root) {
+		ss.add("\n")
+		while(c,fa,n) {
+			if(n)ss.add("\t")
+			ss.add(cur.get(c))
 		}
-		onTimer() {
-			log = out.timeout()
-			if( log ) {
-				print("@@ timer log == $log")
-				this.parseWebLog(log)
-			}
+	}
+	return ss;
+}
+_dbExec(db,sql,node) {
+	type=typeof(db) not(type.eq('node(db)')) return print("@@ _dbExec 데이터베이스 객체오류 SQL:$sql");
+	db.exec(sql,node)
+	if(db.error()) return;
+	return true;
+}
+
+@python.parsePythonResult(&s) {
+	print('python parse result >>', result, this)
+}
+@python.execTimeout() {
+	result=logReader('runcmd-out').timeout()
+	if(result) {
+		map=object('baro.objectMap')
+		cmd = map.get('@cmdExec')
+		if(cmd) {
+			fc = cmd.get('@parsePythonResult')
+			not(typeof(fc,'func')) fc=@python.parsePythonResult
+			call(fc, cmd, result)
+		} else {
+			print('python result>>', result)
 		}
-		onResize() {
-			canvas.geo().inject(x,y,w,h)
-			line = _s('##> geo:$:x,$:y,$:w,$:h,0')
-			print("xx resize xx", line, x, y)
-			in.append(line)
+		return true;
+	}
+	return;
+}
+@python.cmdExec() {
+	map=object('baro.objectMap')
+	cmd = map.get('@cmdExec')
+	if( cmd ) {
+		if(line) {
+			@job.cmdRun(line)
 		}
-		onClose() {
-			this.killTimer()
-			in.append('##> quit:')
+	} else {
+		root = Cf.rootNode()
+		fc = root.get('@timerProc') not(fc) root.set('@timerProc', @python.execTimeout )
+		log=logWriter('runcmd-in')
+		out=logReader('runcmd-out')
+		python=_s('${@python.path}/python') not(isFile(python)) return print("python 설치파일 찾기오류 경로:$python");
+		srcPath = _s('${@sample.path}/apps') not(isFolder(srcPath)) return print("python 소스경로 오류=");
+		line = _s('$python "$srcPath/run_cmd.py" --log "${log.logFileName}" --out "${out.logFileName}"')
+		cmd = @job.cmdRun(line, @python.result )
+		cmd.set('@type','cmdExec')
+		cmd.set('@mode','persist')
+		cmd.set('@detail', '파이션 콘솔 소스실행')
+		map.set('@cmdExec', cmd)
+	}
+	return cmd;
+}
+@python.cmdPip(line) {
+	map=object('baro.objectMap')
+	cmd = map.get('@cmdPip')
+	if( cmd ) {
+		if(line) {
+			@job.cmdRun(line)
 		}
-		setPage() {
-			box=this.child(0)
-			box.margin(0)
-			hbox=box.child(1)
-			hbox.margin(4,2,2,2)
-		}
-		setPageEvent() {
-			_event(canvas,'onDraw', this.drawCanvas, this)
-			_event(btnOk, 'onClick', this.clickBtnOk, this)
-		}
-		setWebview() {
-			line=_s('$python "$srcPath/webpage.py" --log "${in.logFileName}" --out "${out.logFileName}"')
-			cmd.cmdAdd(this, line, this.webviewStarted )
-		}
-		drawCanvas(dc,rc) {
-			dc.fill('#344')
-		}
-		clickBtnOk() {
-			alert('clickBtnOk')
-		}
-		webviewStarted(&s) {
-			print("@@ web view start => $s")
-		}
-		parseWebLog(&s) {
-			if(s.find('##> start:')) {
-				winId = canvas.winId()
-				in.append("##>setParent:${winId}")
-			}
-		}
-	])
-	return p;
+	} else {
+		cmd = @job.cmdRun(line, @python.result )
+		cmd.set('@type','cmdPip')
+		cmd.set('@mode','persist')
+		cmd.set('@detail', '파이션 설치용 커멘드')
+		map.set('@cmdPip', cmd)
+	}
+	return cmd;
+}
+@python.result(s) {
+	print("@@ python result :$s")
 }

@@ -89,10 +89,12 @@ _valid(v) {
 	chk = typeof(v,'num') || v;
 	return chk;
 }
-_varValue(k, fn) {
-	not(fn) fn=Cf.funcNode('parent')
-	if(fn.isset(k)) return fn.get(k);
-	node=fn.get('@this')
+_varValue(k, fn, node) {
+	if(node && node.isVar(k)) return node.get(k);
+	not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
+	not(node) {
+		node=fn.get('@this')
+	}
 	if(typeof(node,'node')) {
 		fn=Cf.funcNode(node)
 		if(fn && fn.isset(k)) return fn.get(k);
@@ -112,7 +114,7 @@ _userVal(&s) {
 	if(c.eq('#')) {
 		ss=''
 		k=s.incr().trim()
-		v=_varValue(k,fn)
+		v=_getVarValue(k,fn)
 		v.ref()
 		while(v.valid()) {
 			k=v.findPos(',').trim()
@@ -124,7 +126,7 @@ _userVal(&s) {
 	}
 	return;
 }
-_getVarValue(&s,fn) {
+_getVarValue(&s,fn,node) {
 	not(fn) fn=Cf.funcNode('parent')
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
@@ -143,7 +145,7 @@ _getVarValue(&s,fn) {
 	if(c.eq(':')) {
 		type=k
 		k=s.incr().move()
-		v=_varValue(k,fn)
+		v=_varValue(k,fn,node)
 		if(type.eq('int')) {
 			if(typeof(v,'num')) {
 				v=v.toInt()
@@ -151,13 +153,10 @@ _getVarValue(&s,fn) {
 				v=0
 			}
 		}
-	} else {
-		v=_varValue(k,fn)
+		return v;
 	}
-		
-	ss=_varValue(k, fn)
-	c=s.ch()
-	not(c) return ss;
+	ss=_varValue(k, fn, node)
+	c=s.ch() not(c) return ss;
 	while(c.eq('.')) {
 		not(typeof(ss,'node')) return '';
 		k=s.incr().move()
@@ -171,8 +170,14 @@ _getVarValue(&s,fn) {
 	}
 	return ss;
 }
-_s(&s, fn) {
-	not(fn) fn=Cf.funcNode('parent')
+_s(&s, fn, node) {
+	if(typeof(fn,'node')) {
+		node=fn
+		fn=null
+	} 
+	not(fn) {
+		fn=Cf.funcNode('parent')
+	}
 	ss=''
 	while(s.valid()) {
 		left = s.findPos('$')
@@ -181,7 +186,7 @@ _s(&s, fn) {
 		if(c.eq('{')) {
 			src=s.match(1)
 			if(typeof(src,'bool')) break;
-			ss.add(_getVarValue(src,fn))
+			ss.add(_getVarValue(src,fn,node))
 			continue;
 		}
 		if(c.eq(':')) {
@@ -193,7 +198,7 @@ _s(&s, fn) {
 		if(c.eq(':')) {
 			type=k
 			k=s.incr().move()
-			v=_varValue(k,fn)
+			v=_varValue(k,fn,node)
 			if(type.eq('int')) {
 				if(typeof(v,'num')) {
 					v=v.toInt()
@@ -202,7 +207,7 @@ _s(&s, fn) {
 				}
 			}
 		} else {
-			v=_varValue(k,fn)
+			v=_varValue(k,fn,node)
 		}
 		if(_valid(v)) ss.add(v)
 	}

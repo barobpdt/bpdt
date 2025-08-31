@@ -81,8 +81,10 @@
 		if( status.eq('start')) {
 			return this.cmdAdd(cmd)
 		}
-		if( status.eq('stop')) {
-			this.cmdAdd('chcp 65001')
+		if( status.eq('first','stop')) {
+			not(cmdList.size()) {
+				this.cmdAdd('chcp 65001')
+			}
 			this.cmdAdd(cmd)
 			this.start()
 			return true;
@@ -123,7 +125,7 @@
 			this.appendText('cmdResult', data);
 			c=data.ch(-1,true);
 			if(c=='>') {
-				if(status.eq('first')) {
+				if(status.eq('first','stop')) {
 					print("@@ ${program} ${status} 실행")
 				} else {
 					this.parseResult()
@@ -134,6 +136,11 @@
 		}
 	}
 	cmdAdd(cmd, run) {
+		if(status.eq('first','stop')) {
+			not(cmdList.size()) {
+				this.cmdAdd('chcp 65001')
+			}
+		}
 		cmdList.add(cmd)
 		if(run) this.run()
 	}
