@@ -1,0 +1,109 @@
+<html>
+<head>
+	<title>WebRTC Video Chat</title>
+	<style>
+		video {
+			width: 48%;
+			height: auto;
+			border: 1px solid black;
+			margin: 5px;
+		}
+	</style>
+</head>
+<body>
+	<h1>WebRTC Video Chat</h1>
+	<input type="text" id="roomInput" placeholder="Enter Room ID">
+	<button onclick="joinRoom()">Join Room</button>
+	<br>
+	<video id="localVideo" autoplay muted playsinline></video>
+	<video id="remoteVideo" autoplay playsinline></video>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+	<script>
+		const socket = io.connect('http://192.168.219.108:8090', { 
+			// ws:// 를 안쓰고 http를 쓴다
+			path: '/socket.io', // 서버 path와 일치시켜준다
+			transports: ['websocket']
+		});
+		 
+		socket.on('joined_room', async (data) => {
+			console.log('Joined room:', data.room);
+			if (data.sid !== socket.id) { // If another user joined the room
+				await createPeerConnection(data.sid);
+				await createOffer();
+			}
+		});
+		socket.on('offer', async (data) => {
+			await createPeerConnection(data.offer.sdp.split('a=candidate')[0]); // Extract remote SID from offer (simplified)
+			await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+			const answer = await peerConnection.createAnswer();
+			await peerConnection.setLocalDescription(answer);
+			socket.emit('answer', { room: currentRoom, answer: answer, target_sid: data.offer.sdp.split('a=candidate')[0] }); // Send answer to specific peer
+		});
+
+		socket.on('answer', async (data) => {
+			await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+		});
+
+		socket.on('ice_candidate', async (data) => {
+			await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+		});
+
+		const localVideo = document.getElementById('localVideo');
+		const remoteVideo = document.getElementById('remoteVideo');
+		const roomInput = document.getElementById('roomInput');
+		let localStream;
+		let peerConnection;
+		let currentRoom;
+
+		const configuration = {
+			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+		};
+		async function joinRoom() {
+			currentRoom = roomInput.value;
+			if (!currentRoom) {
+				alert('Please enter a room ID.');
+				return;
+			}
+			try {
+				console.log('@@ joinRoom(), currentRoom:', currentRoom, navigator.mediaDevices);
+				localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+				localVideo.srcObject = localStream;
+				socket.emit('join_room', { room:currentRoom, sid:socket.id });
+			} catch (error) {
+				console.error('Error accessing media devices:', error);
+			}
+		} 
+		async function createPeerConnection(remoteSocketId) {
+			peerConnection = new RTCPeerConnection(configuration);
+			localStream.getTracks().forEach(track => {
+				peerConnection.addTrack(track, localStream);
+			});
+			peerConnection.ontrack = (event) => {
+				remoteVideo.srcObject = event.streams[0];
+			};
+			peerConnection.onicecandidate = (event) => {
+				if (event.candidate) {
+					socket.emit('ice_candidate', {
+						room: currentRoom,
+						candidate: event.candidate,
+						target_sid: remoteSocketId // Send candidate to specific peer
+					});
+				}
+			};
+		}
+
+		async function createOffer() {
+			const offer = await peerConnection.createOffer();
+			await peerConnection.setLocalDescription(offer);
+			socket.emit('offer', { room: currentRoom, offer: offer, target_sid: getOtherPeerId() });
+		}
+		
+		function getOtherPeerId() {
+			// In a simple two-person chat, you'd need a way to know the other peer's ID.
+			// This is a placeholder for a more robust signaling mechanism.
+			// For example, the server could send the other peer's ID in 'joined_room'.
+			return null; // This needs to be implemented to target the correct peer
+		}
+	</script>
+</body>
+</html>

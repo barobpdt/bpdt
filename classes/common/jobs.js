@@ -4,9 +4,10 @@
 	not(jobs.is('start')) {			
 		jobs.start(@job.proc)
 	}
+	@job.timer()
 	return jobs;
 }
-@job.event(obj, eventName, fc, target) { return _event(obj, eventName, fc, target) }
+
 @job.addPost(param) {
 	not(System.globalTimer()) @job.timer();
 	global=Cf.rootNode() 
@@ -28,7 +29,7 @@
 	}
 	global=Cf.rootNode()
 	global.addArray('@timerPostList') 
-	@job.event(global,'onTimeout', @job.timerProc)
+	_event(global,'onTimeout', @job.timerProc)
 	System.globalTimer(250)
 }
 @job.timerProc() {
@@ -37,14 +38,33 @@
 		if(timerProc()) return;
 	}
 	job = timerPostList.pop() not(job) return;
-	type=job.jobType not(type) type='test'; 
-	fc=call("@job.${type}#post")
-	if(typeof(fc,'function') ) {
-		call(fc, this, job)
-	} else {
-		print("@@ timer job function not defined node==>$job")
+	if(typeof(job,'func')) {
+		
+	} else if(typeof(job,'node')) {
+		if(job.cmp('tag','precess') ) {
+			if( job.nextCommand ) {
+				command = job.nextCommand
+				job.nextCommand=null
+				job.write(command)
+			}
+			return;
+		}
+		if(job.cmp('tag','web') ) {
+			if( job.nextUrl ) {
+				url = job.nextUrl
+				job.nextUrl = null;
+				job.call(url)
+			}
+		}
+		type=job.jobType not(type) type='test'; 
+		fc=call("@job.${type}#post")
+		if(typeof(fc,'function') ) {
+			call(fc, this, job)
+		} else {
+			print("@@ timer job function not defined node==>$job")
+		}
 	}
-} 
+}
 
 @job.proc(node) {
 	print("@@ 작업시작 => ", node)
@@ -57,6 +77,7 @@
 		return print("@@ 작업 처리 함수 오류(node:$node)")
 	}
 }
+
 @job.addJob(param) {
 	if(typeof(param,'node')) {
 		args(node)
@@ -120,9 +141,7 @@
 		cur = arr.add(Baro.process("cmdObject_$n"))
 		cur.set('@firstCall', true)
 		cmdList = cur.addArray('cmdList').reuse()
-		cmdList.add('chcp 65001');
 		_event(cur, '@callback', @job.cmdProc)
-		cur.run('cmd', 0x801)
 		return cur;
 	};
 	not(cnt) {
@@ -131,10 +150,6 @@
 	}
 	obj=null
 	while(cur, arr) {
-		not(cur.run()) {
-			cur.run('cmd', 0x801)
-			continue;
-		}
 		if(cur.cmp('@mode', 'presist')) continue;
 		if(cur.cmp('@status','start')) continue;
 		tick=cur.get('@endTick')
@@ -168,37 +183,38 @@
 		cmd=@job.cmdObject(callback)
 	}
 	not(_tagCheck(cmd,'process')) return print("@@ cmdRun 오류 $cmd 객체오류");
-	isRun = cmd.run()
-	if( isRun) {
-		cmd.cmdList.add(command)
-		@job.cmdNext(cmd)
-	} else {
-		not(cmd.cmdList.size()) {
-			cmd.cmdList.add('chcp 65001')
-		}
+	not( cmd.run() ) {
+		@job.cmdStop(cmd)
+		cmd.cmdList.add('chcp 65001')
 		cmd.cmdList.add(command)
 		cmd.run('cmd', 0x801)
+		return cmd;
 	}
-	print("@@ job.cmdRun COMMAND:$command")
-	return cmd;
-}
-@job.cmdNext(cmd) {
-	not(cmd.cmdList) return print("cmd 프로세스 실행배열 미설정");
-	command=cmd.cmdList.pop()
-	if(command) {
-		cmd.set('cmdResult', '')
-		cmd.set('@status', 'start')
-		cmd.write(command)
+	if( cmd.cmp('@status','start') ) {
+		if(command) {
+			cmd.cmdList.add(command)
+		}
 	} else {
-		cmd.set('@status', 'stay')
+		not(command) command = cmd.cmdList.pop()
+		if( command ) {
+			print("@@ job.cmdRun COMMAND:$command")
+			cmd.set('cmdResult','')
+			cmd.set('@status','start')
+			cmd.write(command)
+		} else {
+			cmd.set('@status','stay')			
+		}
 	}
-}
+	return cmd;
+} 
 @job.cmdStop(cmd) {
 	cmd.cmdList.reuse()
+	cmd.set('cmdResult','')
 	cmd.set('@status', 'stop')
 	cmd.set('@firstCall', true)
 	not(cmd.run()) {
 		print("@@ ${cmd.id}가 이미 중지된 상태입니다")
+		return;
 	}
 	cmd.stop()
 }
@@ -207,21 +223,24 @@
 		this.appendText('cmdResult', data);
 		c=data.ch(-1,true);
 		if(c=='>') {
+			this.set('@endTick', System.tick())
 			if( this.get('@firstCall') ) {
+				print("@@ firstCall RESULT:${this.cmdResult}")
 				this.set('@firstCall', false)
 			} else {
 				cb=this.get('@callbackResult')
-				print("@@ cmd result callbackResult:$cb")
 				if(typeof(cb,'func')) {
 					call(cb, this, this.ref(cmdResult))
 				} else {
 					print(">> cmd proc 결과:", this.cmdResult )
 				}
 			}
-			@job.cmdNext(this)
+			this.set('@status','result')
+			@job.cmdRun(this)
 		}
 	}
 }
+
 @job.webObject() {
 	map=object('baro.objectMap')
 	arr = map.get('@webObjects')
@@ -437,11 +456,11 @@ node.set('@data', data)
 }
 
 _tagCheck(obj, type) {
+	not(typeof(obj,'node')) return false;
 	if(obj.cmp('tag',type)) return true;
 	tag=obj.get('@tag')
 	chk = tag && tag.start(type)
 	return chk;
-	
 }
 _dbFetch(db, sql, node, filter) {
 	type=typeof(db) not(type.eq('node(db)')) return print("@@ _dbFetch 데이터베이스 객체오류 SQL:$sql");
@@ -479,57 +498,59 @@ _dbExec(db,sql,node) {
 	return true;
 }
 
-@python.parsePythonResult(&s) {
-	print('python parse result >>', result, this)
-}
-@python.execTimeout() {
-	result=logReader('runcmd-out').timeout()
-	if(result) {
-		map=object('baro.objectMap')
-		cmd = map.get('@cmdExec')
-		if(cmd) {
-			fc = cmd.get('@parsePythonResult')
-			not(typeof(fc,'func')) fc=@python.parsePythonResult
-			call(fc, cmd, result)
-		} else {
-			print('python result>>', result)
-		}
-		return true;
-	}
-	return;
-}
-@python.cmdExec() {
+
+@python.cmdExec(param) {
 	map=object('baro.objectMap')
 	cmd = map.get('@cmdExec')
-	if( cmd ) {
-		if(line) {
-			@job.cmdRun(line)
-		}
-	} else {
-		root = Cf.rootNode()
-		fc = root.get('@timerProc') not(fc) root.set('@timerProc', @python.execTimeout )
+	cmdline = func() {
 		log=logWriter('runcmd-in')
 		out=logReader('runcmd-out')
-		python=_s('${@python.path}/python') not(isFile(python)) return print("python 설치파일 찾기오류 경로:$python");
+		python=_s('${@python.path}/python')
+		pythonFilename = _s('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
 		srcPath = _s('${@sample.path}/apps') not(isFolder(srcPath)) return print("python 소스경로 오류=");
-		line = _s('$python "$srcPath/run_cmd.py" --log "${log.logFileName}" --out "${out.logFileName}"')
-		cmd = @job.cmdRun(line, @python.result )
+		return _s('$python "$srcPath/run_cmd.py" --log "${log.logFileName}" --out "${out.logFileName}"');
+	}
+	if( cmd ) {
+		runCheck = ~(cmd.run()) || cmd.cmp('@status','stay');
+		if( runCheck ) {
+			@job.cmdRun(cmd, cmdline())
+		}
+		if(param) {
+			log=logWriter('runcmd-in')
+			log.append(param)
+		}
+	} else {
+		line = cmdline() not(line) return;
+		cmd = @job.cmdRun(cmdline(), @python.result )
 		cmd.set('@type','cmdExec')
 		cmd.set('@mode','persist')
 		cmd.set('@detail', '파이션 콘솔 소스실행')
+		if( typeof(param,'func')) {
+			execTimeout = param;
+		} else {
+			if(param) {
+				@job.addPost(cmd)
+			}
+			execTimeout = @python.execTimeout
+		}
+		root = Cf.rootNode()
+		root.set('@timerProc', execTimeout )
 		map.set('@cmdExec', cmd)
 	}
 	return cmd;
 }
 @python.cmdPip(line) {
+	not(line) line='pip list'
+	not(line.start('pip')) line = Cf.val('pip ',line)
+	python=_s('${@python.path}/python')
+	pythonFilename = _s('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
 	map=object('baro.objectMap')
 	cmd = map.get('@cmdPip')
+	cmdline = _s('$python -m $line')
 	if( cmd ) {
-		if(line) {
-			@job.cmdRun(line)
-		}
+		@job.cmdRun(cmd, cmdline)
 	} else {
-		cmd = @job.cmdRun(line, @python.result )
+		cmd = @job.cmdRun(cmdline, @python.result )
 		cmd.set('@type','cmdPip')
 		cmd.set('@mode','persist')
 		cmd.set('@detail', '파이션 설치용 커멘드')
@@ -539,4 +560,74 @@ _dbExec(db,sql,node) {
 }
 @python.result(s) {
 	print("@@ python result :$s")
+}
+ 
+@parse.youtubeSource(&s) {
+	url = s.findPos('=>')
+	print("YOUTUBE source URL:$url 분석시작")
+	not(s.ch()) return;
+	node = this
+	node.fullpath='c:/temp/youtubeSource.html'
+	fileWrite(node.fullpath, s)
+	print(">> job.addPost start", node.fullpath)
+	// @job.addPost('openSource', this)
+	while(s.valid()) {
+		s.findPos('<a data-testid="next-link"') not(s.ch()) break;
+		s.findPos('<img src=')
+		c=s.ch()
+		if(c.eq()) {
+			img=s.match()
+			print("image URL:$img")
+		}
+	}
+}
+
+@job.openSource#post(node) {
+	fullpath = node.fullpath
+	print(">> job.openSource start", node.fullpath)
+	@job.cmdRun(_s('notepade "$fullpath'))
+}
+
+@python.execTimeout() {
+	out=logReader('runcmd-out')
+	result = out.timeout()
+	if( this.ref(pythonExecResult) ) {
+		if(result) this.appendText('pythonExecResult', result)
+		@python.execResult(this.ref(pythonExecResult))
+		this.set('pythonExecResult', '')
+		return true;
+	}
+	not( result) return false;
+	this.set('pythonExecResult',result)
+}
+@python.execResult(&s) {
+	cmd=object('baro.objectMap').get('@cmdExec')
+	s.findPos('##>')
+	not(s.ch()) {
+		print("@python.execResult 실행 결과가 없습니다")
+		return;
+	} 
+	while(s.valid()) {
+		type=s.findPos(':').trim()
+		ss=s.findPos('##>') not(ss.ch()) continue;
+		if(type.eq('set')) {
+			type=s.move()
+			if(type.eq('webdriver')) {
+				
+			}
+		}
+		if(type.eq('print','execException')) {
+			print("$type >> $ss")
+			continue;
+		}
+		if(type.eq('result','exec')) {
+			continue;
+		}
+		fc=call("@parse.$type")
+		if(typeof(fc,'func')) {
+			call(fc, cmd, ss, type)
+		} else {
+			print("@python.execResult 실행결과처리함수 @parse.$type 함수 미정의")
+		}
+	}
 }

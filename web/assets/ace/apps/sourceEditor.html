@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,height=device-height" />
     <title>Ace Kitchen Sink</title>
     <meta name="author" content="Fabian Jakobs">
-    <link rel="stylesheet" href="/ace/kitchen-sink/styles.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="/assets/ace/kitchen-sink/styles.css" type="text/css" media="screen" charset="utf-8">
 
 </head>
 <body>
@@ -16,7 +16,7 @@
 		<div></div>
 		<div></div>
 	</div> 
-	<img id="c9-logo" alt="Cloud9 IDE | Your code anywhere, anytime" src="/ace/kitchen-sink/logo.png" style="width: 172px;margin: -9px 30px -12px 51px;">
+	<img id="c9-logo" alt="Cloud9 IDE | Your code anywhere, anytime" src="/assets/ace/kitchen-sink/logo.png" style="width: 172px;margin: -9px 30px -12px 51px;">
 
 	<div style="position: absolute; overflow: hidden; top:100px; bottom:0;width:100%;">
 		<div id="optionsPanel" style="height:100%; width:100%; overflow-y: auto"></div>
@@ -29,11 +29,11 @@
     var os = /os=(\w+)|$/.exec(location.search)[1];
     if (os) Object.defineProperty(navigator, "platform", {configurable:true, value: os});
   </script>
-  <script src="/js/require.js" type="text/javascript"></script>
+  <script src="/assets/js/require.js" type="text/javascript"></script>
   <script>
 	var paths = {
-		ace: "/ace/src",
-		app: "/app",
+		ace: "/assets/ace/src",
+		app: "/assets/app",
 		"ace/worker/worker_client": "lib/ace/worker/worker_client_v2",
 		"ace/worker": "lib/ace/worker",
 	};
@@ -54,7 +54,7 @@
 		"css_worker",
 	].forEach( m => paths["ace/mode/" + m] = "lib/ace/mode/" + m )
     
-    require.config({baseUrl:'/ace', paths: paths });
+    require.config({baseUrl:'/assets/ace', paths: paths });
     require(["ace/ace"], ace=>require(["apps/sourceEditor"], e => console.log('sourceEditor load ok',e))) 
   </script>
 </body>
