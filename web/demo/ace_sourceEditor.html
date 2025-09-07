@@ -32,8 +32,7 @@
   <script src="/assets/js/require.js" type="text/javascript"></script>
   <script>
 	var paths = {
-		ace: "/assets/ace/src",
-		app: "/assets/app",
+		ace: "src",
 		"ace/worker/worker_client": "lib/ace/worker/worker_client_v2",
 		"ace/worker": "lib/ace/worker",
 	};
@@ -55,7 +54,7 @@
 	].forEach( m => paths["ace/mode/" + m] = "lib/ace/mode/" + m )
     
     require.config({baseUrl:'/assets/ace', paths: paths });
-    require(["ace/ace"], ace=>require(["apps/sourceEditor"], e => console.log('sourceEditor load ok',e))) 
+    require(["ace/ace"], ace=>require(["editor/_sourceEditor"], e => console.log('sourceEditor load ok',e))) 
   </script>
 </body>
 </html>

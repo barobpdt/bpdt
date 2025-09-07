@@ -22,11 +22,10 @@
 
 <pre id="editor"></pre>
 
-<script src="kitchen-sink/require.js"></script>
+<script src="/assets/js/require.js"></script>
 <script>
-// setup paths
-require.config({paths: { "ace" : "../src"}});
 // load ace and extensions
+require.config({baseUrl:'/assets/ace', paths: { "ace" : "src"} });
 require(["ace/ace", "ace/ext/code_lens"], function(ace, codeLens) {
     var editor = ace.edit("editor");
     editor.session.setMode("ace/mode/html");

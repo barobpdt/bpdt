@@ -1,10 +1,10 @@
 "use strict";
 
+var devUtil = require("./dev_util");
 require("ace/ext/rtl");
 
 require("ace/multi_select");
 require("./inline_editor");
-var devUtil = require("./dev_util");
 require("./file_drop");
 
 var config = require("ace/config");

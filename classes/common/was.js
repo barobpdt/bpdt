@@ -1,4 +1,19 @@
 <script>
+	isApiRootInfo(&s,&b) {
+		node = Cf.getObject('api','api')
+		not(node) {
+			fo = Baro.file()
+			fnm = _s('${@web.rootPath}/api/api.js')
+			not(isFile(fnm)) return print("$fnm API소스 파일 오류")
+			node = Cf.getObject('api','api', true)
+			fsrc = fileRead(fnm)
+			apiSourceApply(node, fsrc)	
+			node.set('lastModifyTm', fo.modifyDate(fnm))
+		}
+		fcNm = s.trim()
+		fc=node.get(fcNm)
+		return typeof(fc,'func');
+	}
 	apiController(req, param, service, uri) {
 		was=Cf.rootNode("_node.was.object")
 		param.set('@uri', uri)
@@ -21,8 +36,17 @@
 		}
 		uri=param.ref('@uri')
 		webRoot = conf('web.rootPath')
-		fileName = "$webRoot/api/${service}.js"
-		name=uri.findPos('/').trim();
+		if( isApiRootInfo(service, uri) ) {
+			fileName = "$webRoot/api/api.js"
+			name=service
+			if(url.find('/')) {
+				uri.findPos('/')
+			}
+			service = 'api'
+		} else {
+			fileName = "$webRoot/api/${service}.js"	
+			name=uri.findPos('/').trim();
+		}
 		fo=Baro.file('api')
 		if( uri.find('/') ) {
 			if(fo.isFile(fileName) ) {
@@ -30,13 +54,13 @@
 			} else {
 				fileName="$webRoot/api/$service/${name}.js"
 				not(fo.isFile(fileName)) {
-					ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
+					ss=_s('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
 					return req.send(ss)
 				}
 				objectId = "$service/$name"
 				name = uri.findPos('/').trim()
 				not(name) {
-					ss=pv('{"error":"api호출 오류 #{fileName} 파일 $name 함수가 없습니다"}')
+					ss=_s('{"error":"api호출 오류 ${fileName} 파일 $name 함수가 없습니다"}')
 					return req.send(ss)
 				}
 			}
@@ -44,7 +68,7 @@
 			if(fo.isFile(fileName) ) {
 				objectId=service
 			} else {
-				ss=pv('{"error":"api호출 오류 #{fileName} 파일이 없습니다"}')
+				ss=_s('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
 				return req.send(ss)
 			}
 		}
@@ -53,7 +77,7 @@
 		modifyTm = fo.modifyDate(fileName)
 		if( lastTm!=modifyTm ) {
 			fsrc = fileRead(fileName)
-			apiSourceApply(serviceNode, fsrc, lastTm)			
+			apiSourceApply(serviceNode, fsrc)
 			serviceNode.set('lastModifyTm', modifyTm)
 		}
 		Cf.error(true)
@@ -75,7 +99,21 @@
 			req.send(result)
 		} 
 	}
-	apiSourceApply(node, &s, lastTm) {
+	apiSourceApply(node, &s) {
+		parseApi = func(&s) {
+			if(s.find('<api')) {
+				ss=''
+				while(s.valid() ) {
+					s.findPos('<api') not(s.ch()) break;
+					aa=s.findPos('</api>')
+					aa.findPos('>')
+					ss.add(aa)
+				}
+				serviceNode[$ss]
+			} else {
+				serviceNode[$s]
+			}
+		};
 		if(s.find('<func')) {
 			ss='', fsrc=''
 			while(s.valid()) {
@@ -92,7 +130,7 @@
 				if(mode.eq('const','skip')) {
 					print("@@ apiSource mode==$mode")
 					if( mode.eq('const') ) {
-						if(lastTm) continue;
+						if(node.lastModifyTm) continue;
 					} else {
 						continue;
 					}
@@ -100,83 +138,12 @@
 				ss.add(a)
 			}
 			Cf.sourceApply("<func>$ss</func>")
+			parseApi(fsrc)
 		} else {
-			fsrc = s
+			parseApi(s)
 		}
-		node[$fsrc]
-		print("@@ apiSourceApply node=>", node)
 	}
-	apiController_old(req, param, service, uri) {
-		was=Cf.rootNode("_node.was.object")
-		param.set('@uri', uri)
-		bound=req.getValue('boundary');
-		buffer=null;
-		if(bound) {
-			was.parseReqParam( req, param, bound );
-		} else {
-			buffer=req.readBuffer();
-			if(buffer) {
-				type=req.getValue('Content-Type');
-				if(type.eq('application/data')) {
-					print("type == application/data")
-				} else if(type.eq('application/xml')) {
-					parseXml(buffer);
-				} else {
-					param.parseJson(buffer);
-				}
-			}
-		}
-		data=''
-		uri=param.ref('@uri')
-		if( uri.find('/') ) {
-			name=uri.findPos('/').trim();
-			if(was.isValid("@api/$service/$name")) {
-				objectId = "$service/$name"
-				fileName = "api/$service/$name" 
-				name = uri.findPos('/').trim()
-			} else {
-				objectId = service
-				fileName = "api/$service"
-			}
-			data=uri.trim()
-		} else {
-			if(was.isValid("@api/$service")) {
-				objectId = service
-				fileName = "api/$service"
-			} else {
-				objectId = 'api'
-				fileName = 'api/api'
-			}
-			name=uri.trim()
-		}
-		serviceNode=Cf.getObject("api", objectId, true)
-		not( serviceNode.isValid('lastModifyTm') ) { 
-			path = conf('web.rootPath')
-			fullPath="${path}/${fileName}.js"
-			print("service:$service [serviceNode=$serviceNode fullPath == $fullPath]")
-			modifyTm = Baro.file('api').modifyDate(fullPath)
-			serviceNode.set('lastModifyTm', modifyTm)
-			was.addServiceFunc(serviceNode, fileRead(fullPath))
-		}
-		Cf.error(true)
-		fc=serviceNode.val(name)
-		if(typeof(fc,'func')) {
-			result = fc(req, param, data, buffer)
-			not(result) result = param
-		} else {
-			result = "$objectId 서비스에 $name 함수미정의"
-		}
-		if( param.var(sendCheck)) return;
-		if( typeof(result,'node')) {
-			if(result.isValid('@treeMode')) {
-				req.send(json().listData(result) )
-			} else {
-				req.send(jsonData(result) )
-			}
-		} else {
-			req.send(result)
-		} 
-	}
+	 
 	webFileFilter(req, page) {
 		param=req.param();
 		if(page) {
@@ -211,8 +178,9 @@
 		while( key, node.keys() ) {
 			if( key.ch('@') ) continue;
 			val=node.get(key);
-			if(typeof(val,'node','array')) continue;
-			if( typeof(val,'num') || val.eq('true','false') ) {
+			if( typeof(val,'node','array')) continue;
+			if(num) rst.add(',')
+			if( val.eq('true','false') ) {
 				rst.add(Cf.jsValue(key), ':', val )
 			} else {
 				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
@@ -227,7 +195,7 @@
 			while( key, fa, col ) {
 				if( col ) rst.add(",")
 				val = cur.get(key)
-				if( typeof(val,'num') || val.eq('true','false') ) {
+				if( val.eq('true','false') ) {
 					rst.add(Cf.jsValue(key), ':', val )
 				} else {
 					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )

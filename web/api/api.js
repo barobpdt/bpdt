@@ -15,6 +15,7 @@
 		root.path = path
 		root.text = path
 		root.type = 'folder'
+		print("root==>$root", param)
 		params.set('idx',1)
 		return @api.folderList(path, params, root.id)
 	}
@@ -32,7 +33,7 @@
 </api>
 
 <func>
-	folderTree(path, root, depth) {
+	@api.folderTree(path, root, depth) {
 		not(root) root = _node('listFolder').removeAll();
 		not(depth) depth = 0;
 		fo=Baro.file()
@@ -51,7 +52,7 @@
 		})
 		return root;
 	}
-	folderList(path, root, parentId, depth, idxNum) {
+	@api.folderList(path, root, parentId, depth, idxNum) {
 		not(parentId) return;
 		not(depth) depth = 0
 		not(idxNum) idxNum = 0
@@ -80,7 +81,7 @@
 		});
 		return root;
 	} 
-	fetchTreeChild(path, pid, root, cur) {
+	@api.fetchTreeChild(path, pid, root, cur) {
 		fo=Baro.file()
 		fo.var(sort,'name, case')
 		fo.list(path, func(info) {

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>폴더 선택</title>
+    <script src="/assets/js/jquery.js"></script>
+    <script src="/assets/js/jstree.js"></script>
+    <script src="/assets/js/common.js?id=1"></script>
+	
+    <link rel="stylesheet" href="/assets/themes/jstree/proton/style.css" />
+    <link rel="stylesheet" href="./folder_select.css"> 
+    <style>
+        .image_ {
+            background-image: url('data:image/svg+xml,<svg id="mySVG" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle id="myCircle" cx="50" cy="50" r="40" fill="blue" /></svg>');
+            width: 100px;
+            height: 100px;
+            background-position: center;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="folder-select-container">
+        <div class="header">
+            <h2>폴더 선택</h2>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <label for="driveSelect">드라이브:</label>
+				<div style="display:flex; align-items:center;">
+					<select id="driveSelect" style="width:150px"></select>
+					<span style="flex:1"></span>
+				</div>
+            </div>
+            <div class="control-group">
+                <label for="filterInput" style="text-align:right; margin-right:8px;">필터:</label>
+                <input type="text" id="filterInput" placeholder="폴더 이름으로 필터링...">
+            </div>
+        </div>
+        <div class="content">
+            <div id="folderTree" class="folder-tree"></div>
+            <div class="selected-path">
+                <label for="selectedPath">선택된 경로:</label>
+                <input type="text" id="selectedPath" readonly>
+            </div>
+        </div>
+        <div class="buttons">
+            <button id="selectButton" class="primary">선택</button>
+            <button id="cancelButton" class="secondary">취소</button>
+        </div>
+    </div>
+    <script src="./folder_select.js"></script>
+	
+	<style>
+	.jstree-proton-small .jstree-anchor {
+		padding: 0;
+		border-radius: 0;
+	}
+	</style>
+</body>
+</html> 

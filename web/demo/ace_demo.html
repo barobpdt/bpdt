@@ -33,11 +33,10 @@
   <script>
 	var paths = {
 		ace: "src",
-		demo: "kitchen-sink",
+		editor: "editor",
 		"ace/worker/worker_client": "lib/ace/worker/worker_client_v2",
 		"ace/worker": "lib/ace/worker",
 	};
-    
 	[
 		"jsoniq",
 		"json/json_parse",
@@ -54,8 +53,10 @@
 		"css_worker",
 	].forEach( m => paths["ace/mode/" + m] = "lib/ace/mode/" + m )
     
-    require.config({baseUrl:'/assets/ace', paths: paths });
-    require(["ace/ace"], ace=>require(["demo/demo"], demo => console.log('ace load ok'))) 
+	require.config({baseUrl:'/assets/ace', paths: paths });
+	require(["ace/ace"], ace=> {
+		require(["editor/_demo"], demo => console.log('ace load ok'))
+	}) 
   </script>
 </body>
 </html>
