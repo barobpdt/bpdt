@@ -178,6 +178,7 @@
 		if(typeof(callback,'func')) {
 			cmd.set('@callbackResult', callback)
 		}
+		cmd.set('@logPrint', true)
 	} else {
 		args(command, callback)
 		cmd=@job.cmdObject(callback)
@@ -187,7 +188,7 @@
 		@job.cmdStop(cmd)
 		cmd.cmdList.add('chcp 65001')
 		cmd.cmdList.add(command)
-		cmd.run('cmd', 0x801)
+		cmd.run('cmd')
 		return cmd;
 	}
 	if( cmd.cmp('@status','start') ) {
@@ -212,6 +213,7 @@
 	cmd.set('cmdResult','')
 	cmd.set('@status', 'stop')
 	cmd.set('@firstCall', true)
+	cmd.set('@logPrint', false)
 	not(cmd.run()) {
 		print("@@ ${cmd.id}가 이미 중지된 상태입니다")
 		return;
@@ -237,6 +239,9 @@
 			}
 			this.set('@status','result')
 			@job.cmdRun(this)
+		} else if(this.get('@logPrint')) {
+			prog = this.ref('@line').move()
+			print("$prog >> $data")
 		}
 	}
 }
@@ -522,6 +527,7 @@ _dbExec(db,sql,node) {
 	} else {
 		line = cmdline() not(line) return;
 		cmd = @job.cmdRun(cmdline(), @python.result )
+		cmd.set('@logPrint',true)
 		cmd.set('@type','cmdExec')
 		cmd.set('@mode','persist')
 		cmd.set('@detail', '파이션 콘솔 소스실행')
