@@ -1,8 +1,9 @@
 ## git 초기화
+'''
 git fetch --all
 git reset --hard origin/main
 git reset --soft origin/main <== 혼자작업시
-
+'''
 
 # React Native 푸시 알림 예제
 
