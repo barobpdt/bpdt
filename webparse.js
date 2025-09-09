@@ -1,3 +1,35 @@
+##
+from PySide6.QtGui import QImage, QColor
+    width = 200
+    height = 150
+    image = QImage(width, height, QImage.Format_ARGB32)
+    image.fill(Qt.white) # 이미지를 흰색으로 채웁니다.	
+		
+	# Set the color of the pixel at (10, 20) to blue
+	image.setPixelColor(10, 20, QColor(0, 0, 255)) # Blue color (RGB)
+    painter = QPainter(image)
+    label = QLabel()
+    label.setPixmap(QPixmap.fromImage(image))
+    label.show()
+
+# Get the color of the pixel at (10, 20)
+pixel_color = image.pixelColor(10, 20)
+print(f"Pixel color at (10, 20): {pixel_color.red()}, {pixel_color.green()}, {pixel_color.blue()}")
+
+    from PyQt5.QtGui import QPixmap, QColor, Qt
+    # Load your image
+    image = QPixmap("your_image.png")
+
+    # Define the color to be made transparent (e.g., white)
+    transparent_color = QColor(255, 255, 255) # RGB for white
+
+    # Create a mask from the color
+    # Qt.MaskInColor makes the specified color transparent
+    mask = image.createMaskFromColor(transparent_color, Qt.MaskInColor)
+
+    # Apply the mask to the image
+    image.setMask(mask)
+
 ## 미디파일 목록
 	https://songs.bardmusicplayer.com/ 
 	
