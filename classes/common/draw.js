@@ -322,6 +322,68 @@
 		}
 		return arr;
 	}
+	rcSize(param) {
+		not(param) return pt(0,0);
+		if(typeof(param,'size')) return param;
+		if(typeof(param,'rect')) return param.size();
+		if(typeof(param,'widget')) return param.rect().size();
+		if(typeof(param,'image')) return param.imageSize();
+		if(typeof(param,'node')) {
+			rc=param.var(rect)
+			if(rc) return rc.size()
+		}
+		return pt(0,0);
+	}
+	mdc(code, param) {
+		map=object("user.mdcMap")
+		asize=args().size() not(asize) return map;
+		d=map.get(code)
+		if( asize.eq(1) ) {
+			return d;
+		}
+		img=null
+		if(typeof(param,'string')) {
+			img=Cf.imageLoad(param)
+		} else if(typeof(param,'image')) {
+			img=param
+		} else if(typeof(param,'node')) {
+			img=param.var(image)
+		} 
+		if(img) {
+			if(d) return d;
+			d=Baro.drawObject(img)
+			d.name=code
+			map.set(code, d)
+			return d;
+		}
+
+		if(typeof(param,'point')) {
+			param.inject(width, height);
+		} else if(typeof(param,'rect')) { 
+			param.size().inject(width, height);
+		} else {
+			args(1,width, height);
+		}
+		not(typeof(width,'num') || typeof(height,'num')) return print("메모리 DC생성 영역오류(폭:$width 높이:$height)", param);
+		
+		if(d) {
+			rc=d.rect();
+			rc.size().inject(w, h);
+			if(width.eq(w) && height.eq(h) ) {
+				d.flag(FLAG.new);
+				return d;
+			}
+			d.destroy();
+			d.painter(width, height);
+			print("mdc set ($width, $height)");
+		} else {
+			d=Baro.drawObject(width, height);
+			d.name=code;
+			map.set(code, d);
+		}  
+		d.var(first,true);
+		return d;
+	}
 </script>
 
 <script module="rect">

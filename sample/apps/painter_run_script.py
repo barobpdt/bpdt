@@ -70,7 +70,24 @@ log(f'print: saveImagePath={out_path}')
 ])
 
 ## sprite 이미지 조회 및 소스열기 
-c=@python.cmdExec(#[##> exec:
+@python.cmdExec(#[##> exec:
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+global driver
+options = Options()
+options.add_experimental_option("detach", True)
+options.add_argument("--window-size = x,y")
+options.add_argument('--disable-popup-blocking')
+ 
+driver = webdriver.Chrome(options=options)
+driver.get('https://www.google.com/') #?q=[search text]
+log(f'print: driver=>{driver}')
+])
+
+@python.cmdExec(#[##> exec:
 driver.get('https://www.freepik.com/search?format=search&img=1&last_filter=img&last_value=1&query=2d+sprites')
 log(f'openEditor: {driver.page_source}')
 ])
