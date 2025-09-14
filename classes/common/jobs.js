@@ -150,7 +150,7 @@
 	}
 	obj=null
 	while(cur, arr) {
-		if(cur.cmp('@mode', 'presist')) continue;
+		if(cur.cmp('@mode', 'persist')) continue;
 		if(cur.cmp('@status','start')) continue;
 		tick=cur.get('@endTick')
 		if(tick) {

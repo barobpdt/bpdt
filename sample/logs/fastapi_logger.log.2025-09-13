@@ -1,0 +1,83 @@
+2025-09-13 15:48:35,847 - fastapi_logger - INFO - create_async_database_engine:41 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:48:35,847 - fastapi_logger - ERROR - create_async_database_engine:62 - ❌ 비동기 연결 1 실패: name 'create_async_engine' is not defined
+2025-09-13 15:48:35,847 - fastapi_logger - ERROR - create_async_database_engine:64 - ❌ 모든 비동기 연결 시도 실패
+2025-09-13 15:48:35,848 - fastapi_logger - ERROR - initialize_database_engines:119 - ❌ 비동기 데이터베이스 엔진 생성 실패: name 'create_async_engine' is not defined
+2025-09-13 15:48:35,848 - fastapi_logger - INFO - initialize_database_engines:120 - ⚠️ 동기 데이터베이스 엔진으로 대체합니다.
+2025-09-13 15:48:35,848 - fastapi_logger - INFO - create_database_engine:73 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:48:35,879 - fastapi_logger - ERROR - create_database_engine:97 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:48:35,879 - fastapi_logger - ERROR - create_database_engine:99 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 15:48:35,879 - fastapi_logger - ERROR - initialize_database_engines:128 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:48:35,880 - fastapi_logger - INFO - initialize_database_engines:133 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 15:52:40,334 - fastapi_logger - INFO - create_async_database_engine:41 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:52:40,334 - fastapi_logger - ERROR - create_async_database_engine:62 - ❌ 비동기 연결 1 실패: name 'create_async_engine' is not defined
+2025-09-13 15:52:40,334 - fastapi_logger - ERROR - create_async_database_engine:64 - ❌ 모든 비동기 연결 시도 실패
+2025-09-13 15:52:40,334 - fastapi_logger - ERROR - initialize_database_engines:119 - ❌ 비동기 데이터베이스 엔진 생성 실패: name 'create_async_engine' is not defined
+2025-09-13 15:52:40,334 - fastapi_logger - INFO - initialize_database_engines:120 - ⚠️ 동기 데이터베이스 엔진으로 대체합니다.
+2025-09-13 15:52:40,335 - fastapi_logger - INFO - create_database_engine:73 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:52:40,354 - fastapi_logger - ERROR - create_database_engine:97 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:52:40,354 - fastapi_logger - ERROR - create_database_engine:99 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 15:52:40,355 - fastapi_logger - ERROR - initialize_database_engines:128 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:52:40,355 - fastapi_logger - INFO - initialize_database_engines:133 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 15:53:56,400 - fastapi_logger - INFO - create_async_database_engine:41 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:53:56,400 - fastapi_logger - ERROR - create_async_database_engine:62 - ❌ 비동기 연결 1 실패: name 'create_async_engine' is not defined
+2025-09-13 15:53:56,400 - fastapi_logger - ERROR - create_async_database_engine:64 - ❌ 모든 비동기 연결 시도 실패
+2025-09-13 15:53:56,400 - fastapi_logger - ERROR - initialize_database_engines:119 - ❌ 비동기 데이터베이스 엔진 생성 실패: name 'create_async_engine' is not defined
+2025-09-13 15:53:56,400 - fastapi_logger - INFO - initialize_database_engines:120 - ⚠️ 동기 데이터베이스 엔진으로 대체합니다.
+2025-09-13 15:53:56,401 - fastapi_logger - INFO - create_database_engine:73 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:53:56,500 - fastapi_logger - ERROR - create_database_engine:97 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:53:56,500 - fastapi_logger - ERROR - create_database_engine:99 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 15:53:56,501 - fastapi_logger - ERROR - initialize_database_engines:128 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:53:56,501 - fastapi_logger - INFO - initialize_database_engines:133 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 15:55:37,936 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:55:37,964 - fastapi_logger - ERROR - create_async_database_engine:63 - ❌ 비동기 연결 1 실패: The asyncio extension requires an async driver to be used. The loaded 'pysqlite' is not async.
+2025-09-13 15:55:37,964 - fastapi_logger - ERROR - create_async_database_engine:65 - ❌ 모든 비동기 연결 시도 실패
+2025-09-13 15:55:37,964 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 비동기 데이터베이스 엔진 생성 실패: The asyncio extension requires an async driver to be used. The loaded 'pysqlite' is not async.
+2025-09-13 15:55:37,965 - fastapi_logger - INFO - initialize_database_engines:121 - ⚠️ 동기 데이터베이스 엔진으로 대체합니다.
+2025-09-13 15:55:37,965 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 15:55:37,966 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:55:37,966 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 15:55:37,966 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 15:55:37,967 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:02:02,690 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:02:02,720 - fastapi_logger - ERROR - create_async_database_engine:63 - ❌ 비동기 연결 1 실패: The asyncio extension requires an async driver to be used. The loaded 'pysqlite' is not async.
+2025-09-13 16:02:02,720 - fastapi_logger - ERROR - create_async_database_engine:65 - ❌ 모든 비동기 연결 시도 실패
+2025-09-13 16:02:02,720 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 비동기 데이터베이스 엔진 생성 실패: The asyncio extension requires an async driver to be used. The loaded 'pysqlite' is not async.
+2025-09-13 16:02:02,721 - fastapi_logger - INFO - initialize_database_engines:121 - ⚠️ 동기 데이터베이스 엔진으로 대체합니다.
+2025-09-13 16:02:02,721 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:02:02,721 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:02:02,722 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 16:02:02,722 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:02:02,722 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:07:06,204 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-13 16:07:06,222 - fastapi_logger - INFO - create_async_database_engine:59 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-13 16:07:06,222 - fastapi_logger - INFO - initialize_database_engines:118 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:07:06,222 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:07:06,223 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:07:06,223 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 16:07:06,223 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:07:06,224 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:10:46,073 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-13 16:10:46,090 - fastapi_logger - INFO - create_async_database_engine:59 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-13 16:10:46,090 - fastapi_logger - INFO - initialize_database_engines:118 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:10:46,091 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:10:46,091 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:10:46,091 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 16:10:46,091 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:10:46,092 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:12:27,374 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-13 16:12:27,391 - fastapi_logger - INFO - create_async_database_engine:59 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-13 16:12:27,392 - fastapi_logger - INFO - initialize_database_engines:118 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:12:27,392 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:12:27,392 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:12:27,393 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 16:12:27,393 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:12:27,393 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:53:38,262 - fastapi_logger - INFO - create_async_database_engine:42 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-13 16:53:38,286 - fastapi_logger - INFO - create_async_database_engine:59 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-13 16:53:38,286 - fastapi_logger - INFO - initialize_database_engines:118 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:53:38,286 - fastapi_logger - INFO - create_database_engine:74 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-13 16:53:38,286 - fastapi_logger - ERROR - create_database_engine:98 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:53:38,287 - fastapi_logger - ERROR - create_database_engine:100 - ❌ 모든 동기 연결 시도 실패
+2025-09-13 16:53:38,287 - fastapi_logger - ERROR - initialize_database_engines:129 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-13 16:53:38,287 - fastapi_logger - INFO - initialize_database_engines:134 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-13 16:55:39,519 - fastapi_logger - ERROR - get_async_db:159 - ⚠️ 비동기 데이터베이스 세션 오류: 'AsyncSession' object has no attribute 'query'

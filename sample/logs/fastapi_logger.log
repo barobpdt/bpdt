@@ -1,0 +1,260 @@
+2025-09-14 00:21:26,392 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 00:21:26,424 - fastapi_logger - INFO - create_async_database_engine:63 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 00:21:26,424 - fastapi_logger - INFO - initialize_database_engines:122 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:21:26,424 - fastapi_logger - INFO - create_database_engine:78 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 00:21:26,425 - fastapi_logger - ERROR - create_database_engine:102 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:21:26,426 - fastapi_logger - ERROR - create_database_engine:104 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 00:21:26,426 - fastapi_logger - ERROR - initialize_database_engines:133 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:21:26,427 - fastapi_logger - INFO - initialize_database_engines:138 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:23:15,434 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 00:23:15,452 - fastapi_logger - INFO - create_async_database_engine:63 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 00:23:15,452 - fastapi_logger - INFO - initialize_database_engines:122 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:23:15,452 - fastapi_logger - INFO - create_database_engine:78 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 00:23:15,453 - fastapi_logger - ERROR - create_database_engine:102 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:23:15,453 - fastapi_logger - ERROR - create_database_engine:104 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 00:23:15,453 - fastapi_logger - ERROR - initialize_database_engines:133 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:23:15,454 - fastapi_logger - INFO - initialize_database_engines:138 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:27:10,916 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 00:27:10,934 - fastapi_logger - INFO - create_async_database_engine:63 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 00:27:10,934 - fastapi_logger - INFO - initialize_database_engines:122 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:27:10,934 - fastapi_logger - INFO - create_database_engine:78 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 00:27:10,935 - fastapi_logger - ERROR - create_database_engine:102 - ❌ 동기 연결 1 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:27:10,935 - fastapi_logger - ERROR - create_database_engine:104 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 00:27:10,935 - fastapi_logger - ERROR - initialize_database_engines:133 - ❌ 동기 데이터베이스 엔진 생성 실패: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:27:10,935 - fastapi_logger - INFO - initialize_database_engines:138 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:27:23,047 - fastapi_logger - ERROR - get_async_db:163 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'list_type', 'loc': ('response',), 'msg': 'Input should be a valid list', 'input': <coroutine object get_users at 0x00000151FFE484F0>}
+
+2025-09-14 00:29:51,253 - fastapi_logger - ERROR - get_async_db:163 - ⚠️ 비동기 데이터베이스 세션 오류: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:30:08,685 - fastapi_logger - ERROR - get_async_db:163 - ⚠️ 비동기 데이터베이스 세션 오류: 'connect_timeout' is an invalid keyword argument for Connection()
+2025-09-14 00:40:52,510 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 00:40:52,534 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 00:40:52,535 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:40:52,535 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 00:40:52,548 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 00:40:52,548 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 00:40:52,548 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 00:40:52,548 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:41:04,113 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x000002366002A7A0>}
+
+2025-09-14 00:43:31,865 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x00000236600C65C0>}
+
+2025-09-14 00:57:47,557 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 00:57:47,572 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 00:57:47,572 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:57:47,572 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 00:57:47,572 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 00:57:47,572 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 00:57:47,572 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 00:57:47,572 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 00:58:12,677 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 00:58:12,695 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x00000139DFE5A7A0>}
+
+2025-09-14 01:02:46,986 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:02:47,005 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:02:47,006 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:02:47,006 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:02:47,007 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:02:47,007 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:02:47,007 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:02:47,008 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:02:52,686 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:02:52,701 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x000002878EF1A890>}
+
+2025-09-14 01:04:44,233 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:04:44,250 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:04:44,250 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:04:44,250 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:04:44,252 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:04:44,252 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:04:44,252 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:04:44,253 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:04:53,721 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:04:53,737 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x00000206BF75A890>}
+
+2025-09-14 01:14:52,881 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:14:52,884 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x00000206BF7F6980>}
+
+2025-09-14 01:15:47,442 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:15:47,445 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x00000206BF844040>}
+
+2025-09-14 01:17:45,706 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:17:45,733 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:17:45,733 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:17:45,733 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:17:45,735 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:17:45,735 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:17:45,735 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:17:45,735 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:17:53,112 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:17:53,134 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': <coroutine object create_user at 0x000001A8A0EDA890>}
+
+2025-09-14 01:20:39,896 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:20:39,913 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:20:39,914 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:20:39,914 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:20:39,915 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:20:39,915 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:20:39,915 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:20:39,915 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:20:45,549 - fastapi_logger - INFO - post_user:270 - @@user add {'name': 'isitna', 'email': '333@bbb.ccc'}
+2025-09-14 01:20:45,566 - fastapi_logger - INFO - post_user:272 - @@user select None
+2025-09-14 01:20:45,566 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: name 'uesr' is not defined
+2025-09-14 01:23:06,906 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:23:06,925 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:23:06,925 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:23:06,925 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:23:06,927 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:23:06,927 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:23:06,927 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:23:06,928 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:23:13,778 - fastapi_logger - INFO - create_user:24 - @@ create user start name='isitna' email='333@bbb.ccc'
+2025-09-14 01:23:13,779 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: name 'db_uesr' is not defined
+2025-09-14 01:24:06,498 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:24:06,515 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:24:06,515 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:24:06,516 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:24:06,518 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:24:06,518 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:24:06,518 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:24:06,519 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:24:12,218 - fastapi_logger - INFO - create_user:24 - @@ create user start name='isitna' email='333@bbb.ccc'
+2025-09-14 01:24:12,219 - fastapi_logger - INFO - create_user:26 - @@ create user <fapi_sqlite_model.User object at 0x00000212CBCDCEC0>
+2025-09-14 01:24:12,219 - fastapi_logger - INFO - create_user:28 - @@ create user add ok <fapi_sqlite_model.User object at 0x00000212CBCDCEC0>
+2025-09-14 01:24:12,247 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'posts'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <fapi_sqlite_model.User object at 0x00000212CBCDCEC0>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+
+2025-09-14 01:30:34,895 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:30:34,912 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:30:34,912 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:30:34,912 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:30:34,916 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:30:34,916 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:30:34,916 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:30:34,917 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:31:18,320 - fastapi_logger - INFO - create_user:24 - @@ create user start name='na' email='999@bbb.ccc'
+2025-09-14 01:31:18,321 - fastapi_logger - INFO - create_user:26 - @@ create user <fapi_sqlite_model.User object at 0x000001EB52E8F200>
+2025-09-14 01:31:18,321 - fastapi_logger - INFO - create_user:28 - @@ create user add ok <fapi_sqlite_model.User object at 0x000001EB52E8F200>
+2025-09-14 01:31:18,342 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'posts'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <fapi_sqlite_model.User object at 0x000001EB52E8F200>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+
+2025-09-14 01:37:56,872 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 400: Email already registered
+2025-09-14 01:38:21,391 - fastapi_logger - INFO - create_user:24 - @@ create user start name='aaa' email='aaa@bbb.ccc'
+2025-09-14 01:38:21,391 - fastapi_logger - INFO - create_user:26 - @@ create user <fapi_sqlite_model.User object at 0x000001EB5300BEF0>
+2025-09-14 01:38:21,391 - fastapi_logger - INFO - create_user:28 - @@ create user add ok <fapi_sqlite_model.User object at 0x000001EB5300BEF0>
+2025-09-14 01:38:21,414 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'posts'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <fapi_sqlite_model.User object at 0x000001EB5300BEF0>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+
+2025-09-14 01:38:52,223 - fastapi_logger - INFO - create_user:24 - @@ create user start name='bbb' email='bbb@bbb.ccc'
+2025-09-14 01:38:52,224 - fastapi_logger - INFO - create_user:26 - @@ create user <fapi_sqlite_model.User object at 0x000001EB52BFB830>
+2025-09-14 01:38:52,224 - fastapi_logger - INFO - create_user:28 - @@ create user add ok <fapi_sqlite_model.User object at 0x000001EB52BFB830>
+2025-09-14 01:38:52,244 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'posts'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <fapi_sqlite_model.User object at 0x000001EB52BFB830>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+
+2025-09-14 01:40:24,728 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:40:24,745 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:40:24,745 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:40:24,745 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:40:24,748 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:40:24,749 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:40:24,749 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:40:24,750 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:41:55,145 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:41:55,163 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:41:55,163 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:41:55,163 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:41:55,165 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:41:55,165 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:41:55,165 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:41:55,165 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:42:24,971 - fastapi_logger - INFO - create_user:24 - @@ create user start name='ddd' email='ddd@bbb.ccc'
+2025-09-14 01:42:24,972 - fastapi_logger - INFO - create_user:26 - @@ create user <fapi_sqlite_model.User object at 0x00000238E66EAF60>
+2025-09-14 01:42:24,972 - fastapi_logger - INFO - create_user:28 - @@ create user add ok <fapi_sqlite_model.User object at 0x00000238E66EAF60>
+2025-09-14 01:42:25,035 - fastapi_logger - INFO - post_user:274 - @@ uer add ok <fapi_sqlite_model.User object at 0x00000238E66EAF60>
+2025-09-14 01:42:55,703 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 400: Email already registered
+2025-09-14 01:43:35,577 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'list_type', 'loc': ('response',), 'msg': 'Input should be a valid list', 'input': <coroutine object get_users at 0x00000238E6967970>}
+
+2025-09-14 01:47:50,406 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:47:50,424 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:47:50,425 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:47:50,425 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:47:50,427 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:47:50,427 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:47:50,427 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:47:50,428 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:51:16,223 - fastapi_logger - INFO - create_async_database_engine:46 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 01:51:16,241 - fastapi_logger - INFO - create_async_database_engine:60 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 01:51:16,241 - fastapi_logger - INFO - initialize_database_engines:107 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:51:16,242 - fastapi_logger - INFO - create_database_engine:75 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 01:51:16,243 - fastapi_logger - ERROR - create_database_engine:87 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 01:51:16,243 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 01:51:16,243 - fastapi_logger - ERROR - initialize_database_engines:118 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 01:51:16,244 - fastapi_logger - INFO - initialize_database_engines:123 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 01:51:28,628 - fastapi_logger - INFO - get_users:257 - @@ get_users = <coroutine object get_users at 0x0000020577F7E5C0>
+2025-09-14 01:51:28,629 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'list_type', 'loc': ('response',), 'msg': 'Input should be a valid list', 'input': <coroutine object get_users at 0x0000020577F7E5C0>}
+
+2025-09-14 01:53:19,500 - fastapi_logger - ERROR - get_async_db:148 - ⚠️ 비동기 데이터베이스 세션 오류: 1 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'posts'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <fapi_sqlite_model.User object at 0x00000205780B0D40>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+
+2025-09-14 02:10:48,177 - fastapi_logger - INFO - create_async_database_engine:48 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 02:10:48,208 - fastapi_logger - INFO - create_async_database_engine:62 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 02:10:48,208 - fastapi_logger - INFO - initialize_database_engines:109 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:10:48,208 - fastapi_logger - INFO - create_database_engine:77 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 02:10:48,212 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 02:10:48,212 - fastapi_logger - ERROR - create_database_engine:91 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 02:10:48,212 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 02:10:48,213 - fastapi_logger - INFO - initialize_database_engines:125 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:11:38,252 - fastapi_logger - INFO - create_async_database_engine:48 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 02:11:38,271 - fastapi_logger - INFO - create_async_database_engine:62 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 02:11:38,271 - fastapi_logger - INFO - initialize_database_engines:109 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:11:38,271 - fastapi_logger - INFO - create_database_engine:77 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 02:11:38,273 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 02:11:38,273 - fastapi_logger - ERROR - create_database_engine:91 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 02:11:38,273 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 02:11:38,274 - fastapi_logger - INFO - initialize_database_engines:125 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:12:16,293 - fastapi_logger - INFO - get_users:259 - @@ get_users = <coroutine object get_users at 0x00000209EA1CA2F0>
+2025-09-14 02:12:16,296 - fastapi_logger - ERROR - get_async_db:150 - ⚠️ 비동기 데이터베이스 세션 오류: [TypeError("'coroutine' object is not iterable"), TypeError('vars() argument must have __dict__ attribute')]
+2025-09-14 02:14:34,785 - fastapi_logger - INFO - create_async_database_engine:48 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 02:14:34,804 - fastapi_logger - INFO - create_async_database_engine:62 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 02:14:34,804 - fastapi_logger - INFO - initialize_database_engines:109 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:14:34,804 - fastapi_logger - INFO - create_database_engine:77 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 02:14:34,806 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 02:14:34,807 - fastapi_logger - ERROR - create_database_engine:91 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 02:14:34,807 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 02:14:34,807 - fastapi_logger - INFO - initialize_database_engines:125 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:14:44,775 - fastapi_logger - INFO - get_users:259 - @@ get_users = <coroutine object get_users at 0x0000026A0A50E5C0>
+2025-09-14 02:14:44,776 - fastapi_logger - ERROR - get_async_db:150 - ⚠️ 비동기 데이터베이스 세션 오류: [TypeError("'coroutine' object is not iterable"), TypeError('vars() argument must have __dict__ attribute')]
+2025-09-14 02:27:23,587 - fastapi_logger - INFO - create_async_database_engine:48 - 🔍 비동기 데이터베이스 연결 시도 1: sqlite+aiosqlite:///./test.db
+2025-09-14 02:27:23,622 - fastapi_logger - INFO - create_async_database_engine:62 - ✅ 비동기 데이터베이스 연결 성공! (연결 1)
+2025-09-14 02:27:23,622 - fastapi_logger - INFO - initialize_database_engines:109 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:27:23,622 - fastapi_logger - INFO - create_database_engine:77 - 🔍 동기 데이터베이스 연결 시도 1: sqlite:///./test.db
+2025-09-14 02:27:23,624 - fastapi_logger - ERROR - create_database_engine:89 - ❌ 동기 연결 1 실패: name 'text' is not defined
+2025-09-14 02:27:23,625 - fastapi_logger - ERROR - create_database_engine:91 - ❌ 모든 동기 연결 시도 실패
+2025-09-14 02:27:23,625 - fastapi_logger - ERROR - initialize_database_engines:120 - ❌ 동기 데이터베이스 엔진 생성 실패: name 'text' is not defined
+2025-09-14 02:27:23,625 - fastapi_logger - INFO - initialize_database_engines:125 - ✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료
+2025-09-14 02:27:34,915 - fastapi_logger - INFO - get_users:264 - @@ user validate exception <fapi_sqlite_model.User object at 0x0000021D30AC1C70> - 1 validation error for User
+  Input should be a valid dictionary or instance of User [type=model_type, input_value=<fapi_sqlite_model.User o...t at 0x0000021D30AC1C70>, input_type=User]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_type
+2025-09-14 02:27:34,915 - fastapi_logger - INFO - get_users:264 - @@ user validate exception <fapi_sqlite_model.User object at 0x0000021D307C1BE0> - 1 validation error for User
+  Input should be a valid dictionary or instance of User [type=model_type, input_value=<fapi_sqlite_model.User o...t at 0x0000021D307C1BE0>, input_type=User]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_type
+2025-09-14 02:27:34,915 - fastapi_logger - INFO - get_users:264 - @@ user validate exception <fapi_sqlite_model.User object at 0x0000021D30AC1CA0> - 1 validation error for User
+  Input should be a valid dictionary or instance of User [type=model_type, input_value=<fapi_sqlite_model.User o...t at 0x0000021D30AC1CA0>, input_type=User]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_type
+2025-09-14 02:27:34,916 - fastapi_logger - INFO - get_users:264 - @@ user validate exception <fapi_sqlite_model.User object at 0x0000021D30AC1CD0> - 1 validation error for User
+  Input should be a valid dictionary or instance of User [type=model_type, input_value=<fapi_sqlite_model.User o...t at 0x0000021D30AC1CD0>, input_type=User]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_type
+2025-09-14 02:27:34,916 - fastapi_logger - INFO - get_users:264 - @@ user validate exception <fapi_sqlite_model.User object at 0x0000021D30AC1D00> - 1 validation error for User
+  Input should be a valid dictionary or instance of User [type=model_type, input_value=<fapi_sqlite_model.User o...t at 0x0000021D30AC1D00>, input_type=User]
+    For further information visit https://errors.pydantic.dev/2.11/v/model_type
+2025-09-14 02:27:34,916 - fastapi_logger - INFO - get_users:265 - @@ get_users result = []

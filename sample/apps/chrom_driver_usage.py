@@ -3,7 +3,7 @@
 @python.cmdPip('pip install flask')
 @python.cmdPip('pip list')
 
-@python.cmdExec(#[exec:
+@python.cmdExec(#[##> exec:
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -12,7 +12,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 options = Options()
 options.add_experimental_option("detach", True)
-options.add_argument("--window-size = x,y")
+# options.add_argument("--window-size = x,y")
 options.add_argument('--disable-popup-blocking')
  
 driver = webdriver.Chrome(options=options)
