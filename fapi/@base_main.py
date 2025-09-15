@@ -12,17 +12,18 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from typing import List
 
-import @base_sqlite_schema as schema
-import @base_sqlite_model as model
-import @base_sqlite_crud as crud
-import @base_sqlite_jwt as auth
-from @base_logger import setup_logging
+import aiosqlite
+import fapi_sqlite_model as model
+import fapi_sqlite_schema as schema
+import fapi_sqlite_crud as crud
+import fapi_sqlite_jwt as jwtModule
 
 import os
 import asyncio
+from fapi_logger import setup_logging
 from datetime import datetime, timedelta
 
-@{imports}
+@base.imports
 
 localPath = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, localPath)
@@ -30,116 +31,25 @@ sys.path.insert(0, localPath)
 
 # 로거 초기화 (가장 먼저 실행)
 logger = setup_logging()
-logger.info(f'start @base API => PID: {os.getpid()}')
-
+# model.Base.metadata.create_all(bind=engine)
+pid = os.getpid()
 # 비동기 데이터베이스 URL
-ASYNC_DATABASE_URLS = [ "sqlite+aiosqlite:///./test.db" ]
-DATABASE_URLS 		= [ "sqlite:///./test.db" ]
-
-# 첫 번째 연결 문자열 사용
-ASYNC_DATABASE_URL = ASYNC_DATABASE_URLS[0]
-DATABASE_URL = DATABASE_URLS[0]
-
+ASYNC_DATABASE_URLS = '@base.dbUrl|[sqlite+aiosqlite:///./test.db]'
+# DATABASE_URLS 		= [ "sqlite:///./test.db" ]
+ 
 # 비동기 데이터베이스 엔진 생성
-def create_async_database_engine():
-	"""비동기 데이터베이스 엔진을 생성합니다."""
-	for i, url in enumerate(ASYNC_DATABASE_URLS, 1):
-		try:
-			logger.info(f"🔍 비동기 데이터베이스 연결 시도 {i}: {url}")
-			
-			engine = create_async_engine(url, echo=True)
-			'''	
-				url,
-				pool_pre_ping=True,
-				pool_recycle=300,
-				pool_timeout=30,
-				max_overflow=10,
-				pool_size=5,
-				echo=True,  # SQL 로그 비활성화 (성능 향상 False 설정)
-				connect_args={"connect_timeout": 30, "read_timeout": 30, "write_timeout": 30}
-			'''
-			
-			logger.info(f"✅ 비동기 데이터베이스 연결 성공! (연결 {i})")
-			return engine
-			
-		except Exception as e:
-			logger.error(f"❌ 비동기 연결 {i} 실패: {e}")
-			if i == len(ASYNC_DATABASE_URLS):
-				logger.error("❌ 모든 비동기 연결 시도 실패")
-				raise e
-			continue
-
-# 동기 데이터베이스 엔진 생성 (기존 호환성용)
-def create_database_engine():
-	"""동기 데이터베이스 엔진을 생성합니다."""
-	for i, url in enumerate(DATABASE_URLS, 1):
-		try:
-			logger.info(f"🔍 동기 데이터베이스 연결 시도 {i}: {url}")
-			
-			engine = create_engine(url)
-			
-			# 연결 테스트
-			with engine.connect() as conn:
-				conn.execute(text("SELECT 1"))
-			
-			logger.info(f"✅ 동기 데이터베이스 연결 성공! (연결 {i})")
-			return engine
-			
-		except Exception as e:
-			logger.error(f"❌ 동기 연결 {i} 실패: {e}")
-			if i == len(DATABASE_URLS):
-				logger.error("❌ 모든 동기 연결 시도 실패")
-				raise e
-			continue
-
-# 데이터베이스 엔진 초기화 (개선된 버전)
-def initialize_database_engines():
-	"""데이터베이스 엔진들을 초기화합니다."""	
-	# 비동기 엔진 생성 시도
-	global async_engine, engine, AsyncSessionLocal, SessionLocal    
-	# 비동기 엔진 생성 시도
-	async_engine = None
-	try:
-		async_engine = create_async_database_engine()
-		AsyncSessionLocal = async_sessionmaker(
-			async_engine, 
-			class_=AsyncSession, 
-			expire_on_commit=False
-		)
-		logger.info("✅ 비동기 데이터베이스 엔진 생성 완료")
-	except Exception as e:
-		logger.error(f"❌ 비동기 데이터베이스 엔진 생성 실패: {e}")
-		logger.info("⚠️ 동기 데이터베이스 엔진으로 대체합니다.")
-	
-	# 동기 엔진 생성 (비동기 실패 시 또는 호환성을 위해)
-	try:
-		engine = create_database_engine()
-		SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-		logger.info("✅ 동기 데이터베이스 엔진 생성 완료")
-	except Exception as e:
-		logger.error(f"❌ 동기 데이터베이스 엔진 생성 실패: {e}")
-		# 최후의 수단: 기본 설정으로 엔진 생성
-		try:
-			engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
-			SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-			logger.info("✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료")
-		except Exception as e2:
-			logger.error(f"❌ 모든 데이터베이스 연결 시도 실패: {e2}")
-			raise e2
-
-# Dependency to get the database session
-
-# 데이터베이스 세션 의존성
-def get_db():
-	db = SessionLocal()
-	try:
-		yield db
-	except Exception as e:
-		logger.error(f"⚠️ 데이터베이스 세션 오류: {e}")
-		db.rollback()
-		raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-	finally:
-		db.close()
+try:
+	global async_engine, AsyncSessionLocal
+	async_engine = create_async_engine(ASYNC_DATABASE_URLS, echo=True)
+	AsyncSessionLocal = async_sessionmaker(
+		async_engine, 
+		class_=AsyncSession, 
+		expire_on_commit=False
+	)
+	logger.info("✅ 비동기 데이터베이스 엔진 생성 완료")
+except Exception as e:
+	logger.error(f"❌ 비동기 연결 URL:{ASYNC_DATABASE_URLS} 실패: {e}")
+ 
 
 # 비동기 데이터베이스 세션 의존성
 async def get_async_db():
@@ -147,22 +57,17 @@ async def get_async_db():
 		try:
 			yield db
 		except Exception as e:
-			logger.error(f"⚠️ 비동기 데이터베이스 세션 오류: {e}")
+			logger.error(f"⚠️ 데이터베이스 세션 오류: {e}")
 			await db.rollback()
 			raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-initialize_database_engines()
-
-model.Base.metadata.create_all(bind=engine)
-
 # FastAPI app instance
 app = FastAPI(
-	title="FastAPI @base API",
-	description="@base Management",
-	version="@version|0.0.1",
+	title="@base.title",
+	description="@base.desc",
+	version="@base.version|[1.0.0]",
 	docs_url='/swagger', openapi_url='/api/openapi.json'
-    @root_path ? {, root_path='/api/v1'}
-)
+) #root_path='/api/v1'
 
 app.add_middleware(
 	CORSMiddleware,
@@ -171,11 +76,18 @@ app.add_middleware(
 	allow_methods=["*"],
 	allow_headers=["*"],
 )
+
 templates = Jinja2Templates(directory="templates")
 
 # JWT Bearer 토큰
+SECRET_KEY = "your-secret-key-here-change-in-production"  # 실제 운영환경에서는 환경변수로 관리
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 security = HTTPBearer()
 server_running = True
+
+logger.info(f'@base.title #FAST API START => PID: {os.getpid()}')
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
 	"""현재 인증된 사용자 조회"""
@@ -189,16 +101,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 		userid: str = payload.get("sub")
 		if userid is None:
 			raise credentials_exception
-		token_data = auth.TokenData(userid=userid)
+		token_data = jwtModule.TokenData(userid=userid)
 	except JWTError:
 		raise credentials_exception
 	
-	adminUser = auth.get_adminUser(userid=token_data.userid)
+	adminUser = jwtModule.get_adminUser(userid=token_data.userid)
 	if adminUser is None:
 		raise credentials_exception
 	return adminUser
 
-async def get_current_active_user(current_user: auth.AdminUser = Depends(get_current_user)):
+async def get_current_active_user(current_user: jwtModule.AdminUser = Depends(get_current_user)):
 	"""현재 활성 사용자 조회"""
 	if current_user.disabled:
 		raise HTTPException(status_code=400, detail="Inactive user")
@@ -212,7 +124,7 @@ async def shutdown_background():
 	
 #> EndPoint
 @app.post("/shutdown")
-async def shutdown_server(current_user: auth.AdminUser = Depends(get_current_active_user)):
+async def shutdown_server(current_user: jwtModule.AdminUser = Depends(get_current_active_user)):
 	"""서버를 안전하게 종료합니다. (인증된 사용자만 가능)"""
 	global server_running
 	logger.info(f"🛑 서버 종료 요청 수신: user={current_user.username}")
@@ -231,12 +143,12 @@ async def shutdown_server(current_user: auth.AdminUser = Depends(get_current_act
 def login(request : Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
-@app.post("/login", response_model=auth.Token)
-async def login_for_access_token(userInfo: auth.UserLogin):
+@app.post("/login", response_model=jwtModule.Token)
+async def login_for_access_token(userInfo: jwtModule.UserLogin):
 	"""사용자 로그인 및 JWT 토큰 발급"""
 	logger.info(f"로그인 시도: username={userInfo.userid}")
 	try:
-		user = auth.authenticate_user(userInfo.userid, userInfo.password)
+		user = jwtModule.authenticate_user(userInfo.userid, userInfo.password)
 		if not user:
 			logger.warning(f"로그인 실패: 잘못된 사용자명 또는 비밀번호 - {userInfo.username}")
 			raise HTTPException(
@@ -244,8 +156,8 @@ async def login_for_access_token(userInfo: auth.UserLogin):
 				detail="Incorrect username or password",
 				headers={"WWW-Authenticate": "Bearer"},
 			)        
-		access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-		access_token = auth.create_access_token(
+		access_token_expires = timedelta(minutes=jwtModule.ACCESS_TOKEN_EXPIRE_MINUTES)
+		access_token = jwtModule.create_access_token(
 			data={"sub": user.userid}, expires_delta=access_token_expires
 		)        
 		logger.info(f"로그인 성공: user={userInfo}")
@@ -256,6 +168,7 @@ async def login_for_access_token(userInfo: auth.UserLogin):
 		logger.error(f"로그인 처리 중 오류: {e}")
 		raise HTTPException(status_code=500, detail="Login processing error")
 
+###################### USER #######################
 @modelChanage {
 #CRUD MODEL> @(modelName) Endpoint ----------------------------
 @app.get("/@(modelName)_list/", response_model=List[model.@(modelName)])

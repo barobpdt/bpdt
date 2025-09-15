@@ -5,6 +5,8 @@
 @python.cmdPip('pip install passlib')
 @python.cmdPip('pip install python-multipart')
 @python.cmdPip('pip install bcrypt==4.0.1') 
+@python.cmdPip('pip install aiosqlite')
+@python.cmdPip('pip install "python-jose[cryptography]"')
 
 
 ## fastApi 실행

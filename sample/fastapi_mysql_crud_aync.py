@@ -20,7 +20,6 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 
-
 # JWT 설정
 SECRET_KEY = "your-secret-key-here-change-in-production"  # 실제 운영환경에서는 환경변수로 관리
 ALGORITHM = "HS256"
@@ -31,8 +30,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT Bearer 토큰
 security = HTTPBearer()
-
-
 
 sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding = 'utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding = 'utf-8')

@@ -23,9 +23,10 @@ import asyncio
 from fapi_logger import setup_logging
 from datetime import datetime, timedelta
 
+@base.imports
 
 localPath = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-# sys.path.insert(0, localPath)
+sys.path.insert(0, localPath)
 
 
 # 로거 초기화 (가장 먼저 실행)
@@ -33,113 +34,22 @@ logger = setup_logging()
 # model.Base.metadata.create_all(bind=engine)
 pid = os.getpid()
 # 비동기 데이터베이스 URL
-ASYNC_DATABASE_URLS = [ "sqlite+aiosqlite:///./test.db" ]
-DATABASE_URLS 		= [ "sqlite:///./test.db" ]
-
-# 첫 번째 연결 문자열 사용
-ASYNC_DATABASE_URL = ASYNC_DATABASE_URLS[0]
-DATABASE_URL = DATABASE_URLS[0]
-
+ASYNC_DATABASE_URLS = '@base.dbUrl|[sqlite+aiosqlite:///./test.db]'
+# DATABASE_URLS 		= [ "sqlite:///./test.db" ]
+ 
 # 비동기 데이터베이스 엔진 생성
-def create_async_database_engine():
-	"""비동기 데이터베이스 엔진을 생성합니다."""
-	for i, url in enumerate(ASYNC_DATABASE_URLS, 1):
-		try:
-			logger.info(f"🔍 비동기 데이터베이스 연결 시도 {i}: {url}")
-			
-			engine = create_async_engine(url, echo=True)
-			'''	
-				url,
-				pool_pre_ping=True,
-				pool_recycle=300,
-				pool_timeout=30,
-				max_overflow=10,
-				pool_size=5,
-				echo=True,  # SQL 로그 비활성화 (성능 향상 False 설정)
-				connect_args={"connect_timeout": 30, "read_timeout": 30, "write_timeout": 30}
-			'''
-			
-			logger.info(f"✅ 비동기 데이터베이스 연결 성공! (연결 {i})")
-			return engine
-			
-		except Exception as e:
-			logger.error(f"❌ 비동기 연결 {i} 실패: {e}")
-			if i == len(ASYNC_DATABASE_URLS):
-				logger.error("❌ 모든 비동기 연결 시도 실패")
-				raise e
-			continue
-
-# 동기 데이터베이스 엔진 생성 (기존 호환성용)
-def create_database_engine():
-	"""동기 데이터베이스 엔진을 생성합니다."""
-	for i, url in enumerate(DATABASE_URLS, 1):
-		try:
-			logger.info(f"🔍 동기 데이터베이스 연결 시도 {i}: {url}")
-			
-			engine = create_engine(url)
-			
-			# 연결 테스트
-			with engine.connect() as conn:
-				conn.execute(text("SELECT 1"))
-			
-			logger.info(f"✅ 동기 데이터베이스 연결 성공! (연결 {i})")
-			return engine
-			
-		except Exception as e:
-			logger.error(f"❌ 동기 연결 {i} 실패: {e}")
-			if i == len(DATABASE_URLS):
-				logger.error("❌ 모든 동기 연결 시도 실패")
-				raise e
-			continue
-
-# 데이터베이스 엔진 초기화 (개선된 버전)
-def initialize_database_engines():
-	"""데이터베이스 엔진들을 초기화합니다."""	
-	# 비동기 엔진 생성 시도
-	global async_engine, engine, AsyncSessionLocal, SessionLocal    
-	# 비동기 엔진 생성 시도
-	async_engine = None
-	try:
-		async_engine = create_async_database_engine()
-		AsyncSessionLocal = async_sessionmaker(
-			async_engine, 
-			class_=AsyncSession, 
-			expire_on_commit=False
-		)
-		logger.info("✅ 비동기 데이터베이스 엔진 생성 완료")
-	except Exception as e:
-		logger.error(f"❌ 비동기 데이터베이스 엔진 생성 실패: {e}")
-		logger.info("⚠️ 동기 데이터베이스 엔진으로 대체합니다.")
-	
-	# 동기 엔진 생성 (비동기 실패 시 또는 호환성을 위해)
-	try:
-		engine = create_database_engine()
-		SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-		logger.info("✅ 동기 데이터베이스 엔진 생성 완료")
-	except Exception as e:
-		logger.error(f"❌ 동기 데이터베이스 엔진 생성 실패: {e}")
-		# 최후의 수단: 기본 설정으로 엔진 생성
-		try:
-			engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
-			SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-			logger.info("✅ 기본 설정으로 동기 데이터베이스 엔진 생성 완료")
-		except Exception as e2:
-			logger.error(f"❌ 모든 데이터베이스 연결 시도 실패: {e2}")
-			raise e2
-
-# Dependency to get the database session
-
-# 데이터베이스 세션 의존성
-def get_db():
-	db = SessionLocal()
-	try:
-		yield db
-	except Exception as e:
-		logger.error(f"⚠️ 데이터베이스 세션 오류: {e}")
-		db.rollback()
-		raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-	finally:
-		db.close()
+try:
+	global async_engine, AsyncSessionLocal
+	async_engine = create_async_engine(ASYNC_DATABASE_URLS, echo=True)
+	AsyncSessionLocal = async_sessionmaker(
+		async_engine, 
+		class_=AsyncSession, 
+		expire_on_commit=False
+	)
+	logger.info("✅ 비동기 데이터베이스 엔진 생성 완료")
+except Exception as e:
+	logger.error(f"❌ 비동기 연결 URL:{ASYNC_DATABASE_URLS} 실패: {e}")
+ 
 
 # 비동기 데이터베이스 세션 의존성
 async def get_async_db():
@@ -147,19 +57,18 @@ async def get_async_db():
 		try:
 			yield db
 		except Exception as e:
-			logger.error(f"⚠️ 비동기 데이터베이스 세션 오류: {e}")
+			logger.error(f"⚠️ 데이터베이스 세션 오류: {e}")
 			await db.rollback()
 			raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-initialize_database_engines()
-
 # FastAPI app instance
 app = FastAPI(
-	title="FastAPI Sqlite CRUD Sample",
-	description="A simple CRUD application using FastAPI and Sqlite with QR User Management",
-	version="1.0.0",
+	title="@base.title",
+	description="@base.desc",
+	version="@base.version|[1.0.0]",
 	docs_url='/swagger', openapi_url='/api/openapi.json'
 ) #root_path='/api/v1'
+
 app.add_middleware(
 	CORSMiddleware,
 	allow_origins=["*"],
@@ -167,11 +76,18 @@ app.add_middleware(
 	allow_methods=["*"],
 	allow_headers=["*"],
 )
+
 templates = Jinja2Templates(directory="templates")
 
 # JWT Bearer 토큰
+SECRET_KEY = "your-secret-key-here-change-in-production"  # 실제 운영환경에서는 환경변수로 관리
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 security = HTTPBearer()
 server_running = True
+
+logger.info(f'@base.title #FAST API START => PID: {os.getpid()}')
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
 	"""현재 인증된 사용자 조회"""
@@ -253,21 +169,15 @@ async def login_for_access_token(userInfo: jwtModule.UserLogin):
 		raise HTTPException(status_code=500, detail="Login processing error")
 
 ###################### USER #######################
-@app.get("/users/", response_model=List[schema.User])
+@modelChanage {
+#CRUD MODEL> @(modelName) Endpoint ----------------------------
+@app.get("/@(modelName)_list/", response_model=List[model.@(modelName)])
 async def get_users(skip:int=0, limit:int=0, db:AsyncSessionLocal = Depends(get_async_db)):
-	user_all = await crud.get_users(db,skip=skip,limit=limit)
-	result = []
-	for user in user_all:
-		try:
-			result.append(schema.User.model_validate(user))
-		except Exception as e:
-			logger.info(f'@@ user validate exception {user} - {e}')
-	logger.info(f'@@ get_users result = {result}')
-	return result
+	return await crud.get_users(db,  skip=skip,limit=limit)
 
-@app.get("/users/{user_id}/")
+@app.get("/@(modelName)/{@(modelName)id}/")
 async def get_user(user_id:int, db:AsyncSessionLocal = Depends(get_async_db)):
-	user_sel = await crud.get_user(db,user_id =user_id )
+	user_sel = await crud.get_@(modelName)(db, @(modelName)id )
 	if user_sel is None:
 		raise HTTPException(status_code=404, detail="User not found")
 	return user_sel
@@ -296,34 +206,7 @@ async def delete_user(user_id: int, db:AsyncSessionLocal = Depends(get_async_db)
 		raise HTTPException(status_code=404, detail="User not found")
 	await crud.delete_user(db, user_sel)
 	return {"message": "User deleted successfully"}
-
-'''
-####################### POST #######################
-@app.get("/posts/", response_model=list[schema.Post])
-async def get_posts(skip:int=0,limit:int=0,db:AsyncSessionLocal = Depends(get_async_db)):
-	posts = crud.get_posts(db,skip=skip,limit=limit)
-	return posts
-
-@app.post("/users/{user_id}/posts/",response_model=schema.Post)
-async def post_post_for_user(user_id:int, post:schema.PostCreate, db:AsyncSessionLocal = Depends(get_async_db)):
-	return crud.create_user_post(db=db,user_id=user_id, post=post)
-
-@app.put("/posts/{post_id}/",response_model=schema.Post)
-async def update_post(post_id: int, updated_post: schema.PostCreate, db:AsyncSessionLocal = Depends(get_async_db)):
-	db_post = crud.get_post(db, post_id)
-	if db_post is None:
-		raise HTTPException(status_code=404, detail="Post not found")
-	updated_post = crud.update_post(db, db_post, updated_post)
-	return updated_post
-
-@app.delete("/posts/{post_id}/")
-async def delete_post(post_id: int, db:AsyncSessionLocal = Depends(get_async_db)):
-	db_post = crud.get_post(db, post_id)
-	if db_post is None:
-		raise HTTPException(status_code=404, detail="Post not found")
-	crud.delete_post(db, db_post)
-	return {"message": "Post deleted successfully"}
-'''
+} 
 
 if __name__ == "__main__":
 	import uvicorn
