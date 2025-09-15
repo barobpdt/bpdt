@@ -503,6 +503,38 @@ _dbExec(db,sql,node) {
 	return true;
 }
 
+@python.setPath(&s) {
+	s.findPos("\n")
+	s.ch()
+	print("s==$s")
+	if(lineCheck(s,'>')) {
+		ss=s.findPos('>').trim()
+		path = ss.replace('\','/')
+		pp=pythonPath("$path/AppData/Local/Programs/Python")
+		print("@@ python path == $pp", path)
+		if(pp ) {
+			conf('python.path', pp, true)
+		}
+	}
+	pythonPath = func(basePath) {
+		pp=''
+		fo=Baro.file('jobs')
+		print("xxxxxxxxxxxxxx python path start : $basePath")
+		fo.list(basePath,func(info) {
+			while(info.next()) {
+				info.inject(type, name, fullPath)
+				print("@@ name==$name $type")
+				if(type=='folder') {
+					ss=name.lower()
+					if(ss.start('python')) {
+						return pp.add(fullPath)
+					}
+				}
+			}
+		});
+		return pp;
+	};
+}
 
 @python.cmdExec(param) {
 	map=object('baro.objectMap')
@@ -566,26 +598,6 @@ _dbExec(db,sql,node) {
 }
 @python.result(s) {
 	print("@@ python result :$s")
-}
- 
-@parse.youtubeSource(&s) {
-	url = s.findPos('=>')
-	print("YOUTUBE source URL:$url 분석시작")
-	not(s.ch()) return;
-	node = this
-	node.fullpath='c:/temp/youtubeSource.html'
-	fileWrite(node.fullpath, s)
-	print(">> job.addPost start", node.fullpath)
-	// @job.addPost('openSource', this)
-	while(s.valid()) {
-		s.findPos('<a data-testid="next-link"') not(s.ch()) break;
-		s.findPos('<img src=')
-		c=s.ch()
-		if(c.eq()) {
-			img=s.match()
-			print("image URL:$img")
-		}
-	}
 }
 
 @job.openSource#post(node) {
