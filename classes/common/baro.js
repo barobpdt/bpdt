@@ -41,22 +41,27 @@ log(&s) {
 	}
 	print("#log $tm>>$line")
 }
-@baro.val() {
+@baro.lineVal() {
 	c=s.ch()
 	if(c.eq()) {
 		v=s.match()
 		c=s.ch()
 		if(c.eq(',',';')) s.incr()
-	} else if(lineEndCheck(s,'//')) {
+	} else if(lineCheck(s,'//')) {
 		v=s.findPos('//').trim()
 		s.findPos("\n")
-	} else if(lineEndCheck(s,',')) {
+	} else if(lineCheck(s,',')) {
 		v=s.findPos(',').trim()
 	} else {
 		v=s.findPos("\n").trim()
 	}
-	log("baro val => $v")
+	log("baro lineVal => $v")
 	return v;
+}
+@baro.isFunc(&s) {
+	c=s.next().ch()
+	while(c.eq('.')) c=s.incr().next().ch();
+	return c.eq('(');
 }
 @fapi.parseInfo(node, &s) {
 	node.addNode('table')
@@ -68,14 +73,7 @@ log(&s) {
 			if(c.eq('/')) s.findPos("\n") else s.match()
 			continue;
 		}
-		if(_isVar(s)) {
-			if(lineEndCheck(s,':')) {
-				k=s.findPos(':').trim()
-			} else {
-				k=s.findPos('=').trim()
-			}
-			v=@baro.val()
-		} else if(_isNode(s)) {
+		if(_isInfo(s)) {
 			k=s.findPos('{',0,1).trim()
 			v=s.match(1)
 			if(k.eq('endpoint')) k='route'
@@ -87,25 +85,104 @@ log(&s) {
 			}
 			fc(node,v)
 		} else {
-			break;
+			if(lineCheck(s,':')) {
+				k=s.findPos(':').trim()
+				v=@baro.lineVal()
+			} else {
+				k=s.findPos('=').trim()
+			}
+			
 		}
 	}
 	
-	_isNode = func(s) {
+	_isInfo = func(s) {
 		c=s.next().ch()
 		return c.eq('{');
-	};
-	_isVar = func(s) {
-		c=s.next().ch()
-		return c.eq(':','=')
-	};
+	}; 
 }
 /*
+	#comment
 	class:table
 		*field : int, pk, uuid, unique, index, text, now, dtm, str(n), fk(), list(model), rel(), def()
 */
 @fapi.table#info(node, &s) {
-	
+	if( lineBlankCheck(s)) {
+		s.findPos("\n")
+	}
+	indent = indentCount(s)
+	comment = ''
+	cur=null
+	while(s.valid()) {
+		if(lineBlankCheck(s)) {
+			s.findPos("\n")
+			continue;
+		}
+		cnt = indentCount(s)		
+		c=s.ch()
+		if(c.eq('#')) {
+			while(c.eq('#')) c=s.incr().ch();
+			comment = s.findPos("\n").trim()
+			continue;
+		}
+		if(cnt<indent ) {
+			continue
+		}
+		print(">> $indent $cnt ")
+		if( cnt.eq(indent) ) {
+			if(lineCheck(s,':')) {
+				cnm = s.findPos(':').trim()
+				tnm = @baro.lineVal()
+			} else {
+				cnm = @baro.lineVal()
+				tnm = cnm
+			}
+			print("xx",cnm, fnm)
+			cur=node.addNode(cnm)
+			cur.set('tableComment', comment)
+			comment=''
+		} else if(cur) {
+			notnull = false
+			if(c.eq('*')) {
+				notnull = true
+				c=s.incr().ch()
+			}
+			field= s.move()
+			sub=cur.addNode(field)
+			sub.set('notnull', notnull)
+			sub.set('field', field)
+			parseColumn(sub)
+			print("xxxxx field==$field")
+		} else {
+			log("table info error $s", cnt, indent)
+			break;
+		}
+	}
+	parseColumn = func(sub) {
+		while(s.valid()) {
+			if(@baro.isFunc(s)) {
+				k=s.findPos('(',0,1).trim()
+				v=s.match()
+			} else {
+				k=s.move()
+				v=true
+			}
+			sub.set(k,v)
+			print(">>parse column: $sub")
+			if(lineBlankCheck(s)) {
+				s.findPos("\n")
+				break;
+			}			
+			c=s.ch()
+			if(c.eq('/')) {
+				c=s.ch(1)
+				if(c.eq('/')) cmt = s.findPos("\n") else cmt=s.match();
+				sub.set('comment', cmt.trim())
+				s.findPos("\n")
+				break;
+			}
+			if(c.eq(',')) s.incr()
+		}
+	};
 }
 @fapi.route$info(node, &s) {
 
