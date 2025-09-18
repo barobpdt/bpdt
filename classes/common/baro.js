@@ -37,25 +37,31 @@ log(&s) {
 	a=args()
 	asize=a.size()
 	if(asize>1) {
-		while(n=1,asize) line.add("\r\n\t[$n]: ",a.get(n))
+		while(n=1,asize) line.add(", ",a.get(n))
+		print("#log $tm>>($line)")
+	} else {
+		print("#log $tm>>$line")
 	}
-	print("#log $tm>>$line")
 }
 @baro.lineVal() {
 	c=s.ch()
+	isComma = func(s) {
+		c=s.next().ch()
+		while(c.eq('.')) c=s.incr().next().ch()
+		return c.eq(',')
+	};
 	if(c.eq()) {
 		v=s.match()
 		c=s.ch()
 		if(c.eq(',',';')) s.incr()
+	} else if(isComma(s)) {
+		v=s.findPos(',').trim()
 	} else if(lineCheck(s,'//')) {
 		v=s.findPos('//').trim()
 		s.findPos("\n")
-	} else if(lineCheck(s,',')) {
-		v=s.findPos(',').trim()
 	} else {
 		v=s.findPos("\n").trim()
 	}
-	log("baro lineVal => $v")
 	return v;
 }
 @baro.isFunc(&s) {
@@ -63,21 +69,30 @@ log(&s) {
 	while(c.eq('.')) c=s.incr().next().ch();
 	return c.eq('(');
 }
+@baro.isInfo(&s) {
+	c=s.next().ch()
+	while(c.eq('.')) c=s.incr().next().ch();
+	return c.eq('{');
+}
 @fapi.parseInfo(node, &s) {
-	node.addNode('table')
-	node.addNode('route')
+	node.addNode('@table')
+	node.addNode('@route')
 	while(s.valid()) {
+		if(lineBlankCheck(s)) {
+			s.findPos("\n")
+			continue;
+		}
 		c=s.ch()
 		if(c.eq('/')) {
 			c=s.ch(1)
 			if(c.eq('/')) s.findPos("\n") else s.match()
 			continue;
 		}
-		if(_isInfo(s)) {
+		if(@baro.isInfo(s)) {
 			k=s.findPos('{',0,1).trim()
 			v=s.match(1)
 			if(k.eq('endpoint')) k='route'
-			fnm=_s('@fapi.$key#info')
+			fnm=_s('@fapi.$k#info')
 			fc=call(fnm)
 			not(typeof(fc,'func'))  {
 				print("@@ [FastAPI 분석정보 오류] $fnm 함수를 등록하세요 ")
@@ -85,30 +100,35 @@ log(&s) {
 			}
 			fc(node,v)
 		} else {
-			if(lineCheck(s,':')) {
+			log("parse => $s")
+			if( lineCheck(s,':')) {
 				k=s.findPos(':').trim()
 				v=@baro.lineVal()
 			} else {
-				k=s.findPos('=').trim()
+				k=@baro.lineVal()
+				v=true
 			}
-			
+			log(k,v)
+			node.set(k,v)
+			not(lineBlankCheck(s)) {
+				c=s.ch()
+				if(c.eq(',',';')) s.incr()
+			}
 		}
 	}
-	
-	_isInfo = func(s) {
-		c=s.next().ch()
-		return c.eq('{');
-	}; 
 }
 /*
 	#comment
 	class:table
 		*field : int, pk, uuid, unique, index, text, now, dtm, str(n), fk(), list(model), rel(), def()
 */
-@fapi.table#info(node, &s) {
+@fapi.table#info(root, &s) {
 	if( lineBlankCheck(s)) {
 		s.findPos("\n")
 	}
+	node=root.get('@table')
+	not(typeof(node,'node')) node=root.addNode('@table')
+	node.removeAll(true)
 	indent = indentCount(s)
 	comment = ''
 	cur=null
@@ -130,14 +150,14 @@ log(&s) {
 		print(">> $indent $cnt ")
 		if( cnt.eq(indent) ) {
 			if(lineCheck(s,':')) {
-				cnm = s.findPos(':').trim()
-				tnm = @baro.lineVal()
+				tableClass = s.findPos(':').trim()
+				tableName = @baro.lineVal()
 			} else {
-				cnm = @baro.lineVal()
-				tnm = cnm
+				tableClass = @baro.lineVal()
+				tableName = tableClass
 			}
-			print("xx",cnm, fnm)
-			cur=node.addNode(cnm)
+			log('table class:', tableClass, tableName)
+			cur=node.addNode(tableClass)
 			cur.set('tableComment', comment)
 			comment=''
 		} else if(cur) {
@@ -146,12 +166,15 @@ log(&s) {
 				notnull = true
 				c=s.incr().ch()
 			}
-			field= s.move()
+			if(lineCheck(s,':')) {
+				field=s.findPos(':').trim()
+			} else {
+				field=@baro.lineVal()
+			}
 			sub=cur.addNode(field)
 			sub.set('notnull', notnull)
 			sub.set('field', field)
 			parseColumn(sub)
-			print("xxxxx field==$field")
 		} else {
 			log("table info error $s", cnt, indent)
 			break;
@@ -167,7 +190,6 @@ log(&s) {
 				v=true
 			}
 			sub.set(k,v)
-			print(">>parse column: $sub")
 			if(lineBlankCheck(s)) {
 				s.findPos("\n")
 				break;

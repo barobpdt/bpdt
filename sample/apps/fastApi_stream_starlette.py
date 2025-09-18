@@ -3,14 +3,97 @@ from fastapi_socketio import SocketManager
 from loguru import logger
 from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
+'''
+#https://github.com/Theofilusarifin/real-time-ai-using-socket
+sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="aiohttp")
+app = web.Application()
+sio.attach(app)
+@sio.event
+async def connect(sid, auth):
+    username = auth.get("username")
+    if not username:
+        raise ConnectionRefusedError("Missing username")
+    await sio.save_session(sid, {"username": username})
+    await sio.enter_room(sid, "default_room")
+    print(f"[{sid}] : {username} connected")
 
+@sio.event
+async def chat_message(sid, data):
+    session = await sio.get_session(sid)
+    username = session.get("username", "Unknown")
+    user_message = data.get("message", "").strip()
+    
+    # Just broadcast the user message to everyone
+    await sio.emit(
+        "broadcast_message",
+        {"user": username, "message": user_message},
+        room="default_room",
+        skip_sid=sid,
+    )
+
+if "@gemini" in user_message.lower():
+    try:
+        question = user_message.split("@gemini", 1)[1].strip()
+        response = model.generate_content(question, stream=True)
+        for chunk in response:
+            if hasattr(chunk, "text") and chunk.text:
+                # Relay chunk to clients
+                await sio.emit("gemini_stream", {"data": chunk.text}, room="default_room")
+
+        # Signal clients that streaming is done
+        await sio.emit("stream_finished", room="default_room")
+
+    except Exception as e:
+        # If anything goes wrong with the LLM call, broadcast error
+        await sio.emit("broadcast_message", {
+            "user": "Gemini",
+            "message": f"Error: {str(e)}"
+        }, room="default_room")    
+
+@sio.event 
+# 로컬에서  socket.emit('send_image'); 이렇게 요청하면 이게 실행됨
+async def send_image(sid):
+    IMAGE_PATH = "win.png"
+    # 이미지 파일을 바이너리 모드로 읽음
+    if os.path.exists(IMAGE_PATH):
+        with open(IMAGE_PATH, "rb") as f:
+            image_data = f.read()
+        await sio.emit('receive_image', image_data, room=sid)
+    else:
+        await sio.emit('receive_image', {'error': 'Image not found'}, room=sid)
+
+
+// 서버에서 이미지 수신
+        socket.on('receive_image', function(data) {
+            const arrayBufferView = new Uint8Array(data);  // 바이너리 데이터를 Uint8Array로 변환
+            const blob = new Blob([arrayBufferView], { type: "image/jpeg" });  // Blob 객체 생성
+            const urlCreator = window.URL || window.webkitURL;
+            const imageUrl = urlCreator.createObjectURL(blob);  // Blob을 사용해 이미지 URL 생성
+
+            // 이미지를 화면에 표시
+            document.getElementById('image').src = imageUrl;
+        });
+'''
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="../public"), name="static")
 socket_manager = SocketManager(app=app, mount_location="/ws")
 
 
 connected_users = []
+@app.sio.event
+async def join_room(sid, room_name):
+    app.sio.enter_room(sid, room_name)
+    print(f"Client {sid} joined room: {room_name}")
+    await app.sio.emit("room_joined", {"room": room_name, "sid": sid}, room=room_name) 
+    # Confirm to the joining client
 
+@app.sio.event
+async def send_message_to_room(sid, data):
+    message = data.get("message")
+    room = data.get("room")
+    if message and room:
+        print(f"Emitting '{message}' to room '{room}' from {sid}")
+        await app.sio.emit("room_message", {"sender_sid": sid, "message": message}, room=room)
 
 @app.sio.on("connect")
 async def connect(sid, environ):
