@@ -65,7 +65,7 @@ class ParticleManager:
         self.particles.extend(particles)
 
     def draw(self, surface):
-        surface.fblits([(particle.image, particle.pos) for particle in self.particles])
+        surface.blits([(particle.image, particle.pos) for particle in self.particles])
     
     def __len__(self):
         return len(self.particles)
@@ -85,7 +85,7 @@ class Game:
         
         if self.fps > 60:
         
-            self.pm.add([Particle((random.randint(0, screen_size.x), -10),
+            self.pm.add([Particle((random.randint(0, int(screen_size.x)), -10),
                                 (0, 300),
                                 random.randint(1, 3),
                                 random.choice(['darkblue', 'blue', 'darkblue']))
