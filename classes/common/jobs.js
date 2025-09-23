@@ -175,7 +175,7 @@
 @job.cmdRun(param) {
 	if(_tagCheck(param,'process')) {
 		args(cmd,command,callback)
-		if(typeof(callback,'func')) {
+		if( typeof(callback,'func')) {
 			cmd.set('@callbackResult', callback)
 		}
 		cmd.set('@logPrint', true)
@@ -648,4 +648,86 @@ _dbExec(db,sql,node) {
 			print("@python.execResult 실행결과처리함수 @parse.$type 함수 미정의")
 		}
 	}
+}
+
+funcParam(param) {
+	if( typeof(param,'node') ) {
+		asize=args().size()
+		if(asize==3) {			
+			args(node,k,v)
+			node.set("@$k", v)
+		} else {
+			fn=null
+			if(asize==1) {
+				args(node)
+				fn=Cf.funcNode('parent')
+			} else {
+				args(node, name)
+				if(typeof(name,'func')) {
+					fn=name
+				} else {
+					k=name
+					fnParent=Cf.funcNode('parent')
+					v=fnParent.get(k)
+					node.set("@$k", v)
+				}
+			}
+			if( typeof(fn,'func') ) {
+				node.set('@currentFunc', fn)
+			}
+		}
+		return;
+	} 
+	k=param
+	v=this.get("@$k")
+	not(v) {		
+		fn = this.get('@currentFunc')
+		if(typeof(fn,'func')) {
+			v=fn.get(k);
+		}
+	}
+	return v;
+}
+@job.killPort(port) {
+	c=@job.cmdRun('cd') 
+	funcParam(c,'port')
+	@job.cmdRun(c, _s('netstat -ano | findstr $port'), func(&s) {
+		port = funcParam('port')
+		print("kill port ", this, port)
+		cc=@job.cmdRun('cd')
+		while(s.valid()) {		
+			s.findPos('TCP')
+			not(s.ch()) break;
+			s.findPos(':')
+			curPort=s.move()
+			if(port.eq(curPort) ) {
+				line=s.findPos("\n")
+				line.findPos('LISTENING')
+				pid=line.trim()
+				print("pid:$pid")
+				if(pid) {
+					@job.cmdRun(cc,_s('taskkill /PID $pid /F'))
+				}
+			}
+		}
+	});
+} 
+@job.killProg(name) {
+	c=@job.cmdRun('cd')
+	funcParam(c, 'name')
+	@job.cmdRun(c, _s('tasklist | findstr $name'), func(&s) {
+		name = funcParam('name')
+		cc=@job.cmdRun('cd')
+		while(s.valid()) {
+			s.findPos(name)
+			c=s.ch() not(c) break;
+			if(c.eq('.')) {
+				ext=s.incr().move()
+				name=Cf.val(name,".$ext")
+			}
+			pid = s.move()
+			print("pid:$pid")
+			@job.cmdRun(cc,_s('taskkill /im $pid /F'))
+		}
+	});
 }

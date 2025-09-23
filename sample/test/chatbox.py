@@ -104,6 +104,7 @@ class ChatboxWidget(QWidget):
 		self.scrollPos = 0
 		self.maxHeight = 0
 		self.lineGap = 10
+		self.mousePosArr = []
 		self.updateTime = 60
 		self.runCheck = True
 		self.updateCheck = False
@@ -155,9 +156,11 @@ class ChatboxWidget(QWidget):
 		self.log(f'@@ mouse release')
 
 	def mouseMoveEvent(self, event):
-		if self.mouseButton=='left':
-			w, h = self.surfaceMain.get_size()
-			x, y = event.x(), event.y()
+		x, y = event.x(), event.y()
+		if self.particleType=='spark':
+			self.mousePosArr.append((x,y))
+		elif self.mouseButton=='left':
+			w, h = self.surfaceMain.get_size()			
 			cx, cy = w//2, h//2
 			dx, dy = x-cx, y-cy
 			dist = math.sqrt(dx ** 2 + dy ** 2)
@@ -170,7 +173,7 @@ class ChatboxWidget(QWidget):
 			self.logImageRc.center = cx, cy
 			self.log(f'mouse move angle:{angle:2}, scale:{scale:.2}, self.logImageRc:{self.logImageRc}')
 			if self.mouseShift and dx>2 and dy >2 :
-				self.mouseArr.append(event.pos)
+				self.mousePosArr.append((x,y))
 		super().mouseMoveEvent(event) 
 
 	def updateWidget(self):
@@ -287,6 +290,8 @@ class ChatboxWidget(QWidget):
 
 		if self.particleType=='particle02':
 			self.render_particle02()
+		elif self.particleType=='spark':
+			self.ps.draw_spark(self.surfaceMain)
 		elif self.particleType=='dust':
 			self.ps.add_random()
 			self.ps.update()
@@ -341,6 +346,10 @@ class ChatboxWidget(QWidget):
 	def updateStop(self):
 		self.runCheck = False
 	def updateStart(self):
+		if self.particleType=='spark':
+			if len(self.mousePosArr) > 0 :
+				mx, my = self.mousePosArr.pop(0)
+				self.ps.add_spark(mx, my)
 		self.updateCheck = True
 		self.surfaceMain.fill((0,0,0,0))
 		
