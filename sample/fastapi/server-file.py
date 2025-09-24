@@ -33,6 +33,7 @@ async def cors_middleware(request call_next):
         response.headers["Access-Control-Allow-Methods"] = "*"
     return response
 '''
+
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 sio_app = socketio.ASGIApp(sio, socketio_path='/ws/socket.io') 
 app.mount("/ws", sio_app)
@@ -67,3 +68,9 @@ if __name__=="__main__":
 	uvicorn.run("server-file:app", host="0.0.0.0", port=7777, lifespan="on", reload=False)
      
 
+'''
+.well-known 설정
+mkdir -p .well-known/appspecific
+echo "{\"workspace\":{\"root\":\"${PWD}\",\"uuid\":\"`npx --package uuid uuid v4`\"}}" > .well-known/appspecific/com.chrome.devtools.json
+npx serve
+'''

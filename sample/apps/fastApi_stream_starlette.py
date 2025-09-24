@@ -149,6 +149,7 @@ def read_root():
     return FileResponse("../public/index.html")
     
 ## index.html
+'''
 <!DOCTYPE html>
 <html>
 <head>
@@ -285,3 +286,4 @@ socket.on('connect', async () => {
 </script>
 </body>
 </html>    
+'''

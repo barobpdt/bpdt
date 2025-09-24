@@ -8,6 +8,8 @@ import logging
 import os
 import signal
 
+from fastapi.responses import StreamingResponse
+import subprocess
 
 from av import VideoFrame
 import argparse
@@ -31,6 +33,60 @@ logger = logging.getLogger("pc")
 pcs = set()
 # relay = MediaRelay()
 
+'''
+# 비디오 파일 경로 및 코덱 설정
+fourcc = cv2.VideoWriter_fourcc(*'mp4v') # MP4 코덱 지정
+fps = 20.0 # 초당 프레임 수
+frame_size = (640, 480) # 프레임 해상도 (너비, 높이)
+output_file = 'output.mp4' # 저장할 파일 이름
+
+# VideoWriter 객체 생성
+out = cv2.VideoWriter(output_file, fourcc, fps, frame_size)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    # 원하는 이미지 처리 (예: 흑백 변환)
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # 흑백 프레임을 컬러로 다시 변환하여 저장
+    gray_frame_color = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)
+    # 처리된 프레임 저장
+    out.write(gray_frame_color)
+	
+cap.release()
+out.release()	
+'''
+
+@app.get("/video_stream")
+async def video_stream():
+	def generate_video_stream():
+		# FFmpeg command to process and stream the video
+		command = [
+			"ffmpeg",
+			"-i", "input.mp4",  # Replace with your input source (file, camera, etc.)
+			"-f", "mp4",       # Output format (e.g., mp4, webm)
+			"-movflags", "frag_keyframe+empty_moov", # Essential for fragmented MP4 streaming
+			"-preset", "ultrafast", # Adjust for performance vs quality
+			"-c:v", "libx264", # Video codec
+			"-crf", "23",      # Constant Rate Factor for quality (lower is better)
+			"-r", "30",        # Frame rate
+			"-s", "640x480",   # Resolution
+			"pipe:1"           # Output to stdout
+		]
+		process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+		try:
+			while True:
+				chunk = process.stdout.read(4096)  # Read in chunks
+				if not chunk:
+					break
+				yield chunk
+		finally:
+			process.terminate()
+			process.wait()
+
+	return StreamingResponse(generate_video_stream(), media_type="video/mp4")
 
 # add transformation filters on video track
 class VideoTransformTrack(MediaStreamTrack):
