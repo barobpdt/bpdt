@@ -1,0 +1,2 @@
+2025-09-25 14:11:57,211 - fastapi_mysql_crud - INFO - create_database_engine:78 - 🔍 비동기 데이터베이스 연결 시도 postgresql://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+2025-09-25 14:11:57,402 - fastapi_mysql_crud - ERROR - create_database_engine:98 - ❌ 비동기 연결 실패: Invalid argument(s) 'pool_timeout','max_overflow','pool_size' sent to create_engine(), using configuration PGDialect_psycopg2/NullPool/Engine.  Please check that the keyword arguments are appropriate for this combination of components.
