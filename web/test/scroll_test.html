@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>SlickGrid example 12: Fill browser</title>
+<link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/> 
+<style>
+	html, body {
+	margin: 0;
+	padding: 0;
+	background-color: White;
+	overflow: auto;
+	}
+	body {
+	font: 11px Helvetica, Arial, sans-serif;
+	}
+	.container {
+		display: flex;
+    	flex-direction: column;
+		width:100%;
+		height:100vh;
+		overflow: scroll;
+	}
+	#posts {
+		width:100%;
+		height:100%;
+		padding: 16px;
+	}
+	.post {
+		padding:5px;
+		background:#eee;
+	}
+</style>
+</head>
+<body>
+	<div class="container">
+		<ul class="posts">
+
+			<div id="listEnd"></div>
+		</ul>
+	</div>
+
+<script src="/assets/js/jquery.js"></script>
+<script>
+	const API_URL = 'https://jsonplaceholder.typicode.com/posts'
+	const listEnd = document.querySelector('#listEnd'); // 관찰할 대상(요소)
+	const options = {
+		root: null, // 뷰포트를 기준으로 타켓의 가시성 검사
+		rootMargin: '0px 0px 0px 0px', // 확장 또는 축소 X
+		threshold: 0, // 타켓의 가시성 0%일 때 옵저버 실행
+	};
+	const clickId = el => {
+		const post = $(el).closest('li').data('post')
+		console.log('click id => ', post)
+	}
+
+	let page = 0;
+	const createPost = post => `<li class="post">
+		<div class="header>
+			<div class="id" onclick="clickId(this)">${post.id}</div>
+			<div class="title">${post.title}</div>
+		</div>
+		<div class="body">
+			${post.body}
+		</div>
+	</li>`
+	const target = $(listEnd)
+	const onIntersect = (entries, observer) => {
+		console.log('onIntersect ==== start', entries);
+		entries.forEach(async (entry) => {
+			if (entry.isIntersecting) {
+				console.log('무한 스크롤 실행');
+				page++;
+				console.log('page: ' + page);
+				const result = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${page}&_limit=20`)
+				const posts = await result.json()
+				if ( posts.length == 0 ) {
+					if (page === 1) post.html(`<li>no data</li>`)
+					observer.unobserve(listEnd); // 특정 대상(요소)에 대한 관찰 중단
+					return;
+				}
+				posts.forEach(post=> {
+					const li = $(createPost(post)).data('post',post)
+					console.log('li=>', li)
+					target.before(li)
+				})
+				// target.before(posts.map(createPost).join(''));
+			}
+		});
+	};
+
+	const loadPost = limit => {
+		if(!limit ) limit = 10
+		fetch(API_URL+'?limit='+limit).
+		then(res=>res.json()).
+		then(json=>showPosts(json)).
+		catch(err=>console.log('error=>', err))
+	}
+	
+	const observer = new IntersectionObserver(onIntersect, options); // 관찰자 초기화
+	window.addEventListener('DOMContentLoaded', () => {
+		// loadPost()
+		observer.observe(listEnd);
+	})
+</script>
+</body>
+</html>

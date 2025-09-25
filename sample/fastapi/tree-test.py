@@ -105,7 +105,7 @@ if __name__=='__main__':
 			users = root.children['users'] 
 			for key in users.children:
 				user = users.children[key]
-				print(f"user => {user} {user.data}")
-			print(f"Full Tree:\n{root.dump()} {users}")
+				print(f"user => {user}")
+			print(f"Full Tree:\n{root.dump()} {users.__dict__}")
 	except Exception as e:
 		print(f"exception => {e}")
