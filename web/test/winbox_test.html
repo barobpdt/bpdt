@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>SlickGrid example 12: Fill browser</title>
+<link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/> 
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+
+<link rel="stylesheet" href="/assets/winbox/css/winbox.min.css">
+<script src="/assets/winbox/js/winbox.min.js"></script>
+
+<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		background-color: White;
+		overflow: auto;
+	}
+	body {
+		font: 11px Helvetica, Arial, sans-serif;
+	}
+	.apps { display: flex; flex-direction: column; width: 100%; height:100vh }
+
+	.container { display: flex; flex-direction: column; width:100%; height:100%; overflow: auto;}
+	.wb-custom {
+		background-image: url(/assets/winbox/img/icon-github.svg);
+		background-size: 17px auto;
+	}
+	.winbox.my-theme{
+		background: #fff;
+	}
+	.winbox.my-theme .wb-body {
+		color: #fff;
+		background: #131820;
+	}
+	.winbox.my-theme .wb-title {
+		color: #000;
+	}
+	.winbox.my-theme .wb-control {
+		filter: invert(1);
+	}
+</style>
+</head>
+<body>
+	<div class="apps">
+		<div class="topbar" style="height:40px; padding: 2px 4px; border-bottom: 1px solid #aaa;">
+			<button onclick="clickBtn1()">p1</button>
+			<button onclick="clickBtn2()">p2</button>
+			<button onclick="clickBtn3()">p3</button>
+		</div>
+		<div class="container">
+			
+		</div>
+	</div>
+
+<script>
+	$(document).ready(()=>{
+		const target = $('.container')
+		const css={padding:8}
+		for(var n=0; n<100; n++) {
+			$('<div id="test_'+n+'">').css(css).html('test '+n).appendTo(target)
+		}
+	})
+
+	const clickBtn1 = () => {
+		if(cf.wb1) {
+			clog('@@ cf.wb1 => ', cf.wb1)
+			$(cf.wb1.window).show()
+			return;
+		}
+		const template = document.createElement("div");
+		template.innerHTML = `
+			<div class=wb-header>
+				<div class=wb-control>
+					<span class=wb-custom></span>
+					<span class=wb-close></span>
+				</div>
+				<div class=wb-drag>
+					<div class=wb-title></div>
+				</div>
+			</div>
+			<div class=wb-body></div>
+		`;
+		cf.wb1 = new WinBox("Custom Template", { template, class:'my-theme', x:'center', y:'center' });
+	}
+	const clickBtn2 = () => {
+		clog('@@ cf.wb1 => ',cf.wb1)
+		cf.wb1.force_close()
+	}
+	const clickBtn3 = () => {
+		getJq('popup').hide()
+	}
+
+</script>
+<div id="popup" style="position: absolute; display: none; background: #aaa;"></div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>SlickGrid example 12: Fill browser</title>
+<link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/> 
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		background-color: White;
+		overflow: auto;
+	}
+	body {
+		font: 11px Helvetica, Arial, sans-serif;
+	}
+	.apps { display: flex; flex-direction: column; width: 100%; height:100vh }
+
+	.faq-header {
+		width: 250px;
+		height: 40px;
+		background-color: #fff;
+		border: 1px solid #aaa;
+	}
+	.faq-body {
+		width: 250px;
+		height: 400px;
+		background: #fff;
+		overflow-y: scroll;
+		border: 1px solid #7b7d7f;
+	}
+	.faq-body::-webkit-scrollbar {
+		width: 7px;
+	}
+	.faq-body::-webkit-scrollbar-thumb {
+		background-color: rgba(0,0,0,0.4);
+		border-radius: 10rem;
+		border: 1px solid #fff;
+	}
+
+
+	.faq-body::-webkit-scrollbar-track-piece:start {
+		background: transparent;
+	}
+
+	.faq-body::-webkit-scrollbar-track-piece:end {
+		background: transparent;
+	}
+	.faq-question {
+		padding: 20px;
+		border-bottom: 1px solid #000;
+		line-height: 1.3;
+		color: #15191b;
+		font-size: 0.8rem;
+	}
+</style>
+</head>
+<body>
+	<div class="apps">
+		<div class="topbar" style="height:40px; padding: 2px 4px; border-bottom: 1px solid #aaa;">
+			<button onclick="clickBtn1()">p1</button>
+			<button onclick="clickBtn2()">p2</button>
+			<button onclick="clickBtn3()">p3</button>
+		</div>
+		<div class="container" style="display: flex; width: 100%; height:100%; overflow: hidden;">
+			<div class="stack_page_wrapper" style="display: flex; flex:1; overflow: hidden;">
+				<div class="stack_page_inner" style="position: relative; display: flex; width: 3000px; height:100%; flex-wrap: nowrap;">
+				</div>	
+			</div>
+		</div>
+	</div>
+
+<script>
+	const movePage = id => {
+		const width = $('.stack_page_wrapper').width()
+		const inner = $('.stack_page_inner')
+		const page =  inner.find('.'+id)
+		const index = page[0]? inner.children().index(page): -1
+		clog('@@ move ', id, page, index, width)
+		if( index!=-1) {
+			inner.animate({left:-index*width}, 400)
+		}
+		loadPage(id)
+	}
+	const loadPage = id => {
+		const width = $('.stack_page_wrapper').width()
+		const inner = $('.stack_page_inner')
+		const page =  inner.find('.'+id)
+		page.css({padding:8})
+		const div = $('<div/>').appendTo(page)
+		const listHeader = $('<div/>').addClass('faq-header').appendTo(div)
+		const listBody = $('<div/>').addClass('faq-body').appendTo(div)
+		for(var n=0; n<100; n++) {
+			$('<div/>').addClass('faq-question').html('Question '+n).appendTo(listBody)
+		}
+	}
+	const clickBtn1 = () => movePage('p1')
+	const clickBtn2 = () => movePage('p2')
+	const clickBtn3 = () => movePage('p3')
+
+	$(document).ready(()=>{
+		const container = $('.container')
+		const wrapper = $('.stack_page_wrapper')
+		const inner = $('.stack_page_inner')
+		const width=wrapper.width()
+		inner.width(10*width)
+		clog('width == '+width)
+		for(var n=0;n<10;n++) {
+			$('<div class="stack_page p'+n+'">').
+				css({width,height:'100%',background:getRandomColor()}).
+				appendTo(inner)
+		}
+	})
+</script>
+</body>
+</html>

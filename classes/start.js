@@ -189,12 +189,8 @@ _s(&s, fn, node) {
 			ss.add(_getVarValue(src,fn,node))
 			continue;
 		}
-		if(c.eq(':')) {
-			k='int'
-		} else {
-			k=s.move()
-			c=s.ch(1)
-		}
+		k=s.move()
+		c=s.ch(0)
 		if(c.eq(':')) {
 			type=k
 			k=s.incr().move()
@@ -205,6 +201,12 @@ _s(&s, fn, node) {
 				} else {
 					v=0
 				}
+			}
+		} else if(c.eq('[')) {
+			cur=fn.get(k) if(node && typeof(node,'node')) cur=node.get(k)
+			if(typeof(cur,'node')) {
+				k=s.match().trim()
+				v=_varValue(k,fn,cur)
 			}
 		} else {
 			v=_varValue(k,fn,node)

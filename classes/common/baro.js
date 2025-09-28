@@ -1,3 +1,156 @@
+@baro.tableName(&s) {
+	sz=s.size()
+	while(n=0,sz ){
+		c=s.ch(n)
+		if(c.is('upper')) {
+			if(n) ss.add('_')
+		}
+		ss.add(c.upper())
+	}
+	return ss;
+}
+@baro.getAppNode(appId) {
+	root =f.getObject("apps.$appId") if(root) return root;
+	root=object("apps.$appId")
+	root.addNode("@pages")
+	root.addNode("@apis")
+	root.addNode("@tables")
+	return root;
+}
+@baro.getPageNode(apps, pageId) {
+	if( typeof(apps,'string')) {
+		apps = @baro.getAppNode(apps)
+	}
+	not(apps) apps=_node('apps')
+	pages = apps.get("@pages")
+	page = pages.get(pageId) 
+	if(page) return page;
+	page = page.addNode(pageId)
+	page.set('pageId', pageId)
+	page.addNode('@renders')
+	page.addNode('@layout')
+	page.addNode('@funcs')
+	page.addNode('@configData')
+	return page;
+}
+@baro.loadPage(param) {
+	switch(args().size()) {
+	case 2:
+		args( pageId, fileName)
+		appId = 'baroApp')
+	case 3:
+		args(appId, pageId, fileName)
+	case 4:
+		args(appId, pageId, fileName, reload)
+	}
+	root = @baro.getAppNode(appId)
+	page = @baro.getPageNode(root, pageId)
+	modifyDt = Baro.file().modifyDate(fileName)
+	not(modifyDt) {
+		return print("@loadPage error", pageId, fileName);
+	}
+	not(reload) {
+		if( modifyDt.ne(page.get('@modifyDate')) ) return page;
+	}
+	page.set('@pageId', pageId)
+	src = fileRead(fileName) not(src) print("@@ 페이지 소스가 없습니다", pageId, fileName)
+	@baro.parsePage(page, src)
+	return page;
+}
+@baro.isAppSrc(&s) {
+	not(s.ch()) return false;
+	c=s.next().ch()
+	while(c.eq('.',':','-')) c=s.incr().next().ch();
+	if(c.eq('(')) 
+}
+
+@baro.isFuncSrc(&s) {
+	c=s.ch()
+	not(c) return false;
+	s.start('const',true)
+	s.start('var',true)
+	s.start('function',true)
+	if(c.eq('@')) s.incr().ch()
+	c=s.next().ch()
+	while(c.eq('.')) c=s.incr().next().ch();
+	if(c.eq('=')) {
+		c=s.incr().ch()
+		s.start('function',true)
+		if(c.eq('(')) {
+			s.match()
+			c=s.ch()
+			if( s.start('=>') ) return true;
+		} else if( lineEndCheck(s,'=>') ) {
+			return true;
+		} else {
+			return false;
+		}
+	} else if(c.eq('(')) {
+		s.match()
+	} else {
+		return false;
+	}
+	c=s.ch()
+	if( lineEndCheck(s,'=>') ) {
+		return true;
+	}
+	return c.eq('{')
+}
+@baro.tagEndPos(&s) {
+	sp=s.cur() 
+	c=s.incr().next().ch()
+	while(c.eq('.','-')) c=s.incr().next().ch();
+	tag = s.trim(sp+1, s.cur())
+	body = s.match("<$tag","</$tag>", 4)
+	if(typeof(body,'bool')) return;
+	return s.cur()
+}
+@baro.funcEndPos(&s) {
+	not(s.ch()) return;
+	c=s.next()
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if( c.eq('(') ) {
+			s.match()
+		} else if( c.eq('<') ) (
+			ep = @baro.tagEndPos(s)
+			not(typeof(ep,'num')) return;
+			s.pos(ep)
+		} else {
+			if(c.eq('@')) c=s.incr()
+			c=s.next().ch()
+			while(c.eq('.')) c=s.incr().next().ch()
+			if( c.eq('(') ) {
+				s.match()
+			}
+		}
+		c=s.ch()
+		if(c.eq('?',':',';')) {
+			s.incr()
+			if(c.eq(';')) return s.cur();
+			continue;
+		}
+		break;
+	}
+	return s.cur();
+}
+@baro.openNodeInfo(node, fileName) {
+	not(fileName) fileName='c:/temp/node_info.json'
+	src=toString(node, true, false)
+	not(src) return print('@@saveNodeInfo 노드데이터가 없습니다')
+	fileWrite(fileName, src)
+	node=_node()
+	node.set('@saveFileName', fileName)
+	@job.addPost('openUrl', node)
+}
+@baro.parseApp(appId, &s) {
+	app = @baro.getAppNode(appId)
+	while(s.valid()) {
+		
+	}
+	return app;
+}
+
 @proc.print(type,data) {
 	print("$type>> $data")
 }
@@ -238,4 +391,60 @@ log(&s) {
 		}
 	}
 	return ss;
+}
+@python.isStartComment(&s, move) {
+	c=s.ch()
+	if(s.start("'''",'"""')) {
+		if(s.start("'''")) {
+			s.match("'''","'''")
+		} else {
+			s.match('"""','"""')
+		}
+		return s.cur()
+	} 
+	if(c.eq('#')) {
+		s.findPos("\n")
+		return s.cur()
+	}
+	return;
+}
+@python.removeIndent() {
+	lines=_arr()
+	aa=_arr()
+	ss=''
+	ln="\r\n"
+	while(s.valid()) {
+		if(lineBlankCheck(s)) {
+			s.findPos("\n")
+			continue;
+		}
+		ep=@python.isStartComment(s)
+		if(typeof(ep,'num')) {
+			s.pos(ep)
+			continue;
+		}
+		line=s.findPos("\n").trim('right')
+		lines.add(line)
+	}
+	while(line, lines, n) {
+		a=indentText(line)
+		idx = aa.find(a)
+		if(aa.size() && idx.eq(0)) {
+			print("ss=>$ss")
+			aa.reuse()
+			ss=''
+			idx=-1;
+		}
+		if(idx<0) {
+			not(aa.size()) {
+				firstIndent = a.size()
+			}
+			aa.add(a)
+		}
+		if( firstIndent) {
+			ss.add(line.value(firstIndent),ln)
+		} else {
+			ss.add(line, ln)
+		}
+	}
 }

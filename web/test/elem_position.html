@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>SlickGrid example 12: Fill browser</title>
+<link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/> 
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		background-color: White;
+		overflow: auto;
+	}
+	body {
+		font: 11px Helvetica, Arial, sans-serif;
+	}
+	.apps { display: flex; flex-direction: column; width: 100%; height:100vh }
+
+	.container { display: flex; flex-direction: column; width:100%; height:100%; overflow: auto;}
+</style>
+</head>
+<body>
+	<div class="apps">
+		<div class="topbar" style="height:40px; padding: 2px 4px; border-bottom: 1px solid #aaa;">
+			<button onclick="clickBtn1()">p1</button>
+			<button onclick="clickBtn2()">p2</button>
+			<button onclick="clickBtn3()">p3</button>
+		</div>
+		<div class="container">
+			
+		</div>
+	</div>
+
+<script>
+	$(document).ready(()=>{
+		const target = $('.container')
+		const css={padding:8}
+		for(var n=0; n<100; n++) {
+			$('<div id="test_'+n+'">').css(css).html('test '+n).appendTo(target)
+		}
+	})
+
+	const clickBtn3 = () => {
+		getJq('popup').hide()
+	}
+	const clickBtn1 = () => {
+		setScrollTop('.container','test_50')
+	}
+	const clickBtn2 = () => {
+		const {top,left, width, height} = getElOffset('test_2', true)
+		getJq('popup').css({top,left, width, height}).show()
+	}
+
+</script>
+<div id="popup" style="position: absolute; display: none; background: #aaa;"></div>
+</body>
+</html>

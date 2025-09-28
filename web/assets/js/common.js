@@ -7,7 +7,7 @@ const isNull = a => a===null || typeof a == 'undefined'
 const isEmpty = a => isNull(a) || (typeof a=='string' && a=='' )
 const isObj = a => !isNull(a) && typeof a=='object';
 const isNum = a => typeof a=='number' ? true: typeof a=='string' ? /^[0-9]+$/.test(a): false
-const jqCheck= a => typeof JQuery=='object' && a instanceof jQuery;
+const jqCheck= a => a instanceof jQuery;
 const constructorName = val => val && val.constructor ? val.constructor.name: ''
 const isValid= a => Array.isArray(a)? a.length>0: isObj(a)? Object.keys(a).length : !isEmpty(a)
 const isEl = o => 
@@ -16,8 +16,76 @@ const isEl = o =>
 const getEl = el => isEl(el) ? el : 
 	jqCheck(el)? el[0]: 
 	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el)[0]: document.getElementById(el)): null;
+const getJq = el => isEl(el) ? $(el) : 
+	jqCheck(el)? el: 
+	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el): $(document.getElementById(el))): null;
 	
-const cf={stateMap:{}, effectMap:{}}
+const cf={stateMap:{}, effectMap:{}, stackPages:{}}
+function getRandomColor() {
+	var letters = '0123456789ABCDEF';
+	var color = '#';
+	for (var i = 0; i < 6; i++) {
+		color += letters[Math.floor(Math.random() * 16)];
+	}
+	return color;
+}
+function getElRect(el) {
+	const target = getEl(el)
+	if(target) {
+		return target.getBoundingClientRect()
+	}
+}
+const setScrollTop = (parent, target) => {
+	const a = getJq(parent), b=getJq(target)
+	const yp = $(b).offset().top - $(a).offset().top
+	const sp = yp + a.scrollTop()
+	a.scrollTop(sp)
+}
+const getOffsetParent = target => {
+	const a=getJq(target)
+	if( !a[0] ) return {top:0,left:0}
+	const tag = a.offsetParent().prop('tagName')
+	if( tag=='HTML' ) {
+		return a.offset()
+	}
+	let {top,left} = a.offset()
+	let p=a.parent()
+	while( p.prop('tagName')!='BODY' ) {
+		const o=p.offset()
+		top+=o.top
+		left+=o.left
+		p=p.parent()
+	}
+	return {top,left}
+}
+const getElOffset = (el, checkRect) => {
+	const target=getEl(el)
+	if( !target ) return;
+	if( target.getBoundingClientRect ) {
+		var m = target.getBoundingClientRect();
+		var n = document.body;
+		var c = document.documentElement;
+		var a = window.pageYOffset || c.scrollTop || n.scrollTop;
+		var h = window.pageXOffset || c.scrollLeft || n.scrollLeft;
+		var l = c.clientTop || n.clientTop || 0;
+		var o = c.clientLeft || n.clientLeft || 0;
+		var r = m.top + a - l;
+		var e = m.left + h - o;
+		return checkRect ? 
+			{ top: Math.round(r), left: Math.round(e), width: m.width, height: m.height } : 
+			{ top: Math.round(r), left: Math.round(e) }
+	}
+	let aa = target;
+	let left=0, top=0, width=aa.offsetWidth, height=aa.offsetHeight;
+	while (aa) {
+		left = c + parseInt(aa.offsetLeft);
+		top = e + parseInt(aa.offsetTop);
+		aa = aa.offsetParent
+	}
+	return checkRect? {top,left,width,height} : { top, left }
+}
+
+const screenSize = () => ({ width:$(window).width(), height:$(window).height() })
 
 function setState(id, data) {
 	const map = cf.effectMap
@@ -26,7 +94,7 @@ function setState(id, data) {
 		if(typeof(cur.target)=='function') {
 			cur.target(data, cur)
 		} else {
-			const el=getEl(cur.target)
+			const el=getJq(cur.target)
 			if(el) {
 				$(el).html(data)
 			}

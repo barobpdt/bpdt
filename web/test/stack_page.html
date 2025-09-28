@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>SlickGrid example 12: Fill browser</title>
+<link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/> 
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+<style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		background-color: White;
+		overflow: auto;
+	}
+	body {
+		font: 11px Helvetica, Arial, sans-serif;
+	}
+	.apps { display: flex; flex-direction: column; width: 100%; height:100vh }
+	.container { flex:1; overflow: hidden;  }
+	#posts {
+		width:100%;
+		height:100%;
+		padding: 16px;
+	}
+	.post {
+		padding:5px;
+		background:#eee;
+	}
+</style>
+</head>
+<body>
+	<div class="apps">
+		<div class="topbar" style="height:40px; padding: 2px 4px; border-bottom: 1px solid #aaa;">
+			<button onclick="clickBtn1()">p1</button>
+			<button onclick="clickBtn2()">p2</button>
+			<button onclick="clickBtn3()">p3</button>
+		</div>
+		<div class="container">
+			
+		</div>
+	</div>
+
+<script>  
+	function getRandomColor() {
+		var letters = '0123456789ABCDEF';
+		var color = '#';
+		for (var i = 0; i < 6; i++) {
+			color += letters[Math.floor(Math.random() * 16)];
+		}
+		return color;
+	}
+	const stackPageSrc = (pageId) => `<div class="stack_page ${pageId}" style="display: flex; flex-direction: column; width:100%; height: 100%;">
+		<div class="page_header" style="height:30px">header</div>
+		<div class="page_contents" style="flex:1; background: #eee;">contents</div>
+		<div class="page_footer" style="height:30px">footer</div>
+	</div>`
+
+	const stackPageFadeIn = (page) => {
+        // page.css("position", "relative");
+        // page.animate({left : -800 * currentIndex}, 600, "easeOutElastic");
+		const width = page.width()
+		const prev = cf.stackPages.$currentPage
+		if( page===prev ) {
+			page.show()
+			return clog('@@ stackPageFadeIn skip')
+		}
+		page.css({position:'relative', transform:'translateX(-'+width+')'}).show()
+		if( prev ) {
+			prev.css({position:'relative', opacity:1, transform:'translateX(0)'}).show()
+		}
+		const animate = () => {
+			page.animate({ transform:'translateX(0)'}, 500, () => cf.stackPages.$currentPage=page)
+			if( prev ) {
+				prev.animate({ transform:'translateX('+width+')'}, 500, () => prev.hide() );
+			}
+		}
+		setTimeout(animate, 50)
+	}
+	const stackPageAdd = pageId => {
+		const stack = cf.stackPages.$root
+		let page = cf.stackPages[pageId]
+		if( page) {
+			stack.find('.stack_page').each((n,p)=>$(p).hide())
+			stackPageFadeIn(page)
+		} else {
+			page = $(stackPageSrc(pageId)).appendTo(stack)
+			page.find('.page_contents').css("background-color", getRandomColor())
+			cf.stackPages[pageId] = page
+			cf.stackPages.$currentPage = page
+		}
+	}
+	const clickBtn1 = () => stackPageAdd('p1')
+	const clickBtn2 = () => stackPageAdd('p2')
+	const clickBtn3 = () => stackPageAdd('p3')
+
+
+	$(document).ready(()=>{
+		cf.stackPages.$root = $('.container')
+		stackPageAdd('p1')
+		stackPageAdd('p2')
+		stackPageAdd('p3')
+	}) 
+</script>
+</body>
+</html>
