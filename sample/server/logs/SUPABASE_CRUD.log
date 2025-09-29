@@ -97,3 +97,15 @@ FROM "user"
 2025-09-25 16:47:47,710 - SUPABASE_CRUD - INFO - create_database_engine:106 - ✅ 비동기 데이터베이스 연결 성공!
 2025-09-25 16:47:47,710 - SUPABASE_CRUD - INFO - <module>:119 - ✅ 비동기 데이터베이스 엔진 생성 완료
 2025-09-25 16:47:47,710 - SUPABASE_CRUD - INFO - <module>:119 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-09-25 16:48:31,045 - SUPABASE_CRUD - ERROR - get_async_db:127 - ⚠️ 데이터베이스 오류: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.ConnectionDoesNotExistError'>: connection was closed in the middle of operation
+[SQL: SELECT "user"."userId", "user".name, "user".email, "user".ref, "user".data, "user".created_at, "user".updated_at 
+FROM "user" 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER]
+[parameters: (50, 0)]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+2025-09-25 16:48:31,045 - SUPABASE_CRUD - ERROR - get_async_db:127 - ⚠️ 데이터베이스 오류: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.ConnectionDoesNotExistError'>: connection was closed in the middle of operation
+[SQL: SELECT "user"."userId", "user".name, "user".email, "user".ref, "user".data, "user".created_at, "user".updated_at 
+FROM "user" 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER]
+[parameters: (50, 0)]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
