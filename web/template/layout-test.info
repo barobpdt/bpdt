@@ -1,0 +1,68 @@
+table(테이블명, 테이블타입) -- comment
+	id pk(int), uniq
+	name: text
+	addr: text
+	phone_no: str(100) 
+	useYn: def(Y)
+	posts: list(Post)
+	add_dt: date def(now)
+	update_dt: date onupdate(now)
+	
+req {}
+res {}
+api.get('/common_code/codeGroup', @list(commCodeRes), @kwt) {
+}
+api.get('/common_code/codeListAll', useYn, @commCodeRes ) {
+
+}
+api.get('/common_code/codeList', useYn, searchText, @commCodeRes ) {
+	
+}
+page(commcode_mng) {
+	layout: {
+		contents {@vbox}
+			title {@hbox, height:40}
+				img {src:}
+				h3 asasas
+				img {src:/icon.png, click:@toggleLeft}
+			box {@rows}
+				leftPanel {@vbox, flex:30, padding:2}
+					codeGroupTitle {@hbox}
+					codeGroupList {@vbox}
+				centerPanel {@vbox, flex:70, padding:2}
+					codeListTitle {@render, @hbox}
+					codeListHeader {@hbox}
+					codeListBody {@vbox}
+			end box
+		end contents
+	}
+	init {
+		apiGet('/common_code/codeGroup', res=>{
+			@codeGroupTitle(res)
+			@codeGroupList(res)
+		})
+		apiGet('/common_code/codeListAll', {useYn:'Y'}, res=>{
+			@codeListHeader(res)
+			@codeListBody(res)			
+		})
+	}
+	toggleLeft() {
+	
+	}
+	render {
+		codeGroupTitle(res)
+			h3 @res.title
+			space
+			button {id:groupAdd, text:그룹추가}
+			button {id:groupAdd, text:그룹추가}
+			button {id:groupDel, text:그룹추가}
+		codeGroupList(res)
+			@cd.codeGroup.map(row=>@codeGroupItem(row)).join('')
+		codeGroupItem(row)
+			div { item:row }
+				row.children.length ? 
+	}
+	func {
+		search()
+	}
+}
