@@ -7,25 +7,38 @@ table(테이블명, 테이블타입) -- comment
 	posts: list(Post)
 	add_dt: date def(now)
 	update_dt: date onupdate(now)
-	
-req {}
-res {}
-api.get('/common_code/codeGroup', @list(commCodeRes), @kwt) {
-}
-api.get('/common_code/codeListAll', useYn, @commCodeRes ) {
 
-}
-api.get('/common_code/codeList', useYn, searchText, @commCodeRes ) {
 	
+	types : int, str, float, char, text, date, uuid(1~5), json, enum, bool
+	props : uniq, index, pk, fk, def, onupdate, notnull(*) , rel()
+
+table(CommCode) -- 공통코드 관리
+
+model(CommCodeGroupRes) { name, addr, useYn, post}
+model(CommCodeGroupApiRes) { header:json, data:CommCodeGroupRes }
+model(CommCodeRes) {}
+
+api.get('/common_code/codeGroup', @auth) {
+	@res=CommCodeGroupApiRes
+	res.header=@{title:공통코드 그룹정보}
+	res.data=@db.one(select(CommCode).optional().filter())
+	return res
 }
+api.get('/common_code/codeList', useYn, pid, @auth ) {
+	@res=CommCodeRes
+	res.header=@{fields(code,value,useYn,ref,data)}
+	res.list = @db.all(select(CommCode).filter(userYn,pid))
+	return res	
+}
+
 page(commcode_mng) {
 	layout: {
 		contents {@vbox}
-			title {@hbox, height:40}
+			title {@rows, height:40}
 				img {src:}
 				h3 asasas
 				img {src:/icon.png, click:@toggleLeft}
-			box {@rows}
+			box {@hbox}
 				leftPanel {@vbox, flex:30, padding:2}
 					codeGroupTitle {@hbox}
 					codeGroupList {@vbox}

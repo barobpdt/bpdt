@@ -9,6 +9,34 @@
 	}
 	return ss;
 }
+@baro.parseLayout(&s) {
+	/*
+	contents {@vbox}
+		title {@rows, height:40}
+			img {src:}
+			h3 asasas
+			img {src:/icon.png, click:@toggleLeft}
+		box {@hbox}
+			leftPanel {@vbox, flex:30, padding:2}
+				codeGroupTitle {@hbox}
+				codeGroupList {@vbox}
+			centerPanel {@vbox, flex:70, padding:2}
+				codeListTitle {@render, @hbox}
+				codeListHeader {@hbox}
+				codeListBody {@vbox}
+		end box
+	end contents
+	*/
+	prev
+	if(lineBlankCheck(s)) {
+		s.findPos("\n")
+	}
+	while(s.valid()) {
+		if(lineBlankCheck(s)) {
+			s.findPos("\n")
+		}
+	}
+}
 @baro.getAppNode(appId) {
 	root =f.getObject("apps.$appId") if(root) return root;
 	root=object("apps.$appId")
