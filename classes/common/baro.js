@@ -9,8 +9,9 @@
 	}
 	return ss;
 }
-@baro.parseLayout(&s) {
-	/*
+/*
+https://jason.today/falling-sand
+s=#[
 	contents {@vbox}
 		title {@rows, height:40}
 			img {src:}
@@ -26,16 +27,62 @@
 				codeListBody {@vbox}
 		end box
 	end contents
-	*/
-	prev
+]
+node=_node("page")
+@baro.parseLayout(node, s)
+ss=toString(node.get('@layout'), 2)
+System.copyText(ss)
+*/
+@baro.parseLayout(page, &s) { 
+	prev = false
 	if(lineBlankCheck(s)) {
+		prev = true
 		s.findPos("\n")
 	}
+	parentArray=[]
+	layout = page.addNode('@layout').removeAll(true)
+	indentArray=page.addArray('@indentArray').reuse()
+	parentArray.add(layout)
 	while(s.valid()) {
 		if(lineBlankCheck(s)) {
 			s.findPos("\n")
+			continue;
 		}
+		a = indentText(s)
+		line = findEnd() not(line) break;
+		if( line.start('end') ) {
+			continue;
+		}
+		if( prev ) {
+			prev = false
+			root = true
+		} else {
+			root = ~(indentArray.size())
+			not(root) {
+				idx=indentArray.find(a)
+				endCheck = idx.eq(0) || ~(a)
+				print("@@ end check $idx $endCheck")
+				if(idx==-1) {
+					idx=indentArray.size()
+					indentArray.add(a)
+				}
+			}
+		}
+		if( root ) {
+			idx=0
+			indentArray.add('')
+		}
+		parent = parentArray.get(idx)
+		print("xxxxx $idx $parent $line")
+		not(parent ) return print("@@ 레이아웃 분석 부모노드 찾기오류 idx:$idx $line");
+		cur = parent.addNode()
+		cur.set('@line', line)
+		setArray(parentArray, idx+1, cur)
 	}
+	findEnd = func() {
+		line = s.findPos("\n")
+		return line;
+	};
 }
 @baro.getAppNode(appId) {
 	root =f.getObject("apps.$appId") if(root) return root;
