@@ -32,13 +32,15 @@ node=_node("page")
 @baro.parseLayout(node, s)
 ss=toString(node.get('@layout'), 2)
 System.copyText(ss)
+layout = node.get('@layout')
+@baro.parseLayoutLine(layout)
 */
 @baro.parseLayout(page, &s) { 
 	prev = false
 	if(lineBlankCheck(s)) {
 		prev = true
 		s.findPos("\n")
-	}
+	} 
 	parentArray=[]
 	layout = page.addNode('@layout').removeAll(true)
 	indentArray=page.addArray('@indentArray').reuse()
@@ -49,10 +51,7 @@ System.copyText(ss)
 			continue;
 		}
 		a = indentText(s)
-		line = findEnd() not(line) break;
-		if( line.start('end') ) {
-			continue;
-		}
+		line = findEnd() not(line) break; 
 		if( prev ) {
 			prev = false
 			root = true
@@ -80,10 +79,58 @@ System.copyText(ss)
 		setArray(parentArray, idx+1, cur)
 	}
 	findEnd = func() {
-		line = s.findPos("\n")
-		return line;
+		ss=''
+		c=s.ch() not(c) return;
+		startPos = s.cur()
+		if( s.start('end') ) {
+			s.findPos("\n")
+			return 'end';
+		}
+		if( lineCheck(s,'<') ) {
+			left = s.findPos('<',1,1)
+			sp=s.cur()
+			c=s.incr().next().ch()
+			while(c.eq('-',':')) c=s.incr().next().ch()
+			tag=s.trim(sp+1, s.cur(), true)
+			body=s.match("<$tag", "</$tag>", 4)
+			if(typeof(body,'bool')) {
+				return print("매칭되는 태그를 찾을수 없습니다", left, tag);
+			}
+			ss.add(left)
+			ss.add('<#tag#>'
+		} else if( lineCheck(s,'{') ) {
+			left = s.findPos('{',1,1)
+			body = s.match()
+			if(typeof(body,'bool')) {
+				return print("레이아웃 속성 매핑오류", left);
+			}
+			ss.add(left)
+			ss.add('<#json#>')
+		} else {
+			left = s.findPos("\n")
+			body = ''
+			ss.add(left)
+		}
+		if(body) {
+			s.findPos("\n")
+		}
+		return ss;
 	};
+	checkTag = func(s) {
+		c=s.ch()
+		return c.eq('<')
+	}
 }
+
+@baro.parseLayoutLine(root) {
+	while(cur, root, n) {
+		s=cur.ref('@line')
+		print(">>$s")
+		@baro.parseLayoutLine(cur)
+	}		
+}
+
+
 @baro.getAppNode(appId) {
 	root =f.getObject("apps.$appId") if(root) return root;
 	root=object("apps.$appId")

@@ -727,7 +727,8 @@ funcParam(param) {
 			}
 			pid = s.move()
 			print("pid:$pid")
-			@job.cmdRun(cc,_s('taskkill /im $pid /F'))
+			// @job.cmdRun(cc,_s('taskkill /im $name /F'))
+			@job.cmdRun(cc,_s('taskkill /PID $pid /F'))
 		}
 	});
 }
