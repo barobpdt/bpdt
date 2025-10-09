@@ -1,3 +1,166 @@
+isDbType(type) {
+	s=type.trim().lower()
+	return s.eq('int','float','dt','datetime','date','long','json','bool','yn')
+}
+// [json] 
+// data: Mapped[dict|None] = mapped_column(MutableDict.as_mutable(sa.JSON))    => json
+// data: Mapped[dict[str,str] | None] = mapped_column(JSONB(none_as_null=True)) => json(str)
+// Mapped[datetime] = mapped_column(server_default=sa.func.now())  => now or now()
+// Mapped[datetime | None] = mapped_column(onupdate=sa.func.now()) => now(onupdate,UTC)
+
+// *name => __init__ 함수 매개변수 포함 
+nodeAddProps(node, text, sep) {
+	s=node.get('@props') if(s) node.appendText('@props',sep)
+	node.appendText('@props',text)
+}
+isDbFunc(fnm) {
+	s=fnm.trim().lower()
+	return s.eq('pk','fk','index','uniq','now','rel','def','notnull','cc')
+}
+parseSchemaFields(tableNode) {
+	while(cur, tableNode) {
+		parseField(cur.ref('fieldInfo'))
+	}
+}
+@baro.parseSchemaField(cur, &s) {
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq(',')) c=s.incr().ch()
+		fnm=s.move()
+		if(isDbType(fnm)) {
+			cur.set('fieldType',fnm)
+			c=s.ch()
+			not(c.eq('(')) continue;
+			ss=s.match(1) if(typeof(ss,'bool')) return print("")
+			a=ss.findPos(',').trim()
+			// ex) str(10) or type(MyType,[info])
+			if(typeof(a,'num')) {
+				cur.set('typeSize', a)
+			} else {
+				cur.set('typeObject', a)
+			}
+			if(ss.ch()) {
+				cur.set('typeInfo',ss.trim())
+			}
+		}
+	} else if(isDbFunc(fnm)) {
+		name=fnm.lower()
+		c=s.ch()
+		if(c.eq('(')) {
+			fparam=s.match(1) if(typeof(ss,'bool')) return print("")
+		} else {
+			fparam=''
+		}
+		fc=call("@baro.dbField_$name")
+		if(typeof(fc,'func')) {
+			call(fc, tableNode, cur, fparam.ref())
+		} else {
+			print("@@ db 필드함수 $name 미정의")
+		}
+	} else {
+		
+	}
+	
+}
+@baro.dbField_pk(fieldNode, &s) {
+	// pk(str) or pk(str(50)) 
+	fieldNode.set('@pk',true)
+	nodeAddProps(fieldNode, 'primary_key=True')
+	@baro.parseSchemaField(fieldNode, s)
+}
+@baro.dbField_fk(fieldNode, &s) {
+	ref=s.trim()
+	fieldNode.set('@fk',true)
+	fieldNode.set('@fkRef',ref)
+	nodeAddProps(fieldNode, "ForeignKey('$ref')")
+}
+@baro.dbField_index(fieldNode, &s) { 
+	fieldNode.set('@index',true)
+	nodeAddProps(fieldNode, 'index=True')
+}
+@baro.dbField_uniq(fieldNode, &s) { 
+	fieldNode.set('@uniq',true) 
+	nodeAddProps(fieldNode, 'unique=True')
+}
+@baro.dbField_notnull(fieldNode, &s) { 
+	nodeAddProps(fieldNode, 'nullable=False')
+}
+@baro.dbField_now(fieldNode, &s) { 
+	
+	nodeAddProps(fieldNode, 'server_default=sa.func.now()')	
+	
+}
+@baro.dbField_cc(fieldNode, &s) {
+	fieldNode.inject(field, argsUse)
+}
+@baro.parseSchema(page, &s) {
+	
+}
+@baro.parseSchemaNode(tableNode, s) {
+	while(s.valid()) {
+		if(lineBlankCheck(s)) {
+			continue;
+		}
+		// field type... {props} -- comment
+		c=s.ch() not(c) break;
+		if(s.start('--')) {
+			s.findPos("\n")
+			continue;
+		} 
+		comment='', props=''
+		if(endCommaCheck(s)) {
+			fieldInfo=s.findPos(',').trim()
+		}
+		else if(lineCheck(s,'{')) {
+			fieldInfo=s.findPos('{',1,1).trim()
+			props=s.match(1)
+			if(lineCheck(s,'--')) {
+				s.findPos("\n")
+				comment=s.trim()
+			}
+		} 
+		else if(lineCheck(s,'--')) {
+			fieldInfo=s.findPos('--',1,1).trim()
+			comment = s.trim()
+		} else {
+			fieldInfo=s.findPos("\n").trim()
+		}
+		cur=setFieldInfo(fieldInfo)
+	not(cur) break
+		not(left.ch()) break;
+	cur.with(props, comment)
+	}
+	return tableNode;
+	
+	endCommaCheck = func(&s) {
+		c=s.ch() not(c) return;
+		if(c.eq('*')) s.incr()
+		c=s.next().ch()
+		if(c.eq(':','=')) {
+			c=s.incr().next().ch()
+		}
+		return c.eq(',')
+	};
+	setFieldInfo = func(cur, &s) {
+		c=s.ch() not(c) return;
+		cur= tableNode.addNode()
+		argsUse = false
+		if(c.eq('*')) {
+			s.incr()
+			argsUse = true;
+		}
+		field=s.move()
+		c=s.ch()
+		if(c.eq(':','=')) {
+			s.incr()
+		}
+		cur.with(field, argsUse)
+		@baro.parseSchemaField()
+		return cur;
+	};
+}
+
+
 @baro.tableName(&s) {
 	sz=s.size()
 	while(n=0,sz ){
@@ -33,7 +196,7 @@ node=_node("page")
 ss=toString(node.get('@layout'), 2)
 System.copyText(ss)
 layout = node.get('@layout')
-@baro.parseLayoutLine(layout)
+@baro.parseLayoutLine(node, layout)
 */
 @baro.parseLayout(page, &s) { 
 	prev = false
@@ -52,6 +215,7 @@ layout = node.get('@layout')
 		}
 		a = indentText(s)
 		line = findEnd() not(line) break; 
+		if( line.eq('end')) continue;
 		if( prev ) {
 			prev = false
 			root = true
@@ -86,8 +250,9 @@ layout = node.get('@layout')
 			s.findPos("\n")
 			return 'end';
 		}
+		encCheck = true
 		if( lineCheck(s,'<') ) {
-			left = s.findPos('<',1,1)
+			left = s.findPos('<',1,1).trim()
 			sp=s.cur()
 			c=s.incr().next().ch()
 			while(c.eq('-',':')) c=s.incr().next().ch()
@@ -96,22 +261,37 @@ layout = node.get('@layout')
 			if(typeof(body,'bool')) {
 				return print("매칭되는 태그를 찾을수 없습니다", left, tag);
 			}
-			ss.add(left)
-			ss.add('<#tag#>'
+			ss.add(left, "<##><$tag",body,"</$tag>")
 		} else if( lineCheck(s,'{') ) {
-			left = s.findPos('{',1,1)
+			left = s.findPos('{',1,1).trim()
 			body = s.match()
 			if(typeof(body,'bool')) {
 				return print("레이아웃 속성 매핑오류", left);
 			}
 			ss.add(left)
-			ss.add('<#json#>')
+			ss.add('<##>{',body,'}')
 		} else {
-			left = s.findPos("\n")
+			left = s.findPos("\n").trim()
 			body = ''
 			ss.add(left)
+			endCheck=false
 		}
-		if(body) {
+		if( checkTag(s) ) {
+			while(checkTag(s)) {
+				c=s.ch() not(c) break;
+				sp=s.cur()
+				c=s.incr().next().ch()
+				if(c.eq('-',':')) c=s.incr().next().ch()
+				tag=s.trim(sp+1, s.cur, true)
+				body=s.match("<$tag", "</$tag>", 4)
+				if(typeof(body,'bool')) {
+					return print("매칭되는 태그를 찾을수 없습니다", left, tag);
+				}
+				ss.add("<$tag",body,"</$tag>")
+			}
+			endCheck=true
+		}
+		if(endCheck) {
 			s.findPos("\n")
 		}
 		return ss;
@@ -122,12 +302,102 @@ layout = node.get('@layout')
 	}
 }
 
-@baro.parseLayoutLine(root) {
-	while(cur, root, n) {
-		s=cur.ref('@line')
+@baro.parseLayoutLine(page, node) {
+	while(cur, node, n) {
+		cur.set('@pageNode', page);
+		@baro.parseLayoutData(cur, cur.ref('@line'))
 		print(">>$s")
 		@baro.parseLayoutLine(cur)
-	}		
+	}
+}
+
+@baro.parseLayoutTag(node, &s) {
+	page=node.get('@pageNode')
+	not(typeof(page,'node')) return print(">> @parseLayoutTag 페이지노드 미정의", node)
+	not(s.ch()) return;
+	sp=s.cur()
+	name=s.move()
+	c=s.ch()
+	if(c.eq('-')) {
+		while(c.eq('-')) c=s.incr().next().ch();
+		className=s.trim(sp,s.cur(),true)
+		node.htmlTemplate = _s('<div class="$className" #{style}>$s#{htmlBody}</div>')
+		return;
+	}
+	
+	if(name.eq('label') ) name="h3"
+	if(name.ch('h') && typeof(name.value(1),'num')) {
+		node.htmlTemplate = _s('<$name #{style}>$s#{htmlBody}</$name>')
+	} else {
+		fc=call("@baro.htmlTemplate_$name")
+		if(typeof(fc,'func')) {
+			node.htmlTemplate = call(fc,page,node,s)
+		} else {
+			node.htmlTemplate = _s('<div class="$name" #{style}>$s#{htmlBody}</div>')
+		}
+	}
+}
+@baro.parseLayoutData(node, &data) {
+	page=node.get('@pageNode')
+	not(typeof(page,'node')) return print(">> @parseLayoutData 페이지노드 미정의", node)
+	line=data.findPos('<##>')
+	@baro.parseLayoutTag(node, line)
+	c=data.ch() not(c) return;
+	if(c.eq('<')) {
+		return @baro.parseLayoutHtml(node, data)
+	} 
+	if(c.eq('{')) {
+		s=data.match(1)
+		if(typeof(s,'bool')) return print(">> @baro.parseLayoutData 매칭오류")
+	}
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		localCheck=false
+		if(c.eq('@')) {
+			s.incr()
+			localCheck=true
+		} 
+		if(c.is('oper') ) {
+			print("@2 layoutProp 오류 $s")
+			break;
+		}
+		sp=s.cur()
+		c=s.next().ch()
+		while(c.eq('-')) c=s.incr().next().ch();
+		k=s.trim(sp,s.cur(),true)
+		if(c.eq(':','=')) {
+			c=s.incr().ch()
+			if(c.eq()) {
+				v=s.match()
+			} else if(lineCheck(s,';')) {
+				v=s.match(';').trim()
+			} else if(lineCheck(s,',')) {
+				v=s.match(',').trim()
+			}
+			node.appendText('@style', Cf.val(k,':',v), ';')
+		} else {
+			param=''
+			if(c.eq('(')) param=s.match()
+			if(localCheck) {
+				fc=call("@baro.localStyle_$k")
+				if(typeof(fc,'func')) {
+					rst=call(fc,pageNode, node, param)
+					if(rst) {
+						if(ss) ss.add(';')
+						ss.add(rst)
+					}
+				} else {
+					print("")
+				}
+			}
+		}
+		c=s.ch()
+		if(c.eq(',',';')) s.incr()
+	}
+}
+
+@baro.parseLayoutHtml(node, &s) {
+	node.set('@htmlBody', s)
 }
 
 
@@ -234,7 +504,7 @@ layout = node.get('@layout')
 		c=s.ch() not(c) break;
 		if( c.eq('(') ) {
 			s.match()
-		} else if( c.eq('<') ) (
+		} else if( c.eq('<') ) {
 			ep = @baro.tagEndPos(s)
 			not(typeof(ep,'num')) return;
 			s.pos(ep)

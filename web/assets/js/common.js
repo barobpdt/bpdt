@@ -20,7 +20,21 @@ const getJq = el => isEl(el) ? $(el) :
 	jqCheck(el)? el: 
 	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el): $(document.getElementById(el))): null;
 	
-const cf={stateMap:{}, effectMap:{}, stackPages:{}}
+const cf={stateMap:{}, effectMap:{}, stackPages:{},
+	/* 웹소켓 설정 */
+    , websocket: null
+    , wsUrl:'ws://localhost:8092/chat'
+ 	, wsCallback: null
+	, wsStatus:''
+    , wsType:''
+    , wsMode: ''
+    , wsVersion:'1.0'
+	, currentRetry: 0             // 현재 재시도 횟수
+	, maxRetries: 5 // 최대 재시도 횟수
+	, retryInterval: 2000 // 재시도 간격 (밀리초)
+	/* 기타 공통 설정 */
+	, dumyDiv: document.createElement('div')
+}
 function getRandomColor() {
 	var letters = '0123456789ABCDEF';
 	var color = '#';
@@ -131,29 +145,6 @@ function getStateNodes(id) {
 	}
 	return arr;
 }
-const pageInfo = {
-	editor: null
-	/* 웹소켓 설정 */
-    , websocket: null
-    , wsUrl:'ws://localhost:8092/chat'
- 	, wsCallback: null
-	, wsStatus:''
-    , wsType:''
-    , wsMode: ''
-    , wsVersion:'1.0'
-	, currentRetry: 0             // 현재 재시도 횟수
-	, maxRetries: 5 // 최대 재시도 횟수
-	, retryInterval: 2000 // 재시도 간격 (밀리초)
-	/* 기타 공통 설정 */
-	, dumyDiv: document.createElement('div')
-};
-
-const impl = (obj, dest) => {
-    for (var key in dest) {
-        obj[key] = dest[key];
-    }
-    return obj;
-};
 
 const stringByteLength = (s,b,i,c) => {
     for(b=i=0;c=s.charCodeAt(i++);b+=c>>11?3:c>>7?2:1);
@@ -165,7 +156,7 @@ function qa(s) {
 }
 function qs(s) {
 	const a = document.querySelector(s)
-	return a||pageInfo.dumyDiv
+	return a||cf.dumyDiv
 }
 function appendParam() {
 	let s=''
@@ -196,24 +187,19 @@ function websocketConnect() {
             return
         }
         const size = stringByteLength(message)
-        const data = '@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+pageInfo.wsVersion+'\r\n\r\n'+message
-        console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+pageInfo.wsVersion)
+        const data = '@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion+'\r\n\r\n'+message
+        console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion)
         ws.send(data)
     }    
-    function connect(url) {
-		if( url ) {
-			pageInfo.wsUrl = url
-		} else {
-			url = pageInfo.wsUrl
-		}
+    function connect() {
         try {
             // 웹소켓 객체 생성
-            pageInfo.websocket = new WebSocket(url);
+            cf.websocket = new WebSocket(cf.wsUrl);
             // 연결 성공 이벤트
-            ws=pageInfo.websocket
+            ws=cf.websocket
             ws.onopen = function() {
                 console.log('웹소켓 연결 성공!');
-                pageInfo.currentRetry = 0; // 연결 성공 시 재시도 카운터 초기화
+                cf.currentRetry = 0; // 연결 성공 시 재시도 카운터 초기화
                 
                 // 연결 상태 표시
                 updateConnectionStatus('연결됨', 'success');
@@ -232,7 +218,7 @@ function websocketConnect() {
                         const message = event.data.substr(pos+4)
                         // const node = JSON.parse(message);
                         // 메시지 타입에 따른 처리
-                        if( typeof(pageInfo.wsCallback)=='function' ) pageInfo.wsCallback(header, message);
+                        if( typeof(cf.wsCallback)=='function' ) cf.wsCallback(header, message);
                     }
                 } catch (error) {
                     console.error('메시지 파싱 오류:', error);
@@ -244,13 +230,13 @@ function websocketConnect() {
                 console.log('웹소켓 연결 종료:', event.code, event.reason);
                 ws = null
                 updateConnectionStatus('연결 끊김', 'error');
-				if( pageInfo.wsMode=='close' ) return
+				if( cf.wsMode=='close' ) return
                 // 정상 종료가 아닌 경우 재연결 시도
-                if (!event.wasClean && pageInfo.maxRetries && pageInfo.currentRetry < pageInfo.maxRetries) {
-                    pageInfo.currentRetry++;
-                    console.log(`${pageInfo.retryInterval/1000} 초 후 재연결 시도...`);
-                    setTimeout(connect, pageInfo.retryInterval);
-                } else if (pageInfo.currentRetry >= pageInfo.maxRetries) {
+                if (!event.wasClean && cf.maxRetries && cf.currentRetry < cf.maxRetries) {
+                    cf.currentRetry++;
+                    console.log(`${cf.retryInterval/1000} 초 후 재연결 시도...`);
+                    setTimeout(connect, cf.retryInterval);
+                } else if (cf.currentRetry >= cf.maxRetries) {
                     console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
                     updateConnectionStatus('연결 실패', 'error');
                 }
@@ -266,13 +252,13 @@ function websocketConnect() {
         } catch (error) {
             ws = null
             console.error('웹소켓 연결 중 오류 발생:', error);
-            if( pageInfo.wsMode=='close' ) return
+            if( cf.wsMode=='close' ) return
             // 오류 발생 시 재연결 시도
-            if ( pageInfo.maxRetries && pageInfo.currentRetry < pageInfo.maxRetries) {
-                pageInfo.currentRetry++;
-                console.log(`${pageInfo.retryInterval/1000}초 후 재연결 시도...`);
+            if ( cf.maxRetries && cf.currentRetry < cf.maxRetries) {
+                cf.currentRetry++;
+                console.log(`${cf.retryInterval/1000}초 후 재연결 시도...`);
                 
-                setTimeout(connect, pageInfo.retryInterval);
+                setTimeout(connect, cf.retryInterval);
             } else {
                 console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
                 updateConnectionStatus('연결 실패', 'error');
@@ -282,10 +268,9 @@ function websocketConnect() {
     
     // 연결 상태 표시 함수
     function updateConnectionStatus(status, type) {
-        pageInfo.wsStataus = status
-        pageInfo.wsType = type
-    }
-    
+        cf.wsStatus = status
+        cf.wsType = type
+    }    
     return { connect, isConnect, sendData }
 }
 
