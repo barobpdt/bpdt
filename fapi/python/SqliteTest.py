@@ -242,10 +242,11 @@ if __name__=='__main__':
 		api.loginfo("✅ 비동기 데이터베이스 엔진 생성 완료")
 		Base.metadata.create_all(bind=api.engine)
 		with Session(api.engine) as session:
-			init_data(session)
-			add_code(session)
-			# selectCommCode(session)
+			# init_data(session)
+			# add_code(session)
+			selectCommCode(session)
 			# addUser(session)
+			pass
 
 		result = api.exec('select * from item')
 		data = result.fetchall()

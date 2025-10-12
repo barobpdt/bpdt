@@ -8,6 +8,20 @@ Aborting
 폐기
 C:\bpdt>git checkout -- sample/test/xx_particle.py
 
+## 원격데슼크톱 설정
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
+
+Enable-NetFirewallRule -DisplayGroup "원격 데스크톱" #영어일 경우 Remote Controll
+
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\Wds\rdpwd\Tds\tcp" -Name PortNumber 10002
+
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name PortNumber 10002
+
+New-NetFirewallRule -DisplayName "원격 데스크톱 연결(10002)" -Direction Inbound -Protocol TCP -LocalPort 10002 -Action Allow
+
+net stop TermService
+
+net start TermService
 
 ## webview
 const webViewScript = `

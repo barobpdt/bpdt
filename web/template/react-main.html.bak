@@ -42,24 +42,24 @@ const SplitHandle = (prop) => {
 const TopMenuBar = ({menuList}) => 
 	<div class="menubar">
 	{menuList.map(item=>
-		<TopMenuBar.menu item={item}/>
+		<TopMenuBar.menu item={sub}/>
 	)}
 	</div>
 
-TopMenuBar.menu = ({menu}) => 
+TopMenuBar.menu = ({item}) => 
 	<div tag={TopMenuBar.Menu}
 		click={e=>{
 			global.setCurrentOpenMenu(item)
 		}} 
-		active={global.currentOpenMenu == menu}
-		isSubMenu={menu.chidren && menu.chidren.length}
+		active={global.currentOpenMenu == item}
+		isSubMenu={item.chidren && item.chidren.length}
 		class="menu-item"
 		data-menu="file"
 	>
-		<span>{menu.name}</span>
-		{menu.children && menu.children.length>0 &&
+		<span>{item.name}</span>
+		{item.children && item.children.length>0 &&
 		item.children.map(sub=>
-			<TopMenuBar.menuItem menuItem={menuItem}/>
+			<TopMenuBar.submenu sub={sub}/>
 		)}
 	</div>
 TopMenuBar.submenu = ({sub})=>
@@ -118,33 +118,32 @@ global[
 >
 	<!-- 메뉴바 -->
 	<div tag={TopMenuBar} menuList={global.menuItem} class="menu-bar">
-		{menuList.map((menu)=>
-		<div tag={TopMenuBar.menu}
+		{menuList.map((item)=>
+		<div tag={TopMenuBar.Menu}
 			click={e=>{
-				global.setCurrentOpenMenu(menu)
+				global.setCurrentOpenMenu(item)
 			}} 
-			active={global.currentOpenMenu == menu}
-			isSubMenu={menu.chidren && menu.chidren.length}
+			active={global.currentOpenMenu == item}
+			isSubMenu={item.chidren && item.chidren.length}
 			class="menu-item"
 			data-menu="file"
 		>
-			<span>{menu.name}</span>
-			{menu.children && menu.children.length>0 &&
-			menu.children.map(sub=>
-			<div tag={TopMenuBar.menuItem} menuItem={menuItem} class="submenu">
-				{menuItem.children && menuItem.children.length &&
+			<span>{item.name}</span>
+			{item.children && item.children.length>0 &&
+			item.children.map(sub=>
+			<div tag={TopMenuBar.SubMenu} sub={sub} class="submenu">
+				{sub.children && sub.children.length &&
 				<div class="submenu-item has-submenu">
-					<span style="flex:1;">{menuItem.name}</span>
+					<span style="flex:1;">{item.name}</span>
 					<span class="submenu-arrow">▶</span>
 					<div class="sub-submenu">
-						{menuItem.children.map(sub=>
-							<div class="submenu-item">{sub.name}</div>
+						{sub.children.map(ssub=>
+						<div class="submenu-item">{ssub.name}</div>
 						)}
 					</div>
-				</div> :
-				<div class="submenu-item">{menuItem.name}</div>
+				</div>
 				}
-				
+				<div class="submenu-item">{sub.name}</div>
 			</div>
 			)}
 		</div>

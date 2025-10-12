@@ -71,10 +71,9 @@ class ApiConfig:
 		if not logger:
 			logger = self.getLogger('api_log')
 		try:
-			logger.log(msg)
+			logger.info(msg)
 		except Exception as e:
-			print(f'log print exception message:{msg}')
-			pass
+			print(f'log print exception message:{msg} {logger} {e}')
 	def log(self, msg):
 		try:
 			if self.fpOut:
@@ -127,11 +126,11 @@ class ApiConfig:
 		logger = logging.getLogger(name)
 		logger.setLevel(logging.INFO)
 		
-		# 콘솔 핸들러
+		# 콘솔 핸들러 %(name)s - %(levelname)s 
 		console_handler = logging.StreamHandler()
 		console_handler.setLevel(logging.INFO)
 		console_formatter = logging.Formatter(
-			'%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+			'%(asctime)s - %(message)s'
 		)
 		console_handler.setFormatter(console_formatter)
 		
@@ -145,7 +144,7 @@ class ApiConfig:
 		)
 		file_handler.setLevel(logging.INFO)
 		file_formatter = logging.Formatter(
-			'%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
+			'%(asctime)s - %(funcName)s:%(lineno)d - %(message)s'
 		)
 		file_handler.setFormatter(file_formatter)
 		
