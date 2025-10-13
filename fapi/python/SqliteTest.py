@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 from jose import JWTError, jwt
@@ -19,9 +20,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.collections import attribute_keyed_dict
 from sqlalchemy.ext.mutable import MutableDict
 import json
-
+import sys
 from ApiConfig import ApiConfig
 
+print("디비 테스트 시작 =====")
 class Base(DeclarativeBase):
 	pass
 
@@ -137,7 +139,7 @@ class CommCode(MappedAsDataclass, Base):
 		self.parent = kwargs['parent'] if 'parent' in kwargs else None
 		if self.parent:
 			self.depth = self.parent.depth + 1
-		print(f'init {self}')
+		# print(f'init {self}')
 
 	def getChild(self, code):
 		try:
@@ -166,11 +168,22 @@ class CommCode(MappedAsDataclass, Base):
 		except Exception as e:
 			pass
 		return p
+	def getRef(self, code, ref):
+		try:
+			p=self.getObject(code)
+			if p:
+				for c in p.children.values():
+					if c.ref==ref:
+						return c
+		except Exception as e:
+			pass
+		return None
+	
 	def detail(self):
-		return '\r\n'.join([repr(c) for c in self.children.values()])
+		return '\n\t'.join([repr(c) for c in self.children.values()])
 		
 	def __repr__(self):
-		return f"CC(code={self.code},title={self.title})"
+		return f"CC(code={self.code},title={self.title},ref={self.ref})"
 
 	def dump(self, indent: int = 0) -> str:
 		return (
@@ -187,9 +200,9 @@ async def create_tables(engine):
 	try:
 		async with engine.begin() as conn:
 			await conn.run_sync(Base.metadata.create_all)
-		ApiConfig().loginfo("✅ 비동기 데이터베이스 테이블이 성공적으로 생성되었습니다.")
+		ApiConfig().info("✅ 비동기 데이터베이스 테이블이 성공적으로 생성되었습니다.")
 	except Exception as e:
-		ApiConfig().loginfo(f"⚠️ 비동기 테이블 생성 중 오류 발생: {e}")
+		ApiConfig().info(f"⚠️ 비동기 테이블 생성 중 오류 발생: {e}")
 
 def init_data(session):
 	root = CommCode('root','commcode root','root')
@@ -224,10 +237,7 @@ def selectCommCode(session):
 		.options(selectinload(CommCode.children, recursion_depth=2))
 		.filter(CommCode.type=='root')
 	).one()
-	api=ApiConfig()
-	api.setCommCode(root)
-	auth = api.getCode('auth')
-	print(f'select commCode => {root} auth={auth.detail()}')
+	ApiConfig().setCommCode(root) 
 
 def addUser(session):
 	session.add(User('test','test','test@a.com'))
@@ -237,20 +247,23 @@ def addUser(session):
 
 if __name__=='__main__':
 	try:
+		# C:/Users/NRJ/AppData/Local/Programs/Python/Python313/python SqliteTest.py
 		api = ApiConfig()
 		api.setDb(DATABASE_URL)
-		api.loginfo("✅ 비동기 데이터베이스 엔진 생성 완료")
+		api.info("✅ 데이터베이스 엔진 생성 완료")
 		Base.metadata.create_all(bind=api.engine)
 		with Session(api.engine) as session:
 			# init_data(session)
 			# add_code(session)
+			# print(sys.getdefaultencoding())
 			selectCommCode(session)
+			auth = api.getCodeObject('auth')
+			api.info(f'auth = {auth.detail()}')
+			api.info(f'test ====== DATABASE_URL:{DATABASE_URL}')
 			# addUser(session)
-			pass
-
 		result = api.exec('select * from item')
 		data = result.fetchall()
 		for row in data:
 			print(f'>> row={row}')
 	except Exception as e:
-		ApiConfig().loginfo(f"❌ 데이터베이스 실행오류 URL:{DATABASE_URL} 실패: {e}")
+		ApiConfig().info(f"❌ 데이터베이스 실행오류 URL:{DATABASE_URL} 실패: {e}")

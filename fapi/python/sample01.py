@@ -39,7 +39,7 @@ if __name__=='__main__':
 		encoded_jwt = jwt.encode(meta, SECRET_KEY, algorithm=ALGORITHM)
 		payload = jwt.decode(encoded_jwt, SECRET_KEY, algorithms=[ALGORITHM])
 		api = ApiConfig()
-		api.loginfo("start sample01 ")
+		api.info("start sample01 ")
 		print(f'meta=>{meta} {passwd} {verify} {encoded_jwt} {payload}')
 	except Exception as e:
-		ApiConfig().loginfo(f"sample01: {e}")
+		ApiConfig().info(f"sample01: {e}")

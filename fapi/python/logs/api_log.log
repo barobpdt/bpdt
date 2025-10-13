@@ -8,3 +8,67 @@
 2025-10-13 01:52:28,486 - loginfo:74 - start sample01 
 2025-10-13 01:53:40,581 - loginfo:74 - start sample01 
 2025-10-13 01:54:35,594 - loginfo:74 - start sample01 
+2025-10-13 09:27:58,468 - loginfo:74 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 09:31:26,534 - loginfo:74 - start sample01 
+2025-10-13 14:38:34,030 - loginfo:124 - postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 테이블 생성 중 오류 발생: object AsyncEngine can't be used in 'await' expression
+2025-10-13 14:38:34,031 - loginfo:124 - ⚠️ 비동기 테이블 생성 중 오류 발생: 'NoneType' object has no attribute 'begin'
+2025-10-13 14:38:34,031 - loginfo:124 - ⚠️ 비동기 테이블 생성 중 오류 발생: 'NoneType' object has no attribute 'begin'
+2025-10-13 14:40:45,893 - loginfo:124 - postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 테이블 생성 중 오류 발생: object AsyncEngine can't be used in 'await' expression
+2025-10-13 14:40:45,893 - err:116 - ❌ 데이터베이스 오류 URL:postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 실패: 'NoneType' object has no attribute '_run_ddl_visitor'
+2025-10-13 14:40:45,893 - err:116 - ❌ 데이터베이스 오류 URL:postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 실패: 'NoneType' object has no attribute '_run_ddl_visitor'
+2025-10-13 14:42:31,665 - err:116 - ❌ 데이터베이스 오류 URL:postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 실패: 'AsyncEngine' object has no attribute '_run_ddl_visitor'
+2025-10-13 16:17:57,079 - err:116 - ❌ 데이터베이스 오류 URL:postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres 실패: Tenant or user not found
+2025-10-13 17:31:43,545 - info:124 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 17:32:59,095 - info:124 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 17:33:51,821 - info:124 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 17:34:48,000 - info:124 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 17:36:20,523 - info:124 - ✅ 비동기 데이터베이스 엔진 생성 완료
+2025-10-13 17:38:34,341 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:38:34,361 - info:124 - auth = CC(code=01,title=관리자)
+CC(code=02,title=담당)
+CC(code=03,title=사용자)
+CC(code=04,title=게스트)
+2025-10-13 17:38:34,361 - info:124 - auth = CC(code=01,title=관리자)
+CC(code=02,title=담당)
+CC(code=03,title=사용자)
+CC(code=04,title=게스트)
+2025-10-13 17:41:05,519 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:41:05,542 - info:124 - auth = CC(code=01,title=관리자)CC(code=02,title=담당)CC(code=03,title=사용자)CC(code=04,title=게스트)
+2025-10-13 17:41:05,542 - info:124 - auth = CC(code=01,title=관리자)CC(code=02,title=담당)CC(code=03,title=사용자)CC(code=04,title=게스트)
+2025-10-13 17:43:50,081 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:44:32,332 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:44:32,354 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:44:32,354 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:48:50,288 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:48:50,346 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:48:50,346 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:49:41,397 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:49:41,425 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:49:41,425 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:49:41,426 - info:124 - test ====== DATABASE_URL:sqlite:///./test.db
+2025-10-13 17:49:41,426 - info:124 - test ====== DATABASE_URL:sqlite:///./test.db
+2025-10-13 17:49:41,426 - info:124 - test ====== DATABASE_URL:sqlite:///./test.db
+2025-10-13 17:50:36,004 - info:124 - ✅ 데이터베이스 엔진 생성 완료
+2025-10-13 17:50:36,029 - info:124 - auth = CC(code=01,title=관리자)
+	CC(code=02,title=담당)
+	CC(code=03,title=사용자)
+	CC(code=04,title=게스트)
+2025-10-13 17:50:36,031 - info:124 - test ====== DATABASE_URL:sqlite:///./test.db

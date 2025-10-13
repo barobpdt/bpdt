@@ -3,18 +3,38 @@ import sys
 import time 
 import threading
 import logging
-from CommCode import CommCode
+from typing import List, Optional
+from datetime import datetime, timedelta
+
+# from CommCode import CommCode
 from logging.handlers import TimedRotatingFileHandler
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+import uuid
+
+def generate_unique_id():
+	unique_id = uuid.uuid5(uuid.NAMESPACE_DNS, 'example.com') # uuid.uuid1(node=get_mac_address())
+	while check_id_duplicate(unique_id):
+		unique_id = uuid.uuid4()
+	return unique_id
+
+def check_id_duplicate(id):
+	# 중복 여부 확인 로직
+	return False # 중복되지 않은 경우
 
 # localPath = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 localPath = os.path.dirname(__file__)
 sys.path.insert(0, localPath)
 
-print(f"@@ localpath = {localPath} ")
+
+
 class ApiConfig:
 	_instance = None
 	_lock = threading.Lock()
@@ -28,6 +48,13 @@ class ApiConfig:
 	def __init__(self):
 		if hasattr(self, '_initialized'):
 			return
+		self._initialized = True
+		self.logName = 'api_log'
+		self.security = HTTPBearer()
+		self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+		self.SECRET_KEY = self.pwd_context.hash('bpdttest')
+		self.ALGORITHM = "HS256"
+		self.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 		self.async_engine = None
 		self.async_session = None
 		self.engine = None
@@ -40,7 +67,22 @@ class ApiConfig:
 		self.nextCommand = ''
 		self.fpOut = None		# setLogPath
 		self.startTm = time.time()
-		self._initialized = True
+	def createToken(self, userId:str, expires_delta: Optional[timedelta] = None):
+		"""JWT 액세스 토큰 생성""" 
+		node = {"sub": userId}
+		if expires_delta:
+			expire = datetime.utcnow() + expires_delta
+		else:
+			expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_TOKEN_EXPIRE_MINUTES)
+		node.update({"exp": expire})
+		encoded_jwt = jwt.encode(node, self.SECRET_KEY, algorithm=self.ALGORITHM)
+		return encoded_jwt
+	
+	def isConnect(self):
+		if self.async_session is None and self.session is None:
+			return False
+		return True
+	
 	def setAyncDb(self, url):
 		try:
 			self.async_engine = create_async_engine(url, echo=True)
@@ -50,26 +92,34 @@ class ApiConfig:
 				expire_on_commit=False
 			)
 		except Exception as e:
-			self.loginfo(f"{url} 테이블 생성 중 오류 발생: {e}")
+			self.info(f"{url} 테이블 생성 중 오류 발생: {e}")
 
 	def setDb(self, url):
 		try:
 			self.engine = create_engine(url, echo=True)
 			self.session = sessionmaker(autocommit=True, autoflush=True, bind=self.engine)
 		except Exception as e:
-			self.loginfo(f"{url} 테이블 생성 중 오류 발생: {e}")
+			self.info(f"{url} 테이블 생성 중 오류 발생: {e}")
 	def exec(self, query):
 		result = None
 		try:
 			with self.engine.connect() as connection:
 				result = connection.execute(text(query))
 		except Exception as e:
-			self.loginfo(f'{query} query exec exception : {e}')
+			self.info(f'{query} query exec exception : {e}')
 		return result
-	def loginfo(self, msg):
+	def err(self,msg):
 		logger = self.logger
 		if not logger:
-			logger = self.getLogger('api_log')
+			logger = self.getLogger(self.logName)
+		try:
+			logger.error(msg)
+		except Exception as e:
+			print(f'log print exception message:{msg} {logger} {e}')
+	def info(self, msg):
+		logger = self.logger
+		if not logger:
+			logger = self.getLogger(self.logName)
 		try:
 			logger.info(msg)
 		except Exception as e:
@@ -87,7 +137,7 @@ class ApiConfig:
 			if self.fpIn:
 				self.fpIn.close()
 			self.fpIn=open(path, 'r', encoding='utf8')
-			self.inFileLastPos = fpIn.seek(0, os.SEEK_END)
+			self.inFileLastPos = self.fpIn.seek(0, os.SEEK_END)
 			self.inFilePath = path
 		except Exception as e:
 			pass
@@ -151,13 +201,13 @@ class ApiConfig:
 		# 핸들러 추가
 		logger.addHandler(console_handler)
 		logger.addHandler(file_handler)
-		
-		return logger	
+		self.logger = logger
+		return logger
 			
 	def setCommCode(self, root):
 		self.commCode=root
 
-	def getCode(self, code=None):
+	def getCodeObject(self, code=None):
 		if self.commCode is None:
 			return None
 		if not code:
@@ -171,7 +221,7 @@ class ApiConfig:
 	def getCodeKey(self, code, title):
 		if self.commCode is None:
 			return ''
-		node = self.getCode(code)
+		node = self.getCodeObject(code)
 		if not node:
 			return ''
 		for cur in node.children.values():
@@ -181,7 +231,20 @@ class ApiConfig:
 	def getCodeCount(self, code):
 		if self.commCode is None:
 			return 0
-		node = self.getCode(code)
+		node = self.getCodeObject(code)
+ 
+	
+async def get_async_db():
+	api = ApiConfig()
+	if api.async_session is None:
+		raise HTTPException(status_code=500, detail=f"Database not init")
+	async with api.async_session() as db:
+		try:
+			yield db
+		except Exception as e:
+			api.error(f"⚠️ 데이터베이스 오류: {e}")
+			await db.rollback()
+			raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 	
 if __name__=='__main__':
 	api = ApiConfig()
