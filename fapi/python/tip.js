@@ -1,3 +1,43 @@
+/* update 
+## 개별업데이트
+from sqlalchemy import update
+stmt = (
+    update(user_table)
+    .where(user_table.c.name == "patrick")
+    .values(fullname="Patrick the Star")
+)
+print(stmt)
+
+## 멀티업데이트
+from sqlalchemy import bindparam
+stmt = (
+    update(user_table)
+    .where(user_table.c.name == bindparam("oldname"))
+    .values(name=bindparam("newname"))
+)
+with engine.begin() as conn:
+    conn.execute(
+        stmt,
+        [
+            {"oldname": "jack", "newname": "ed"},
+            {"oldname": "wendy", "newname": "mary"},
+            {"oldname": "jim", "newname": "jake"},
+        ],
+    )
+
+## 환경변수 등록	
+$Env:MY_NAME = "Wade Wilson"
+echo "Hello $Env:MY_NAME"
+
+# Mac, linux
+export MY_NAME="Wade Wilson"
+
+import os
+name = os.getenv("MY_NAME", "World")
+print(f"Hello {name} from Python")
+*/
+
+
 s=#[
 menu : tree
 Auth : entity

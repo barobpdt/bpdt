@@ -23,6 +23,8 @@ import json
 import sys
 from ApiConfig import ApiConfig
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 print("디비 테스트 시작 =====")
 class Base(DeclarativeBase):
 	pass
@@ -204,6 +206,17 @@ async def create_tables(engine):
 	except Exception as e:
 		ApiConfig().info(f"⚠️ 비동기 테이블 생성 중 오류 발생: {e}")
 
+def init_group(session, root):	
+	codeGroup = CommCode('CodeTree','코드그룹','tree',parent=root)
+	auth = CommCode('test','테스트항목','codeGroup',parent=codeGroup) 
+	session.add(codeGroup)
+	session.add(auth)
+	session.add(CommCode('01','관리자','codeValue', parent=auth))
+	session.add(CommCode('02','담당','codeValue', parent=auth))
+	session.add(CommCode('03','사용자','codeValue', parent=auth))
+	session.add(CommCode('04','게스트','codeValue', parent=auth))
+	session.commit()
+
 def init_data(session):
 	root = CommCode('root','commcode root','root')
 	auth = CommCode('auth','권한그룹','codeGroup',parent=root)			
@@ -236,7 +249,7 @@ def selectCommCode(session):
 		select(CommCode)
 		.options(selectinload(CommCode.children, recursion_depth=2))
 		.filter(CommCode.type=='root')
-	).one()
+	).one() 
 	ApiConfig().setCommCode(root) 
 
 def addUser(session):
@@ -257,9 +270,9 @@ if __name__=='__main__':
 			# add_code(session)
 			# print(sys.getdefaultencoding())
 			selectCommCode(session)
-			auth = api.getCodeObject('auth')
-			api.info(f'auth = {auth.detail()}')
-			api.info(f'test ====== DATABASE_URL:{DATABASE_URL}')
+			root=api.commCode
+			print(f'@@ root dump ==> {root.dump()}')
+			# init_group(session, root) 
 			# addUser(session)
 		result = api.exec('select * from item')
 		data = result.fetchall()

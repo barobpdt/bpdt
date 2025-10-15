@@ -18,6 +18,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import uuid
+import asyncio
 
 def generate_unique_id():
 	unique_id = uuid.uuid5(uuid.NAMESPACE_DNS, 'example.com') # uuid.uuid1(node=get_mac_address())
@@ -66,7 +67,20 @@ class ApiConfig:
 		self.inFilePath = ''
 		self.nextCommand = ''
 		self.fpOut = None		# setLogPath
+		self.serverRunning = False
+		self.processId = os.getpid()
 		self.startTm = time.time()
+	async def shutdownFastApi(self):
+		"""백그라운드에서 서버 종료"""
+		await asyncio.sleep(2)  # 2초 대기
+		self.info("🛑 FastAPI 서버 종료 ")
+		sys.exit(0)
+
+	def shutdownServer(self):
+		self.serverRunning = False		
+		# 백그라운드에서 서버 종료
+		asyncio.create_task(self.shutdownFastApi())
+
 	def createToken(self, userId:str, expires_delta: Optional[timedelta] = None):
 		"""JWT 액세스 토큰 생성""" 
 		node = {"sub": userId}
