@@ -3,6 +3,7 @@ import sys
 import time 
 import threading
 import logging
+import signal
 from typing import List, Optional
 from datetime import datetime, timedelta
 
@@ -15,10 +16,13 @@ from sqlalchemy.orm import sessionmaker
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import APIKeyHeader
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import uuid
 import asyncio
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 def generate_unique_id():
 	unique_id = uuid.uuid5(uuid.NAMESPACE_DNS, 'example.com') # uuid.uuid1(node=get_mac_address())
@@ -34,7 +38,7 @@ def check_id_duplicate(id):
 localPath = os.path.dirname(__file__)
 sys.path.insert(0, localPath)
 
-
+security = HTTPBearer()
 
 class ApiConfig:
 	_instance = None
@@ -50,12 +54,12 @@ class ApiConfig:
 		if hasattr(self, '_initialized'):
 			return
 		self._initialized = True
-		self.logName = 'api_log'
-		self.security = HTTPBearer()
+		self.processId = os.getpid()
+		self.logName = 'api_log' 
 		self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 		self.SECRET_KEY = self.pwd_context.hash('bpdttest')
 		self.ALGORITHM = "HS256"
-		self.ACCESS_TOKEN_EXPIRE_MINUTES = 30
+		self.ACCESS_TOKEN_EXPIRE_MINUTES = 30 
 		self.async_engine = None
 		self.async_session = None
 		self.engine = None
@@ -69,18 +73,42 @@ class ApiConfig:
 		self.fpOut = None		# setLogPath
 		self.serverRunning = False
 		self.processId = os.getpid()
-		self.startTm = time.time()
-	async def shutdownFastApi(self):
-		"""백그라운드에서 서버 종료"""
+		self.startTm = 0
+
+	async def fastApiStart(self): 
+		ASYNC_DATABASE_URL = 'postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres'	
+		try:
+			self.serverRunning = True
+			self.startTm = time.time()
+			self.info(f'FAST API Start ASYNC_DATABASE_URL: {ASYNC_DATABASE_URL} serverRunning:{self.serverRunning}')
+			await self.setAyncDb(ASYNC_DATABASE_URL)
+		except Exception as e:
+			print(f'start FastAPI db connect error: {e}')
+
+	async def fastApiEnd(self):
+		self.info(f'stop FastAPI serverRunning:{self.serverRunning}')		 		
 		await asyncio.sleep(2)  # 2초 대기
-		self.info("🛑 FastAPI 서버 종료 ")
-		sys.exit(0)
+		try:
+			self.shutdownServer()
+			self.info("🛑 FastAPI 서버 종료 ")
+			sys.exit(0)		
+			self.serverRunning = False
+		except Exception as e:
+			self.info("fastApiEnd exception")
 
 	def shutdownServer(self):
-		self.serverRunning = False		
-		# 백그라운드에서 서버 종료
-		asyncio.create_task(self.shutdownFastApi())
-
+		self.info(f"🛑 프로세스 시그널로 서버를 종료합니다... PID:{self.processId}")
+		try:			
+			# SIGTERM 시그널 전송
+			os.kill(self.processId, signal.SIGTERM)
+			print(f"✅ 종료 시그널 전송: PID {pid}")        
+			# 강제 종료
+			print("⚠️ 강제 종료 실행...")
+			os.kill(self.processId, signal.SIGKILL)            
+		except Exception as e:
+			print(f"❌ 서버 종료 오류: {e}")
+			
+	
 	def createToken(self, userId:str, expires_delta: Optional[timedelta] = None):
 		"""JWT 액세스 토큰 생성""" 
 		node = {"sub": userId}
@@ -91,6 +119,15 @@ class ApiConfig:
 		node.update({"exp": expire})
 		encoded_jwt = jwt.encode(node, self.SECRET_KEY, algorithm=self.ALGORITHM)
 		return encoded_jwt
+	
+	def getTokenUserId(self, token:str):
+		userId = ''
+		try:
+			payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+			userId: str = payload.get("sub")
+		except JWTError as e:
+			self.err(f'getTokenUserId JWT exception TOKEN:{token}, {e}')
+		return userId
 	
 	def isConnect(self):
 		if self.async_session is None and self.session is None:
@@ -247,6 +284,18 @@ class ApiConfig:
 			return 0
 		node = self.getCodeObject(code)
  
+def userLoginCheck(credentials: HTTPAuthorizationCredentials = Depends(security)):
+	ex = HTTPException(
+		status_code=status.HTTP_401_UNAUTHORIZED,
+		detail="Invalid authentication credentials",
+		headers={"WWW-Authenticate": "Bearer"},
+	)
+	try:
+		print(f"@@ userLoginCheck => {credentials.credentials}")
+		api = ApiConfig()
+		return api.getTokenUserId(credentials.credentials, ex)
+	except Exception:
+		raise ex
 	
 async def get_async_db():
 	api = ApiConfig()
@@ -256,10 +305,11 @@ async def get_async_db():
 		try:
 			yield db
 		except Exception as e:
-			api.error(f"⚠️ 데이터베이스 오류: {e}")
+			api.err(f"⚠️ 데이터베이스 오류: {e}")
 			await db.rollback()
 			raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-	
+
+		
 if __name__=='__main__':
 	api = ApiConfig()
 	print(f'@@ ApiConfig => {api}')

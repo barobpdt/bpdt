@@ -216,23 +216,32 @@ _s(&s, fn, node) {
 	return ss;
 } 
 _confInfo(&s) {
+	not(s.ch()) return;
+	sp=s.cur()
+	c=s.next().ch()
+	while(c.eq('#')) {
+		c=s.incr().next().ch()
+	}
+	a=s.trim(sp, s.cur(), true)
 	db=Baro.db('config')
-	a=s.move(), filter=''
+	filter=''
 	if(a.eq('*') ) {
 		c=s.ch()
 		not(c.eq('.')) return print("@@ error conf list $a 하위 정보 오류");
 		b=s.incr().trim()
-		print("b==$b")
 		if(b.find('%')) {
 			filter = "and cd like '$b'"
 		} else {
 			filter = "and cd='$b' "
 		}
 	} else {
-		c=s.ch()
 		if(c.eq('.')) {
 			b=s.incr().trim()
-			filter = "and grp='$a' and cd like '$b'"
+			if(b.eq('*')) {
+				filter = "and grp='$a'"
+			} else {
+				filter = "and grp='$a' and cd like '$b'"
+			}
 		} else {
 			filter = "and grp='$a'"
 		}
@@ -241,7 +250,8 @@ _confInfo(&s) {
 	ss=''
 	while(cur, node) {
 		cur.inject(grp, cd, data)
-		line=_s('$grp.$cd ${firstLine(data)} ${nl}')
+		info = firstLine(data)
+		line=_s('$grp.$cd $info $nl')
 		ss.add(line)
 	}
 	return ss;

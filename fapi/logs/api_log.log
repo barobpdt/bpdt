@@ -1,0 +1,6 @@
+2025-10-17 10:48:00,241 - info:172 - stop FastAPI serverRunning:False
+2025-10-17 10:51:55,665 - info:175 - FAST API Start ASYNC_DATABASE_URL: postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+2025-10-17 10:52:06,683 - info:175 - stop FastAPI serverRunning:False
+2025-10-17 10:54:31,172 - info:173 - stop FastAPI serverRunning:False
+2025-10-17 10:54:33,186 - info:173 - 🛑 프로세스 시그널로 서버를 종료합니다... PID:46556
+2025-10-17 10:56:48,425 - info:175 - FAST API Start ASYNC_DATABASE_URL: postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres serverRunning:True

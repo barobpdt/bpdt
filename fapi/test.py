@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
+
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, DateTime, Numeric
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
@@ -11,7 +13,8 @@ from sqlalchemy.sql import text
 from sqlalchemy.future import select
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from python.ApiConfig import ApiConfig
+from schema_supabase import TreeNode, UserAdmin
+from python.ApiConfig import ApiConfig, userLoginCheck, get_async_db
 from datetime import datetime, timedelta
 import os
 import sys
@@ -19,13 +22,15 @@ import io
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import asyncio
-import signal
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from uuid import UUID, uuid4
 
 from fastapi.templating import Jinja2Templates
 templates = Jinja2Templates(directory="templates")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 api = ApiConfig()
@@ -35,15 +40,11 @@ print(f"api=={api}")
 # 관리자 사용자 정보 (실제 운영환경에서는 데이터베이스에서 관리)
 from contextlib import asynccontextmanager
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-	# When service starts.
-	startup_event()	
+async def lifespan(app: FastAPI): 
+	await api.fastApiStart()
 	yield    
-	# When service is stopped.
-	print("service is stopped.")   
+	await api.fastApiEnd()
 
-pid = os.getpid()
-print(f"fastapi start pid={pid} ")
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -61,6 +62,10 @@ app.add_middleware(
 	allow_headers=["*"],
 )
 
+class UserLogin(BaseModel):
+	userId: str
+	userName: str|None
+
 class Task(BaseModel):
 	id: Optional[UUID] = None
 	title: str
@@ -77,20 +82,6 @@ class Task(BaseModel):
 tasks = []
 tasks.append(Task(uuid4(),'test01'))
 tasks.append(Task(uuid4(),'test02'))
-
-
-def stop_server_process():
-	print("🛑 프로세스 시그널로 서버를 종료합니다...")
-	try:
-		# SIGTERM 시그널 전송
-		os.kill(pid, signal.SIGTERM)
-		print(f"✅ 종료 시그널 전송: PID {pid}")        
-		# 강제 종료
-		print("⚠️ 강제 종료 실행...")
-		os.kill(pid, signal.SIGKILL)            
-	except Exception as e:
-		print(f"❌ 서버 종료 오류: {e}")
-		return False
 	
 # 애플리케이션 시작 이벤트
 def startup_event():
@@ -117,6 +108,30 @@ def read_root():
 		}
 	}
 
+''' [호출테스트]
+w=Baro.web()
+data=#[{
+  "userId": "test",
+  "userName": "test"
+}]
+w.header('content-type','application/json')
+w.data=data
+w.call('http://localhost:8000/login', 'POST', func(type,data) {
+	if( type=='read') {
+		node=_node().parseJson(data)
+		print('login result => ', node)
+	}
+})
+
+
+'''
+
+async def get_current_active_user(userId:str = Depends(userLoginCheck)):
+	"""현재 활성 사용자 조회"""
+	if not userId:
+		raise HTTPException(status_code=400, detail="Inactive user")
+	return userId
+
 @app.get('/login',response_class=HTMLResponse)
 def login(request : Request):
 	return templates.TemplateResponse("login.html", {"request": request})
@@ -125,9 +140,28 @@ def login(request : Request):
 def read_tasks():
 	return tasks
 
+@app.post('/login')
+async def setUserLogin(user:UserLogin):
+	token = ApiConfig().createToken(user.userId) 
+	return {'token':token}
+
+@app.get("/is_login", response_model=UserLogin)
+async def is_login(token:str = Depends(oauth2_scheme)):
+	print(f'is_login token:{token}')
+	userId = api.getTokenUserId(token)
+	print(f'is_login userId:{userId}')
+	return {"userId":userId,"userName":"test"}
+
+@app.get("/db_test")
+async def db_test(db: AsyncSession = Depends(get_async_db)):
+	result = await db.execute(
+		select(UserAdmin)
+	)
+	return result.scalars().all()
+
 @app.get("/shutdown")
-def read_tasks():
-	stop_server_process()
+async def read_tasks():
+	await ApiConfig().fastApiEnd()
 	return {'result':'stop'}
 
 if __name__ == "__main__":        

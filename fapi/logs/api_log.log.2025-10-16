@@ -1,0 +1,9 @@
+2025-10-16 15:38:02,250 - info:172 - FAST API Start ASYNC_DATABASE_URL: postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+2025-10-16 16:38:08,395 - info:172 - FAST API Start ASYNC_DATABASE_URL: postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+2025-10-16 16:38:20,752 - err:164 - ⚠️ 데이터베이스 오류: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+2025-10-16 17:06:42,869 - info:172 - FAST API Start ASYNC_DATABASE_URL: postgresql+asyncpg://postgres.yskotbxdlxyzpnwhxucs:pass1812!!@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+2025-10-16 17:07:36,897 - err:164 - ⚠️ 데이터베이스 오류: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.ConnectionDoesNotExistError'>: connection was closed in the middle of operation
+[SQL: SELECT user_admin."userId", user_admin."userName", user_admin.fullname, user_admin.email, user_admin."authCode", user_admin."createdDtm", user_admin."updatedDtm" 
+FROM user_admin]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+2025-10-16 17:17:49,870 - info:172 - stop FastAPI serverRunning:False

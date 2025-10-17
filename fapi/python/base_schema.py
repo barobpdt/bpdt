@@ -25,6 +25,18 @@ from ApiConfig import ApiConfig
 class Base(DeclarativeBase):
 	pass
 
+class Item(Base):
+	__tablename__ = "item"
+	id:Mapped[str] = mapped_column(primary_key=True)
+	name:Mapped[str]
+	type:Mapped[str]
+	def __init__(self, id, name, type):
+		self.id=id
+		self.name = name
+		self.type = type
+	def __repr__(self) -> str:
+		return f"item(id={self.id!r}, name={self.name!r})"
+
 class UserAdmin(Base):
 	__tablename__ = "user_admin"
 	userId: Mapped[str] = mapped_column(primary_key=True)
