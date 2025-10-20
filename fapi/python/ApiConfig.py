@@ -24,16 +24,6 @@ import asyncio
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-def generate_unique_id():
-	unique_id = uuid.uuid5(uuid.NAMESPACE_DNS, 'example.com') # uuid.uuid1(node=get_mac_address())
-	while check_id_duplicate(unique_id):
-		unique_id = uuid.uuid4()
-	return unique_id
-
-def check_id_duplicate(id):
-	# 중복 여부 확인 로직
-	return False # 중복되지 않은 경우
-
 # localPath = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 localPath = os.path.dirname(__file__)
 sys.path.insert(0, localPath)
@@ -145,16 +135,16 @@ class ApiConfig:
 		except Exception as e:
 			self.info(f"{url} 테이블 생성 중 오류 발생: {e}")
 
-	def setDb(self, url):
+	def setLocalDb(self, url):
 		try:
-			self.engine = create_engine(url, echo=True)
-			self.session = sessionmaker(autocommit=True, autoflush=True, bind=self.engine)
+			self.localEngine = create_engine(url, echo=True)
+			self.localSession = sessionmaker(bind=self.localEngine) #,autocommit=True, autoflush=True
 		except Exception as e:
 			self.info(f"{url} 테이블 생성 중 오류 발생: {e}")
-	def exec(self, query):
+	def queryResult(self, query):
 		result = None
 		try:
-			with self.engine.connect() as connection:
+			with self.localEngine.connect() as connection:
 				result = connection.execute(text(query))
 		except Exception as e:
 			self.info(f'{query} query exec exception : {e}')
@@ -309,7 +299,47 @@ async def get_async_db():
 			await db.rollback()
 			raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-		
+
 if __name__=='__main__':
+	from sqlalchemy.orm import DeclarativeBase
+	from sqlalchemy.orm import Mapped
+	from sqlalchemy.orm import mapped_column
+	from sqlalchemy.orm import Session
+	from uuid import UUID, uuid4
+
+	class BaseLocal(DeclarativeBase):
+		pass
+	class test(BaseLocal):
+		__tablename__ = 'db_test'
+		id:Mapped[UUID] = mapped_column(primary_key=True)
+		name:Mapped[str]
+		value:Mapped[str]
+
+		def __init__(self, *args, **kwargs):
+			if not 'id' in kwargs:
+				kwargs['id'] = uuid4()
+			if len(args)>0 :
+				kwargs['name'] = args[0] if len(args)>0 else kwargs['name'] 
+				kwargs['value'] = args[1] if len(args)>1 else kwargs['value'] 
+			super().__init__(**kwargs)
+		def __repr__(self):
+			return f'test({self.id} = {self.name} {self.value})'
+	
 	api = ApiConfig()
-	print(f'@@ ApiConfig => {api}')
+	api.setLocalDb("sqlite:///c:/temp/test.db")
+	# BaseLocal.metadata.create_all(api.engine)
+
+	with api.localSession() as sess:
+		aa= test('isit','na')
+		print(f'aa===={aa}')
+		try:
+			sess.add( test('aaa','bbb') )
+			sess.add( test('bbb','bbb') )
+			sess.add( test('ccc','bbb') )
+			sess.commit()
+		except Exception as e:
+			print(f"db exception : {e}")
+
+	result = api.queryResult("select * from db_test")
+	data = result.all()
+	print(f'@@ ApiConfig => {api} {data}')

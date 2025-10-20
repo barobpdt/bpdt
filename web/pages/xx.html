@@ -1,0 +1,193 @@
+<html>
+<head>
+	<title>test</title>
+	<style>
+		/* START TOOLTIP STYLES */
+[tooltip] {
+	position: relative; /* opinion 1 */
+}
+
+/* Applies to all tooltips */
+[tooltip]::before,
+[tooltip]::after {
+	text-transform: none; /* opinion 2 */
+	font-size: .9em; /* opinion 3 */
+	line-height: 1;
+	user-select: none;
+	pointer-events: none;
+	position: absolute;
+	display: none;
+	opacity: 0;
+}
+[tooltip]::before {
+	content: '';
+	border: 5px solid transparent; /* opinion 4 */
+	z-index: 1001; /* absurdity 1 */
+}
+[tooltip]::after {
+	content: attr(tooltip); /* magic! */
+
+	/* most of the rest of this is opinion */
+	font-family: Helvetica, sans-serif;
+	text-align: center;
+
+	/* 
+		Let the content set the size of the tooltips 
+		but this will also keep them from being obnoxious
+		*/
+	min-width: 3em;
+	max-width: 21em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding: 1ch 1.5ch;
+	border-radius: .3ch;
+	box-shadow: 0 1em 2em -.5em rgba(0, 0, 0, 0.35);
+	background: #333;
+	color: #fff;
+	z-index: 1000; /* absurdity 2 */
+}
+
+/* Make the tooltips respond to hover */
+[tooltip]:hover::before,
+[tooltip]:hover::after {
+	display: block;
+}
+
+/* don't show empty tooltips */
+[tooltip='']::before,
+[tooltip='']::after {
+	display: none !important;
+}
+
+/* FLOW: UP */
+[tooltip]:not([flow])::before,
+[tooltip][flow^="up"]::before {
+	bottom: 100%;
+	border-bottom-width: 0;
+	border-top-color: #333;
+}
+[tooltip]:not([flow])::after,
+[tooltip][flow^="up"]::after {
+	bottom: calc(100% + 5px);
+}
+[tooltip]:not([flow])::before,
+[tooltip]:not([flow])::after,
+[tooltip][flow^="up"]::before,
+[tooltip][flow^="up"]::after {
+	left: 50%;
+	transform: translate(-50%, -.5em);
+}
+
+/* FLOW: DOWN */
+[tooltip][flow^="down"]::before {
+	top: 100%;
+	border-top-width: 0;
+	border-bottom-color: #333;
+}
+[tooltip][flow^="down"]::after {
+	top: calc(100% + 5px);
+}
+[tooltip][flow^="down"]::before,
+[tooltip][flow^="down"]::after {
+	left: 50%;
+	transform: translate(-50%, .5em);
+}
+
+/* FLOW: LEFT */
+[tooltip][flow^="left"]::before {
+	top: 50%;
+	border-right-width: 0;
+	border-left-color: #333;
+	left: calc(0em - 5px);
+	transform: translate(-.5em, -50%);
+}
+[tooltip][flow^="left"]::after {
+	top: 50%;
+	right: calc(100% + 5px);
+	transform: translate(-.5em, -50%);
+}
+
+/* FLOW: RIGHT */
+[tooltip][flow^="right"]::before {
+	top: 50%;
+	border-left-width: 0;
+	border-right-color: #333;
+	right: calc(0em - 5px);
+	transform: translate(.5em, -50%);
+}
+[tooltip][flow^="right"]::after {
+	top: 50%;
+	left: calc(100% + 5px);
+	transform: translate(.5em, -50%);
+}
+
+/* KEYFRAMES */
+@keyframes tooltips-vert {
+to {
+	opacity: .9;
+	transform: translate(-50%, 0);
+}
+}
+
+@keyframes tooltips-horz {
+to {
+	opacity: .9;
+	transform: translate(0, -50%);
+}
+}
+
+/* FX All The Things */ 
+[tooltip]:not([flow]):hover::before,
+[tooltip]:not([flow]):hover::after,
+[tooltip][flow^="up"]:hover::before,
+[tooltip][flow^="up"]:hover::after,
+[tooltip][flow^="down"]:hover::before,
+[tooltip][flow^="down"]:hover::after {
+	animation: tooltips-vert 300ms ease-out forwards;
+}
+
+[tooltip][flow^="left"]:hover::before,
+[tooltip][flow^="left"]:hover::after,
+[tooltip][flow^="right"]:hover::before,
+[tooltip][flow^="right"]:hover::after {
+	animation: tooltips-horz 300ms ease-out forwards;
+}
+
+
+	</style>
+</head>
+<body style="padding:0;margin:0;">
+	<div id="pages" style="display:flex;flex-direction:column;width:100%;height:100vh">
+		<div id="top" style="display:flex; height:40px;background:#aaa">
+			<div style="display: flex; gap:2px; padding: 2px; width:100px; background: #aaa;align-items: center; justify-content: center;">
+				<span>logo</span>
+				<span>a</span>
+				<span>b</span>
+			</div>
+			<div style="display: flex; flex:1; align-items: center;">
+				<div id="menu" style="width:400px; background: #eaa; height:30px; margin-left:4px">menu</div>
+				<div id="tabs" style="display: flex; flex:1; gap:4px; height:100%; align-items: end; margin-left: 4px;">
+					<div id="tab01" tooltip="Get Down." flow="down"
+					style="display: flex; width:80px; height:35px; background: #556; color:#fff; align-items: center; justify-content: center;">
+						tab01
+					</div>
+				</div>
+			</div>
+			<div style="display: flex; gap:2px; padding: 2px 0px; align-items: center; justify-content: center; width:100px;background: #ddd;">
+				<span style="flex:1; background: #445; color:#fff; text-align: center;">1</span>
+				<span style="flex:1; background: #445; color:#fff; text-align: center;">2</span>
+				<span style="flex:1; background: #445; color:#fff; text-align: center;">3</span>
+			</div>
+		</div>
+		<div id="body" style="display: flex; flex:1; overflow: auto; background: #556; padding: 2px;">
+			<div style="display: flex; gap:2px; padding: 2px; align-items: center; justify-content: center; width:100%;background: #fff;">
+				body
+			</div>
+		</div>
+		<div id="bottom" style="display: flex; height:40px;background:#aaa">
+			
+		</div>
+	</div>
+</body>
+</html>

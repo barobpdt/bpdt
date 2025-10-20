@@ -39,41 +39,61 @@ print(f"Hello {name} from Python")
 
 
 s=#[
-menu : tree
-Auth : entity
-User : entity
-	userId pk(str)
-	userName str
-	email
-	delYn yn(N)
-	ref
-	data
-	createDtm
-	modifyDtm
-	
-UserAuth 
-	userId fk(user.userId)
-	authCode str(16) notnull
-	authName text
-	
-Item
-	itemCode str(16) pk
-	itemName text
-	
-Order
-	orderNo pk(str)
-	itemId fk(item.id)
-
-OrderDetail
-	orderNo fk(order.orderNo)
-		
 ]
 ~~ 
-getTableInfo(&s, node) {
-	not(node) node=_node()
+@baro.schemaMake(parent) {
+	nl=conf('str.newline')
+	projectName = parent.projectName
+	not(projectName) projectName = 'test'
+
+	while(table, parent) {
+		table.inject(line, jsonData)
+		if(jsonData) table.parseJson(jsonData)
+		table.name = line.trim()
+		not(table.tableName) {
+			table.tableName = @baro.dbConvertName(table.name)
+		}
+		while(field, table) {
+			@baro.schemaMakeField(table, field)
+		}
+		@baro.schemaApplySource(table)
+	}
+}
+@baro.schemaMakeField(table, field) {
+	
+}
+@baro.schemaApplySource(table) {
+	ss=''
+	while(field, table) {
+		table.inject(line, jsonData,comment)
+		ss.add("$line{$jsonData}$comment", nl)
+	}
+	key = _s('table#${projectName}.${table.name}')
+	prev = conf(key)
+	not( ss.eq(prev)) {
+		conf(key, ss, true)
+	}
+}
+@baro.dbConvertName(&s) {
+	ss=''
+	sz=s.size()
+	while(n=0,sz ){
+		c=s.ch(n)
+		if(c.is('upper')) {
+			if(n) ss.add('_')
+		}
+		ss.add(c.upper())
+	}
+	return ss;
+}
+ 
+@baro.schemaCreate(parent, &s) {
+	not(s.ch()) return;
+	tableNode=null
 	startIndex = -1;
-	info = '', ss=''
+	Cf.error(true)
 	while(s.valid()) {
+		if( Cf.error() ) break;
 		if( lineBlankCheck(s)) {
 			s.findPos("\n")
 			continue;
@@ -81,21 +101,34 @@ getTableInfo(&s, node) {
 		cnt = indentCount(s)
 		c=s.ch()
 		if(c.eq('#')) continue;
-		line = s.findPos("\n")
 		if(startIndex.eq(-1)) {
 			startIndex = cnt
 		}
+		// print("xxxxxxxxx", startIndex, cnt)
 		if( startIndex.eq(cnt)) {
-			if(ss) {
-				cur=node.addNode()
-				cur.info = info
-				cur.data = ss
-			}
-			info = line
-			ss=''
+			tableNode = parent.addNode()
+			parse(tableNode)
 			continue;
 		}
-		ss.add(line,"\r\n")
+		parse( tableNode.addNode() )
 	}
 	return node;
-} 
+	
+	parse = func(cur) {
+		if( lineCheck(s,'{') ) {
+			cur.line = s.findPos('{',0,1).trim()
+			data = s.match() if(typeof(data,'bool')) return print("${cur.line} 매칭오류")
+			cur.jsonData = data.trim()
+			if( lineCheck(s,'--') ) {
+				cur.comment = s.findPos("\n").trim()
+			}
+		} else {
+			if( lineCheck(s,'--') ) {
+				cur.line = s.findPos('--').trim()
+				cur.comment = s.findPos("\n").trim()
+			} else {
+				cur.line = s.findPos("\n").trim()
+			}
+		}
+	};
+}	

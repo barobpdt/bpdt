@@ -68,7 +68,7 @@
   var grid,
       data = [],
       columns = [
-          { id: "title", name: "Title", field: "title", width: 120 },
+          { id: "title", name: "Title", field: "title", width: 120, sortable:true },
           { id: "duration", name: "Duration", field: "duration", width: 120 },
           { id: "%", name: "% Complete", field: "percentComplete", width: 120 },
           { id: "start", name: "Start", field: "start", width: 120 },
@@ -114,6 +114,23 @@
   }
 
   grid = new Slick.Grid("#container", data, columns, options);
+  grid.setSelectionModel(new Slick.RowSelectionModel());
+  grid.onSort.subscribe(function (e, args) {
+		data.sort(function (dataRow1, dataRow2) {
+			console.log('args =>',args)
+			var field = args.sortCol.field;
+			var sign = args.sortAsc ? 1 : -1;
+			var value1 = dataRow1[field];
+			var value2 = dataRow2[field];
+			
+			var result = (value1 == value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
+			return result;
+		});
+
+		grid.invalidate();
+		grid.render();
+	});
+	grid.onClick.subscribe((e,args)=>console.log('click',e,args))
 </script>
 </body>
 </html>

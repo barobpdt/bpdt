@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>과일 룰렛</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; }
+        #result { margin-top: 20px; font-size: 1.5em; font-weight: bold; }
+        canvas { margin-top: 30px; }
+        button { margin-top: 20px; padding: 10px 30px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h2>과일 룰렛</h2>
+    <canvas id="roulette" width="400" height="400"></canvas>
+    <br>
+    <button id="spinBtn">돌리기</button>
+    <div id="result"></div>
+    <script>
+        // 과일과 가중치 설정
+        const fruits = [
+            { name: "사과", weight: 1 },
+            { name: "바나나", weight: 2 },
+            { name: "포도", weight: 3 },
+            { name: "오렌지", weight: 2 },
+            { name: "키위", weight: 1 },
+            { name: "복숭아", weight: 1 }
+        ];
+        const colors = ["#FF6666", "#FFE066", "#A366FF", "#FFB366", "#66FF99", "#FF99CC"];
+        const canvas = document.getElementById('roulette');
+        const ctx = canvas.getContext('2d');
+        const radius = 180;
+        let startAngle = 0;
+        let spinning = false;
+        let currentAngle = 0;
+
+        // 가중치 합계
+        const totalWeight = fruits.reduce((sum, f) => sum + f.weight, 0);
+
+        // 룰렛 그리기
+        function drawRoulette(angleOffset = 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let angle = angleOffset;
+            fruits.forEach((fruit, i) => {
+                const sliceAngle = (fruit.weight / totalWeight) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(200, 200);
+                ctx.arc(200, 200, radius, angle, angle + sliceAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+                ctx.stroke();
+                // 텍스트
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate(angle + sliceAngle / 2);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#222";
+                ctx.font = "bold 18px sans-serif";
+                ctx.fillText(fruit.name, radius * 0.65, 8);
+                ctx.restore();
+                angle += sliceAngle;
+            });
+            // 화살표
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(200, 20);
+            ctx.lineTo(190, 50);
+            ctx.lineTo(210, 50);
+            ctx.closePath();
+            ctx.fillStyle = "#222";
+            ctx.fill();
+            ctx.restore();
+        }
+
+        drawRoulette();
+
+        // 랜덤 선택 (가중치 기반)
+        function weightedRandom() {
+            let r = Math.random() * totalWeight;
+            for (let i = 0; i < fruits.length; i++) {
+                if (r < fruits[i].weight) return i;
+                r -= fruits[i].weight;
+            }
+            return fruits.length - 1;
+        }
+
+        // 돌리기 버튼 이벤트
+        document.getElementById('spinBtn').onclick = function() {
+            if (spinning) return;
+            spinning = true;
+            document.getElementById('result').textContent = '';
+            // 선택된 과일 인덱스
+            const selectedIdx = weightedRandom();
+            // 해당 과일의 시작 각도 계산
+            let targetAngle = 0;
+            for (let i = 0; i < selectedIdx; i++) {
+                targetAngle += (fruits[i].weight / totalWeight) * 2 * Math.PI;
+            }
+            // 해당 섹터의 중앙으로 맞추기
+            targetAngle += ((fruits[selectedIdx].weight / totalWeight) * Math.PI);
+            // 룰렛을 여러 바퀴 돌린 후 해당 각도에 멈추게 함
+            const spins = 5;
+            const finalAngle = (2 * Math.PI * spins) + (2 * Math.PI - targetAngle);
+            let duration = 3000; // ms
+            let start = null;
+            function animate(ts) {
+                if (!start) start = ts;
+                let elapsed = ts - start;
+                let progress = Math.min(elapsed / duration, 1);
+                // ease out
+                let ease = 1 - Math.pow(1 - progress, 3);
+                currentAngle = ease * finalAngle;
+                drawRoulette(currentAngle);
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    spinning = false;
+                    drawRoulette(currentAngle);
+                    document.getElementById('result').textContent = `선택된 과일: ${fruits[selectedIdx].name}`;
+                    launchFireworks();
+                }
+            }
+            requestAnimationFrame(animate);
+        };
+
+        // 폭죽 파티클 효과
+        function launchFireworks() {
+            const particles = [];
+            const numParticles = 60;
+            const centerX = 200;
+            const centerY = 200;
+            for (let i = 0; i < numParticles; i++) {
+                const angle = (2 * Math.PI * i) / numParticles;
+                const speed = 2 + Math.random() * 2;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push({
+                    x: centerX,
+                    y: centerY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    alpha: 1,
+                    color: color,
+                    radius: 4 + Math.random() * 3
+                });
+            }
+            let frame = 0;
+            function animateParticles() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawRoulette(currentAngle);
+                particles.forEach(p => {
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    // 파티클 이동
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.97;
+                    p.vy *= 0.97;
+                    p.alpha *= 0.97;
+                });
+                ctx.restore();
+                frame++;
+                if (frame < 60) {
+                    requestAnimationFrame(animateParticles);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawRoulette(currentAngle);
+                }
+            }
+            animateParticles();
+        }
+    </script>
+</body>
+</html>
