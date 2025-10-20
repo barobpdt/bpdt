@@ -19,22 +19,31 @@ const getEl = el => isEl(el) ? el :
 const getJq = el => isEl(el) ? $(el) : 
 	jqCheck(el)? el: 
 	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el): $(document.getElementById(el))): null;
-	
-const cf={stateMap:{}, effectMap:{}, stackPages:{},
-	/* 웹소켓 설정 */
-    , websocket: null
-    , wsUrl:'ws://localhost:8092/chat'
- 	, wsCallback: null
-	, wsStatus:''
-    , wsType:''
-    , wsMode: ''
-    , wsVersion:'1.0'
-	, currentRetry: 0             // 현재 재시도 횟수
-	, maxRetries: 5 // 최대 재시도 횟수
-	, retryInterval: 2000 // 재시도 간격 (밀리초)
-	/* 기타 공통 설정 */
-	, dumyDiv: document.createElement('div')
+
+Object.prototype.update = function(...args) { return Object.assign(this,...args) }
+Object.prototype.copy = function(...args) { return Object.assign({},this,...args) }
+Object.prototype.isset = function(name) { return this.hasOwnProperty(name) }
+
+String.prototype.lpad = function(padLength, padString) {
+    let arrTxt = this;
+	if(!padString) padString='0';
+    while (arrTxt.length < padLength)
+        arrTxt = padString + arrTxt;
+    return arrTxt;
 }
+String.prototype.rpad = function(padLength, padString) {
+    let arrTxt = this;
+	if(!padString) padString='0';
+    while (arrTxt.length < padLength)
+        arrTxt += padString;
+    return arrTxt;
+}
+/*
+String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
+String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
+String.prototype.rtrim = function() { return this.replace(/\s+$/,"") }
+*/
+
 function getRandomColor() {
 	var letters = '0123456789ABCDEF';
 	var color = '#';
@@ -101,74 +110,65 @@ const getElOffset = (el, checkRect) => {
 
 const screenSize = () => ({ width:$(window).width(), height:$(window).height() })
 
-function setState(id, data) {
-	const map = cf.effectMap
-	stateMap[id]=data
-	for(const cur of getStateNodes(id)) {
-		if(typeof(cur.target)=='function') {
-			cur.target(data, cur)
-		} else {
-			const el=getJq(cur.target)
-			if(el) {
-				$(el).html(data)
-			}
-		}
-	}	
-}
-function setStateEffect(pageCode, names, target, data) {
-	if(!Array.isArray(names)) {
-		name = names
-		names = [name]
+class WebsocketManager {
+	constructor(url) {
+		this.websocket = null
+		this.url = url
+		this.maxRetries = 3
+		this.currentRetry = 0
+		this.retryInterval = 10000
 	}
-	const alen = arguments.length
-	const id = pageCode+'--'+name
-	if(cf.effectMap[id]) {
-		if(alen>2 ) cf.effectMap[id].target = target
-		if(alen>3 ) cf.effectMap[id].data = data
-	} else {
-		cf.effectMap[id] = {pageCode,id,names,target,data}
-	}
-	
-}
-function getStateNodes(id) {
-	const arr=[]
-	const map = cf.effectMap
-	stateMap[id]=data	
-	for(const k in map) {
-		const cur = map[k]
-		if(!Array.isArray(cur.names)) continue;
-		for(const a of cur.names) {
-			if( a.name==nm && (pc==null||pc==cur.pageCode)) {
-				arr.push(cur)
-			}
+	closeWebsocket() {
+		if( this.websocket ) {
+			this.websocket.close()
+			this.websocket = null
 		}
 	}
-	return arr;
-}
-
-const stringByteLength = (s,b,i,c) => {
-    for(b=i=0;c=s.charCodeAt(i++);b+=c>>11?3:c>>7?2:1);
-    return b
-}
-function qa(s) {
-	const a = document.querySelectorAll(s)
-	return a||[]
-}
-function qs(s) {
-	const a = document.querySelector(s)
-	return a||cf.dumyDiv
-}
-function appendParam() {
-	let s=''
-	Array.from(arguments).map((c,n)=>s+=(n>0?'|':'')+c)
-	return s
-}
-
-function websocketConnect() {
-    // 웹소켓 연결 함수
-    let ws = null
-    const isConnect = () => ws!=null
-    function sendData(type, header, param) {
+	connect() {
+		if( this.websocket ) {
+			this.closeWebsocket()
+		}
+		const me = this
+		this.currentRetry = 0
+		this.websocket = new WebSocket(this.url);
+		this.websocket.onopen = function() {
+			console.log('웹소켓 연결 성공!')
+		}
+		this.websocket.onmessage = function(event) {
+			try {
+				const pos = event.data.indexOf('\r\n\r\n')
+				if(pos!=-1) {
+					const header = event.data.substr(0,pos)
+					const message = event.data.substr(pos+4)
+					// const node = JSON.parse(message);
+					// 메시지 타입에 따른 처리
+					me.recvData(header, message);
+				}
+			} catch (error) {
+				console.error('메시지 파싱 오류:', error);
+			}
+		}
+		this.websocket.onclose = function(event) {
+			console.log('웹소켓 연결 종료:', event.code, event.reason);
+			if (!event.wasClean && me.maxRetries && me.currentRetry < me.maxRetries) {
+				me.currentRetry++;
+				console.log(`${me.retryInterval/1000} 초 후 재연결 시도...`);
+				setTimeout(me.connect, me.retryInterval);
+			} else if (me.currentRetry >= me.maxRetries) {
+				console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
+			}
+		}
+		this.websocket.onerror = function(error) {
+			me.closeWebsocket()
+		}
+	}
+	isConnect() {
+		return this.websocket
+	}
+	recvData(header, data) {
+		
+	}
+	sendData(type, header, param) {
         let message='', contentType=''
 		if( param instanceof FileReader ) {
 			const ab = param.result
@@ -190,93 +190,26 @@ function websocketConnect() {
         const data = '@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion+'\r\n\r\n'+message
         console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion)
         ws.send(data)
-    }    
-    function connect() {
-        try {
-            // 웹소켓 객체 생성
-            cf.websocket = new WebSocket(cf.wsUrl);
-            // 연결 성공 이벤트
-            ws=cf.websocket
-            ws.onopen = function() {
-                console.log('웹소켓 연결 성공!');
-                cf.currentRetry = 0; // 연결 성공 시 재시도 카운터 초기화
-                
-                // 연결 상태 표시
-                updateConnectionStatus('연결됨', 'success');
-                
-                // 서버에 연결 성공 메시지 전송
-                sendData('connection','check',{status: 'connected', message: '클라이언트가 연결되었습니다.'});
-            };
-            
-            // 메시지 수신 이벤트
-            ws.onmessage = function(event) {
-                try {
-                    const pos = event.data.indexOf('\r\n\r\n')
-                    console.log('@@ 서버로부터 메시지 수신: pos == '+pos);
-                    if(pos!=-1) {
-                        const header = event.data.substr(0,pos)
-                        const message = event.data.substr(pos+4)
-                        // const node = JSON.parse(message);
-                        // 메시지 타입에 따른 처리
-                        if( typeof(cf.wsCallback)=='function' ) cf.wsCallback(header, message);
-                    }
-                } catch (error) {
-                    console.error('메시지 파싱 오류:', error);
-                }
-            };
-            
-            // 연결 종료 이벤트
-            ws.onclose = function(event) {
-                console.log('웹소켓 연결 종료:', event.code, event.reason);
-                ws = null
-                updateConnectionStatus('연결 끊김', 'error');
-				if( cf.wsMode=='close' ) return
-                // 정상 종료가 아닌 경우 재연결 시도
-                if (!event.wasClean && cf.maxRetries && cf.currentRetry < cf.maxRetries) {
-                    cf.currentRetry++;
-                    console.log(`${cf.retryInterval/1000} 초 후 재연결 시도...`);
-                    setTimeout(connect, cf.retryInterval);
-                } else if (cf.currentRetry >= cf.maxRetries) {
-                    console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
-                    updateConnectionStatus('연결 실패', 'error');
-                }
-            };
-            
-            // 오류 이벤트
-            ws.onerror = function(error) {
-                ws = null
-                console.error('웹소켓 오류:', error);
-                updateConnectionStatus('연결 오류', 'error');
-            };
-            
-        } catch (error) {
-            ws = null
-            console.error('웹소켓 연결 중 오류 발생:', error);
-            if( cf.wsMode=='close' ) return
-            // 오류 발생 시 재연결 시도
-            if ( cf.maxRetries && cf.currentRetry < cf.maxRetries) {
-                cf.currentRetry++;
-                console.log(`${cf.retryInterval/1000}초 후 재연결 시도...`);
-                
-                setTimeout(connect, cf.retryInterval);
-            } else {
-                console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
-                updateConnectionStatus('연결 실패', 'error');
-            }
-        }
-    }   
-    
-    // 연결 상태 표시 함수
-    function updateConnectionStatus(status, type) {
-        cf.wsStatus = status
-        cf.wsType = type
-    }    
-    return { connect, isConnect, sendData }
+    } 
 }
 
+function websocketUploadFiles(ws) {
+	const info={ws, uploadFiles:null, fileIndex:1, currentFile:null, chunkSize: 64 * 1024 }	
+	// 파일아이디 생성 
+	function generateFileId() {
+		return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+	}
 
-function wsChunkUploadFiles(ws) {
-	const info={ws, uploadFiles:null, fileIndex:1, currentFile:null, chunkSize: 64 * 1024 }
+	// 파일 크기 포맷 함수
+	function formatFileSize(bytes) {
+		if (bytes === 0) return '0 Bytes';
+		const k = 1024;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+	}
+
+
 	function start(files) {
 		info.fileIndex=0
 		info.currentFile
@@ -354,19 +287,127 @@ function wsChunkUploadFiles(ws) {
 	}
 	return {info, start}
 }
-
-// 파일아이디 생성 
-function generateFileId() {
-	return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+const getLocalId = (prefix, arr) => {
+	const idx = arr.length+''
+	return prefix+'_'+idx.lpad(2,'0')
+}
+class Apps {
+	constructor(target) {	
+		this.apps = []
+		this.targetEl = getJq(target)
+		this.currentApp = null
+		this.menus = null
+		this.tabs = null
+		this.currentAddCode = null
+	} 
+	addApp(code, appInfo) {
+		const sty = cf.style
+		if( !jqCheck(this.targetEl) ) return clog(`@@ Apps 타겟객체 미정의`)
+		if( this.apps.find(cur=>cur.code==code) ) return clog(`@@ Apps ${code} 앱이 이미추가됨`)
+		const appStyle = {}
+		if( isObj(appInfo) ) {
+			if(appInfo.isset('color')) appStyle.color=appInfo.color
+			if(appInfo.isset('bg')||appInfo.isset('background')) appStyle.background=appInfo.background||appInfo.bg
+			// background: getRandomColor()
+		} else {
+			appInfo={}
+		}
+		clog('appStyle===>', appStyle, appInfo)
+		const content = $('<div/>').css(appStyle.update(sty.full, sty.flexcenter)).appendTo(this.targetEl)
+		const app = new App(content, code, appInfo )
+		this.apps.push(app)
+		if( this.currentAddCode==null ) {
+			const me = this
+			this.currentAddCode = code
+			setTimeout(()=> {
+				me.setCurrentApp(me.currentAddCode)
+				me.currentAddCode = null
+			}, 100)
+		} else {
+			this.currentAddCode = code
+		}
+		return app
+	}
+	setCurrentApp(code) {
+		const app = this.apps.find(cur=>cur.code==code)
+		if( app ) {
+			this.apps.map(cur=>cur.hideApp())
+			this.currentApp = app
+			app.showApp()
+		} else {
+			clog(`@@ Apps.setCurrentApp ${code} 앱오류`)
+		}
+	}
+	reload() {
+		if( !this.currentApp ) return
+		this.currentApp.reload()
+	}
 }
 
-// 파일 크기 포맷 함수
-function formatFileSize(bytes) {
-	if (bytes === 0) return '0 Bytes';
-	const k = 1024;
-	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+class App {
+	constructor(content, code, appInfo) {
+		this.pages=[]
+		this.contentEl = content
+		this.code = code
+		this.name = appInfo.name||''
+		this.appInfo = appInfo
+		this.currentPage = null
+		this.currentPopup = null
+		if( appInfo.isset('layout')) {
+			this.makeLayout(appInfo.layout)
+		}
+	}
+	setCurrentPage(pageId, pageCode) {
+		let page = this.pages.find(cur=>cur.id==pageId)
+		if(!page) {
+			page = new Page(this, pageId, pageCode)
+			this.pages.push(page)
+		}
+		page.reload()
+		return page
+	}
+	hideApp() {
+		if(!jqCheck(this.contentEl)) return clog('@@ app hideApp 대상오류', this.dump())
+		this.contentEl.hide()
+	}
+	showApp() {
+		if(!jqCheck(this.contentEl)) return clog('@@ app showApp 대상오류', this.dump())
+		this.contentEl.show()
+	}
+	reload() {
+		if( this.currentPopup) {
+			this.currentPopup.reload()
+		}
+		if( this.currentPage ) {
+			this.currentPage.reload()
+		}
+	}
+	makeLayout(layout) {
+		
+	}
+	dump() {
+	
+	}
 }
-
-
+class Page {
+	constructor(app, id, code) {
+		this.app = app
+		this.id=id
+		this.code=code
+	}
+	reload() {
+		
+	}
+}
+	
+const cf={
+	apps: null
+	/* 웹소켓 설정 */
+    , websocket: new WebsocketManager('ws://localhost:8092/chat')
+	/* 기타 공통 설정 */
+	, dumyDiv: document.createElement('div')
+	, style:{
+		full:{width:'100%',height:'100%'},
+		flexcenter: {display:'flex', alignItems:'center', justifyContent:'center' }
+	}
+}

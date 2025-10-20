@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>SlickGrid example 12: Fill browser</title>
+  <link rel="stylesheet" href="/assets/js/slick/css/example-demo.css" type="text/css"/>
+  <link rel="stylesheet" href="/assets/js/slick/css/slick-alpine-theme.css" type="text/css"/>
+  <style>
+	{ box-sizing: border-box; } 
+	.container { display: grid; grid: '. . .'; gap: 1px; padding: 1px; border: 16px solid silver; color: white; } 
+	.container1 { display: grid; grid: minmax(80px, auto)/1fr 2fr 1fr; gap: 1px; padding: 1px; border: 16px solid silver; color: white; height:200px } 
+	.item { padding: 8px; background: coral; } .item:nth-child(2) { background: royalblue; }
+
+	.container--1 { grid-auto-columns: auto; }
+	.container--2 { grid-auto-columns: 40px 50% 1fr; }
+	.container--3 { grid-auto-columns: 1fr 4fr; }
+	.container--4 { grid-auto-columns: min-content; }
+	.container--5 { grid-auto-columns: max-content; }
+  </style>
+</head>
+<body>
+<div class="container container--1">
+  <div class="item">1</div>
+  <div class="item">2 2 2 2 2 2 2 2 2 2 2 2</div>
+  <div class="item">3</div>
+</div>
+<br>
+<div class="container container--2">
+  <div class="item">1</div>
+  <div class="item">2</div>
+  <div class="item">3</div>
+</div>
+<br>
+<div class="container container--3">
+  <div class="item">1</div>
+  <div class="item">2</div>
+  <div class="item">3</div>
+</div>
+<br>
+<div class="container container--4">
+  <div class="item">1</div>
+  <div class="item">2 2 2</div>
+  <div class="item">3</div>
+</div>
+<br>
+<div class="container">
+  <div class="item">1</div>
+  <div class="item">2 2 2 2 2 2 2 2 2 2 2 2</div>
+  <div class="item">3</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+</div>
+
+<div class="container1">
+  <div class="item" >3</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+  <div class="item">4</div>
+</div>
+</body>
+</html>

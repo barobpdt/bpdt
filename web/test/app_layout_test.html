@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+  <title>레이아웃 테스트</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" type="text/css"/>
+  <script src="/assets/js/jquery.js"></script>
+  <script src="/assets/js/common.js"></script>
+  <style>
+ 
+  </style>
+</head>
+<body style="margin:0;padding:0"> 
+	<div id="apps" style="border:1px solid #aaa;width:100%; height:100vh"></div>
+	
+<script>
+	$(document).ready(()=>{ 
+		const apps = new Apps('apps')
+		apps.addApp('test', {name:'테스트페이지', background:'#aaa'})
+		apps.addApp('dev',  {name:'개발페이지',background:'#eee'})
+		cf.apps = apps
+	})
+</script>
+</body>
+</html>
