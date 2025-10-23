@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>레이아웃 테스트</title>
+<link rel="stylesheet" href="/assets/css/styles.css" type="text/css"/>
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+<style>
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+	body {
+		font-family: Arial, sans-serif;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	
+		flex-direction: column;
+		background: #111;
+		overflow-x: hidden;
+	}
+	section {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 100vh;
+	}
+	section h2 {
+		position: relative;
+		color: #fff;
+		font-size: 3rem;
+	}
+	.container {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		width: 700px;
+		grid-gap: 30px;
+		top: -200px;
+	}
+	.container .box {
+		position: relative;
+		width: 200px;
+		height: 200px;
+		top: 50vh;
+		transition: all 0.3s ease;
+		background: #fff;
+		border-radius: 10px;
+	}
+	.container .box:nth-child(3n+1) {
+		background: #ff3d00;
+		transform: translate(-400px, 0) scale(0);
+	}
+	
+	.container .box:nth-child(3n+2) {
+		background: #ff3d00;
+		transform: translate(0, 400px) scale(0);
+	}
+	.container .box:nth-child(3n+3) {
+		background: #ff3d00;
+		transform: translate(400px, 0) scale(0);
+	}
+	.container .box.active {
+		background: #ff3d00;
+		transform: translate(0, 0) scale(1);
+	}
+
+</style>
+</head>
+<body style="margin:0;padding:0"> 
+	<section>
+	<h2>Exam Scroll</h2>
+	</section>
+	<div class="container">
+		 
+	</div>
+	
+	<script>
+		function randomClr() {
+			const r = Math.floor(Math.random() * 256);
+			const g = Math.floor(Math.random() * 256);
+			const b = Math.floor(Math.random() * 256);
+			return `rgb(${r}, ${g}, ${b})`;
+		}
+		function randomClr1() {
+			const s='123456789abcdef';
+			const len = 6
+			let c=''
+			for(let i=0; i<len; i++) {
+				const idx = Math.floor(Math.random()*s.length)
+				c+=s[idx]
+			}
+			return `#${c}`;
+		}
+		
+		for(let i=0; i<60; i++) {
+			$('<div class="box"/>').css('background', randomClr()).appendTo($('.container')) 
+		}
+		
+		$(window).on('scroll', e=>{
+			$('.box').each((index, item)=>{
+				if(item.offsetTop < window.scrollY) {
+					$(item).addClass('active')
+				} else {
+					$(item).removeClass('active')
+				}
+			})
+		})
+
+	</script>
+</body>
+</html>
+

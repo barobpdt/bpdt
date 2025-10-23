@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Button</title>
+    <!--
+    parseCss(fileRead('c:/temp/xx01.txt'))  
+~~
+<func>
+	parseCss(&s) {
+		not(s.ch()) return;
+		while(s.valid()) {
+			not(s.ch()) break;
+			if(lineCheck(s,'{')) {
+				k=s.findPos('{',0,1)
+				v=s.match()
+			} else {
+				k=s.findPos("\n")
+				c=s.ch()
+				v=when(c.eq('{'), s.match())
+			}
+			data=makeCssJson(v)
+			print(">>",k,data)
+		}
+	}
+</func>
+~~
+<func>
+	makeCssJson(&s) {
+		ss='{'
+		while(s.valid(),n) {
+			not(s.ch()) break;
+			k=replaceCssName(s.findPos(':'))
+			v=s.findPos(';').trim()
+			if(n) ss.add(',')
+			c=v.ch()
+			if(c.eq() || typeof(v,'num')) {
+				ss.add(k,':',v)
+			} else {
+				ss.add(k,':',Cf.jsValue(v))
+			}
+		}
+		ss.add('}')
+		return ss;
+	}
+	replaceCssName(&s) {
+		ss=''
+		while(s.valid(), n) {
+			not(s.ch()) break;
+			left = s.findPos('-').trim()
+			if(n.eq(0)) {
+				ss.add(left)
+			} else {
+				ss.add(upperFirst(left))
+			}
+		}
+		return ss;
+		upperFirst = func(&s) {
+			ss=''
+			while(s.valid(), n) {
+				c=s.ch()
+				if(n.eq(0)) ss.add(c.upper()) else ss.add(c);
+				s.incr()
+			}
+			print("ss====$ss")
+			return ss;
+		};
+	}
+</func>
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        width: 100%;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        background: rgb(83, 143, 55);
+      }
+      .center {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #btn_test {
+        width: 140px;
+        height: 50px;
+        position: relative;
+        background: none;
+        outline: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+      #btn_test .top {
+        width: 100%;
+        height: 100%;
+        background: rgb(255, 255, 238);
+        font-family: poppins;
+        font-size: 16px;
+        color: rgb(36, 38, 34);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7mm;
+        outline: 2px solid rgb(36, 38, 34);
+        transition: 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      #btn_test .bottom {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgb(229, 229, 199);
+        top: 10px;
+        left: 0;
+        border-radius: 7mm;
+        outline: 2px solid rgb(36, 38, 34);
+        z-index: -1;
+      }
+      #btn_test .bottom::before {
+        position: absolute;
+        content: "";
+        width: 2px;
+        height: 9px;
+        background: rgb(36, 38, 34);
+        bottom: 0;
+        left: 15%;
+      }
+      #btn_test .bottom::after {
+        position: absolute;
+        content: "";
+        width: 2px;
+        height: 9px;
+        background: rgb(36, 38, 34);
+        bottom: 0;
+        left: 85%;
+      }
+      #btn_test:active .top {
+        transform: translateY(10px);
+      }
+      #btn_test::before {
+        position: absolute;
+        content: "";
+        width: calc(100% + 2px);
+        height: 100%;
+        background: rgb(140, 140, 140);
+        top: 14px;
+        left: -1px;
+        border-radius: 7mm;
+        outline: 2px solid rgb(36, 38, 34);
+        z-index: -1;
+      }
+      #btn_test .top::before {
+        position: absolute;
+        content: "";
+        width: 15px;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.1);
+        transform: skewX(30deg);
+        left: -20px;
+        transition: 0.25s;
+      }
+      #btn_test:active .top::before {
+        left: calc(100% + 20px);
+      }
+    </style>
+    <script src="/assets/js/jquery.js"></script>
+  </head>
+  <body>
+    <div class="center">
+      <button type="button" id="btn_test">
+        <div class="top">Click Me!</div>
+        <div class="bottom"></div>
+      </button>
+    </div>
+  </body>
+</html>

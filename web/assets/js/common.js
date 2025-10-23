@@ -291,6 +291,20 @@ const getLocalId = (prefix, arr) => {
 	const idx = arr.length+''
 	return prefix+'_'+idx.lpad(2,'0')
 }
+const loadCss = (src) => {
+	var link = document.createElement("link");
+	link.href = src;
+	link.async = false;  
+	link.rel = "stylesheet";
+	link.type = "text/css";    
+	document.head.appendChild(link);  
+}
+const loadStyle = (src) => {
+	const el = document.createElement('style');
+	el.textContent = src;
+	document.head.appendChild(el);
+}
+
 class Apps {
 	constructor(target) {	
 		this.apps = []
@@ -299,11 +313,14 @@ class Apps {
 		this.menus = null
 		this.tabs = null
 		this.currentAddCode = null
-	} 
-	addApp(code, appInfo) {
-		const sty = cf.style
+	}
+	getApp(code) {
+		return this.apps.find(cur=>cur.code==code)
+	}
+	makeApp(code, appInfo) {
+		const sty = cf.styles
 		if( !jqCheck(this.targetEl) ) return clog(`@@ Apps 타겟객체 미정의`)
-		if( this.apps.find(cur=>cur.code==code) ) return clog(`@@ Apps ${code} 앱이 이미추가됨`)
+		if( this.getApp(code) ) return clog(`@@ Apps ${code} 앱이 이미 추가됨`)
 		const appStyle = {}
 		if( isObj(appInfo) ) {
 			if(appInfo.isset('color')) appStyle.color=appInfo.color
@@ -313,8 +330,8 @@ class Apps {
 			appInfo={}
 		}
 		clog('appStyle===>', appStyle, appInfo)
-		const content = $('<div/>').css(appStyle.update(sty.full, sty.flexcenter)).appendTo(this.targetEl)
-		const app = new App(content, code, appInfo )
+		const container = $('<div/>').css(appStyle.update(sty.full, sty.flexcenter)).appendTo(this.targetEl)
+		const app = new App(container, code, appInfo )
 		this.apps.push(app)
 		if( this.currentAddCode==null ) {
 			const me = this
@@ -329,7 +346,7 @@ class Apps {
 		return app
 	}
 	setCurrentApp(code) {
-		const app = this.apps.find(cur=>cur.code==code)
+		const app = this.getApp(code)
 		if( app ) {
 			this.apps.map(cur=>cur.hideApp())
 			this.currentApp = app
@@ -345,26 +362,66 @@ class Apps {
 }
 
 class App {
-	constructor(content, code, appInfo) {
+	constructor(container, code, appInfo) {
 		this.pages=[]
-		this.contentEl = content
+		this.containerEl = container
+		this.contentEl = null
 		this.code = code
 		this.name = appInfo.name||''
 		this.appInfo = appInfo
+		this.currentAddPageId = null
 		this.currentPage = null
 		this.currentPopup = null
-		if( appInfo.isset('layout')) {
-			this.makeLayout(appInfo.layout)
+		this.layout = appInfo.isset('layout') ? this.makeLayout(appInfo.layout): null
+	}
+	loadPage(url) {
+		if( !jqCheck(this.contentEl) ) return clog(`@@loadPage 부모 content 미정의  ${url} 페이지 로드오류`)
+		const me = this
+		apiGet(cf.devHost+url, res => me.makePage(res.pageId, this.contentEl, res) )
+	}
+	deleteLayout() {
+		
+	}
+	makeLayout(layoutInfo) {
+		if(this.layout ) {
+			this.deleteLayout()
+		}
+		const layout = new PageLayout(this.containerEl, layoutInfo, null, target)
+		if( layout.kind=='content' ) {
+			this.contentEl = layout.el
+		}
+		return layout
+	}
+	getPage(pageId) {
+		return this.pages.find(cur=>cur.id==pageId)
+	}
+	makePage(pageId, targetEl, pageInfo) {
+		if( this.getPage(pageId) ) return clog(`@@makePage ${pageId} 페이지 이미 추가됨`)
+		const page = new Page(pageId, targetEl, pageInfo)
+		this.pages.push(page)
+		if( this.currentAddPageId==null ) {
+			const me = this
+			this.currentAddPageId = pageId
+			setTimeout(()=> {
+				me.setCurrentPage(me.currentAddPageId)
+				me.currentAddPageId = null
+			}, 100)
+		} else {
+			this.currentAddPageId = pageId
 		}
 	}
-	setCurrentPage(pageId, pageCode) {
-		let page = this.pages.find(cur=>cur.id==pageId)
-		if(!page) {
-			page = new Page(this, pageId, pageCode)
-			this.pages.push(page)
+	setCurrentPage(pageId, reload) {
+		const page = this.pages.find(cur=>cur.id==pageId)
+		if( page ) {
+			this.pages.map(cur=>cur.hidePage())
+			this.currentPage = page
+			page.showPage()
+			if(reload) {
+				page.rendor()
+			}
+		} else {
+			clog(`@@ Apps.setCurrentPage ${pageId} page 오류`)
 		}
-		page.reload()
-		return page
 	}
 	hideApp() {
 		if(!jqCheck(this.contentEl)) return clog('@@ app hideApp 대상오류', this.dump())
@@ -382,32 +439,85 @@ class App {
 			this.currentPage.reload()
 		}
 	}
-	makeLayout(layout) {
-		
-	}
+	
+ 
 	dump() {
 	
 	}
 }
 class Page {
-	constructor(app, id, code) {
-		this.app = app
-		this.id=id
-		this.code=code
+	constructor(pageId, targetEl, pageInfo) { 
+		this.id = pageId
+		this.info = pageInfo
+		this.targetEl = targetEl
+		const css = pageInf.css || {}
+		this.pageEl = $('<div/>').css(css.update(cf.styles.pageBox)).appendTo(targetEl)
+		this.layout = this.makeLayout(pageInfo.layout)
+	}
+	deleteLayout() {
+		
+	}
+	makeLayout(layoutInfo) {
+		if(this.layout ) {
+			this.deleteLayout()
+		}
+		const layout = new PageLayout(this.pageEl, layoutInfo, null, target)
+		if( layout.kind=='content' ) {
+			this.contentEl = layout.el
+		}
+		return layout
+	}
+	showPage() {
+		this.pageEl.show()
+	}
+	hidePage() {
+		this.pageEl.hide()
 	}
 	reload() {
 		
 	}
+	findEl(selector) {
+		return this.layout.findEl(selector)
+	}
 }
 	
-const cf={
-	apps: null
-	/* 웹소켓 설정 */
-    , websocket: new WebsocketManager('ws://localhost:8092/chat')
-	/* 기타 공통 설정 */
-	, dumyDiv: document.createElement('div')
-	, style:{
-		full:{width:'100%',height:'100%'},
-		flexcenter: {display:'flex', alignItems:'center', justifyContent:'center' }
+class PageLayout {
+	constructor(parentEl, layoutInfo, parentLayout, target) {
+		this.target = target
+		this.parentLayout = parentLayout
+		this.parentEl = parentEl
+		this.layoutInfo = layoutInfo
+		this.el = null
+		this.kind = layoutInfo.kind||''
+		this.childLayout = []
+		this.createLayout(layoutInfo)
+	} 
+	createLayout(layout) {
+		const tag = layout.tag || 'div'
+		const sty = layout.style || {}
+		this.el = $('<'+tag+'/>').css(sty).appendTo(this.parentEl)
+		if( layout.class) this.el.attr('class', layout.class)
+		if( Array.isArray(layout.children) ) {
+			for( cur of layout.children ) {
+				const obj = new PageLayout(this.el, cur, this, this.target)
+				this.childLayout.push(obj)
+			}
+		}
 	}
+	findEl(selector) {
+		return this.el.find(selector)
+	}	
+}
+
+const cf = {
+	apps: null
+	, devMode: false 		// 개발자모드
+    , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
+	, styles:{				// 공통스타일
+		full:{width:'100%',height:'100%'},
+		flexcenter: {display:'flex', alignItems:'center', justifyContent:'center' },
+		pageBox: {display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', width:'100%',height:'100%' }
+	}
+	, devHost: 'http://localhost'
+	, apiHost: 'http://localhost:8000'
 }

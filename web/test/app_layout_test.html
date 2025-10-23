@@ -17,11 +17,12 @@
 	
 <script>
 	$(document).ready(()=>{ 
-		const apps = new Apps('apps')
-		apps.addApp('test', {name:'테스트페이지', background:'#aaa'})
-		apps.addApp('dev',  {name:'개발페이지',background:'#eee'})
+		const apps = new Apps('apps')		
+		const appInfo = {name:'개발페이지', background:'#aaa', style:{}} 
+		const dev = apps.makeApp('dev', appInfo)
 		cf.apps = apps
 	})
 </script>
 </body>
 </html>
+
