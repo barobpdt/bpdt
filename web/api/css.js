@@ -83,9 +83,47 @@
 		.btn3d:active .top::before {
 			left: calc(100% + 20px);
 		}
+	]}
+	3dText() {
+		depth=param.get('depth') not(depth) depth=4
+		type=param.get('type') not(type) type='left'
+		if(type.eq('left')) {
+			dx=-2, dy=2	
+			sx=-1, sy=1, ex=-2, ey=2
+		} else {
+			dx=2, dy=2
+			sx=1, sy=1, ex=2, ey=2
+		}
+		base = randomColor().lightColor(50)
+		bgColor = getColor(base.lightColor(150))
+		color=getColor(base), hoverColor=getColor(base.darkColor(80))
+		ss=''
+		while(n=1,depth) {
+			if(n.gt(1)) ss.add(',')
+			ss.add("${sx}px ${sy}px 0px ${color}, ${ex}px ${ey}px 0px ${color}")
+			sx+=dx;
+			sy+=dy;
+			ex+=dx;
+			ey+=dy;
+		}
+		classNm = 'letter'
+	return #[
+		.${classNm} {
+			width: fit-content;
+			height: fit-content;
+			transform-style: preserve-3d;
+			padding: 10px;
+			color: ${bgColor};
+			cursor: pointer;
+		}
+		.${classNm} span {
+			display: block;
+			font-size: 60px;
+			font-weight: 800;
+			text-shadow: ${ss};
+		}
+		.${classNm}:hover {
+			color: ${hoverColor}; 
+		}
 	 ]}
 </api>
-
-<func>
-	 
-</func>	

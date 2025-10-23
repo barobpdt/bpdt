@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Button</title>
-    <!--
-    parseCss(fileRead('c:/temp/xx01.txt'))  
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>3D Button</title>
+	<!--
+	parseCss(fileRead('c:/temp/xx01.txt'))  
 ~~
 <func>
 	parseCss(&s) {
@@ -68,120 +68,151 @@
 		};
 	}
 </func>
-    -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        width: 100%;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        background: rgb(83, 143, 55);
-      }
-      .center {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      #btn_test {
-        width: 140px;
-        height: 50px;
-        position: relative;
-        background: none;
-        outline: none;
-        border: none;
-        padding: 0;
-        margin: 0;
-      }
-      #btn_test .top {
-        width: 100%;
-        height: 100%;
-        background: rgb(255, 255, 238);
-        font-family: poppins;
-        font-size: 16px;
-        color: rgb(36, 38, 34);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 7mm;
-        outline: 2px solid rgb(36, 38, 34);
-        transition: 0.2s;
-        position: relative;
-        overflow: hidden;
-      }
-      #btn_test .bottom {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: rgb(229, 229, 199);
-        top: 10px;
-        left: 0;
-        border-radius: 7mm;
-        outline: 2px solid rgb(36, 38, 34);
-        z-index: -1;
-      }
-      #btn_test .bottom::before {
-        position: absolute;
-        content: "";
-        width: 2px;
-        height: 9px;
-        background: rgb(36, 38, 34);
-        bottom: 0;
-        left: 15%;
-      }
-      #btn_test .bottom::after {
-        position: absolute;
-        content: "";
-        width: 2px;
-        height: 9px;
-        background: rgb(36, 38, 34);
-        bottom: 0;
-        left: 85%;
-      }
-      #btn_test:active .top {
-        transform: translateY(10px);
-      }
-      #btn_test::before {
-        position: absolute;
-        content: "";
-        width: calc(100% + 2px);
-        height: 100%;
-        background: rgb(140, 140, 140);
-        top: 14px;
-        left: -1px;
-        border-radius: 7mm;
-        outline: 2px solid rgb(36, 38, 34);
-        z-index: -1;
-      }
-      #btn_test .top::before {
-        position: absolute;
-        content: "";
-        width: 15px;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.1);
-        transform: skewX(30deg);
-        left: -20px;
-        transition: 0.25s;
-      }
-      #btn_test:active .top::before {
-        left: calc(100% + 20px);
-      }
-    </style>
-    <script src="/assets/js/jquery.js"></script>
-  </head>
-  <body>
-    <div class="center">
-      <button type="button" id="btn_test">
-        <div class="top">Click Me!</div>
-        <div class="bottom"></div>
-      </button>
-    </div>
-  </body>
+	-->
+	<link rel="styleSheet" href="/assets/css/buttons.css"/>
+	<link
+	href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+	rel="stylesheet"
+	/>
+	<style>
+	body {
+		width: 100%;
+		height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	.container {
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+		display: flex;
+		flex-direction: column;
+		align-items: center;		
+		color: white;
+		overflow: auto;
+	} 
+	.buttons-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		gap: 30px;
+		width: 100%;
+	}
+	.button-card {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 4px 40px
+	}
+	</style>
+	<script src="/assets/js/jquery.js"></script>
+	<script src="/assets/js/common.js"></script>
+</head>
+<body>
+	<div class="container">
+		<div class="buttons-grid">
+            <!-- Button 16 -->
+            <div class="button-card">
+                <h3 class="button-title">Particle Explosion</h3>
+                <button class="btn btn-particle">Explode</button>
+            </div>
+            
+            <!-- Button 17 -->
+            <div class="button-card">
+                <h3 class="button-title">Liquid Fill Effect</h3>
+                <button class="btn btn-liquid">Liquid Fill</button>
+            </div>
+            
+            <!-- Button 18 -->
+            <div class="button-card">
+                <h3 class="button-title">Holographic Effect</h3>
+                <button class="btn btn-holographic">Hologram</button>
+            </div>
+            
+            <!-- Button 19 -->
+            <div class="button-card">
+                <h3 class="button-title">Morphing Shape</h3>
+                <button class="btn btn-morph">Morph</button>
+            </div>
+            
+            <!-- Button 20 -->
+            <div class="button-card">
+                <h3 class="button-title">Sliding Panels</h3>
+                <button class="btn btn-slide-panels">Slide Panels</button>
+            </div>
+            
+            <!-- Button 21 -->
+            <div class="button-card">
+                <h3 class="button-title">Glitch Effect</h3>
+                <button class="btn btn-glitch" data-text="Glitch">Glitch</button>
+            </div>
+            
+            <!-- Button 22 -->
+            <div class="button-card">
+                <h3 class="button-title">Matrix Style</h3>
+                <button class="btn btn-matrix">Matrix</button>
+            </div>
+            
+            <!-- Button 23 -->
+            <div class="button-card">
+                <h3 class="button-title">Gravity Effect</h3>
+                <button class="btn btn-gravity">Gravity</button>
+            </div>
+            
+            <!-- Button 24 -->
+            <div class="button-card">
+                <h3 class="button-title">Confetti Animation</h3>
+                <button class="btn btn-confetti">Confetti</button>
+            </div>
+            
+            <!-- Button 25 -->
+            <div class="button-card">
+                <h3 class="button-title">Cyberpunk Style</h3>
+                <button class="btn btn-cyberpunk">Cyberpunk</button>
+            </div>
+            
+            <!-- Button 26 -->
+            <div class="button-card">
+                <h3 class="button-title">Jelly Animation</h3>
+                <button class="btn btn-jelly">Jelly</button>
+            </div>
+            
+            <!-- Button 27 -->
+            <div class="button-card">
+                <h3 class="button-title">Spotlight Effect</h3>
+                <button class="btn btn-spotlight">Spotlight</button>
+            </div>
+            
+            <!-- Button 28 -->
+            <div class="button-card">
+                <h3 class="button-title">Split Text Effect</h3>
+                <button class="btn btn-split" data-text="Split Text"><span>S</span><span>p</span><span>l</span><span>i</span><span>t</span></button>
+            </div>
+            
+            <!-- Button 29 -->
+            <div class="button-card">
+                <h3 class="button-title">Gradient Border</h3>
+                <button class="btn btn-gradient-border">Gradient Border</button>
+            </div>
+            
+            <!-- Button 30 -->
+            <div class="button-card">
+                <h3 class="button-title">Infinite Loop</h3>
+                <button class="btn btn-infinite">Infinite</button>
+            </div>
+        </div>
+	</div>
+	<script>
+		$(document).ready(()=>{
+			$('.btn').each((i, btn)=>{
+				$(btn).on('click', ()=>{
+					$(btn).addClass('active').css({transform: 'scale(0.95)'});
+					setTimeout(()=>{
+						clog('timeout btn=>', btn)
+						$(btn).css({transform:''}).removeClass('active')
+					}, 200);
+				})
+			})
+		})
+	</script>
+</body>
 </html>

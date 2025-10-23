@@ -87,43 +87,157 @@
         width: 100%;
         height: 100%;
         display: flex;
+		flex-direction: column;
         align-items: center;
         justify-content: center;
       }
+      .box {        
+        background: white;
+        border-radius: 2mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: black;
+        position: relative;
+        transition: 0.5s;
+      }
+      .box-text {
+        font-family: poppins;
+        font-size: 50px;
+        font-weight: 500;
+      }
       
+	  .box.box-outline:hover {
+        outline: 5mm solid rgb(5, 113, 220);
+      }
+	   .btn-outline:hover {
+        outline: 2mm solid rgb(5, 113, 220);
+      }
+      #box2:hover {
+        box-shadow: 10px 10px 0 rgb(5, 113, 220), 20px 20px 0 rgb(4, 75, 146),
+          30px 30px 0 rgb(3, 45, 87);
+      }
+
+	  .box-overlap::before {
+        position: absolute;
+        content: "";
+        width: 0;
+        height: 0;
+        bottom: -150px;
+        left: -150px;
+        background: rgb(5, 113, 220);
+        border-radius: 50%;
+        transition: 0.5s;
+      }
+      .box-overlap span {
+        z-index: 10;
+      }
+      .box-overlap:hover span {
+        color: white;
+      }
+      .box-overlap {
+        overflow: hidden;
+      }
+      .box-overlap:hover::before {
+        width: 600px;
+        height: 600px;
+      }
+	  .box-line::before {
+        position: absolute;
+        content: "";
+        top: 4px;
+        left: 6px;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        outline: 0.5mm solid transparent;
+        border-radius: 2mm;
+        z-index: -1;
+        transition: 0.5s;
+      }
+      .box-line:hover::before {
+        outline: 0.5mm solid white;
+      }
+
+	  .title-text {
+        font-family: poppins;
+        font-size: 90px;
+        font-weight: 600;
+        mix-blend-mode: difference;
+        color: brown;
+        filter: contrast(70%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        margin-bottom: 100px;
+        text-shadow: -3px -3px dodgerblue;
+        animation: title_render 0.75s ease-out;
+      }
+      .title-text span {
+        display: block;
+        font-size: 40px;
+        text-shadow: 1px 1px dodgerblue;
+      }
+      @keyframes title_render {
+        from {
+          transform: scale(2);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
     </style>
+	<link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round|Material+Icons+Sharp|Material+Icons+Two+Tone"
+      rel="stylesheet"
+    />
     <script src="/assets/js/jquery.js"></script>
     <script src="/assets/js/common.js"></script>
   </head>
   <body>
     <div class="center">
-      <button type="button" class="btn3d">
-        <div class="top">Click Me!</div>
-        <div class="bottom"></div>
-      </button>
+		<div class="title-text">
+			<span>HAPPY</span>
+			INDEPENDENCE DAY
+		</div>
+		<button type="button" class="btn3d">
+			<div class="top">Click Me!</div>
+			<div class="bottom"></div>
+		</button>
+		<div class="text" style="display:flex;margin-top: 10px;">			
+		</div>
+
+		<div class="box box-outline" style="width: 200px; height: 300px;">
+			<div class="box-text">CARD</div>
+		</div>
+		<div class="box box-line" style="width: 200px; height: 300px; margin-top: 10px;">
+			<span class="material-icons">A</span>
+		</div>
+
+		<div class="box box-line" style="cursor:pointer; width: 80px; height: 50px; margin-top:20px; margin-bottom: 20px;">
+			<span>
+				test
+			</span>
+		</div>
     </div>
-	<script>
-		const apiGet = async (url) => {
-			const res = await fetch(url)
-			return res.text()
-		}
-		class Btn3d {
-			constructor(target, style) {
-				loadStyle(style)
-				this.target = getJq(target)
-				this.el = $('<button type="button" class="btn3d"/>').css({marginLeft:10}).appendTo(target)
-				this.el.on('click', this.clikButton.bind(this))
-				$('<div class="top">').html('test').appendTo(this.el)
-				$('<div class="bottom">').appendTo(this.el)
-			}
-			clikButton() {
-				clog('this=>>', this)
-				alert('click test')
-			}
+	 
+	<script>  
+		const tag3dText = (selector, text, classnm)=>{
+			if(!classnm) classnm = 'letter'
+			const target = getJq(selector)
+			text.split('').forEach(ch=>$('<div/>',{class: classnm, html: `<span>${ch}</span>`}).appendTo(target))
 		}
 		$(document).ready(async ()=>{ 
-			const btn = new Btn3d('.center', await apiGet('http://localhost/api/css/btn3d'))
-			clog('btn=>', btn)
+			loadStyle(await apiGet('http://localhost/api/css/btn3d'))
+			loadStyle(await apiGet('http://localhost/api/css/3dText',{type:'right',depth:5})) 
+			tagBtn3d('.center','test').on('click', (e)=>{
+				$('.box.box-outline').css({'boxShadow': '10px 10px 0 rgb(5, 113, 220), 20px 20px 0 rgb(4, 75, 146), 30px 30px 0 rgb(3, 45, 87)'})
+			})
+			tagBtn3d('.center','hover').on('click', (e)=>{
+				
+			}).hover(e=>clog('hovered'), e=>clog('unhovered'))
+			tag3dText('.text', '3D Button', 'letter')
 		})
 	</script>
   </body>

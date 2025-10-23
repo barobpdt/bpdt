@@ -304,6 +304,21 @@ const loadStyle = (src) => {
 	el.textContent = src;
 	document.head.appendChild(el);
 }
+const apiGet = async (url, param) => {
+	if( isObj(param) ) {
+		const query = Object.keys(param).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(param[k]) ).join('&')
+		url += (url.indexOf('?')==-1 ? '?':'&') + query
+	}
+	const res = await fetch(url)
+	return res.text()
+}
+const tagBtn3d = (target, text, style) => {
+	if( style ) loadStyle(style)
+	const el = $('<button type="button" class="btn3d"/>').css({marginLeft:10}).appendTo(getJq(target))
+	$('<div class="top">').html(text).appendTo(el)
+	$('<div class="bottom">').appendTo(el)
+	return el
+}
 
 class Apps {
 	constructor(target) {	

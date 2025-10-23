@@ -1,0 +1,432 @@
+.form_section {
+    flex:1;
+	margin-bottom: 60px;
+	background: white;
+	border-radius: 12px;
+	padding: 30px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form_section h2 {
+	font-size: 24px;
+	font-weight: 600;
+	margin-bottom: 20px;
+	color: #1d1d1f;
+}
+
+.form-row {
+	display: flex;
+	gap: 60px;
+	align-items: flex-start;
+}
+
+.state-group {
+	flex: 1;
+}
+
+/* Buttons */
+.form_section .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 16px;
+	border: 2px solid transparent;
+	border-radius: 20px 20px 20px 0px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	margin: 4px;
+	min-width: 32px;
+	height: 32px;
+	outline: none;
+}
+
+.form_section .btn.primary {
+	background-color: #0082da;
+	color: white;
+}
+.form_section .btn.primary:hover {
+	background: color-mix(in srgb, #0082da, #141414 15%);
+}
+.form_section .btn.primary:active {
+	background: color-mix(in srgb, #0082da, #141414 25%);
+}
+.form_section .btn.primary:focus, .form_section  .btn.primary.focused {
+	background: color-mix(in srgb, #0082da, #141414 15%);
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.form_section .btn.icon-btn {
+	background-color: #0082da;
+	color: white;
+	width: 4px;
+	height: 32px;
+	border-radius: 20px 20px 20px 0px;
+	padding: 0;
+}
+
+.form_section .btn.icon-btn:hover {
+	background: color-mix(in srgb, #0082da, #141414 15%);
+}
+.form_section .btn.icon-btn:active {
+	background: color-mix(in srgb, #0082da, #141414 25%);
+}
+.form_section .btn.icon-btn:focus,
+.form_section .btn.icon-btn.focused {
+	background: color-mix(in srgb, #0082da, #141414 15%);
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.form_section .btn-group {
+	display: inline-flex;
+	font-family: "Roboto", sans-serif;
+	border-radius: 20px 20px 20px 0px;
+	border: transparent;
+	overflow: hidden;
+	background: #0082da;
+	position: relative;
+}
+
+.form_section .btn-group > button {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: #fff;
+	padding: 0.55rem 0.9rem;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 0.3;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+}
+
+/* vertical divider between segments */
+.form_section .btn-group .caret {
+	border-left: 1.5px solid rgba(255, 255, 255, 0.8);
+	padding-left: 0.8rem;
+}
+
+/* states */
+.form_section .btn-group > button:hover {
+	background: color-mix(in srgb, #0082da, #141414 15%);
+}
+
+.form_section .btn-group > button:active {
+	background: color-mix(in srgb, #0082da, #141414 25%);
+}
+
+.form_section .btn-group > button:focus,
+.form_section .btn-group > button:focus-visible {
+	outline-color: transparent;
+	background: color-mix(in srgb, #0082da, #141414 15%);
+	box-shadow: none;
+}
+
+.form_section .btn-group:focus-within {
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+/* Chips */
+.chip {
+	display: inline-block;
+	padding: 4px 16px;
+	background-color: #daecf8;
+	border-radius: 20px;
+	border: 2px solid transparent;
+	font-size: 14px;
+	font-weight: 500;
+	color: #1d1d1f;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+	margin: 4px;
+}
+.chip:hover {
+	background: color-mix(in srgb, #daecf8, #141414 15%);
+}
+.chip:active {
+	background: color-mix(in srgb, #daecf8, #141414 25%);
+}
+.chip:focus,
+.chip.focused {
+	background-color: #daecf8;
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+/* Checkbox */
+.checkbox-group {
+	display: inline-block;
+	position: relative;
+	margin: 4px 8px;
+}
+
+.checkbox {
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	border: 2px solid #c6c6c8;
+	border-radius: 4px;
+	background-color: white;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+}
+
+.checkbox:hover {
+	background-color: #fff;
+	border-color: #0082da;
+	position: relative;
+}
+
+.checkbox:checked {
+	background-color: #0082da;
+	border-color: #0082da;
+	position: relative;
+}
+
+.checkbox:checked::after {
+	content: "✓";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: white;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.checkbox:focus,
+.checkbox.focused {
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.checkbox:focus:checked,
+.checkbox.focused:checked {
+	background-color: #0082da;
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.checkbox-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+}
+
+/* Radio Button */
+.radio-group {
+	display: inline-block;
+	position: relative;
+	margin: 4px 8px;
+}
+
+.radio {
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	border: 2px solid #c6c6c8;
+	border-radius: 50%;
+	background-color: white;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+}
+
+.radio:hover {
+	border-color: #0082da;
+	position: relative;
+}
+
+.radio:checked {
+	border-color: #0082da;
+	position: relative;
+}
+
+.radio:checked::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 10px;
+	height: 10px;
+	background-color: #0082da;
+	border-radius: 50%;
+}
+
+.radio:focus,
+.radio.focused {
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.radio:focus:checked,
+.radio.focused:checked {
+	border: solid 2px #cccc33;
+	outline: 2px solid #f3f7cd;
+	outline-offset: 2px;
+}
+
+.radio-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+}
+
+/* Tabs */
+.tab {
+	display: inline-block;
+	padding: 8px 16px;
+	background-color: #fff;
+	font-size: 14px;
+	font-weight: 500;
+	color: #0082da;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+}
+
+.tab:hover {
+	background: #daecf8;
+	color: #0082da;
+}
+.tab:active {
+	background-color: color-mix(in srgb, #daecf8, #141414 10%);
+}
+.tab:focus,
+.tab.focused {
+	color: #141414;
+	background-color: #fff;
+	border-bottom: 3px solid #141414;
+}
+
+/* Switch */
+.switch-group {
+	display: inline-block;
+	position: relative;
+	margin: 4px 8px;
+}
+
+.switch {
+	appearance: none;
+	width: 44px;
+	height: 24px;
+	background-color: #c7c7c7;
+	border-radius: 12px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+	position: relative;
+	box-sizing: border-box;
+	border: 0;
+}
+
+.switch::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 20px;
+	height: 20px;
+	background-color: white;
+	border-radius: 50%;
+	transition: all 0.2s ease;
+}
+
+.switch:checked {
+	background-color: #0082da;
+}
+
+.switch:checked::after {
+	transform: translateX(20px);
+}
+
+.switch:focus,
+.switch.focused {
+	box-shadow: 0px 0px 6px #cccc33;
+	outline: 2px solid #cccc33;
+	outline-offset: 1px;
+}
+
+.switch-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 44px;
+	height: 24px;
+	cursor: pointer;
+}
+
+/* Text Field */
+.text-field-group {
+	margin: 8px 0;
+	width: 200px;
+}
+
+.text-field-label {
+	display: block;
+	font-size: 14px;
+	font-weight: 500;
+	color: #1d1d1f;
+	margin-bottom: 4px;
+}
+
+.text-field {
+	width: 100%;
+	padding: 8px 12px;
+	border: none;
+	border-bottom: 1px solid #c6c6c8;
+	border-radius: 0;
+	font-size: 14px;
+	background-color: white;
+	transition: all 0.2s ease;
+	outline: none;
+}
+
+.text-field:focus,
+.text-field.focused {
+	border-color: #cccc33;
+	box-shadow: 0px 3px 3px #cccc33;
+	border-bottom: 2px solid #cccc33;
+}
+
+.text-field::placeholder {
+	color: #8e8e93;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.form-row {
+		flex-direction: column;
+		gap: 30px;
+	}
+
+	.container {
+		padding: 20px 15px;
+	}
+
+	h1 {
+		font-size: 36px;
+	}
+}
