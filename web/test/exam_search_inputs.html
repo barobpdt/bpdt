@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>3D Button</title>
+	<link
+	href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round|Material+Icons+Sharp|Material+Icons+Two+Tone"
+	rel="stylesheet"
+	/>
+	<link rel="styleSheet" href="/assets/css/form_section.css"/>
+	<link
+	href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+	rel="stylesheet"
+	/>
+	<style>
+	body {
+		width: 100%;
+		height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	.container {
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		overflow: auto;
+	}   
+	.search-bar {
+		width: fit-content;
+		height: fit-content;
+		background: white;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 0.5mm solid rgb(3, 35, 67);
+		border-radius: 1mm;
+		padding: 7px 10px;
+	}
+	.inputf {
+		width: fit-content;
+		height: fit-content;
+		position: relative;
+	}
+	.search-bar input {
+		width: 225px;
+		flex-grow: 1;
+		height: 35px;
+		box-sizing: border-box;
+		padding: 10px 25px;
+		background: transparent;
+		font-family: poppins;
+		outline: none;
+		border: none;
+		position: relative;
+	}
+	#search1 {
+		border-right: 0.5mm solid rgba(3, 35, 67, 0.5);
+		margin-right: 10px;
+	}
+	.inputf::before {
+		content: "search";
+		font-family: "Material Icons";
+		font-size: 20px;
+		color: rgba(0, 0, 0, 0.7);
+		position: absolute;
+		top: 50%;
+		left: -3px;
+		transform: translate(0, -50%) rotateY(180deg);
+		z-index: 1;
+	}
+	.inputf:nth-child(2)::before {
+		content: "location_on";
+	}
+	.search-bar button {
+		width: 80px;
+		height: 35px;
+		font-family: poppins;
+		background: rgb(41, 41, 41);
+		color: white;
+		outline: none;
+		border: none;
+		border-radius: 1mm;
+		font-weight: 500;
+		cursor: pointer;
+		box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.25);
+	}
+	input[type="search"]::-webkit-search-cancel-button {
+		appearance: none;
+		position: relative;
+		right: -10px;
+		width: 16px;
+		height: 16px;
+		background-image: url(../images/cancel.svg);
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: 16px 16px;
+		cursor: pointer;
+	}
+	.tag-box {
+		background: white;
+		width: 500px;
+		height: fit-content;
+		padding: 20px;
+		font-family: poppins;
+		border-radius: 1mm;
+		box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px,
+			rgba(0, 0, 0, 0.22) 0px 10px 10px;
+	}
+    .tag-box .tag-wrap {
+		width: 100%;
+		height: 100%;
+		border: 0.4mm solid rgb(220, 220, 220);
+		border-radius: 1mm;
+	}
+	.tag-box .tags {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 20px;
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.tag-box .tag {
+		width: fit-content;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12px;
+		background: rgb(235, 235, 235);
+		color: rgb(45, 45, 45);
+		font-weight: 500;
+		padding: 4px 9px;
+		border-radius: 4mm;
+		margin: 3px;
+	}
+	.tag-box .tag span {
+		font-size: 16px;
+		margin-left: 5px;
+		cursor: pointer;
+	}
+	.tag-box .input-box {
+		width: 100%;
+		box-sizing: border-box;
+		background: rgb(245, 245, 245);
+		padding: 20px;
+		display: flex;
+		flex-direction: column;
+	}
+	.tag-box .input-box label {
+		font-size: 14px;
+		font-weight: 500;
+		margin-bottom: 5px;
+	}
+	.tag-box .input-box input {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 7px 10px;
+		border-radius: 1mm;
+		outline: 0.4mm solid rgb(220, 220, 220);
+		border: none;
+		font-family: poppins;
+		margin-bottom: 5px;
+	}
+	.tag-box .message {
+		font-size: 12px;
+		color: rgb(150, 150, 150);
+	}
+
+	.dform {
+        width: 430px;
+        height: fit-content;
+        border-radius: 3mm;
+        background: white;
+      }
+      .dform .title {
+        width: 100%;
+      }
+      .dform .title span {
+        width: fit-content;
+        font-family: poppins;
+        font-size: 22px;
+        background: rgb(233, 176, 250);
+        border-radius: 7mm;
+        padding: 5px 15px;
+        display: block;
+        margin: 30px 20px;
+        margin-bottom: 10px;
+      }
+      .dform .all-inputs {
+        display: block;
+        margin: 50px 0;
+      }
+      .dform .inputf {
+        position: relative;
+        width: 370px;
+        height: 40px; 
+        display: block;
+        border-radius: 6mm;
+        margin: 25px 30px;
+      }
+      .dform .input {
+        width: 300px;
+        box-sizing: border-box;
+        padding: 15px;
+        height: 40px;
+        border-radius: 5mm;
+        border: 0.4mm solid rgb(90, 90, 90);
+        background: white;
+        font-family: poppins;
+        outline: none;
+      }
+      .dform .label {
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        font-size: 11px;
+        background: white;
+        font-family: poppins;
+        padding: 0 3px;
+        font-weight: 500;
+        transition: 0.25s;
+        z-index: -1;
+        opacity: 0;
+      }
+      .dform .input:focus + .label {
+        top: -8px;
+        z-index: 0;
+        opacity: 1;
+      }
+      .dform .input:focus::placeholder {
+        opacity: 0;
+      }
+      .dform .input:not(:placeholder-shown) + .label {
+        top: -8px;
+        z-index: 0;
+        opacity: 1;
+      }
+      .dform .more {
+        width: 100%;
+        height: fit-content;
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: poppins;
+        font-size: 16px;
+        background: rgb(92, 214, 105);
+        border-top: 0.5mm solid rgb(0, 0, 0);
+        cursor: pointer;
+      }
+      .dform .close {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translate(0, -50%);
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        color: white;
+        transition: 0.25s;
+      }
+      .dform .close:hover {
+        background: rgb(255, 133, 81);
+        color: black;
+      }
+      .dform .delete {
+        width: 100%;
+        background: rgb(236, 94, 79);
+        display: block;
+        position: relative;
+        height: 40px;
+        animation: delete 0.25s linear;
+      }
+      @keyframes delete {
+        0% {
+          width: 0;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+	</style>
+	<script src="/assets/js/jquery.js"></script>
+	<script src="/assets/js/common.js"></script>
+</head>
+<body>
+	<div class="container">  
+		<div class="search-bar">
+			<span class="inputf">
+				<input
+					type="search"
+					id="search1"
+					placeholder="Job Title / Keywords"
+				/>
+			</span>
+			<span class="inputf">
+				<input type="search" id="search2" placeholder="Location" />
+			</span>
+			<button type="button">Search</button>
+		</div> 
+
+		<div class="tag-box" style="margin-top: 40px;">
+			<div class="tag-wrap">
+				<div class="tags"></div>
+				<div class="input-box">
+					<label for="input">Add your skills</label>
+					<input
+						type="text"
+						id="input"
+						placeholder="HTML, CSS, JS..."
+						autocomplete="off"
+					/>
+					<div class="message">
+						Lorem ipsum dolor sit amet consectetur adipisicing elit.
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<form class="dform" action="" style="margin-top: 40px;">
+			<div class="title"><span>Dynamic Form</span></div>
+			<span class="all-inputs" id="inputs">
+			<span class="inputf">
+				<input
+				type="text"
+				class="input"
+				placeholder="Your Entry"
+				name="Entry 1"
+				/>
+				<span class="label">Your Entry</span>
+			</span>
+			</span>
+			<div class="more" id="add">
+			Add Input <span class="material-icons-outlined">add</span>
+			</div>
+		</form>
+	</div>
+
+	<script>
+		let colors = [
+        { back: "rgb(255,240,246)", text: "rgb(192, 75, 143)" },
+        { back: "rgb(255,241,240)", text: "rgb(203, 69, 80)" },
+        { back: "rgb(255,242,232)", text: "rgb(196, 96, 66)" },
+        { back: "rgb(255,247,230)", text: "rgb(206, 107, 36)" },
+        { back: "rgb(255,251,230)", text: "rgb(196, 144, 54)" },
+        { back: "rgb(252,255,230)", text: "rgb(117, 151, 36)" },
+        { back: "rgb(246,255,237)", text: "rgb(131, 176, 109)" },
+        { back: "rgb(230,255,251)", text: "rgb(71, 159, 161)" },
+        { back: "rgb(230,244,255)", text: "rgb(64, 121, 212)" },
+        { back: "rgb(240,245,255)", text: "rgb(93, 110, 197)" },
+        { back: "rgb(249,240,255)", text: "rgb(140, 116, 173)" },
+        { back: "rgb(255,85,0)", text: "rgb(255,255,255)" },
+        { back: "rgb(45,183,245)", text: "rgb(255,255,255)" },
+        { back: "rgb(135,208,104)", text: "rgb(255,255,255)" },
+        { back: "rgb(16,142,233)", text: "rgb(255,255,255)" },
+        { back: "rgb(22,119,255)", text: "rgb(255,255,255)" },
+        { back: "rgb(205,32,31)", text: "rgb(255,255,255)" },
+        { back: "rgb(59,89,153)", text: "rgb(255,255,255)" },
+        { back: "rgb(56,106,32)", text: "rgb(255,255,255)" },
+        { back: "rgb(30,31,37)", text: "rgb(255,255,255)" },
+      ];
+      let input = document.getElementById("input");
+      let tags = document.querySelector(".tags");
+
+      document.addEventListener("keyup", (e) => {
+        if (e.key == "Enter") {
+          if (input.value) {
+            let tag = document.createElement("div");
+
+            tag.className = "tag";
+            tag.insertAdjacentHTML("beforeend", input.value);
+
+            let close = document.createElement("span");
+            close.className = "material-icons";
+            close.innerHTML = "close";
+
+            tag.insertAdjacentElement("beforeend", close);
+
+            let colorValues = colors[Math.floor(Math.random() * colors.length)];
+
+            tag.style.color = colorValues.text;
+            tag.style.background = colorValues.back;
+
+            tags.append(tag);
+
+            close.addEventListener("click", (e) => {
+              tag.remove();
+            });
+          }
+        }
+      });
+
+	  	const initForm = ()=> {
+			let add = document.getElementById("add");
+			let index = 2;
+			add.addEventListener("click", () => {
+				let inputs = document.getElementById("inputs");
+				let input = document.createElement("span");
+				input.className = "inputf";
+				let html =
+				' <input type="text" class="input" placeholder="Your Entry" name="Entry' +
+				index +
+				' " /> <span class="label">Your Entry</span> <div class="close"><span class="material-icons-outlined">close</span></div>';
+
+				input.insertAdjacentHTML("beforeend", html);
+				inputs.appendChild(input);
+				index += 1;
+
+				let allInputs = inputs.querySelectorAll(".inputf");
+
+				allInputs.forEach((item) => {
+				let close = item.querySelector(".close");
+				if (close) {
+					close.addEventListener("click", () => {
+					item.className = "delete";
+					item.innerHTML = "";
+					setTimeout(() => {
+						item.remove();
+					}, 1000);
+					});
+				}
+				});
+			});
+		}
+		$(document).ready(async ()=>{ 
+			initForm()
+		});
+	</script>
+</body>
+</html>

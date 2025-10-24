@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>3D Button</title>
+	<link
+	href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round|Material+Icons+Sharp|Material+Icons+Two+Tone"
+	rel="stylesheet"
+	/>
+	<link rel="styleSheet" href="/assets/css/form_section.css"/>
+	<link
+	href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+	rel="stylesheet"
+	/>
+	<style>
+	body {
+		width: 100%;
+		height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	.container {
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		overflow: auto;
+	}   
+
+	.dropdown {
+		width: 300px;
+		height: fit-content;
+		box-sizing: border-box;
+		position: relative;        
+	}
+	.dropdown .input-box {
+		width: 100%;
+		height: 40px;
+		box-sizing: border-box;
+		outline: 0.3mm solid rgba(0, 0, 0, 0.15);
+		border-radius: 2mm;
+		padding: 10px 15px;
+		font-family: poppins;
+		font-size: 14px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		position: relative;
+		background: #fff;
+	}
+	.dropdown .input-box::before {
+		content: "expand_more";
+		font-family: "Material Icons";
+		position: absolute;
+		font-size: 18px;
+		top: 50%;
+		right: 15px;
+		transform: translate(0, -50%);
+		width: fit-content;
+		height: fit-content;
+	}
+	.dropdown .input-box.open::before {
+		content: "expand_less";
+	}
+	.dropdown .input-box:empty::after {
+		content: "Select Title";
+		color: rgba(0, 0, 0, 0.5);
+	}
+	.dropdown .list {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		width: 100%;
+		height: fit-content;
+		background: white;
+		margin-top: 10px;
+		border-radius: 2mm;
+		overflow: hidden;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: column;
+		max-height: 0;
+		transition: 0.25s ease-out;
+	}
+	.dropdown .list input {
+		display: none;
+	}
+	.dropdown .list label {
+		display: flex;
+		width: 100%;
+		align-items: center;
+		justify-content: flex-start;
+		font-family: poppins;
+		font-size: 14px;
+		padding: 10px 15px;
+		box-sizing: border-box;
+		cursor: pointer;
+		position: relative;
+	}
+	.dropdown .material-icons-outlined{
+		margin-right: 5px;
+		font-size: 22px;
+	}
+	.dropdown .list label:hover {
+		background: rgba(0, 0, 0, 0.08);
+	}
+	.dropdown input:checked + label {
+		color: rgb(20, 117, 213);
+		background: rgb(238, 245, 252);
+	}
+	.dropdown input:checked + label::before {
+		content: "done";
+		font-family: "Material Icons";
+		position: absolute;
+		top: 50%;
+		right: 15px;
+		transform: translate(0, -50%);
+		font-size: 18px;
+	}
+	.dropdown .open {
+		outline: 0.7mm solid rgb(20, 117, 213);
+	}
+	.dropdown .title {
+		font-family: poppins;
+		font-size: small;
+		font-weight: 500;
+		margin-bottom: 10px;
+	}
+	.dropdown .search-box {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 10px 8px;
+	}
+	.dropdown .list .search {
+		display: block;
+		width: 100%;
+		box-sizing: border-box;
+		padding: 8px;
+		border-radius: 1mm;
+		border: none;
+		outline: 0.3mm solid rgba(0, 0, 0, 0.15);
+		font-family: poppins;
+	}
+	.dropdown .list .search:focus {
+		outline: 0.5mm solid rgba(0, 0, 0, 0.35);
+	}
+	</style>
+	<script src="/assets/js/jquery.js"></script>
+	<script src="/assets/js/common.js"></script>
+</head>
+<body>
+	<div class="container">  
+	<div class="dropdown">
+		<div class="title">Title</div>
+		<div class="input-box"></div>
+		<div class="list">
+		<div class="search-box">
+			<input
+			type="search"
+			name=""
+			class="search"
+			placeholder="Search Options"
+			/>
+		</div>
+		<input type="radio" name="drop1" id="id11" class="radio" />
+		<label for="id11">
+			<span class="material-icons-outlined"> directions_walk </span>
+			<span class="name">Walk</span>
+		</label>
+
+		<input type="radio" name="drop1" id="id12" class="radio" />
+		<label for="id12">
+			<span class="material-icons-outlined"> directions_bike </span>
+			<span class="name">Road</span>
+		</label>
+
+		<input type="radio" name="drop1" id="id13" class="radio" />
+		<label for="id13">
+			<span class="material-icons-outlined"> train </span>
+			<span class="name">Train</span>
+		</label>
+
+		<input type="radio" name="drop1" id="id14" class="radio" />
+		<label for="id14">
+			<span class="material-icons-outlined"> flight </span>
+			<span class="name">Flight</span>
+		</label>
+
+		<input type="radio" name="drop1" id="id15" class="radio" />
+		<label for="id15">
+			<span class="material-icons-outlined"> directions_boat </span>
+			<span class="name">Ship</span>
+		</label>
+
+		<input type="radio" name="drop1" id="id16" class="radio" />
+		<label for="id16">
+			<span class="material-icons-outlined"> local_shipping </span>
+			<span class="name">Delivery</span>
+		</label>
+		</div>
+	</div>
+	</div>
+
+	<script>
+		const dropdownSelect = (selector)=>{
+			const dropdown = getJq(selector);
+			const inputBox = dropdown.find('.input-box');
+			const list = dropdown.find('.list');
+			const options = list.find('label');
+			const radios = list.find('input[type="radio"]');
+			const searchInput = list.find('.search');
+
+			inputBox.on('click', ()=>{
+				list.css({maxHeight: list.css('maxHeight') == '0px' ? '300px' : '0px'});
+				inputBox.toggleClass('open');
+				searchInput.val('');
+				options.show();
+			});
+
+			radios.on('change', (e)=>{
+				const selectedLabel = list.find(`label[for="${e.target.id}"]`);
+				const icon = selectedLabel.find('.material-icons-outlined').html();
+				const name = selectedLabel.find('.name').html();
+				inputBox.html(`<span class="material-icons-outlined">${icon}</span><span class="name">${name}</span>`);
+				list.css({maxHeight: '0px'});
+				inputBox.removeClass('open');
+			});
+			searchInput.on('keyup', (e)=>{
+				const query = e.target.value.toLowerCase();
+				options.each((i, label)=>{
+					const name = $(label).find('.name').html().toLowerCase();
+					if(name.includes(query)){
+						$(label).show();
+					}else{
+						$(label).hide();
+					}
+				});
+			});
+		}
+		$(document).ready(async ()=>{ 
+			dropdownSelect('.dropdown')
+		});
+	</script>
+</body>
+</html>
