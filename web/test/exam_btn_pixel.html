@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<title>레이아웃 테스트</title>
+<link rel="stylesheet" href="/assets/css/styles.css" type="text/css"/>
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/common.js"></script>
+<style>
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+	body {
+		font-family: Arial, sans-serif;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		background: #111;
+		overflow: hidden; 
+	}  
+	.pxcel-btn {
+		position: relative;
+		width: 200px;
+		height: 60px;
+		border: none;
+		outline: none;
+		color:#fff;
+		background: #333;
+		font-size: 1.25rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.pxcel-btn .text {
+		position: relative;
+		z-index: 3;
+	}
+	.pxcel-btn .pxcel-btn-bg {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		/*
+		background: var(--clr);
+		clip-path: polygon(0 0, 0% 100%, 0% 100%, 0% 0%);
+		transition: clip-path 0.4s ease-in-out;
+		*/
+		z-index: 2;
+		pointer-events: none;
+	}
+</style>
+</head>
+<body style="margin:0;padding:0"> 
+	<div style="display: flex; padding: 20px; width: 100%; height: 100%; justify-content: center; align-items: center; gap: 20px; flex-direction: column; background: #111; overflow: auto;">
+		<button class="pxcel-btn">
+			<span class="text">픽셀 버튼</span>
+			<div class="pxcel-btn-bg" data-bgcolor="#ff5722"></div>
+		</button>
+		<button class="pxcel-btn">
+			<span class="text">픽셀 버튼</span>
+			<div class="pxcel-btn-bg" data-bgcolor="#03a9f4"></div>
+		</button>
+	</div>
+	<script>
+		$(document).ready(async ()=>{ 
+			$('.pxcel-btn').each((n,btn)=>{
+				const bg = $(btn).find('.pxcel-btn-bg')
+				let pixelSize = 10, btnWidth = $(btn).outerWidth(), btnHeight = $(btn).outerHeight()
+				let cols = Math.ceil(btnWidth / pixelSize)
+				let rows = Math.ceil(btnHeight / pixelSize)
+				clog('cols:',cols,'rows:',rows)
+				for(let r=0; r<rows; r++){
+					for(let c=0; c<cols; c++){
+						let dot = $('<div class="pxcel-dot"></div>')
+						let bgcolor = $(bg).data('bgcolor') || '#ff5722'
+						const delay = Math.random()*1
+						dot.css({
+							position: 'absolute',
+							width: pixelSize+'px',
+							height: pixelSize+'px',
+							backgroundColor: bgcolor,
+							top: (r*pixelSize)+'px',
+							left: (c*pixelSize)+'px',
+							boxSizing: 'border-box',
+							border: '1px solid rgba(0,0,0,0.1)',
+							opacity: 0,
+							transitionDelay: delay+'s'
+						})
+						bg.append(dot)
+					}
+				}
+				$(btn).hover( (e)=>{
+					clog('hover in')
+					$(btn).find('.pxcel-dot').each((i,dot)=>{
+						$(dot).css({opacity:1})
+					})
+				}, (e)=>{
+					clog('hover out')
+					$(btn).find('.pxcel-dot').each((i,dot)=>{
+						$(dot).css({opacity:0})
+					})
+				})
+
+				/*
+				$(btn).on('mouseenter', (e)=>{
+					$(btn).find('.pxcel-btn-bg').css({'clip-path': 'polygon(0 0, 100% 0%, 100% 100%, 0% 100%)'})
+				})
+				$(btn).on('mouseleave', (e)=>{
+					$(btn).find('.pxcel-btn-bg').css({'clip-path': 'polygon(0 0, 0% 100%, 0% 100%, 0% 0%)'})
+				})
+				*/
+			})
+		})
+	</script>
+</body>
+</html> 
+
