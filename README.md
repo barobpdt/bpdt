@@ -1,5 +1,7 @@
 https://directauto.samsungcard.com/oap/partner/UOAPUA0104M0.jsp
 
+P210006097794
+
 ## git 초기화
 ```
 git fetch --all
