@@ -23,6 +23,7 @@ const getJq = el => isEl(el) ? $(el) :
 Object.prototype.update = function(...args) { return Object.assign(this,...args) }
 Object.prototype.copy = function(...args) { return Object.assign({},this,...args) }
 Object.prototype.isset = function(name) { return this.hasOwnProperty(name) }
+Object.prototype.cmp = function(name, value) { return this.isset(name) && this[name]===value }
 
 String.prototype.lpad = function(padLength, padString) {
     let arrTxt = this;
@@ -319,7 +320,10 @@ const tagBtn3d = (target, text, style) => {
 	$('<div class="bottom">').appendTo(el)
 	return el
 }
-
+const loadPage = (app, url) => {
+	if( !jqCheck(app.contentEl) ) return clog(`@@loadPage 부모 content 미정의  ${url} 페이지 로드오류`)
+	apiGet(cf.devHost+url, res => app.createPage(res.pageId, app.contentEl, res) )
+}
 class Apps {
 	constructor(target) {	
 		this.apps = []
@@ -332,10 +336,10 @@ class Apps {
 	getApp(code) {
 		return this.apps.find(cur=>cur.code==code)
 	}
-	makeApp(code, appInfo) {
-		const sty = cf.styles
+	createApp(code, appInfo) {
 		if( !jqCheck(this.targetEl) ) return clog(`@@ Apps 타겟객체 미정의`)
 		if( this.getApp(code) ) return clog(`@@ Apps ${code} 앱이 이미 추가됨`)
+		const sty = cf.styles
 		const appStyle = {}
 		if( isObj(appInfo) ) {
 			if(appInfo.isset('color')) appStyle.color=appInfo.color
@@ -389,11 +393,7 @@ class App {
 		this.currentPopup = null
 		this.layout = appInfo.isset('layout') ? this.makeLayout(appInfo.layout): null
 	}
-	loadPage(url) {
-		if( !jqCheck(this.contentEl) ) return clog(`@@loadPage 부모 content 미정의  ${url} 페이지 로드오류`)
-		const me = this
-		apiGet(cf.devHost+url, res => me.makePage(res.pageId, this.contentEl, res) )
-	}
+	
 	deleteLayout() {
 		
 	}
@@ -401,7 +401,7 @@ class App {
 		if(this.layout ) {
 			this.deleteLayout()
 		}
-		const layout = new PageLayout(this.containerEl, layoutInfo, null, target)
+		const layout = new LayoutTree(this.containerEl, layoutInfo, null, this.contentEl)
 		if( layout.kind=='content' ) {
 			this.contentEl = layout.el
 		}
@@ -410,8 +410,8 @@ class App {
 	getPage(pageId) {
 		return this.pages.find(cur=>cur.id==pageId)
 	}
-	makePage(pageId, targetEl, pageInfo) {
-		if( this.getPage(pageId) ) return clog(`@@makePage ${pageId} 페이지 이미 추가됨`)
+	createPage(pageId, targetEl, pageInfo) {
+		if( this.getPage(pageId) ) return clog(`@@createPage ${pageId} 페이지 이미 추가됨`)
 		const page = new Page(pageId, targetEl, pageInfo)
 		this.pages.push(page)
 		if( this.currentAddPageId==null ) {
@@ -462,12 +462,16 @@ class App {
 }
 class Page {
 	constructor(pageId, targetEl, pageInfo) { 
+		const sty = cf.styles
+		const css = {}.update(sty.flexCenter, sty.full)
+		if(pageInfo.css ) css.update(pageInfo.css) 
 		this.id = pageId
 		this.info = pageInfo
+		this.pageEl = $('<div/>').css(css).appendTo(targetEl)
 		this.targetEl = targetEl
-		const css = pageInf.css || {}
-		this.pageEl = $('<div/>').css(css.update(cf.styles.pageBox)).appendTo(targetEl)
-		this.layout = this.makeLayout(pageInfo.layout)
+		this.layout = null
+		this.contentEl = null
+		if( isObj(pageInfo.layout) ) this.makeLayout(pageInfo.layout)
 	}
 	deleteLayout() {
 		
@@ -476,11 +480,12 @@ class Page {
 		if(this.layout ) {
 			this.deleteLayout()
 		}
-		const layout = new PageLayout(this.pageEl, layoutInfo, null, target)
-		if( layout.kind=='content' ) {
-			this.contentEl = layout.el
-		}
-		return layout
+		this.layout = new LayoutTree(this.pageEl, layoutInfo, null, this)
+		this.contentEl = layout.findContent()
+		clog('@page make layout => ', this)
+	}
+	findEl(selector) {
+		return this.layout.findEl(selector)
 	}
 	showPage() {
 		this.pageEl.show()
@@ -491,12 +496,9 @@ class Page {
 	reload() {
 		
 	}
-	findEl(selector) {
-		return this.layout.findEl(selector)
-	}
 }
 	
-class PageLayout {
+class LayoutTree {
 	constructor(parentEl, layoutInfo, parentLayout, target) {
 		this.target = target
 		this.parentLayout = parentLayout
@@ -510,28 +512,51 @@ class PageLayout {
 	createLayout(layout) {
 		const tag = layout.tag || 'div'
 		const sty = layout.style || {}
-		this.el = $('<'+tag+'/>').css(sty).appendTo(this.parentEl)
-		if( layout.class) this.el.attr('class', layout.class)
+		this.el = $('<'+tag+'/>').css(sty).data('layout-tree',this).appendTo(this.parentEl)
+		if( layout.className) this.el.attr('class', layout.className)			
+		if( layout.page || layout.cmp('type','content')) {
+			this.el.data('type', 'content')
+		}
 		if( Array.isArray(layout.children) ) {
-			for( cur of layout.children ) {
-				const obj = new PageLayout(this.el, cur, this, this.target)
+			for( let cur of layout.children ) {
+				const obj = new LayoutTree(this.el, cur, this, this.target)
 				this.childLayout.push(obj)
 			}
 		}
 	}
 	findEl(selector) {
 		return this.el.find(selector)
-	}	
+	}
+	findContent() {
+		if( this.el.data('type')=='content' ) return this.el
+		const result = this.childLayout.filter(cur=> cur.el.data('type')=='content')
+		return result && result.length? result[0] : this.el
+	}
 }
 
+function getCss() {
+	const sty = cf.styles
+	const css = {}
+	for(v of arguments) {
+		if( typeof v=='string') {
+			if(sty.isset(v)) {
+				Object.assign(css,sty[v])
+			} 
+		} else if( isObj(v)) {
+			Object.assign(css,v)
+		}
+	}
+	return css
+}
 const cf = {
 	apps: null
 	, devMode: false 		// 개발자모드
     , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
 	, styles:{				// 공통스타일
 		full:{width:'100%',height:'100%'},
-		flexcenter: {display:'flex', alignItems:'center', justifyContent:'center' },
-		pageBox: {display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', width:'100%',height:'100%' }
+		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center' },		
+		hbox: {display:'flex', flexDirection:'row', width:'100%' },
+		vbox: {display:'flex', flexDirection:'column', height:'100%' }
 	}
 	, devHost: 'http://localhost'
 	, apiHost: 'http://localhost:8000'
