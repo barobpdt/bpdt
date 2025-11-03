@@ -320,10 +320,30 @@ const tagBtn3d = (target, text, style) => {
 	$('<div class="bottom">').appendTo(el)
 	return el
 }
-const loadPage = (app, url) => {
-	if( !jqCheck(app.contentEl) ) return clog(`@@loadPage 부모 content 미정의  ${url} 페이지 로드오류`)
-	apiGet(cf.devHost+url, res => app.createPage(res.pageId, app.contentEl, res) )
+
+async function isUserSessionValid(token, redirectPage) {
+    const options = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: token
+    };
+    try {
+        const response = await fetch(cf.apiHost+"/session/isValidToken", options);
+        if(response.ok) {
+            sessionStorage.setItem("user", JSON.stringify(await response.json()));
+            return true;
+        }
+    } catch(e) {
+    }
+	localStorage.clear();
+    sessionStorage.clear();
+    if( redirectPage) location.replace("../login/login.html");
+    return false;
 }
+
 class Apps {
 	constructor(target) {	
 		this.apps = []
@@ -391,60 +411,88 @@ class App {
 		this.currentAddPageId = null
 		this.currentPage = null
 		this.currentPopup = null
-		this.layout = appInfo.isset('layout') ? this.makeLayout(appInfo.layout): null
+		this.layout = this.makeLayout(appInfo.layout)
+	} 
+	loadPage(url) {
+		$.getScript(cf.devHost+url+'.js', ()=>clog('>> app loadPage URL: '+url+' 페이지 준비완료'))
 	}
-	
 	deleteLayout() {
-		
+		this.layout = null
 	}
 	makeLayout(layoutInfo) {
-		if(this.layout ) {
+		if( this.layout ) {
 			this.deleteLayout()
 		}
-		const layout = new LayoutTree(this.containerEl, layoutInfo, null, this.contentEl)
-		if( layout.contentUse ) {
-			this.contentEl = layout.el
-		}
+		const layout = new LayoutTree(this.containerEl, layoutInfo, null, this)
+		this.contentEl = layout.findContent() || this.containerEl
 		return layout
+	}	
+	deletePage(page) {
+		if( jqCheck(page.pageEl)) {
+			if( this.currentPage==page) {
+				this.currentPage = null
+			}
+			page.layout = null
+			page.pageEl.remove()
+			this.pages = this.pages.filter(cur=>cur!==page)
+			return true
+		}
+		return false
 	}
 	getPage(pageId) {
 		return this.pages.find(cur=>cur.id==pageId)
 	}
-	createPage(pageId, targetEl, pageInfo) {
-		if( this.getPage(pageId) ) return clog(`@@createPage ${pageId} 페이지 이미 추가됨`)
-		const page = new Page(pageId, targetEl, pageInfo)
+	createPage(pageId, pageInfo, pageImpl) {
+		const prev = this.getPage(pageId)
+		if( prev ) {
+			if(!this.deletePage(prev)) return clog('>> createPage 이전 페이지 삭제오류 [pageId]=='+pageId)
+		}
+		const page = new Page(pageId, pageInfo, this, pageImpl)
 		this.pages.push(page)
-		if( this.currentAddPageId==null ) {
-			const me = this
+		if( this.currentAddPageId ) {
 			this.currentAddPageId = pageId
-			setTimeout(()=> {
-				me.setCurrentPage(me.currentAddPageId)
-				me.currentAddPageId = null
-			}, 100)
 		} else {
+			const app = this
 			this.currentAddPageId = pageId
+			setTimeout(()=> app.startPage(), 100)
+		}
+		clog('>>> create page ', pageImpl)
+	}
+	startPage() {
+		const pageId = this.currentAddPageId
+		if( pageId ) {
+			this.setCurrentPage(pageId)
+			this.currentAddPageId = null
+		} else {
+			clog('>> startPage 호출오류 페이지아이디 미설정')
 		}
 	}
-	setCurrentPage(pageId, reload) {
-		const page = this.pages.find(cur=>cur.id==pageId)
+	setCurrentPage(pageId) {
+		if( !pageId ) return clog('>> setCurrentPage pageId not defined !!!')
+		const page = this.pages.find(cur=>cur.id==pageId)		
 		if( page ) {
+			if( page === this.currentPage ) return clog('>> setCurrentPage same page [pageId]=='+pageId)
 			this.pages.map(cur=>cur.hidePage())
 			this.currentPage = page
 			page.showPage()
-			if(reload) {
-				page.rendor()
-			}
 		} else {
-			clog(`@@ Apps.setCurrentPage ${pageId} page 오류`)
+			clog('>> setCurrentPage 페이지 찾기오류 [pageId]=='+pageId)
+		} 
+		if( isObj(page) && page.pageStartTime==0 ) {
+			if( typeof(page.initPage) =='function') {
+				page.initPage()
+			}
+			page.pageStartTime = new Date().getTime()
 		}
+		return page;
 	}
 	hideApp() {
-		if(!jqCheck(this.contentEl)) return clog('@@ app hideApp 대상오류', this.dump())
-		this.contentEl.hide()
+		if(!jqCheck(this.containerEl)) return clog('@@ app hideApp 대상오류', this.dump())
+		this.containerEl.hide()
 	}
 	showApp() {
-		if(!jqCheck(this.contentEl)) return clog('@@ app showApp 대상오류', this.dump())
-		this.contentEl.show()
+		if(!jqCheck(this.containerEl)) return clog('@@ app showApp 대상오류', this.dump())
+		this.containerEl.show()
 	}
 	reload() {
 		if( this.currentPopup) {
@@ -454,35 +502,40 @@ class App {
 			this.currentPage.reload()
 		}
 	}
-	
- 
 	dump() {
 	
 	}
 }
 class Page {
-	constructor(pageId, targetEl, pageInfo) { 
+	constructor(pageId, pageInfo, parentApp, pageImpl) { 
 		const sty = cf.styles
 		const css = {}.update(sty.flexCenter, sty.full)
 		if(pageInfo.css ) css.update(pageInfo.css) 
 		this.id = pageId
 		this.info = pageInfo
-		this.pageEl = $('<div/>').css(css).appendTo(targetEl)
-		this.targetEl = targetEl
-		this.layout = null
+		this.app = parentApp
 		this.contentEl = null
-		if( isObj(pageInfo.layout) ) this.makeLayout(pageInfo.layout)
-	}
-	deleteLayout() {
-		
-	}
-	makeLayout(layoutInfo) {
-		if(this.layout ) {
-			this.deleteLayout()
+		this.pageStartTime = 0
+		this.pageEl = $('<div/>').css(css).appendTo(parentApp.contentEl)
+		this.layout = this.makeLayout(pageInfo.layout)
+		if( isObj(pageImpl) ) {
+			clog('page init ==>', pageId, pageImpl)
+			for(let key of Object.keys(pageImpl) ) {
+				if( pageImpl.hasOwnProperty(key)) {
+					const fc = pageImpl[key]
+					clog('>>', key, fc)
+					if(typeof(fc)=='function' && !this.hasOwnProperty(key) ) {
+						this[key] = fc
+					}
+				}
+			}
 		}
-		this.layout = new LayoutTree(this.pageEl, layoutInfo, null, this)
+	}
+	
+	makeLayout(layoutInfo) {		
+		const layout = new LayoutTree(this.pageEl, layoutInfo, null, this)
 		this.contentEl = layout.findContent()
-		clog('@page make layout => ', this)
+		return layout
 	}
 	findEl(selector) {
 		return this.layout.findEl(selector)
@@ -503,20 +556,21 @@ class LayoutTree {
 		this.target = target
 		this.parentLayout = parentLayout
 		this.parentEl = parentEl
-		this.layoutInfo = layoutInfo
 		this.el = null
-		this.contentUse = layoutInfo.contentUse||false
+		this.layoutInfo = layoutInfo
+		this.contentUse = false 
 		this.childLayout = []
-		this.createLayout(layoutInfo)
-	} 
+		if( isObj(layoutInfo) ) {
+			this.contentUse = layoutInfo.content===true
+			this.createLayout(layoutInfo)
+		}
+	}
 	createLayout(layout) {
 		const tag = layout.tag || 'div'
 		const sty = layout.style || {}
 		this.el = $('<'+tag+'/>').css(sty).data('layout-tree',this).appendTo(this.parentEl)
-		if( layout.className) this.el.attr('class', layout.className)			
-		if( layout.page || layout.cmp('type','content')) {
-			this.el.data('type', 'content')
-		}
+		if( layout.className) this.el.attr('class', layout.className)
+		if( this.contentUse) this.el.css({position:'relative'})
 		if( Array.isArray(layout.children) ) {
 			for( let cur of layout.children ) {
 				const obj = new LayoutTree(this.el, cur, this, this.target)
@@ -528,9 +582,12 @@ class LayoutTree {
 		return this.el.find(selector)
 	}
 	findContent() {
-		if( this.el.data('type')=='content' ) return this.el
-		const result = this.childLayout.filter(cur=> cur.el.data('type')=='content')
-		return result && result.length? result[0] : this.el
+		if( this.contentUse ) return this.el
+		for(let cur of this.childLayout ) {
+			const el = cur.findContent()
+			if( el ) return el
+		}
+		return null
 	}
 }
 
@@ -554,9 +611,11 @@ const cf = {
     , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
 	, styles:{				// 공통스타일
 		full:{width:'100%',height:'100%'},
-		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center' },		
-		hbox: {display:'flex', flexDirection:'row', width:'100%' },
-		vbox: {display:'flex', flexDirection:'column', height:'100%' }
+		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center', width:'100%',height:'100%' },
+		row: {display:'flex', flexDirection:'row'}, 
+		col: {display:'flex', flexDirection:'column'}, 
+		hbox: {display:'flex', flexDirection:'row', height:'100%' },
+		vbox: {display:'flex', flexDirection:'column', width:'100%' }
 	}
 	, devHost: 'http://localhost'
 	, apiHost: 'http://localhost:8000'

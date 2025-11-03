@@ -24,8 +24,8 @@ app(devTool)
 			appTitle {hbox, w:80}
 			appMenus {hbox, full}
 			appInfo {hbox, w:120}
-		appContents {page:main}
-	init {
+		appContents {page:main} // flexCenter, content:true
+	init() {
 		apiGet('', res=>@makeMenu(res))
 	}
 	makeMenu(res) {
@@ -39,12 +39,12 @@ app(devTool)
 	}
 	getSubmenu(node) {			
 		<div class="submenu">
-			node.children && node.children.length ? [
+			@[node.children && node.children.length] ? [
 				<div class="submenu-item has-submenu" @ref=node>
 					<span style="flex:1;">${node.title}</span>
 					<span class="submenu-arrow">▶</span>
 					<div class="sub-submenu">
-						@{node.children.filter(sub=>@getSubmenu(sub)).join()}
+						@[node.children.filter(sub=>@getSubmenu(sub)).join()]
 					</div>
 				</div>
 			] : [
@@ -72,9 +72,9 @@ page(main)
 			tag:'div'
 			, style: getCss('vbox','full')
 			, children:[
-				{tag:'div',style:getCss('full',{height:30}), className:'appTop'},
+				{tag:'div',style:getCss('full',{height:30,background:getRandomColor()}), className:'appTop'},
 				{tag:'div',style:{flex:1},type:'content', className:'appContents'},
-				{tag:'div',style:{height:30}, className:'appFooter'},
+				{tag:'div',style:{height:30,background:getRandomColor()}, className:'appFooter'},
 			]
 		}
 		const appInfo = {name:'개발페이지', background:'#aaa', style:getCss('full'), layout} 
