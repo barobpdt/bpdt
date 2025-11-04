@@ -39,6 +39,9 @@ String.prototype.rpad = function(padLength, padString) {
         arrTxt += padString;
     return arrTxt;
 }
+String.prototype.splitComma = function() {
+	return this.split(',').map(v=>v.trim())
+}
 /*
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
 String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
@@ -359,8 +362,7 @@ class Apps {
 	createApp(code, appInfo) {
 		if( !jqCheck(this.targetEl) ) return clog(`@@ Apps 타겟객체 미정의`)
 		if( this.getApp(code) ) return clog(`@@ Apps ${code} 앱이 이미 추가됨`)
-		const sty = cf.styles
-		const appStyle = {}
+		const appStyle = getCss('pageContainer')
 		if( isObj(appInfo) ) {
 			if(appInfo.isset('color')) appStyle.color=appInfo.color
 			if(appInfo.isset('bg')||appInfo.isset('background')) appStyle.background=appInfo.background||appInfo.bg
@@ -369,7 +371,7 @@ class Apps {
 			appInfo={}
 		}
 		clog('appStyle===>', appStyle, appInfo)
-		const container = $('<div/>').css(appStyle.update(sty.full, sty.flexcenter)).appendTo(this.targetEl)
+		const container = $('<div/>').css(appStyle).appendTo(this.targetEl)
 		const app = new App(container, code, appInfo )
 		this.apps.push(app)
 		if( this.currentAddCode==null ) {
@@ -413,8 +415,9 @@ class App {
 		this.currentPopup = null
 		this.layout = this.makeLayout(appInfo.layout)
 	} 
-	loadPage(url) {
-		$.getScript(cf.devHost+url+'.js', ()=>clog('>> app loadPage URL: '+url+' 페이지 준비완료'))
+	loadPage(name) {
+		const path = cf.devHost+cf.pagesBase
+		$.getScript(path+name+'.js', ()=>clog('>> app loadPage NAME: '+name+' 페이지 준비완료'))
 	}
 	deleteLayout() {
 		this.layout = null
@@ -507,9 +510,8 @@ class App {
 	}
 }
 class Page {
-	constructor(pageId, pageInfo, parentApp, pageImpl) { 
-		const sty = cf.styles
-		const css = {}.update(sty.flexCenter, sty.full)
+	constructor(pageId, pageInfo, parentApp, pageImpl) {
+		const css = getCss('pageContainer')
 		if(pageInfo.css ) css.update(pageInfo.css) 
 		this.id = pageId
 		this.info = pageInfo
@@ -517,6 +519,7 @@ class Page {
 		this.contentEl = null
 		this.pageStartTime = 0
 		this.pageEl = $('<div/>').css(css).appendTo(parentApp.contentEl)
+		this.pageEl.addClass('page-content')
 		this.layout = this.makeLayout(pageInfo.layout)
 		if( isObj(pageImpl) ) {
 			clog('page init ==>', pageId, pageImpl)
@@ -570,7 +573,7 @@ class LayoutTree {
 		const sty = layout.style || {}
 		this.el = $('<'+tag+'/>').css(sty).data('layout-tree',this).appendTo(this.parentEl)
 		if( layout.className) this.el.attr('class', layout.className)
-		if( this.contentUse) this.el.css({position:'relative'})
+		if( this.contentUse) this.el.css({position:'relative',overflow:'auto'})
 		if( Array.isArray(layout.children) ) {
 			for( let cur of layout.children ) {
 				const obj = new LayoutTree(this.el, cur, this, this.target)
@@ -605,13 +608,36 @@ function getCss() {
 	}
 	return css
 }
+
+function setCss(el) {
+	if(!jqCheck(el)) return clog('>> setCss HTML Element 오류 ')
+	const sty = cf.styles
+	const css = {}
+	let n=0
+	for(v of arguments) {
+		if( n++ > 0 ) {
+			if( typeof v=='string') {
+				if(sty.isset(v)) {
+					Object.assign(css,sty[v])
+				} 
+			} else if( isObj(v)) {
+				Object.assign(css,v)
+			}
+		}
+	}
+	el.css(css)
+}
+
+
 const cf = {
 	apps: null
 	, devMode: false 		// 개발자모드
     , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
 	, styles:{				// 공통스타일
 		full:{width:'100%',height:'100%'},
+		itemCenter: {alignItems:'center', justifyContent:'center'},
 		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center', width:'100%',height:'100%' },
+		pageContainer: {display:'flex', flexDirection:'column', position:'relative', width:'100%',height:'100%' },
 		row: {display:'flex', flexDirection:'row'}, 
 		col: {display:'flex', flexDirection:'column'}, 
 		hbox: {display:'flex', flexDirection:'row', height:'100%' },
@@ -619,4 +645,5 @@ const cf = {
 	}
 	, devHost: 'http://localhost'
 	, apiHost: 'http://localhost:8000'
+	, pagesBase: '/assets/pages/'
 }
