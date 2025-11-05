@@ -14,10 +14,10 @@
 	}
 	const layout = {
 		tag:'div'
-		, style: getCss('vbox','full')
+		, style: getCss('pageContent')
 		, children:[
 			{tag:'div',style:getCss('full',{height:30,background:getRandomColor()}), className:'appTop'},
-			{tag:'div',style:getCss('flexCenter'), className:'appContents', content:true},
+			{tag:'div',style:getCss('pageContent'), className:'appContents', content:true},
 			{tag:'div',style:{height:30,background:getRandomColor()}, className:'appFooter'},
 		]
 	}

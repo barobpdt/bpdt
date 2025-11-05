@@ -359,27 +359,29 @@ class Apps {
 	getApp(code) {
 		return this.apps.find(cur=>cur.code==code)
 	}
-	createApp(code, appInfo) {
+	createApp(code, appInfo, callback) {
 		if( !jqCheck(this.targetEl) ) return clog(`@@ Apps 타겟객체 미정의`)
 		if( this.getApp(code) ) return clog(`@@ Apps ${code} 앱이 이미 추가됨`)
-		const appStyle = getCss('pageContainer')
+		const appStyle = getCss('vbox',{height:'100%'})
 		if( isObj(appInfo) ) {
 			if(appInfo.isset('color')) appStyle.color=appInfo.color
 			if(appInfo.isset('bg')||appInfo.isset('background')) appStyle.background=appInfo.background||appInfo.bg
 			// background: getRandomColor()
 		} else {
 			appInfo={}
-		}
-		clog('appStyle===>', appStyle, appInfo)
-		const container = $('<div/>').css(appStyle).appendTo(this.targetEl)
+		} 
+		const container = $('<div class="app-'+code+'"/>').css(appStyle).appendTo(this.targetEl)
 		const app = new App(container, code, appInfo )
+		if( typeof(callback)=='function' ) {
+			app.appStartCallback = callback
+		}
 		this.apps.push(app)
 		if( this.currentAddCode==null ) {
-			const me = this
+			const apps = this
 			this.currentAddCode = code
 			setTimeout(()=> {
-				me.setCurrentApp(me.currentAddCode)
-				me.currentAddCode = null
+				apps.setCurrentApp(apps.currentAddCode)
+				apps.currentAddCode = null
 			}, 100)
 		} else {
 			this.currentAddCode = code
@@ -392,6 +394,12 @@ class Apps {
 			this.apps.map(cur=>cur.hideApp())
 			this.currentApp = app
 			app.showApp()
+			if( app.appStartTime==0 ) {
+				if( typeof(app.appStartCallback)=='function' ) {
+					app.appStartCallback(app)
+				}
+				app.appStartTime=new Date().getTime()
+			}
 		} else {
 			clog(`@@ Apps.setCurrentApp ${code} 앱오류`)
 		}
@@ -410,6 +418,8 @@ class App {
 		this.code = code
 		this.name = appInfo.name||''
 		this.appInfo = appInfo
+		this.appStartTime = 0
+		this.appStartCallback = null
 		this.currentAddPageId = null
 		this.currentPage = null
 		this.currentPopup = null
@@ -426,8 +436,20 @@ class App {
 		if( this.layout ) {
 			this.deleteLayout()
 		}
+		if( !isObj(layoutInfo)) {
+			this.contentEl = this.containerEl
+			return null
+		}
 		const layout = new LayoutTree(this.containerEl, layoutInfo, null, this)
-		this.contentEl = layout.findContent() || this.containerEl
+		const content = layout.findContent()
+		if( !isObj(layoutInfo.style) ) {
+			setCss(layout.el, 'pageContent', {overflow:'auto'})
+		}
+		if( content ) {
+			this.contentEl = content
+		} else {
+			this.contentEl = layout.el
+		}
 		return layout
 	}	
 	deletePage(page) {
@@ -511,8 +533,8 @@ class App {
 }
 class Page {
 	constructor(pageId, pageInfo, parentApp, pageImpl) {
-		const css = getCss('pageContainer')
-		if(pageInfo.css ) css.update(pageInfo.css) 
+		const css = getCss('pageContent')
+		if(pageInfo.style ) css.update(pageInfo.style) 
 		this.id = pageId
 		this.info = pageInfo
 		this.app = parentApp
@@ -571,9 +593,9 @@ class LayoutTree {
 	createLayout(layout) {
 		const tag = layout.tag || 'div'
 		const sty = layout.style || {}
-		this.el = $('<'+tag+'/>').css(sty).data('layout-tree',this).appendTo(this.parentEl)
+		this.el = $('<'+tag+'/>').css(sty).data('layout-node',this).appendTo(this.parentEl)
 		if( layout.className) this.el.attr('class', layout.className)
-		if( this.contentUse) this.el.css({position:'relative',overflow:'auto'})
+		if( this.contentUse) this.el.css(getCss('pageContent',{overflow:'auto'}))
 		if( Array.isArray(layout.children) ) {
 			for( let cur of layout.children ) {
 				const obj = new LayoutTree(this.el, cur, this, this.target)
@@ -635,9 +657,9 @@ const cf = {
     , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
 	, styles:{				// 공통스타일
 		full:{width:'100%',height:'100%'},
-		itemCenter: {alignItems:'center', justifyContent:'center'},
+		itemCenter: {display:'flex', alignItems:'center', width:'100%',height:'100%'},
 		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center', width:'100%',height:'100%' },
-		pageContainer: {display:'flex', flexDirection:'column', position:'relative', width:'100%',height:'100%' },
+		pageContent: {display:'flex', flexDirection:'column', flex:1, position:'relative', width:'100%' },
 		row: {display:'flex', flexDirection:'row'}, 
 		col: {display:'flex', flexDirection:'column'}, 
 		hbox: {display:'flex', flexDirection:'row', height:'100%' },

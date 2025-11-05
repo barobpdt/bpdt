@@ -12,13 +12,14 @@
 	}
 	const layout = {
 		tag:'div'
-		, style: getCss('pageContainer', {overflow:'auto'})
+		, style: getCss('pageContent', {overflow:'auto'})
 		, content: true
 	}
 	const pageInfo = {id:'form_dropdown', layout}
 	const app = cf.apps.currentApp
 	app.createPage(pageInfo.id, pageInfo, pageImpl)
 })()
+
 function addDropdown(bar) {
 	const dropdown = $('<div class="dropdown"/>').appendTo(bar)
 	const input = $('<div class="input-box"/>').appendTo(bar)

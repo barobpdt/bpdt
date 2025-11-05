@@ -202,7 +202,7 @@ loadStyle(`
 	}
 	const layout = {
 		tag:'div'
-		, style: getCss('flexCenter')
+		, style: getCss('pageContent')
 		, content: true
 	}
 	const pageInfo = {id:'form_test', layout}

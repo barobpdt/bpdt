@@ -99,7 +99,7 @@
 	}
 	const layout = {
 		tag:'div'
-		, style: getCss('pageContainer', {overflow:'auto'})
+		, style: getCss('pageContent', {overflow:'auto'})
 		, content: true
 	}
 	const pageInfo = {id:'form_db_field', layout}
