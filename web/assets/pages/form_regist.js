@@ -15,7 +15,8 @@ button {
   width: 70vw;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.5s cubic-bezier(0.4, 0.25, 0.8, 0.3);
+  tran
+  sition: all 0.5s cubic-bezier(0.4, 0.25, 0.8, 0.3);
 }
 
 input {
@@ -230,15 +231,5 @@ label[for=input-5] .nav-dot {
   <div class="signup-button">Sign Up</div>
 </form>`)
 	}
-	const pageImpl = {
-		initPage: function() { initForm(this, this.contentEl) }
-	}
-	const layout = {
-		tag:'div'
-		, style: getCss('pageContent')
-		, content: true
-	}
-	const pageInfo = {id:'form_regist', layout}
-	const app = cf.apps.currentApp
-	app.createPage(pageInfo.id, pageInfo, pageImpl)
+	makePage('form_regist', initForm)
 })()

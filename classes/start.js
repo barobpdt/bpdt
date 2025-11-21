@@ -215,7 +215,7 @@ _s(&s, fn, node) {
 	}
 	return ss;
 } 
-_confInfo(&s) {
+_conf(&s) {
 	not(s.ch()) return;
 	sp=s.cur()
 	c=s.next().ch()

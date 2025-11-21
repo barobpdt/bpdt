@@ -68,7 +68,8 @@
 	const clickBtn1 = () => {
 		if(cf.wb1) {
 			clog('@@ cf.wb1 => ', cf.wb1)
-			$(cf.wb1.window).show()
+			cf.wb1.show()
+			// $(cf.wb1.window).show()
 			return;
 		}
 		const template = document.createElement("div");
@@ -88,7 +89,7 @@
 	}
 	const clickBtn2 = () => {
 		clog('@@ cf.wb1 => ',cf.wb1)
-		cf.wb1.force_close()
+		cf.wb1.hide()
 	}
 	const clickBtn3 = () => {
 		getJq('popup').hide()

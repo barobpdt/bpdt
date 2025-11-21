@@ -649,8 +649,31 @@ function setCss(el) {
 	}
 	el.css(css)
 }
-
-
+function makePage(pageId, initFunc) {
+	if(typeof initFunc!=='function') {
+		initFunc=function(page,content) {
+			clog(`페이지 생성오류 초기화 함수 미정의 페이지아이디:${pageId}`, page, content)
+		}
+	}
+	const pageImpl = {
+		initPage: function() { initFunc(this, this.contentEl) }
+	}
+	const layout = {
+		tag:'div'
+		, style: getCss('pageContent')
+		, content: true
+	}
+	const pageInfo = {id:pageId, layout}
+	const app = cf.apps.currentApp
+	app.createPage(pageId, pageInfo, pageImpl)
+}
+const mapAt = (map,idx) => { 
+    let n=0
+    for(const a of map) {
+        if(n==idx) return a[1]
+    }
+    return null
+}
 const cf = {
 	apps: null
 	, devMode: false 		// 개발자모드

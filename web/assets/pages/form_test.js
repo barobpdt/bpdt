@@ -137,8 +137,9 @@ function setFormEvent(form, map) {
 		const map = new Map()
 		for(const key of labels.splitComma()) {			
 			const row = $('<div class="input-control">').appendTo(form)
-			$('<label/>').html(key).appendTo(row)
-			map.set(key, $('<input/>').appendTo(row) )
+			const span = $('<span/>').appendTo(row)
+			$('<label/>').html(key).appendTo(span)
+			map.set(key, $('<input/>').appendTo(span) )
 			$('<div class="error"/>').appendTo(row)
 		}
 		const btn = $('<button type="submit">Sign Up</button>').html('등 록').appendTo(form)
@@ -147,17 +148,5 @@ function setFormEvent(form, map) {
 		setFormEvent(form, map)
 		page.inputMap = map		
 	}
-	const pageImpl = {
-		initPage: function() {
-			initForm(this, this.contentEl)
-		}
-	}
-	const layout = {
-		tag:'div'
-		, style: getCss('pageContent')
-		, content: true
-	}
-	const pageInfo = {id:'form_test', layout}
-	const app = cf.apps.currentApp
-	app.createPage(pageInfo.id, pageInfo, pageImpl)
+	makePage('form_test', initForm)
 })()

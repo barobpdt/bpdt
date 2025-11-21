@@ -23,7 +23,7 @@ function initData(treeModule) {
         try {
             const response = await fetch('/api/drives');
             const node = await response.json();
-            
+            console.log('>>',node, driveSelect)
             node.children.forEach(drive => {
                 const option = document.createElement('option');
                 option.value = drive.path;

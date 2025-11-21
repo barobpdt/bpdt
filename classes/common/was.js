@@ -109,9 +109,9 @@
 					aa.findPos('>')
 					ss.add(aa)
 				}
-				serviceNode[$ss]
+				node[$ss]
 			} else {
-				serviceNode[$s]
+				node[$s]
 			}
 		};
 		if(s.find('<func')) {
