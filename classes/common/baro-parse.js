@@ -1,3 +1,15 @@
+@baro.makePageScript(parent, page, savePath) {
+	parseLayout(page.get('@layout'))
+	
+	parseLayout = func(node) {
+		while(cur,node) {
+			parseLayout(cur)
+		}
+	};
+}
+
+
+
 @baro.parseArray(arr, &s, node ) {
 	if(typeof(s,'bool')) return print('@baro.parseArray 매치오류');
 	arr.reuse()
@@ -98,7 +110,9 @@
 		left = s.findPos('##>')
 		if(cur) {
 			prev = conf("pageSrc.${cur.pageCode}")
-			if(prev.ne(left)) {
+			if(prev.eq(left)) {
+				print("######## @baro.parsePage not chanage", cur)
+			} else {
 				conf("pageSrc.${cur.pageCode}", left, true)
 			}
 			cur.src = left
@@ -189,7 +203,7 @@
 				c=s.incr().next().ch(1)
 				if(c.eq('-',':')) c=s.incr().next().ch(1)
 				tag=s.trim(sp+1, s.cur, true)
-				body=s.match("<$tag", "</$tag>", 4)
+				body=s.match("<$tag", "</$tag>",8)
 				if(typeof(body,'bool')) {
 					return print("매칭되는 태그를 찾을수 없습니다", left, tag);
 				}
@@ -209,39 +223,54 @@
 		return c.eq('<')
 	};
 }
-@baro.setHtmlStyle(node, &s) {
+@baro.styleMap() {
+	map=Cf.getObject('baro','styleMap') if(map) return map;
+	map=Cf.getObject('baro','styleMap',true)
+	map.parseJson(#[
+		w:width,h:height,p:padding,m:margin,
+		mt:marginTop, mb:marginBottom, ml:marginLeft, mr:marginRight,
+		pt:paddingTop, pb:paddingBottom, pl:paddingLeft, pr:paddingRight,
+		bt:borderTop, bb:borderBottom, bl:borderLeft, br:borderRight,
+		minH:minHeight,
+		maxH:maxHeight,
+		minW:minWidth,
+		maxW:maxWidth,
+		rel:relative,
+		abs:absolute
+	])
+	return map;	
+}
+@baro.setHtmlStyle(node) {
 	sty = ''
+	map = @baro.styleMap()
 	while(k, node.keys()) {
-		v=node.get(k)
-		if(k.eq('w','h','p','m','minW','minH','maxW','maxH')) {
-			switch(k) {
-			case w: _add_sty('width',v)
-			case h: _add_sty('height',v)
-			case p: _add_sty('padding',v)
-			case w: _add_sty('margin',v)
-			case minW: _add_sty('min-width',v)
-			case minh: _add_sty('min-height',v)
-			case maxW: _add_sty('max-width',v)
-			case maxh: _add_sty('max-height',v)
-			}
+		if(k.eq('key','class')) continue;
+		val=node.get(k)
+		key = map.get(k) not(key) key=k
+		if(key.eq('absolute','relative','fixed')) {
+			_add_sty('position', val)
 		}
-		if(k.eq('abs','rel','fixed','hidden','pointer','flex','row','col')) {
-			switch(k) {
-			case abs: _add_sty('position','absolute',true)
-			case rel: _add_sty('position','relative',true)
-			case fixed: _add_sty('position','fixed',true)
+		else if(key.eq('hidden','pointer','flex','row','col')) {
+			switch(key) {
 			case hidden: _add_sty('display','hidden',true)
 			case flex: 
 				@baro.checkFlexStyle(node.parent(), node)
 			case row: 
 				_add_sty('display','flex',true)
-				_add_sty('flex-direction','row',true)
+				_add_sty('flexDirection','row',true)
 			case col: 
 				_add_sty('display','flex',true)
-				_add_sty('flex-direction','column',true)
+				_add_sty('flexDirection','column',true)
 			default:
 			}
+		} 
+		else if(key && key.ne(k)) {
+			_add_sty(key,val)
 		}
+	}
+	node.set('@style',sty)
+	while( cur, node) {
+		@baro.setHtmlStyle(cur)
 	}
 	_add_sty = func(k,&s,skip) {
 		if(sty) sty.add(';')
@@ -273,5 +302,5 @@
 @baro.loadPage(path) {
 	parent = object('baro.pages')
 	src = fileRead(path)
-	@baro.parsePage(parent, src)
+	@baro.parsePages(parent, src)
 }

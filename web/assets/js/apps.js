@@ -692,3 +692,18 @@ const cf = {
 	, apiHost: 'http://localhost:8000'
 	, pagesBase: '/assets/pages/'
 }
+
+function createApp(appId, name, pageId) {
+	cf.apps = new Apps('apps')
+	const layout = {
+		tag:'div'
+		, children:[
+			{tag:'div',style:getCss('full',{height:30,background:getRandomColor()}), className:'appTop'},
+			{tag:'div',style:{flex:1}, className:'appContents', content:true},
+			{tag:'div',style:{height:30,background:getRandomColor()}, className:'appFooter'},
+		]
+	}
+	if(!pageId) pageId='main'
+	return cf.apps.createApp(appId, {name, layout}, app=>app.loadPage(pageId))
+	
+}
