@@ -47,7 +47,29 @@ String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
 String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
 String.prototype.rtrim = function() { return this.replace(/\s+$/,"") }
 */
-
+function getPageEl() () {
+	const app = cf.apps.currentApp
+	
+	if( arguments.length<2 ) {
+		const page = app.currentPage
+		if(!page) {
+			return null
+		}
+		if(arguments.length==0) {
+			return page
+		}	
+		if(arguments.length==1) {
+			const selector = arguments[0]
+			return page.containerEl ? page.containerEl.find(selector): null
+		}
+	}
+	else if(arguments.length==2) {
+		const pageId = arguments[0]
+		const page = app.getPage(pageId)
+		return page && page.containerEl ? page.containerEl.find(selector): null
+	}
+	return null
+}
 function getRandomColor() {
 	var letters = '0123456789ABCDEF';
 	var color = '#';
@@ -316,6 +338,31 @@ const apiGet = async (url, param) => {
 	const res = await fetch(url)
 	return res.text()
 }
+const apiCall = async (method, url, param, callback) => {
+	if(typeof callback !== 'function') {
+		callback = data => clog("apiCall 콜백함수 미정의 ", url, method, data)
+	}
+	const urlCall = url.startsWith('http')? url: cf.apiHost+url
+	if(method=='GET') {
+		if( isObj(param) ) {
+			const query = Object.keys(param).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(param[k]) ).join('&')
+			url += (url.indexOf('?')==-1 ? '?':'&') + query
+		}
+		fetch(url).then(res=>res.json()).then(data=>callback(data)).catch(err=>apiCallError(url,err))
+	} else {
+		const params = {
+			method,
+			mode:'cors',
+			credentials: 'include',
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify(param)
+		}
+		fetch(url,params).then(res=>res.json()).then(data=>callback(data)).catch(err=>apiCallError(url,err))
+	}
+}
+const apiCallError = (url, err) => {
+	clog(url + "API 호출오류 =>", err)
+}
 const tagBtn3d = (target, text, style) => {
 	if( style ) loadStyle(style)
 	const el = $('<button type="button" class="btn3d"/>').css({marginLeft:10}).appendTo(getJq(target))
@@ -323,6 +370,7 @@ const tagBtn3d = (target, text, style) => {
 	$('<div class="bottom">').appendTo(el)
 	return el
 }
+
 
 async function isUserSessionValid(token, redirectPage) {
     const options = {
