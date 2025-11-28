@@ -63,6 +63,9 @@
 				data=client.readWs()
 				if(data) {
 					this.socketMessageProc(client, data);
+				} else {
+					print("@@ client recv close");
+					client.close()
 				}
 			}
 		default:

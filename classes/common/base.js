@@ -84,12 +84,20 @@
 </script>
 
 <script>
-	color(param) {
-		if(param.ch('#')) {
-			return Baro.color(param.trim()); 
-		} 
+	color(param) {		
 		switch(args().size()) {
 		case 1:
+			if(typeof(param,'array')) {
+				param.inject(r,g,b,a) 
+				if(a) {
+					return Baro.color(r,g,b,a);
+				} else {
+					return Baro.color(r,g,b);
+				}
+			}
+			if(param.ch('#')) {
+				return Baro.color(param.trim()); 
+			} 
 			args(&s);
 			type=s.findPos("(").trim();
 			if(s.valid()) {

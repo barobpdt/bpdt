@@ -47,7 +47,7 @@ String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
 String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
 String.prototype.rtrim = function() { return this.replace(/\s+$/,"") }
 */
-function getPageEl() () {
+function getPageEl() {
 	const app = cf.apps.currentApp
 	
 	if( arguments.length<2 ) {
@@ -163,6 +163,7 @@ class WebsocketManager {
 		this.websocket.onmessage = function(event) {
 			try {
 				const pos = event.data.indexOf('\r\n\r\n')
+				clog("websocket recv >> pos=="+pos, event.data)
 				if(pos!=-1) {
 					const header = event.data.substr(0,pos)
 					const message = event.data.substr(pos+4)
@@ -192,7 +193,7 @@ class WebsocketManager {
 		return this.websocket
 	}
 	recvData(header, data) {
-		
+		clog('@@ recv data', header, data)
 	}
 	sendData(type, header, param) {
         let message='', contentType=''
