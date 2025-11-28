@@ -227,7 +227,18 @@
 			c=s.incr().ch()
 		}
 		v=''
-		if(c.eq()) {			
+		if(@baro.isFunc(s)) {
+			sp=s.cur()
+			while(@baro.isFunc(s)) {
+				s.next().ch()
+				s.match()
+				s.ch() 
+			}
+			v = s.trim(sp,s.cur(),true)
+			print("@@ parseProps : $k == $v")
+			node.set(k,v)
+		}
+		else if(c.eq()) {			
 			v=s.match()
 			if(bsty) {			
 				node.set(k,v)
