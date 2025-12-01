@@ -519,8 +519,10 @@ class App {
 	createPage(pageId, pageInfo, pageImpl) {
 		const prev = this.getPage(pageId)
 		if( prev ) {
+			clog('@@ createPage 이전페이지가 존재합니다 이전페이지 삭제처리')
 			if(!this.deletePage(prev)) return clog('>> createPage 이전 페이지 삭제오류 [pageId]=='+pageId)
 		}
+		clog('@@ createPage id:'+pageId+' [this.currentAddPageId]=='+this.currentAddPageId)
 		const page = new Page(pageId, pageInfo, this, pageImpl)
 		this.pages.push(page)
 		if( this.currentAddPageId ) {
@@ -530,13 +532,13 @@ class App {
 			this.currentAddPageId = pageId
 			setTimeout(()=> app.startPage(), 100)
 		}
-		clog('>>> create page ', pageImpl)
+		// clog('>>> create page ', pageImpl)
 	}
 	startPage() {
 		const pageId = this.currentAddPageId
 		if( pageId ) {
-			this.setCurrentPage(pageId)
 			this.currentAddPageId = null
+			this.setCurrentPage(pageId)
 		} else {
 			clog('>> startPage 호출오류 페이지아이디 미설정')
 		}
@@ -593,11 +595,11 @@ class Page {
 		this.pageEl.addClass('page-content')
 		this.layout = this.makeLayout(pageInfo.layout)
 		if( isObj(pageImpl) ) {
-			clog('page init ==>', pageId, pageImpl)
+			// clog('page init ==>', pageId, Object.keys(pageImpl))
 			for(let key of Object.keys(pageImpl) ) {
 				if( pageImpl.hasOwnProperty(key)) {
 					const fc = pageImpl[key]
-					clog('>>', key, fc)
+					// clog('>> page::constructor', key, fc)
 					if(typeof(fc)=='function' && !this.hasOwnProperty(key) ) {
 						this[key] = fc
 					}

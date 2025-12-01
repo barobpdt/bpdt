@@ -1,0 +1,48 @@
+(function() {
+	loadStyle(`
+
+#formTestPage .input {
+	padding:20px 10px;padding-left:40px;border:2px solid #221515FF;border-radius:8;outline:none;color:#ABA2A2FF;position:true;width:100%;font-size:1em;font-weight:400;letter-space:2;bg:#5A4A4AFF
+}
+#formTestPage .input:focus ~ .icon  {
+	x:-25px;height:34;y:-30px;width:34
+}
+#formTestPage .input:valid ~ .icon  {
+	x:-25px;height:34;y:-30px;width:34
+}
+#formTestPage .input:focus ~ .label  {
+	x:-25px;padding-left:40px;y:-45px;c:#fff;font-size:0.7em
+}
+#formTestPage .input:valid ~ .label  {
+	x:-25px;padding-left:40px;y:-45px;c:#fff;font-size:0.7em
+}
+#formTestPage .icon {
+	height:24;border-radius:6px;transition:0.25s;position:true;width:24;font-size:1.4em;c:#fff;bg:#8B753DFF
+}
+#formTestPage .label {
+	x:0;padding:20px 0;padding-left:60px;transition:0.25s;position:true;c:rgba(255,255,255,0.5);font-size:1em
+}
+
+
+	`)
+	
+	function initPage(page, content) {
+		const formTestContainer=$('<div id="formTestPage" class="container"/>).css({width:'100%',height:'100%',display:'flex', alignItems:'center', justifyContent:'center',bg:'#1c3354'}).appendTo(content)
+const box=$('<div class="box"/>).css({position:'relative',width:400}).appendTo(formTestContainer)
+const h2=$('<h2 class="h2"/>).css({marginBottom:40,tag:'h2',fontSize:'2em',fontWeight:600,textAlign:'center',width:'100%',letterSpace:4}).html(`).appendTo(box)
+const form=$('<div class="form"/>).css({position:'relative',width:'100%'}).appendTo(box)
+const inputBox=$('<div class="inputBox"/>).css({position:'relative',height:100,width:'100%'}).appendTo(form)
+const input=$('<input required class="input"/>).css({tag:'input'}).appendTo(inputBox)
+const icon=$('<div class="icon ui-icon application_add"/>).appendTo(inputBox)
+const label=$('<div class="label"/>).html(`).appendTo(inputBox)
+const inputBox1=$('<div class="inputBox"/>).appendTo(form)
+const input2=$('<input required class="input"/>).css({tag:'input'}).appendTo(inputBox1)
+const icon3=$('<div class="icon ui-icon application_cascade"/>).appendTo(inputBox1)
+const label4=$('<div class="label"/>).html(`).appendTo(inputBox1)
+const line=$('<div class="line"/>).appendTo(form)
+const inputBox5=$('<div class="inputBox"/>).appendTo(form)
+const button=$('<button class="button"/>).css({tag:'button'}).html(`).appendTo(inputBox5)
+
+	}
+	makePage('formTest', initPage)
+})()

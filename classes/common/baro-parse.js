@@ -11,14 +11,12 @@
 	varMap = page.get('@varMap')
 	if(@baro.isHtmlTag(key)) {
 		node.set('tag',key)
+	}
+	node.set('class',key)
+	if(varMap.isset(key)) {
 		key = Cf.val(key,'-',page.incrNum('@varIndex'))
 	} else {
-		node.set('class',key)
-		if(varMap.isset(key)) {
-			key = Cf.val(key,'-',page.incrNum('@varIndex'))
-		} else {
-			varMap.set(key,true)
-		}
+		varMap.set(key,true)
 	}
 	node.set('key', key)
 	nodeInitVal(node,'@html')
@@ -60,9 +58,9 @@
 	nodeInitVal(page,'@funcsInit')
 
 	conf("pageSrc.${pageCode}", src, true)
-	pageSrc = @baro.parseSource(parent, page, page, template,'html')
+	pageSrc = @baro.parseSource(parent, page, page, template,'value')
 	print("## pageSrc ==> $pageSrc")
-	@baro.changePageScript(parent, page)
+	@baro.changePageScript(parent, page, pageSrc)
 }
 
 @baro.parsePages(parent, &s, template) {
@@ -76,7 +74,14 @@
 		if(cur) {
 			@baro.initPage(parent,cur,left,template)
 		}
-		not(s.ch()) break		
+		c=s.ch()
+		not(c) break
+		if( c.eq('*')) {
+			cur=null
+			line = s.findPos("\n")
+			print("@@ skip page : $line")
+			continue;
+		}
 		note = null
 		if( lineCheck(s,'[')) {
 			path = s.findPos('[',0,1).trim()
@@ -119,7 +124,8 @@
 	print("page script == $ss")
 }
 
-@baro.pageScript(parent, page, node ) {
+@baro.pageScript(parent, page, node) {
+	if(node.get('render')) return;
 	ss=''
 	parentVar = node.parentNode().get('varName')
 	node.inject(tag,class,key,varName)
@@ -138,10 +144,13 @@
 		ss.add(".css({$css})")
 	}
 	if(node.isset('@html')) {
-		css=node.html('@html')
-		ss.add(".html(`$html`)")
+		html=node.get('@html')
+		ss.add(".html(`${html}`)")
 	}
-	ss.add(".appentTo($parentVar)",conf("cf.newline"))
+	ss.add(".appendTo($parentVar)",conf("cf.newline"))
+	if(node.get('@event')) {
+		ss.add(node.get('@event'))
+	}
 	while(cur,node) {
 		src=@baro.pageScript(parent,page,cur)
 		ss.add(src)
@@ -149,6 +158,39 @@
 	return ss;
 }
 
+@baro.pageRenderScript(parent, page, node) {
+	ss=''
+	parentVar = node.parentNode().get('varName')
+	node.inject(tag,class,key,varName)
+	not(tag) tag='div'
+	
+	ss.add("const ${varName}=",'$',"('<${tag}")	
+	if(node.get('@attr')) {
+		ss.add(' ', node.get('@attr'))
+	}
+	if(node.get('@styValue')) {
+		ss.add(' style="',node.get('@styValue'),'"')
+	}
+	ss.add("/>)")
+	if(node.get('@sty')) {
+		css=node.get('@sty')
+		ss.add(".css({$css})")
+	}
+	if(node.isset('@html')) {
+		html=node.get('@html')
+		ss.add(".html(`${html}`)")
+	}
+	ss.add(".appendTo($parentVar)",conf("cf.newline"))
+	if(node.get('@event')) {
+		ss.add(node.get('@event'))
+	}
+	if(node.get('render')) return ss;
+	while(cur,node) {
+		src=@baro.pageScript(parent,page,cur)
+		ss.add(src)
+	}
+	return ss;
+}
 
 @baro.parseArray(parent, page, node, arr, &s ) {
 	not(typeof(arr,'array')) return print('@baro.parseArray 배열 미정의');
@@ -188,8 +230,7 @@
 		if(c.eq(',')) {
 			s.incr()
 			continue;
-		}
-		
+		}		
 		if(c.eq()) {
 			k=s.match()
 		} 
@@ -206,14 +247,20 @@
 			}
 			k=s.trim(sp,s.cur(),true)
 		}
+		print("@@ parse props $k [$c]")
 		if(c.eq('(')) {
 			fnm = k
-			fparam=s.match(), fsrc=''
+			fparam=s.match(1), fsrc=''
 			c=s.ch()
 			if(c.eq('{')) {
-				fsrc=s.match(1)	
+				fsrc=s.match(1)
+				node.set("&$fnm", "${fparam}=>${fsrc}")
+			} else {
+				result = @baro.funcVal(parent,page,node,fnm,fparam)
+				print("@@ parseProps $fnm funcval result==$result")
 			}
-			node.set("&$fnm", "${fparam}=>${fsrc}")
+			c=s.ch()
+			if(c.eq(';')) s.incr().ch()			
 			continue
 		}
 		
@@ -232,11 +279,18 @@
 			while(@baro.isFunc(s)) {
 				s.next().ch()
 				s.match()
-				s.ch() 
+				c=s.ch() 
+				if(c.eq(';')) s.incr().ch()
 			}
 			v = s.trim(sp,s.cur(),true)
-			print("@@ parseProps : $k == $v")
-			node.set(k,v)
+			src = @baro.parseSource(parent,page,node,v,'props')
+			if(src) {
+				node.set(k,src)
+			} else {
+				node.set(k,v)
+			}
+			print("@@ parseProps function : $k == $v")
+			
 		}
 		else if(c.eq()) {			
 			v=s.match()
@@ -263,7 +317,7 @@
 			html=''
 			p=src.findPos('>')
 			html.add("<${tag}") if(p.ch()) html.add(" $p>") else html.add(">");
-			html.add(@baro.parseSource(parent,page,node,src,'html'))
+			html.add(@baro.parseSource(parent,page,node,src,'value'))
 			html.add("</$tag>")
 			node.set("%$k", html)
 		} else {			
@@ -345,21 +399,26 @@
 			body = s.match(1)
 			if(typeof(body,'bool')) return print("레이아웃 속성 매핑오류", left);
 			if( left.ch()) {				
-				cur.appendText('html', left.trim())
+				cur.appendText('@html', left.trim())
 			}
 			@baro.parseProps(parent,page,cur, body)
 		}
 		line = @baro.getLine(s);
-		print("======> $key ", line)
+		// print("======> $key ", line)
 		not(_tagValue()) {
 			left = s.findPos("\n")
 			if( left.ch()) {
-				cur.appendText('html', left.trim())
+				cur.appendText('@html', left.trim())
 			}
 		}
 		if( Cf.error()) {
 			print(">> page parse error ", Cf.error(), s.size())
 			return;
+		}
+		render = cur.get('render')
+		if(render) {
+			if(typeof(render,'bool')) render='render'
+			@baro.pageRenderScript(parent,page,cur,render)
 		}
 		if(root==layout) {
 			cur.varName = @baro.varName("${page.pageCode}-${cur.key}")
@@ -404,17 +463,19 @@
 				} else {
 					parent.appendText('@style', src)
 				}
-			} else if(tag.eq('js','init')) {
+			} 
+			else if(tag.eq('js','init')) {
 				body.findPos('>')
 				src=@baro.parseSource(parent,page,cur,body,'js')
 				if(tag.eq('js')) {
-					nodeAppendText(page,'@func', src, conf("cf.newline"))
+					nodeAppendText(page,'@funcs', src, conf("cf.newline"))
 				} else {
-					nodeAppendText(page,'@funcInit', src, conf("cf.newline"))
+					nodeAppendText(page,'@funcsInit', src, conf("cf.newline"))
 				}
-			} else {
+			} 
+			else {
 				props=body.findPos('>')
-				src=@baro.parseSource(parent,page,cur,body,'html')
+				src=@baro.parseSource(parent,page,cur,body,'value')
 				cur.appendText('@html', "<$tag")
 				if(props.ch()) {
 					cur.appendText('@html'," $props>")
@@ -429,6 +490,12 @@
 	
 }
 @baro.funcVal(parent, page, node, fnm, &param, prev) {
+	if(fnm.eq('css')) return _css(param)
+	if(fnm.eq('focus')) return _css(param,'focus')
+	if(fnm.eq('hover')) return _css(param,'hover')
+	if(fnm.eq('valid')) return _css(param,'valid')
+	if(fnm.eq('before')) return _css(param,'before')
+	if(fnm.eq('after')) return _css(param,'after')
 	arr=null
 	if( param.ch()) {
 		arr=_arr()
@@ -436,7 +503,7 @@
 		sp=0
 		while(param.valid()) {
 			c=param.ch() not(c) break;
-			arr.add( @baro.parseSource(parent, page, node, param, type) )
+			arr.add( @baro.parseSource(parent, page, node, param, 'param') )
 			ep = node.set("@endpos") not(ep) break;
 			if(ep<=sp) break;
 			param.pos(ep)
@@ -476,6 +543,42 @@
 		else if(fnm.eq('dark')) ss=c.darkColor(num)
 	}
 	return ss;
+	
+	_css = func(&str, type) {		
+		cur=_node()
+		expr=''
+		if(type.eq('focus','valid','hover','before','after')) {
+			expr=":$type"
+			if(str.find('=>')) {
+				left = str.findPos('=>')
+				if(left.ch()) expr.add(" $left")
+			}
+		}
+		src=@baro.parseSource(parent,page,cur,str,'value')
+		@baro.parseProps(parent,page,cur,src)
+		ss='', nl=conf('cf.newline')
+		while(k, cur.keys()) {
+			if(k.eq('id','key','class','varName','render')) continue;		
+			val=cur.get(k)
+			if(typeof(val,'node','array')) continue;
+			c=k.ch()
+			if(c.eq('#','&','%')) {
+				print("## skip k==$k")
+				continue;
+			}		
+			rst=@baro.addHtmlStyle(parent,page,cur,k,val,true)
+			if(rst) {
+				if(ss) ss.add(';',ln)
+				ss.add(rst)
+			}
+		}
+		css=#[
+#${page.pageId} .${node.class}${expr} {
+	${ss}
+}]
+		nodeAppendText(page,'@css', css, ln)
+		return true;
+	};
 }
 @baro.parseSource(parent, page, node, &s, type) {
 	ss=''
@@ -488,7 +591,7 @@
 			ss.add(_paramVal())
 		}
 	} else {
-		if(type.eq('html','js','css')) {
+		if(type.eq('value','js','css')) {
 			return s;
 		}
 		param = s
@@ -560,27 +663,31 @@
 				continue;
 			}
 			if( typeof(prev,'node') ) {
-				if( type.eq('html')) {
-					node = when(typeof(val,'node'),val,page)
-					if(node.isset(key)) {
-						val=node.get(key)
-					} else {
-						val=node.get("@$key")
-					}
+				if( prev.isset(key)) {
+					val = prev.get(key)
 				} else {
-					if( prev==parent) {
-						val =@baro.findFieldValue(parent,'pageCode',key)
-						pgaeNode = val
-					} else if(prev==pageNode) {
-						val = @baro.findLayoutChild(pageNode,key)
+					if( type.eq('html')) {
+						node = when(typeof(val,'node'),val,page)
+						if(node.isset(key)) {
+							val=node.get(key)
+						} else {
+							val=node.get("@$key")
+						}
 					} else {
-						val = @baro.findLayoutChild(prev,key)
+						if( prev==parent) {
+							val =@baro.findFieldValue(parent,'pageCode',key)
+							pgaeNode = val
+						} else if(prev==pageNode) {
+							val = @baro.findLayoutChild(pageNode,key)
+						} else {
+							val = @baro.findLayoutChild(prev,key)
+						}
+						not(typeof(val,'node')) return print("$key 요소찾기 오류", prev);
 					}
-					not(typeof(val,'node')) return print("$key 요소찾기 오류", prev);
 				}
 				continue;
 			} else {
-				if( type.eq('html')) {
+				if( type.eq('value')) {
 					if(page.isset(key)) {
 						val=node.get(key)
 					} else {
@@ -637,14 +744,19 @@
 		w:width,h:height,p:padding,m:margin,
 		mt:marginTop, mb:marginBottom, ml:marginLeft, mr:marginRight,
 		pt:paddingTop, pb:paddingBottom, pl:paddingLeft, pr:paddingRight,
+		bd:border,
+		b:border,
 		bt:borderTop, bb:borderBottom, bl:borderLeft, br:borderRight,
-		br:borderRadius,
-		tr:transition,
-		fwrap:flex-wrap,
+		rad:borderRadius,
+		c:color,
+		x:top, y:left,
+		t:top, l:left,
+		tr:transition, trs:transition,
+		fwrap:flexWrap,
 		ani:animation
-		anidelay: animation-delay,
-		bgpos:background-position,
-		bgsize:background-size,
+		anidelay: animationDelay,
+		bgpos:backgroundPosition,
+		bgsize:backgroundSize,
 		fit:object-fit,
 		minh:minHeight,
 		maxh:maxHeight,
@@ -652,19 +764,24 @@
 		maxw:maxWidth,
 		rel:relative,
 		abs:absolute,
-		space:letter-space,
-		lh:line-height,
+		space:letterSpace,
+		ls:letterSpace,
+		lh:lineHeight,
+		fs:fontSize,
+		fw:fontWeight,
+		pe:pointerEvent
 	])
 	map.startTick = System.tick()
 	return map;	
 }
 
-@baro.addHtmlStyle(parent, page, node, k, val) {
+@baro.addHtmlStyle(parent, page, node, k, val,bcls) {
+	result=''
 	_styleValue = func(&s) {
 		val=s.trim()
 		if(typeof(val,'num') || val.eq('true','false','null')) return val;		
 		return Cf.val("'",val,"'");
-	}
+	};
 	_addSty = func(key, &s) {
 		ss=''
 		if(@baro.isFunc(s) || s.find('@[') ) {
@@ -673,53 +790,77 @@
 		} else {
 			ss.add(s)
 		}
-		c=key.ch()
-		if(c.eq('-')) {
-			val=ss
-			nodeAppendText(node,'@styValue',"$key:$val",";","$key:")
-		} else if(ss) {
-			val =_styleValue(ss)
-			nodeAppendText(node,'@sty',"$key:$val",",","$key:")
+		if(bcls) {
+			kk=@baro.styleValue(key)
+			result.add("$kk:$val")
+		} else {
+			c=key.ch()
+			if(c.eq('-')||key.find('-')) {
+				val=ss
+				result.add("$key:$val")
+				nodeAppendText(node,'@styValue',result,";","$key:")
+			} else if(ss) {
+				val =_styleValue(ss)
+				result.add("$key:$val")
+				nodeAppendText(node,'@sty',result,",","$key:")
+			}
 		}
 	};	
 	map = @baro.styleMap()
 	key = map.get(k.lower()) not(key) key=k
-	if(key.eq('required','text','password')) {
-		if(key.eq('required')) {
-			nodeAppendText(node,'@attr','required',' ')
-		} else {
-			val = _s('type="${key}"')
-			nodeAppendText(node,'@attr',val,' ')
-		}
-		return;
-	}
-	if(key.eq('flex')) {
-		@baro.checkFlexStyle(node.parentNode(), node)
-		return;
-	}
 	
-	if(key.eq('absolute','relative','fixed')) {
-		_addSty('position', val)
-	}
-	else if(key.eq('full')) {
-		nodeAppendText(node,'@sty',"width:'100%',height:'100%'",',')
-	}
-	else if(key.eq('hidden','pointer','row','col')) {
-		switch(key) {
-		case hidden: 
-			_addSty('display','hidden')
-		case row: 
-			_addSty('display','flex')
-			_addSty('flexDirection','row')
-		case col: 
-			_addSty('display','flex')
-			_addSty('flexDirection','column')
-		default:
+	if( typeof(val,'bool') && val ) {		
+		if(key.eq('flex')) {
+			_addSty('flex','1')
+		}
+		else if(key.eq('flexWrap','pointerEvent','listStyle')) {
+			_addSty(key,'none')
+		}
+		else if(key.eq('hidden','pointer','row','col','vbox','hbox')) {
+			switch(key) {
+			case hidden: 
+				_addSty('display','hidden')
+			case row: 
+				_addSty('display','flex')
+				_addSty('flexDirection','row')
+			case col: 
+				_addSty('display','flex')
+				_addSty('flexDirection','column')
+			case vbox: 
+				_addSty('display','flex')
+				_addSty('flexDirection','row')
+				_addSty('height','100%') 
+			case hbox: 
+				_addSty('display','flex')
+				_addSty('flexDirection','column')
+				_addSty('width','100%')
+			default:
+			}
+		}
+		else if(key.eq('absolute','relative','fixed')) {
+			_addSty('position', key);
+		}
+		else if(key.eq('required','text','password')) {
+			if(key.eq('required')) {
+				nodeAppendText(node,'@attr','required',' ')
+			} else {
+				val = _s('type="${key}"')
+				nodeAppendText(node,'@attr',val,' ')
+			}
+		}
+		else if(key.eq('flexCenter')) {			
+			nodeAppendText(node,'@sty',"width:'100%',height:'100%',display:'flex', alignItems:'center', justifyContent:'center'",',')
+		}
+		else if(key.eq('full')) {
+			nodeAppendText(node,'@sty',"width:'100%',height:'100%'",',')
+		} else {
+			print("@@ addHtmlStyle $key 미정의")
 		}
 	}
 	else if(key && val ) {
 		_addSty(key,val)
 	}
+	return result;
 }
 @baro.makeHtmlProps(parent, page, node) {
 	not(node) { 
@@ -729,8 +870,12 @@
 	map = @baro.styleMap()	
 	_addProp=func(k,v) {
 		key = map.get(k.lower()) not(key) key=k 
-		attr = _s('${key}="${v}"')
-		nodeAppendText(node,'@attr',attr, ' ')
+		if(key.eq('class')) {
+			nodeAppendText(node,'class',v, ' ')
+		} else {
+			attr = _s('${key}="${v}"')
+			nodeAppendText(node,'@attr',attr, ' ')
+		}
 	};
 	_addFunc = func(k,&s) {
 		fparam=s.findPos('=>')
@@ -757,20 +902,11 @@
 			nodeAppendText(page,'@funcs', ss, conf("cf.newline"))
 		}
 	};
-	if(node.id) {
-		val = Cf.val("id=",Cf.jsValue(node.id))
-		nodeAppendText(node,'@attr', val, ' ')
-	}
-	if(node.class) {
-		val = Cf.val("class=",Cf.jsValue(node.class))
-		nodeAppendText(node,'@attr', val, ' ') 
-	}
 	while(k, node.keys()) {
 		if(k.eq('id','key','class','varName','html')) continue;		
 		val=node.get(k)
 		if(typeof(val,'node','array')) continue;
 		c=k.ch()
-		print("##### makeHtmlProps $k = $val [$c]", _addProp)
 		if(c.eq('#','&','%')) {
 			// #props, %:tag, &:function
 			if(c.eq('#')) {
@@ -780,8 +916,16 @@
 			}
 			print("## skip k==$k")
 			continue;
-		}
+		}		
 		@baro.addHtmlStyle(parent,page,node,k,val)
+	}
+	if(node.id) {
+		val = Cf.val("id=",Cf.jsValue(node.id))
+		nodeAppendText(node,'@attr', val, ' ')
+	}
+	if(node.class) {
+		val = Cf.val("class=",Cf.jsValue(node.class))
+		nodeAppendText(node,'@attr', val, ' ') 
 	}
 	while(cur, node) {
 		@baro.makeHtmlProps(parent, page, cur)
@@ -805,9 +949,6 @@
 	return Cf.jsValue("$s")
 }
 
-@baro.checkFlexStyle(parent, flexNode) {
-	
-}
 @baro.isHtmlTag(key) {
 	tag=key.lower()
 	if(tag.start('h')) {
@@ -842,6 +983,7 @@
 	return ss;
 }
 @baro.styleValue(&s) {
+	not(typeof(s,'string')) return;
 	ss='', upper=false
 	while(n=0,s.size()) {
 		c=s.ch(n)
@@ -940,3 +1082,125 @@ catchError() {
 	print("## catch error : $err")
 	return true;
 }
+/* temp/page-test.js
+##> left-navbar [메뉴바 에니메이션] {
+	bgColor:#223f4d
+}
+container
+	navbar {
+		flexCenter,fixed,x:40,w:80,p:20
+		bg:@[bgColor.light(50)]
+		rad:50
+	}
+		ul {render:navItems}
+			li {rel,listStyle,w:100%,h:60}
+				a
+					span
+						icon
+		end
+		<init>
+			clog('init page this==>', @[this])
+			alert('init')
+		</init>
+	end
+
+##> form-test [폼입력창 라벨 에니메이션] {
+	bgColor: #1c3354
+}
+container {flexCenter, bg:#1c3354}
+	box {rel, w:400 }
+		h2 login {fs:2em,fw:600,textAlign:center,w:100%,mb:40,ls:4}
+		form {rel, w:100%}
+			inputBox {rel, w:100%, h:100}
+				input {required, css(
+					abs, w:100%, p:20px 10px, pl:40px
+					bd:2px solid @[bgColor.dark(80)]
+					rad:8
+					fs:1em, fw:400, ls:2
+					bg:@[bgColor.light(50)]
+					color:@[bgColor.light(150)]
+					outline:none
+				),focus(
+					~ .icon => x:-25px, y:-30px, w:34, h:34
+				),valid(
+					~ .icon => x:-25px, y:-30px, w:34, h:34
+				),focus(
+					~ .label => x:-25px, y:-45px, c:#fff, fs:0.7em, pl:40px
+				),valid(
+					~ .label => x:-25px, y:-45px, c:#fff, fs:0.7em, pl:40px
+				)}
+				icon {class="ui-icon application_add", css(
+					abs, pe, w:24, h:24
+					rad:6px, fs:1.4em, flexCenter
+					c:#fff, bg:@[randomColor()]
+					tr:0.25s
+				)}
+				label user name {css(
+					abs, pe, x:0,p:20px 0, c:rgba(255,255,255,0.5), pl:60px
+					fs:1em,
+					tr:0.25s
+				)}
+			inputBox
+				input {required}
+				icon {class="ui-icon application_cascade", bg:@[randomColor()]}
+				label password
+			line <>
+				forget password?
+				<a>click heare</a>
+			<>
+			inputBox
+				button submit
+		end
+	<init>
+		alert('init')
+	</init>
+<css>
+
+</css>	
+		
+##> *wave [리스트 선택 물결표시 기능] {
+	bgColor: randomColor()
+}
+container {flexCenter}
+	box
+	box
+	box
+	box
+	box
+	box
+	box
+	box
+	box
+	<js>
+		function test() {
+			@[box].each(el=>{
+				const c = '@[bgColor.light()]'
+				$(el).on('mouseover')
+			})
+		}
+	</js>
+end
+<css>
+	@[box] {
+		display:flex;
+		width: 250px;
+		color: @[light(100)];
+	}
+	@[box].hovered {
+		display:flex;
+		width: 250px
+	}
+</css>
+
+#page-template.js
+(function() {
+	loadStyle(`
+@[pageCss]
+	`)
+	@[pageFuncs]
+	function initPage(page, content) {
+		@[pageInit]
+	}
+	makePage('@[pageCode]', initPage)
+})()
+*/
