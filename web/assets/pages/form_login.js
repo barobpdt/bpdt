@@ -68,6 +68,7 @@ loadStyle(`
   letter-spacing: 4px
 }
 `)
+	const test = (a,b,c) => clog('test called ',a,b,c)
 	function initForm(page, content) {	
 		setCss(content, 'itemCenter')
 		const map = new Map()
@@ -85,6 +86,7 @@ loadStyle(`
 		setTimeout(()=> {
 			for(const a of map) a[1].val('')
 			mapAt(map,0).focus()
+			test(1,2,3)
 		}, 500)
 	}
 	makePage('form_login', initForm)

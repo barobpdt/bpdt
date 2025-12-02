@@ -4,7 +4,7 @@ function onLoad(page, content) {
 	$('<button class="btn">test1</button>').appendTo(bar)
 	$('<button class="btn">test2</button>').appendTo(bar)
 	$('<button class="btn">test3</button>').appendTo(bar)
-	$('<div><i  class="ui-icon application_add"></i></div>').appendTo(bar)
+	$('<div><i class="ui-icon application_add"></i></div>').appendTo(bar)
 	const body = $('<div/>').css({flex:1}).appendTo(content)
 }
 (function() {
@@ -83,11 +83,13 @@ loadStyle(`
 			{tag:'div',style:{height:30,background:getRandomColor()}, className:'appFooter'},
 		]
 	} 
+	const test = (a,b,c) => clog('test called ',a,b,c)
 	clog('####> ', app)
 	const pageImpl = {
 		initPage: function() {
 			clog('main page init ==> ', this)
 			onLoad(this, this.contentEl)
+			test()
 		}
 	}
 	const pageInfo = {id:'main', layout}

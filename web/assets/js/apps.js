@@ -47,6 +47,18 @@ String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
 String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
 String.prototype.rtrim = function() { return this.replace(/\s+$/,"") }
 */
+function getRenderElement(name) {
+	const app = cf.apps.currentApp
+	const page = app.currentPage
+	return page? page.elementMap[name]: null
+}
+function setRenderElement(name, el) {
+	const app = cf.apps.currentApp
+	const page = app.currentPage
+	if(page) {
+		page.elementMap[name]=el
+	}
+}
 function getPageEl() {
 	const app = cf.apps.currentApp
 	
@@ -591,6 +603,7 @@ class Page {
 		this.app = parentApp
 		this.contentEl = null
 		this.pageStartTime = 0
+		this.elementMap = {}
 		this.pageEl = $('<div/>').css(css).appendTo(parentApp.contentEl)
 		this.pageEl.addClass('page-content')
 		this.layout = this.makeLayout(pageInfo.layout)

@@ -1,3 +1,4 @@
+@baro.ignoreStyleProp(k) { return k.eq('id','key','class','varName','render') }
 @baro.loadPage(path) {
 	not(path) path='c:/temp/page-test.js'
 	not(conf("cf.newline")) conf("cf.newline","\r\n",true)
@@ -106,7 +107,7 @@
 			@baro.parseProps(parent,cur,cur,data)
 		}
 		cur.pageCode = pageCode
-		cur.path = path
+		cur.path = "${path}.js"
 		if(note) cur.note = note
 	}	
 }
@@ -120,15 +121,15 @@
 	not(typeof(root,'node')) return print("@@ make page script 오류 페이지 레이아웃 노드미정의", page, layout)
 	root.id = page.pageId
 	ss=@baro.pageScript(parent, page, root)
-	page.set('@funcsInit', ss)
+	nodeAppendText(page, '@pageInit', ss);
 	print("page script == $ss")
 }
 
 @baro.pageScript(parent, page, node) {
-	if(node.get('render')) return;
+	nl=conf("cf.newline")
 	ss=''
 	parentVar = node.parentNode().get('varName')
-	node.inject(tag,class,key,varName)
+	node.inject(tag,key,varName)
 	not(tag) tag='div'
 	
 	ss.add("const ${varName}=",'$',"('<${tag}")	
@@ -138,7 +139,7 @@
 	if(node.get('@styValue')) {
 		ss.add(' style="',node.get('@styValue'),'"')
 	}
-	ss.add("/>)")
+	ss.add("/>')")
 	if(node.get('@sty')) {
 		css=node.get('@sty')
 		ss.add(".css({$css})")
@@ -147,9 +148,28 @@
 		html=node.get('@html')
 		ss.add(".html(`${html}`)")
 	}
-	ss.add(".appendTo($parentVar)",conf("cf.newline"))
+	ss.add(".appendTo($parentVar)",nl)
 	if(node.get('@event')) {
-		ss.add(node.get('@event'))
+		ss.add(node.get('@event'),nl)
+	}
+	if(node.isset('render')) {
+		render = node.get('render')
+		if(typeof(render,'bool')) {
+			renderFunc = 'renderItem(item)'
+		}
+		else if(lineCheck(render,'(')) {
+			renderFunc = render
+		} else {
+			renderFunc = "${render}(item)"
+		}
+		src=@baro.pageRenderScript(parent,page,node)
+		nodeAppendText(page,'@funcs', #[
+function ${renderFunc} {
+	const content = getRenderElement('$varName')
+	${src}
+}],nl)
+		ss.add("setRenderElement($varName)",nl)
+		return ss;
 	}
 	while(cur,node) {
 		src=@baro.pageScript(parent,page,cur)
@@ -159,36 +179,52 @@
 }
 
 @baro.pageRenderScript(parent, page, node) {
+	_renderHtml = func(&s) {
+		ss=''
+		not(s.find('@[')) return s;
+		while(s.valid()) {
+			left = s.findPos('@[',0,1)		
+			ss.add(left) not(s.ch()) break;
+			s.incr()
+			param = s.match(1)
+			if(typeof(param,'bool')) continue;
+			if(param.ch()) {
+				ss.add('${',param,'}')
+			}
+		}
+		return ss;
+	};
+	nl = conf("cf.newline")
 	ss=''
-	parentVar = node.parentNode().get('varName')
-	node.inject(tag,class,key,varName)
-	not(tag) tag='div'
-	
-	ss.add("const ${varName}=",'$',"('<${tag}")	
-	if(node.get('@attr')) {
-		ss.add(' ', node.get('@attr'))
+	not(node.isset('render')) {
+		p=node.parentNode()
+		parentVar=when(p.isset('render'),'content',p.varName) 
+		not(node.tag) node.tag='div'
+		ss.add("const ${node.varName}=",'$',"(`<${node.tag}")	
+		if(node.get('@attr')) {
+			attr=_renderHtml(node.ref('@attr'))
+			if(attr) ss.add(' ', attr)
+		}
+		if(node.get('@styValue')) {
+			ss.add(' style="',node.get('@styValue'),'"')
+		}
+		ss.add("/>`)")
+		if(node.get('@sty')) {
+			css=node.get('@sty')
+			ss.add(".css({$css})")
+		}
+		if(node.isset('@html')) {
+			html=_renderHtml(node.ref('@html'))
+			if(html) ss.add(".html(`${html}`)")
+		}
+		ss.add(".appendTo($parentVar)",nl)
+		if(node.get('@event')) {
+			ss.add(node.get('@event'),nl)
+		}		
 	}
-	if(node.get('@styValue')) {
-		ss.add(' style="',node.get('@styValue'),'"')
-	}
-	ss.add("/>)")
-	if(node.get('@sty')) {
-		css=node.get('@sty')
-		ss.add(".css({$css})")
-	}
-	if(node.isset('@html')) {
-		html=node.get('@html')
-		ss.add(".html(`${html}`)")
-	}
-	ss.add(".appendTo($parentVar)",conf("cf.newline"))
-	if(node.get('@event')) {
-		ss.add(node.get('@event'))
-	}
-	if(node.get('render')) return ss;
-	while(cur,node) {
-		src=@baro.pageScript(parent,page,cur)
-		ss.add(src)
-	}
+	while(cur, node) {
+		ss.add(@baro.pageRenderScript(parent,page,cur))
+	}	  
 	return ss;
 }
 
@@ -247,7 +283,6 @@
 			}
 			k=s.trim(sp,s.cur(),true)
 		}
-		print("@@ parse props $k [$c]")
 		if(c.eq('(')) {
 			fnm = k
 			fparam=s.match(1), fsrc=''
@@ -558,18 +593,21 @@
 		@baro.parseProps(parent,page,cur,src)
 		ss='', nl=conf('cf.newline')
 		while(k, cur.keys()) {
-			if(k.eq('id','key','class','varName','render')) continue;		
+			if(@baro.ignoreStyleProp(k)) continue;		
 			val=cur.get(k)
 			if(typeof(val,'node','array')) continue;
 			c=k.ch()
 			if(c.eq('#','&','%')) {
-				print("## skip k==$k")
 				continue;
 			}		
 			rst=@baro.addHtmlStyle(parent,page,cur,k,val,true)
 			if(rst) {
-				if(ss) ss.add(';',ln)
-				ss.add(rst)
+				replaceVal = replaceFindText(ss,"$k:",rst,';')
+				if(replaceVal) {
+					ss=replaceVal
+				} else {
+					ss.add(rst,';')
+				}
 			}
 		}
 		css=#[
@@ -686,16 +724,15 @@
 					}
 				}
 				continue;
-			} else {
-				if( type.eq('value')) {
-					if(page.isset(key)) {
-						val=node.get(key)
-					} else {
-						val=page.get("@$key")
-					}
+			}
+			if( type.eq('value')) {
+				if(page.isset(key)) {
+					val=node.get(key)
 				} else {
-					val = @baro.findLayoutChild(pageNode,key)
+					val=page.get("@$key")
 				}
+			} else {
+				val = @baro.findLayoutChild(pageNode,key)
 			}
 		}
 		print(">> parse source ########", type, key)		
@@ -717,7 +754,6 @@
 		} else {
 			not(typeof(val,'string')) return "$val";
 		}
-		print(">> $key = $val")
 		return val;
 	};
 	return ss;
@@ -744,6 +780,7 @@
 		w:width,h:height,p:padding,m:margin,
 		mt:marginTop, mb:marginBottom, ml:marginLeft, mr:marginRight,
 		pt:paddingTop, pb:paddingBottom, pl:paddingLeft, pr:paddingRight,
+		bg:background
 		bd:border,
 		b:border,
 		bt:borderTop, bb:borderBottom, bl:borderLeft, br:borderRight,
@@ -769,7 +806,9 @@
 		lh:lineHeight,
 		fs:fontSize,
 		fw:fontWeight,
-		pe:pointerEvent
+		pe:pointerEvent,
+		ai:alignItems,
+		jc:justifyContent
 	])
 	map.startTick = System.tick()
 	return map;	
@@ -785,41 +824,36 @@
 	_addSty = func(key, &s) {
 		ss=''
 		if(@baro.isFunc(s) || s.find('@[') ) {
-			src=@baro.parseSource(parent,page,node,&s,'css')
+			src=@baro.parseSource(parent,page,node,s,'css')
 			ss.add(src)
 		} else {
 			ss.add(s)
 		}
 		if(bcls) {
 			kk=@baro.styleValue(key)
-			result.add("$kk:$val")
+			sty="${kk}:${val}"			
+			result.add(sty)
 		} else {
 			c=key.ch()
 			if(c.eq('-')||key.find('-')) {
 				val=ss
-				result.add("$key:$val")
-				nodeAppendText(node,'@styValue',result,";","$key:")
+				sty="${key}:${val}"
+				nodeAppendText(node,'@styValue',sty,";","$key:")
 			} else if(ss) {
 				val =_styleValue(ss)
-				result.add("$key:$val")
-				nodeAppendText(node,'@sty',result,",","$key:")
+				sty ="${key}:${val}"
+				nodeAppendText(node,'@sty',sty,",","$key:")
 			}
 		}
 	};	
 	map = @baro.styleMap()
-	key = map.get(k.lower()) not(key) key=k
-	
-	if( typeof(val,'bool') && val ) {		
-		if(key.eq('flex')) {
-			_addSty('flex','1')
-		}
-		else if(key.eq('flexWrap','pointerEvent','listStyle')) {
+	key = map.get(k.lower()) not(key) key=k	
+	if( typeof(val,'bool') && val ) {	
+		if(key.eq('flexWrap','pointerEvent','listStyle')) {
 			_addSty(key,'none')
 		}
-		else if(key.eq('hidden','pointer','row','col','vbox','hbox')) {
+		else if(key.eq('pointer','row','col','vbox','hbox')) {
 			switch(key) {
-			case hidden: 
-				_addSty('display','hidden')
 			case row: 
 				_addSty('display','flex')
 				_addSty('flexDirection','row')
@@ -837,6 +871,9 @@
 			default:
 			}
 		}
+		else if(key.eq('hidden','grid','block','flex')) {
+			_addSty('display', key);
+		}
 		else if(key.eq('absolute','relative','fixed')) {
 			_addSty('position', key);
 		}
@@ -848,11 +885,22 @@
 				nodeAppendText(node,'@attr',val,' ')
 			}
 		}
-		else if(key.eq('flexCenter')) {			
-			nodeAppendText(node,'@sty',"width:'100%',height:'100%',display:'flex', alignItems:'center', justifyContent:'center'",',')
+		else if(key.eq('flexCenter')) {	
+			if(bcls) {
+				result.add('width:100%;height:100%;display:flex;align-items:center; justify_content:center;') 
+			} else {
+				nodeAppendText(node,'@sty',"width:'100%',height:'100%',display:'flex', alignItems:'center', justifyContent:'center'",',')
+			}
+		}
+		else if(key.eq('stretch')) {
+			_addSty('flex','1')
 		}
 		else if(key.eq('full')) {
-			nodeAppendText(node,'@sty',"width:'100%',height:'100%'",',')
+			if(bcls) {
+				result.add('width:100%;height:100%;') 
+			} else {
+				nodeAppendText(node,'@sty',"width:'100%',height:'100%'",',')
+			}
 		} else {
 			print("@@ addHtmlStyle $key 미정의")
 		}
@@ -878,23 +926,25 @@
 		}
 	};
 	_addFunc = func(k,&s) {
+		print("@@ addFunc $k, $s");
 		fparam=s.findPos('=>')
 		fsrc=@baro.parseSource(parent,page,node,s,'js')
 		ss=''
 		if(k.start('on')) {
 			fnm = k.trim(2)
-			ss.add(node.varName, ".off('$fnm').on('$fnm',($fparam)=>")
+			ss.add(node.varName, ".on('$fnm',($fparam)=>")
 			if(fsrc.findPos("\n")) {
 				ss.add("{$fsrc}")
 			} else {
 				ss.add(fsrc)
 			}
+			ss.add(')')
 			nodeAppendText(node,'@event', ss, conf("cf.newline"))
 		} else if(k.eq('init')) {
 			nodeAppendText(page,'@funcsInit', fsrc, conf("cf.newline"))
 		} else {
 			ss.add("const $k = ($fparam)=>")
-			if(fsrc.findPos("\n")) {
+			if(fsrc.find("\n")) {
 				ss.add("{$fsrc}")
 			} else {
 				ss.add(fsrc)
@@ -903,7 +953,7 @@
 		}
 	};
 	while(k, node.keys()) {
-		if(k.eq('id','key','class','varName','html')) continue;		
+		if(@baro.ignoreStyleProp(k)) continue;		
 		val=node.get(k)
 		if(typeof(val,'node','array')) continue;
 		c=k.ch()
@@ -914,7 +964,6 @@
 			} else if(c.eq('&')) {
 				_addFunc(k.value(1),val)
 			}
-			print("## skip k==$k")
 			continue;
 		}		
 		@baro.addHtmlStyle(parent,page,node,k,val)
@@ -960,6 +1009,7 @@
 	return false;
 }
 @baro.varName(&s) {
+	not(typeof(s,'string')) return;
 	ss='', upper=false
 	while(n=0,s.size()) {
 		c=s.ch(n) not(c) break;
@@ -1000,7 +1050,7 @@
 	not(src) return print("changePageScript => 페이지 소스 내용이 없습니다",page);	
 	pageCode = page.get('pageCode')
 	not(page.pageCode) return print("changePageScript => 페이지 코드 미정의",page);
-	savePath = _s('${@web.rootPath}/assets/js/pages/${page.path}')
+	savePath = _s('${@web.rootPath}/assets/pages/${page.path}')
 	fileWrite(savePath, src)
 	ws = wss().get('server')
 	while(client, ws) {
@@ -1011,38 +1061,51 @@
 	}
 }
 
+replaceFindText(str, replace, value, sep) {
+	pos = _find(str)
+	if(typeof(pos,'num')) {
+		return _replace(str,pos)
+	}
+	return false;
+	
+	_replace = func(&str, pos) {		
+		if(pos>0) {
+			ss=str.value(0,pos,true)
+		} else {
+			ss=''
+		}
+		size = replace.size()
+		str.pos(pos+size)
+		str.findPos(sep,1,1)
+		ss.add(value)
+		if(str.ch()) ss.add(str)
+		return ss;
+	};
+	_find = func(&str) { 
+		while(str.valid()) {
+			left = str.findPos(replace,1,1) not(str.valid()) return false;
+			not(left.ch()) return str.cur();
+			c=left.ch(-1) not(c) return str.cur();
+			if( c.eq(sep) ) {
+				return str.cur()
+			}
+		}
+		return false;
+	};
+}
 nodeAppendText(node,key,value,sep,replace) {
 	ss=node.get(key)
-	if(replace) {
-		pos = _find(ss)
-		if(typeof(pos,'num')) {
-			return _replace(ss,pos);
+	if(replace && ss ) {
+		result = replaceFindText(ss,replace,value,sep)
+		if(result) {
+			node.set(key,result)
+			return;
 		}
 	}
 	if(sep) {
 		if(ss) node.appendText(key,sep)
 	}
 	node.appendText(key,value)
-	
-	_replace = func(&str, pos) {
-		ss=str.value(0,pos,true)
-		size = replace.size()
-		str.pos(pos+size)
-		str.findPos(sep,1,1)
-		ss.add(value)
-		if(str.ch()) ss.add(str)
-		node.set(key,ss)
-	};
-	_find = func(&str) {
-		while(str.valid()) {
-			left = str.findPos(replace,1,1)
-			c=left.ch(-1)
-			if( c.eq(sep) || ~(c) ) {
-				return str.cur()
-			}
-		}
-		return false;
-	}
 }
 trimChar(s,ch) {
 	not(ch) ch='0'
@@ -1083,7 +1146,7 @@ catchError() {
 	return true;
 }
 /* temp/page-test.js
-##> left-navbar [메뉴바 에니메이션] {
+##> leftNavbar [메뉴바 에니메이션] {
 	bgColor:#223f4d
 }
 container
@@ -1092,105 +1155,26 @@ container
 		bg:@[bgColor.light(50)]
 		rad:50
 	}
-		ul {render:navItems}
-			li {rel,listStyle,w:100%,h:60}
-				a
-					span
-						icon
+		ul {render:renderNavItems(item), col,gap:10,width:100}
+			li {rel,listStyle,w:100%,h:60, p:0 10px}
+				a {href="#", flexCenter,ai:center,jc:flex-start, onclick(){linkClick('link click')}}
+					span {class="icon", rel,block,minw:65,h:65,rad:65,bg:@[bgColor],c:#fff,fs:1.75em}
+						icon {class="vicon @[item.icon]", abs,w:24,h:24}
 		end
 		<init>
 			clog('init page this==>', @[this])
 			alert('init')
 		</init>
 	end
-
-##> form-test [폼입력창 라벨 에니메이션] {
-	bgColor: #1c3354
-}
-container {flexCenter, bg:#1c3354}
-	box {rel, w:400 }
-		h2 login {fs:2em,fw:600,textAlign:center,w:100%,mb:40,ls:4}
-		form {rel, w:100%}
-			inputBox {rel, w:100%, h:100}
-				input {required, css(
-					abs, w:100%, p:20px 10px, pl:40px
-					bd:2px solid @[bgColor.dark(80)]
-					rad:8
-					fs:1em, fw:400, ls:2
-					bg:@[bgColor.light(50)]
-					color:@[bgColor.light(150)]
-					outline:none
-				),focus(
-					~ .icon => x:-25px, y:-30px, w:34, h:34
-				),valid(
-					~ .icon => x:-25px, y:-30px, w:34, h:34
-				),focus(
-					~ .label => x:-25px, y:-45px, c:#fff, fs:0.7em, pl:40px
-				),valid(
-					~ .label => x:-25px, y:-45px, c:#fff, fs:0.7em, pl:40px
-				)}
-				icon {class="ui-icon application_add", css(
-					abs, pe, w:24, h:24
-					rad:6px, fs:1.4em, flexCenter
-					c:#fff, bg:@[randomColor()]
-					tr:0.25s
-				)}
-				label user name {css(
-					abs, pe, x:0,p:20px 0, c:rgba(255,255,255,0.5), pl:60px
-					fs:1em,
-					tr:0.25s
-				)}
-			inputBox
-				input {required}
-				icon {class="ui-icon application_cascade", bg:@[randomColor()]}
-				label password
-			line <>
-				forget password?
-				<a>click heare</a>
-			<>
-			inputBox
-				button submit
-		end
-	<init>
-		alert('init')
-	</init>
-<css>
-
-</css>	
-		
-##> *wave [리스트 선택 물결표시 기능] {
-	bgColor: randomColor()
-}
-container {flexCenter}
-	box
-	box
-	box
-	box
-	box
-	box
-	box
-	box
-	box
-	<js>
-		function test() {
-			@[box].each(el=>{
-				const c = '@[bgColor.light()]'
-				$(el).on('mouseover')
-			})
-		}
-	</js>
-end
-<css>
-	@[box] {
-		display:flex;
-		width: 250px;
-		color: @[light(100)];
+<js>
+	const aaa = () => {
+		clog('aaa function ', @[this])
+		@[ul].html('')		
 	}
-	@[box].hovered {
-		display:flex;
-		width: 250px
+	const linkClick = () => {
+		clog('link click')
 	}
-</css>
+</js>	
 
 #page-template.js
 (function() {
