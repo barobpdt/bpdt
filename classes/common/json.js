@@ -78,12 +78,13 @@
 					num++;
 				}
 			}
-			not( listCode ) {
+			if( node.childCount() && listCode ) {
+				if(num) rst.add(',');
+				rst.add(' "',listCode,'":[');
+			} else {
 				rst.add('}')
 				return rst;
 			} 
-			if(num) rst.add(',');
-			rst.add(' "',listCode,'":[');
 		}
 		
 		idx=0;

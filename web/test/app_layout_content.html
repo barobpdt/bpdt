@@ -13,20 +13,44 @@
 	<div id="apps" style="border:1px solid #aaa;width:100%; height:100vh;box-sizing: border-box;"></div>
 	
 <script>
- 
+	const initDevPage = app => {
+		const ws = cf.websocket
+		if( ws ) {
+			ws.connectWebSocket()
+			ws.setCallbackFunc((type,data) => {
+				clog('@@ websocket callback ', type, data)
+				switch(type) {
+				case 'changePageScript':
+					clog('@ changePageScript app => ', app)
+					app.loadPage(data.pageCode)
+					return true
+				default:
+				}
+			})
+		}
+		window.addEventListener('beforeunload', () => {
+			if (cf.timerIdx) {
+				clearInterval(cf.timerIdx)
+			}
+			if (cf.inertvalIdx) {
+				clearInterval(cf.timerIdx)
+			}
+		});
+	}
+	const setPageInterval = (fc, delay) => {
+		if(!delay) delay=1000
+		cf.inertvalIdx = setInterval(fc,delay)
+	}
 	$(document).ready(()=>{ 
 		cf.apps = new Apps('apps')
 		const layout = {
 			tag:'div'
 			, children:[
-				{tag:'div',style:getCss('full',{height:30,background:getRandomColor()}), className:'appTop'},
-				{tag:'div',style:{flex:1}, className:'appContents', content:true},
-				{tag:'div',style:{height:30,background:getRandomColor()}, className:'appFooter'},
+				{tag:'div',style:{flex:1}, className:'appContents', content:true}
 			]
 		}
 		const appInfo = {name:'개발페이지', background:'#aaa', layout} 
-		const app = cf.apps.createApp('dev', appInfo, app=>app.loadPage('main'))
-		
+		const app = cf.apps.createApp('dev', appInfo, app=>initDevPage(app))
 	})
 	 
 </script>

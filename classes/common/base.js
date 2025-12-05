@@ -20,7 +20,7 @@
 		include('classes/common/was.js')
 		return addModule(obj, '@was', mode)
 	}
-	wss(name,port) {
+	websocketServer(name,port) {
 		obj = _node("wss.$name")
 		if(obj.var(useModule)) {
 			return obj;

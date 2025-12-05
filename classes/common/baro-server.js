@@ -2,12 +2,33 @@
 	not(port) port=8092
 	server=Baro.server('websocket')
 	server.var(type, 'websocket')
-	server.start(port, parent, @baro.websocketAccept)
-	server.callbackClient(parent, @baro.websocketDispatch)
+	server.start(port, @baro.websocketAccept)
+	server.callbackClient(@baro.websocketDispatch)
 	return server;
 }
 @baro.websocketMessage(client, data) {
-	
+	param = _node()
+	param.parseJson(data)
+	switch(param.type) {
+	case join:
+		client.set('mode','dev')
+		@baro.websocketSendMessage(client, 'joined', 'message:ok')
+	case loadPagePath:
+		root = Cf.rootNode()
+		config = root.get('@watcherFiles').get('webpageWatcher')
+		if( data.path) {
+			path = data.path
+			names = config.watcherNames
+			@baro.filePathInfo(path).inject(watchPath, fileName)
+			if(config.target==watchPath ) {
+				not(names.find(fileName)) {
+					names.add(fileName)
+				}
+			}
+			conf('baro.loadPagePath', path, true)
+		}
+	default:
+	}
 }
 @baro.websocketAccept(client) {
 	print("@@ web socket server accept clinet", clinet)
@@ -42,9 +63,18 @@
 		client.close();
 	}
 }
-
-
-
+@baro.websocketSendMessage(client, type, data) {
+	param=_node()
+	param.parseJson(data)
+	data = json().nodeStr(param)
+	message = Cf.val('{"type":', Cf.jsValue(type), ', "data":', data, '}')
+	if( client) {
+		print("@@ websocketSendMessage message: $message")
+		client.sendWs(message)
+	} else {
+		return print("@@ websocketSendMessage client 미정의 (메시지:$message)");
+	}
+}
 @baro.websocketHandshake(client, &data) {	   
 	header=data.findPos("\r\n\r\n");
 	print("websocket handshake header==$header");
