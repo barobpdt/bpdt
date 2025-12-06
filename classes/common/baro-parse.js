@@ -139,7 +139,8 @@
 			s.findPos('{',0,1)
 			data = s.match(1) if(typeof(data,'bool')) return print("$pageCode 페이지 설정정보 매칭오류")
 			@baro.parseProps(parent,page,page,data)
-			while(k, page.keys()) {
+			arr=page.get('@keyArray') not(typeof(arr,'array')) return print("page props 키배열 오류");
+			while(k, arr) {
 				v=page.get(k)
 				if(v.find('@[')) {
 					src=@baro.parseSource(parent,page,page,v,'value')
@@ -205,32 +206,54 @@
 		ss.add(node.get('@event'),nl)
 	}
 	if(node.isset('render')) {
-		render = node.get('render')
-		if(typeof(render,'bool')) {
+		baseElement = null
+		fnm = node.get('render')
+		if(typeof(fnm,'bool')) {
 			renderFunc = 'renderItem(item)'
 		}
-		else if(lineCheck(render,'(')) {
-			renderFunc = render
+		else if(lineCheck(fnm,'(')) {
+			// renderList(item) or renderList(base, item)
+			baseElement = _baseElement(fnm)
+			renderFunc = fnm
 		} else {
-			renderFunc = "${render}(item)"
+			renderFunc = "${fnm}(item)"
 		}
-		src=@baro.pageRenderScript(parent,page,node)
-		nodeAppendText(page,'@funcs', #[
+		
+		if(baseElement) {
+			src=@baro.pageRenderScript(parent,page,node,baseElement)
+			fsrc = #[
 function ${renderFunc} {
-	const content = getRenderElement('$varName')
 	${src}
-}],nl)
-		ss.add("setRenderElement($varName)",nl)
+}]
+			nodeAppendText(page,'@funcs',fsrc,nl)
+			ss=''
+		} else {
+			src=@baro.pageRenderScript(parent,page,node)
+			fsrc = #[
+function ${renderFunc} {
+	const baseElement = getRenderElement('$varName')
+	${src}
+}]
+			ss.add("setRenderElement('$varName', $varName)",nl)
+			nodeAppendText(page,'@funcs',fsrc,nl)
+		}
 		return ss;
 	}
 	while(cur,node) {
 		src=@baro.pageScript(parent,page,cur)
-		ss.add(src)
+		if(src) ss.add(src)
 	}
 	return ss;
+	
+	_baseElement = func(&s) {
+		name = s.findPos('(')
+		left = s.findPos(')')
+		a = left.findPos(',').trim()
+		return when(left.ch(),a)
+	};
 }
 
-@baro.pageRenderScript(parent, page, node) {
+@baro.pageRenderScript(parent, page, node, baseElement) {
 	_renderHtml = func(&s) {
 		ss=''
 		not(s.find('@[')) return s;
@@ -246,11 +269,18 @@ function ${renderFunc} {
 		}
 		return ss;
 	};
+	addCheck = false
 	nl = conf("cf.newline")
 	ss=''
-	not(node.isset('render')) {
+	if(baseElement) {
+		parentVar=baseElement
+		addCheck = true
+	} else {
 		p=node.parentNode()
-		parentVar=when(p.isset('render'),'content',p.varName) 
+		parentVar=when(p.isset('render'),'baseElement',p.varName) 
+		not(node.isset('render')) addCheck = true
+	}
+	if(addCheck ) {		
 		not(node.tag) node.tag='div'
 		ss.add("const ${node.varName}=",'$',"(`<${node.tag}")	
 		if(node.get('@attr')) {
@@ -313,6 +343,7 @@ function ${renderFunc} {
 }
 @baro.parseProps(parent,page, node, &s) {
 	if(typeof(s,'bool')) return print('@baro.parseProps 매치오류');
+	arr = node.addArray('@keyArray').reuse()
 	while(s.valid()) {
 		c=s.ch() not(c) break;
 		if(c.eq(',')) {
@@ -340,10 +371,14 @@ function ${renderFunc} {
 			fparam=s.match(1).trim(), fsrc=''
 			c=s.ch()
 			if(c.eq('{')) {
+				key = "&$fnm"
 				fsrc=s.match(1)
-				node.set("&$fnm", "${fparam}=>${fsrc}")
+				node.set(key, "${fparam}=>${fsrc}")
+				not(arr.find(key)) arr.add(key)
 			} else {
-				node.appendText("^$fnm", "{$fparam}")
+				key = "^$fnm"
+				node.appendText(key, "{$fparam}")
+				not(arr.find(key)) arr.add(key)
 			}
 			c=s.ch()
 			if(c.eq(';')) s.incr().ch()			
@@ -359,25 +394,29 @@ function ${renderFunc} {
 			}
 			c=s.incr().ch()
 		}
-		v=''
+		key='', v=''
 		if(@baro.isFunc(s)) {
+			key=k
 			sp=s.cur()
 			while(@baro.isFunc(s)) {
-				s.next().ch()
+				s.findPos('(',0,1)
 				s.match()
 				c=s.ch() 
 				if(c.eq(';')) s.incr().ch()
 			}
 			v = s.trim(sp,s.cur(),true)
-			node.set(k,v)
+			node.set(key,v)
+			not(arr.find(key)) arr.add(key)
 		}
 		else if(c.eq()) {			
 			v=s.match()
-			if(bsty) {			
-				node.set(k,v)
+			if(bsty) {
+				key=k
 			} else if(bprop) {
-				node.set("#$k", v)
+				key="#$k"
 			} 
+			node.set(key, v)
+			not(arr.find(key)) arr.add(key)
 		} else if(c.eq('{')) {
 			cur = node.addNode(k)
 			@baro.parseProps(parent,page,cur,s.match())
@@ -398,7 +437,7 @@ function ${renderFunc} {
 			html.add("<${tag}") if(p.ch()) html.add(" $p>") else html.add(">");
 			html.add(@baro.parseSource(parent,page,node,src,'value'))
 			html.add("</$tag>")
-			node.set("%$k", html)
+			node.set("@$k", html)
 		} else {			
 			if(bsty || bprop) {
 				if(lineCheck(s,',')) {
@@ -408,13 +447,16 @@ function ${renderFunc} {
 				}
 			}
 			if(bsty) {			
-				node.set(k,v)
+				key = k
 			} else if(bprop) {
-				node.set("#$k", v)
+				key = "#$k"
 			} else {
-				node.set(k, true)
+				key = k
+				v=true
 			}
-		}		
+			node.set(key,v)
+			not(arr.find(key)) arr.add(key)
+		}
 	}
 }
 @baro.getLine(&s) {
@@ -609,6 +651,13 @@ function ${renderFunc} {
 	if(fnm.eq('before')) return _css(param,'before');
 	if(fnm.eq('after')) return _css(param,'after');
 	if(fnm.eq('kf','keyframes')) return _keyframes(param);
+	if(fnm.eq('style')) {
+		ss="#${page.pageId} .${node.class}"
+		src=@baro.parseSource(parent,page,node,param,'value')
+		ss.add(" {$src}")
+		nodeAppendText(page,'@css',ss,conf('cf.newline'))
+		return ss;
+	}
 	map=Cf.getObject('baro','styleMap')
 	if(map.isset(fnm.lower())) {
 		print("@@ funcVal styleMap set $fnm $param")
@@ -906,6 +955,7 @@ function ${renderFunc} {
 		x:top, y:left,
 		t:top, l:left,
 		tform: transform,
+		tf: transform,
 		tr:transition, 
 		trdelay:transitionDelay,
 		fwrap:flexWrap,
@@ -971,17 +1021,17 @@ function ${renderFunc} {
 			result.add(sty)
 		} else {
 			c=key.ch()
-			if(c.eq('-')) { // ||key.find('-')
+			if(c.eq('-')) {
 				v=ss
-				sty="${key}:${v}"
-				nodeAppendText(node,'@styValue',sty,";","$key:")
+				sty="${key}:${v};"
+				node.appendText('@styValue',sty)
 			} else if(ss) {
 				v =@baro.styleValue(ss)
 				sty ="${key}:${v}"
 				nodeAppendText(node,'@sty',sty,",","$key:")
 			}
 		}
-	};	
+	};
 	map = @baro.styleMap()
 	key = map.get(k.lower()) not(key) key=k	
 	if(key.eq('col')) key='column'
@@ -1116,7 +1166,8 @@ function ${renderFunc} {
 			nodeAppendText(page,'@funcs', ss, conf("cf.newline"))
 		}
 	};
-	while(k, node.keys()) {
+	arr=node.get('@keyArray') not(typeof(arr,'array')) return print("html props 키배열 오류");
+	while(k, arr) {
 		if(@baro.ignoreStyleProp(k)) continue;		
 		val=node.get(k)
 		if(typeof(val,'node','array')) continue;
@@ -1154,7 +1205,8 @@ function ${renderFunc} {
 	data=@baro.parseSource(parent, page,node,str,'value')
 	@baro.parseProps(parent,page,node,data)
 	ss=''
-	while(k, node.keys()) {
+	arr=node.get('@keyArray') not(typeof(arr,'array')) return print("스타일 텍스트 키배열 오류");
+	while(k, arr) {
 		val=node.get(k)
 		if(typeof(val,'node','array')) continue;
 		c=k.ch()
@@ -1167,18 +1219,18 @@ function ${renderFunc} {
 			continue
 		}
 		if(typeof(val,'bool')) {
-			result = @baro.addHtmlStyle(parent,page,node,k,val,true)
-			if(result) {
-				replaceVal = replaceFindText(ss,"$k:",result,';')
-				if(replaceVal) {
-					ss=replaceVal
-				} else {
-					ss.add(result,';')
-				}
-			}
+			result = @baro.addHtmlStyle(parent,page,node,k,val,true)			
 		} else {
-			key=map.get(k) not(key) key=k
-			ss.add(@baro.styleKey(key),':',val,';')
+			key=map.get(k) not(key) key=k			
+			result = Cf.val(@baro.styleKey(key),':',val)
+		}
+		replaceVal = replaceFindText(ss,"$key:",result,';')
+		if(replaceVal) {
+			ss=replaceVal
+		} else {
+			c=result.ch(-1)
+			ss.add(result)
+			not(c.eq(';')) ss.add(';')
 		}
 	}
 	return ss;
@@ -1266,7 +1318,7 @@ function ${renderFunc} {
 	}
 }
 
-replaceFindText(str, replace, value, sep) {
+replaceFindText(&str, replace, value, sep) {
 	pos = _find(str)
 	if(typeof(pos,'num')) {
 		return _replace(str,pos)
@@ -1403,36 +1455,50 @@ catchError() {
 	fn.set('prevTick', System.tick())
 }
 
-/* temp/page-test.js
-##> leftNavbar [메뉴바 에니메이션] {
-	bgColor:#223f4d
+/* temp/test.js
+##> test {
+	bg:#0f0
 }
-container
-	navbar {
-		flexCenter,fixed,x:40,w:80,p:20
-		bg:@[bgColor.light(50)]
-		rad:50
+screen {full}
+	circle {hidden, 
+		css(
+			abs, bottom:0,w:20px,aspect-ratio:1/1, bg:@[bg]
+			shadow(
+				0 0 10px @[bg],
+				0 0 20px @[bg],
+				0 0 30px @[bg],
+				0 0 50px @[bg]	
+			)
+			rad: 50%
+			ani: glow 5s linear forwards
+			kf( glow =>
+				0% { tf:translateY(0); opacity:1 }
+				50% { opacity:1}
+				100% { tf:translateY(-100vh); opacity:0; }
+			)
+		) 
+		before(
+			abs,ctt,x:25%,y:100%,h:100vh,opacity:0.5,bg:linear-gradient(@[bg],transparent)
+		)
 	}
-		ul {render:renderNavItems(item), col,gap:10,width:100}
-			li {rel,listStyle,w:100%,h:60, p:0 10px}
-				a {href="#", flexCenter,ai:center,jc:flex-start, onclick(){linkClick('link click')}}
-					span {class="icon", rel,block,minw:65,h:65,rad:65,bg:@[bgColor],c:#fff,fs:1.75em}
-						icon {class="vicon @[item.icon]", abs,w:24,h:24}
-		end
-		<init>
-			clog('init page this==>', @[this])
-			alert('init')
-		</init>
-	end
+end
 <js>
-	const aaa = () => {
-		clog('aaa function ', @[this])
-		@[ul].html('')		
-	}
-	const linkClick = () => {
-		clog('link click')
-	}
-</js>	
+	const line = () => {
+		const circle = $('<div class="circle"/>').appendTo(@[screen])
+		circle.css({
+			width:parseInt(Math.random() *12),
+			left:parseInt(Math.random() * $(window).width()),
+			animationDuration: parseInt(Math.random()*3)+2+'s'
+		})
+		setTimeout(() => circle.remove(), 5000)
+	}	
+</js>
+
+<init>
+	clog('init test page', line)
+	setPageInterval(line,1000)
+</init>
+
 
 #page-template.js
 (function() {
