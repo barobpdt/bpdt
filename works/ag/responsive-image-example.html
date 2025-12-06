@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture 태그 해상도별 이미지 예제</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .example-section {
+            margin-bottom: 4rem;
+        }
+
+        .example-section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            border-left: 4px solid #667eea;
+            padding-left: 1rem;
+        }
+
+        .example-section p {
+            color: #555;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .image-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .image-wrapper:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+        }
+
+        .tag {
+            color: #ff79c6;
+        }
+
+        .attr {
+            color: #50fa7b;
+        }
+
+        .value {
+            color: #f1fa8c;
+        }
+
+        .clickable:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📱 Picture 태그 해상도별 이미지 예제</h1>
+        <p class="subtitle">브라우저 창 크기를 조절하면서 이미지가 어떻게 변하는지 확인해보세요!</p>
+
+        <div class="current-size" id="currentSize">
+            현재 화면 너비: <span id="width"></span>px
+        </div>
+
+        <!-- 예제 1: 기본 해상도별 이미지 -->
+        <div class="example-section">
+            <h2>예제 1: 기본 해상도별 이미지</h2>
+            <p>화면 크기에 따라 다른 이미지를 표시합니다.</p>
+
+            <div class="image-wrapper clickable" id="example1Image">
+                <picture>
+                    <source media="(min-width: 1200px)" srcset="https://picsum.photos/1200/600?random=1">
+                    <source media="(min-width: 768px)" srcset="https://picsum.photos/800/400?random=2">
+                    <source media="(min-width: 480px)" srcset="https://picsum.photos/600/300?random=3">
+                    <img src="https://picsum.photos/400/200?random=4" alt="반응형 이미지 예제">
+                </picture>
+            </div>
+
+            <!-- 고화질 이미지 Dialog -->
+            <dialog id="imageDialog">
+                <button class="dialog-close" id="closeDialog">×</button>
+                <img src="https://picsum.photos/2400/1200?random=1" alt="고화질 이미지">
+            </dialog>
+
+            <div class="code-block">
+                <code><span class="tag">&lt;picture&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 1200px)"</span> <span class="attr">srcset</span>=<span class="value">"large.jpg"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 768px)"</span> <span class="attr">srcset</span>=<span class="value">"medium.jpg"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 480px)"</span> <span class="attr">srcset</span>=<span class="value">"small.jpg"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="value">"default.jpg"</span> <span class="attr">alt</span>=<span class="value">"반응형 이미지"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/picture&gt;</span></code>
+            </div>
+
+            <div class="info-box">
+                <h3>💡 동작 방식</h3>
+                <ul>
+                    <li><strong>1200px 이상:</strong> 대형 이미지 (1200x600)</li>
+                    <li><strong>768px ~ 1199px:</strong> 중형 이미지 (800x400)</li>
+                    <li><strong>480px ~ 767px:</strong> 소형 이미지 (600x300)</li>
+                    <li><strong>480px 미만:</strong> 기본 이미지 (400x200)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 예제 2: 고해상도(Retina) 디스플레이 대응 -->
+        <div class="example-section">
+            <h2>예제 2: 고해상도 디스플레이 대응</h2>
+            <p>일반 디스플레이와 Retina 디스플레이에 각각 최적화된 이미지를 제공합니다.</p>
+
+            <div class="image-wrapper">
+                <picture>
+                    <source media="(min-width: 768px)" srcset="https://picsum.photos/800/400?random=5 1x, 
+                                https://picsum.photos/1600/800?random=6 2x">
+                    <source srcset="https://picsum.photos/400/200?random=7 1x, 
+                                https://picsum.photos/800/400?random=8 2x">
+                    <img src="https://picsum.photos/400/200?random=9" alt="고해상도 대응 이미지">
+                </picture>
+            </div>
+
+            <div class="code-block">
+                <code><span class="tag">&lt;picture&gt;</span>
+    <span class="tag">&lt;source</span> 
+        <span class="attr">media</span>=<span class="value">"(min-width: 768px)"</span> 
+        <span class="attr">srcset</span>=<span class="value">"desktop-1x.jpg 1x, desktop-2x.jpg 2x"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> 
+        <span class="attr">srcset</span>=<span class="value">"mobile-1x.jpg 1x, mobile-2x.jpg 2x"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="value">"fallback.jpg"</span> <span class="attr">alt</span>=<span class="value">"고해상도 이미지"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/picture&gt;</span></code>
+            </div>
+
+            <div class="info-box">
+                <h3>💡 1x vs 2x</h3>
+                <ul>
+                    <li><strong>1x:</strong> 일반 디스플레이용 (기본 해상도)</li>
+                    <li><strong>2x:</strong> Retina 디스플레이용 (2배 해상도)</li>
+                    <li>브라우저가 자동으로 디바이스에 맞는 이미지를 선택합니다</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 예제 3: 이미지 포맷별 대응 (WebP, AVIF) -->
+        <div class="example-section">
+            <h2>예제 3: 최신 이미지 포맷 대응</h2>
+            <p>브라우저가 지원하는 최적의 이미지 포맷을 자동으로 선택합니다.</p>
+
+            <div class="image-wrapper">
+                <picture>
+                    <source type="image/avif" srcset="https://picsum.photos/800/400?random=10">
+                    <source type="image/webp" srcset="https://picsum.photos/800/400?random=11">
+                    <img src="https://picsum.photos/800/400?random=12" alt="포맷 대응 이미지">
+                </picture>
+            </div>
+
+            <div class="code-block">
+                <code><span class="tag">&lt;picture&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">type</span>=<span class="value">"image/avif"</span> <span class="attr">srcset</span>=<span class="value">"image.avif"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">type</span>=<span class="value">"image/webp"</span> <span class="attr">srcset</span>=<span class="value">"image.webp"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="value">"image.jpg"</span> <span class="attr">alt</span>=<span class="value">"이미지"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/picture&gt;</span></code>
+            </div>
+
+            <div class="info-box">
+                <h3>💡 포맷 우선순위</h3>
+                <ul>
+                    <li><strong>AVIF:</strong> 최신 포맷, 가장 작은 파일 크기</li>
+                    <li><strong>WebP:</strong> 널리 지원되는 최적화 포맷</li>
+                    <li><strong>JPG/PNG:</strong> 모든 브라우저 지원 (폴백)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 예제 4: 복합 예제 (해상도 + 포맷) -->
+        <div class="example-section">
+            <h2>예제 4: 복합 예제 (해상도 + 포맷 조합)</h2>
+            <p>화면 크기와 이미지 포맷을 모두 고려한 최적화된 예제입니다.</p>
+
+            <div class="image-wrapper">
+                <picture>
+                    <source media="(min-width: 1200px)" type="image/webp"
+                        srcset="https://picsum.photos/1200/600?random=13">
+                    <source media="(min-width: 1200px)" srcset="https://picsum.photos/1200/600?random=14">
+                    <source media="(min-width: 768px)" type="image/webp"
+                        srcset="https://picsum.photos/800/400?random=15">
+                    <source media="(min-width: 768px)" srcset="https://picsum.photos/800/400?random=16">
+                    <img src="https://picsum.photos/400/200?random=17" alt="복합 최적화 이미지">
+                </picture>
+            </div>
+
+            <div class="code-block">
+                <code><span class="tag">&lt;picture&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 1200px)"</span> <span class="attr">type</span>=<span class="value">"image/webp"</span> <span class="attr">srcset</span>=<span class="value">"large.webp"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 1200px)"</span> <span class="attr">srcset</span>=<span class="value">"large.jpg"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 768px)"</span> <span class="attr">type</span>=<span class="value">"image/webp"</span> <span class="attr">srcset</span>=<span class="value">"medium.webp"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;source</span> <span class="attr">media</span>=<span class="value">"(min-width: 768px)"</span> <span class="attr">srcset</span>=<span class="value">"medium.jpg"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="value">"small.jpg"</span> <span class="attr">alt</span>=<span class="value">"이미지"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/picture&gt;</span></code>
+            </div>
+
+            <div class="info-box">
+                <h3>💡 핵심 포인트</h3>
+                <ul>
+                    <li>브라우저는 위에서부터 순서대로 조건을 확인합니다</li>
+                    <li>첫 번째로 매칭되는 source를 사용합니다</li>
+                    <li>어떤 source도 매칭되지 않으면 img 태그의 src를 사용합니다</li>
+                    <li>SEO와 접근성을 위해 항상 alt 속성을 포함하세요</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 현재 화면 너비 표시
+        function updateWidth() {
+            const width = window.innerWidth;
+            document.getElementById('width').textContent = width;
+        }
+
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+
+        // Dialog 기능
+        const imageDialog = document.getElementById('imageDialog');
+        const example1Image = document.getElementById('example1Image');
+        const closeDialog = document.getElementById('closeDialog');
+
+        // 이미지 클릭시 Dialog 열기
+        example1Image.addEventListener('click', () => {
+            imageDialog.showModal();
+        });
+
+        // 닫기 버튼 클릭시 Dialog 닫기
+        closeDialog.addEventListener('click', () => {
+            imageDialog.close();
+        });
+
+        // 배경(backdrop) 클릭시 Dialog 닫기
+        imageDialog.addEventListener('click', (e) => {
+            if (e.target === imageDialog) {
+                imageDialog.close();
+            }
+        });
+
+        // ESC 키로 Dialog 닫기 (기본 동작)
+    </script>
+</body>
+
+</html>

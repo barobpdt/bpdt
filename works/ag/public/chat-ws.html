@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 WebSocket 채팅</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .status {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .user-list {
+            list-style: none;
+        }
+
+        .user-item {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-item::before {
+            content: '👤';
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.system {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .message.user .username {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+        }
+
+        .message.user .text {
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            display: inline-block;
+            max-width: 70%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user.me .text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            float: right;
+        }
+
+        .message.user.me {
+            text-align: right;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .typing-indicator {
+            padding: 0.5rem 1.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-style: italic;
+            min-height: 2rem;
+        }
+
+        .input-area {
+            padding: 1rem 1.5rem;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            border-color: #667eea;
+        }
+
+        .input-area button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
+        .input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-modal.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .login-box h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 로그인 모달 -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-box">
+            <h2>💬 WebSocket 채팅 <span class="badge">WS</span></h2>
+            <input type="text" id="usernameInput" placeholder="닉네임을 입력하세요" maxlength="20">
+            <input type="text" id="roomInput" placeholder="방 이름 (기본: general)" value="general">
+            <button onclick="joinChat()">입장하기</button>
+        </div>
+    </div>
+
+    <!-- 채팅 컨테이너 -->
+    <div class="container">
+        <div class="header">
+            <h1>💬 WebSocket 채팅 <span class="badge">WS</span></h1>
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="connectionStatus">연결 중...</span>
+                <span id="userCount">0명 접속</span>
+                <span id="roomName"></span>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="sidebar">
+                <h3>👥 온라인 사용자</h3>
+                <ul class="user-list" id="userList"></ul>
+            </div>
+
+            <div class="chat-area">
+                <div class="messages" id="messages"></div>
+                <div class="typing-indicator" id="typingIndicator"></div>
+                <div class="input-area">
+                    <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." disabled
+                        onkeypress="handleKeyPress(event)" oninput="handleTyping()">
+                    <button onclick="sendMessage()" disabled id="sendButton">전송</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let username = '';
+        let room = 'general';
+        let typingTimeout;
+        let reconnectTimeout;
+
+        // 채팅 입장
+        function joinChat() {
+            username = document.getElementById('usernameInput').value.trim();
+            room = document.getElementById('roomInput').value.trim() || 'general';
+
+            if (!username) {
+                alert('닉네임을 입력해주세요!');
+                return;
+            }
+
+            // WebSocket 연결
+            connectWebSocket();
+        }
+
+        // WebSocket 연결
+        function connectWebSocket() {
+            updateConnectionStatus('연결 중...', false);
+
+            // WebSocket 연결 (ws:// 프로토콜 사용)
+            ws = new WebSocket('ws://localhost:3000/ws');
+
+            // 연결 성공
+            ws.onopen = () => {
+                console.log('✅ WebSocket 연결 성공');
+                updateConnectionStatus('연결됨', true);
+
+                // 방 입장
+                sendWsMessage('join', { username, room });
+            };
+
+            // 메시지 수신
+            ws.onmessage = (event) => {
+                try {
+                    const { type, data } = JSON.parse(event.data);
+                    handleMessage(type, data);
+                } catch (error) {
+                    console.error('메시지 파싱 오류:', error);
+                }
+            };
+
+            // 연결 종료
+            ws.onclose = () => {
+                console.log('❌ WebSocket 연결 종료');
+                updateConnectionStatus('연결 끊김', false);
+
+                // 입력 비활성화
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendButton').disabled = true;
+
+                // 5초 후 재연결 시도
+                if (username) {
+                    reconnectTimeout = setTimeout(() => {
+                        console.log('🔄 재연결 시도...');
+                        connectWebSocket();
+                    }, 5000);
+                }
+            };
+
+            // 에러 처리
+            ws.onerror = (error) => {
+                console.error('WebSocket 오류:', error);
+                updateConnectionStatus('오류 발생', false);
+            };
+        }
+
+        // WebSocket 메시지 전송
+        function sendWsMessage(type, data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type, data }));
+            }
+        }
+
+        // 메시지 핸들러
+        function handleMessage(type, data) {
+            switch (type) {
+                case 'joined':
+                    handleJoined(data);
+                    break;
+                case 'receive_message':
+                    addMessage(data.username, data.message, data.timestamp, data.username === username);
+                    break;
+                case 'message_history':
+                    data.forEach(msg => {
+                        addMessage(msg.username, msg.message, msg.timestamp, msg.username === username);
+                    });
+                    break;
+                case 'user_joined':
+                    addSystemMessage(data.message);
+                    break;
+                case 'user_left':
+                    addSystemMessage(data.message);
+                    break;
+                case 'room_users':
+                    updateUserList(data);
+                    break;
+                case 'user_count':
+                    document.getElementById('userCount').textContent = `${data}명 접속`;
+                    break;
+                case 'user_typing':
+                    document.getElementById('typingIndicator').textContent = `${data.username}님이 입력 중...`;
+                    break;
+                case 'user_stop_typing':
+                    document.getElementById('typingIndicator').textContent = '';
+                    break;
+                case 'error':
+                    console.error('서버 오류:', data.message);
+                    alert(data.message);
+                    break;
+            }
+        }
+
+        // 입장 완료 처리
+        function handleJoined(data) {
+            console.log('✅ 방 입장 완료:', data);
+
+            // 로그인 모달 숨기기
+            document.getElementById('loginModal').classList.add('hidden');
+
+            // 입력 활성화
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('sendButton').disabled = false;
+            document.getElementById('roomName').textContent = `#${room}`;
+
+            addSystemMessage(data.message);
+        }
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(status, connected) {
+            document.getElementById('connectionStatus').textContent = status;
+            const dot = document.getElementById('statusDot');
+            if (connected) {
+                dot.classList.remove('disconnected');
+            } else {
+                dot.classList.add('disconnected');
+            }
+        }
+
+        // 메시지 전송
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            sendWsMessage('send_message', { message });
+            input.value = '';
+
+            // 타이핑 중지
+            sendWsMessage('stop_typing');
+        }
+
+        // 엔터키 처리
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 타이핑 처리
+        function handleTyping() {
+            sendWsMessage('typing');
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                sendWsMessage('stop_typing');
+            }, 1000);
+        }
+
+        // 메시지 추가
+        function addMessage(user, text, timestamp, isMe) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message user ${isMe ? 'me' : ''}`;
+
+            const time = new Date(timestamp).toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div class="username">${escapeHtml(user)}</div>
+                <div class="text">${escapeHtml(text)}</div>
+                <div class="timestamp">${time}</div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 시스템 메시지 추가
+        function addSystemMessage(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.textContent = text;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 사용자 목록 업데이트
+        function updateUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                li.textContent = user;
+                userList.appendChild(li);
+            });
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 페이지 종료 시 WebSocket 닫기
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+
+</html>

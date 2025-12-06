@@ -1,0 +1,48 @@
+{
+    "name": "express-api-server",
+    "version": "1.0.0",
+    "description": "Express REST API 서버 with Drizzle ORM + SQLite + Socket.IO + WebSocket",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "start:drizzle": "node server-drizzle.js",
+        "start:socketio": "node server-socketio.js",
+        "start:websocket": "node server-websocket.js",
+        "dev": "nodemon server.js",
+        "dev:drizzle": "nodemon server-drizzle.js",
+        "dev:socketio": "nodemon server-socketio.js",
+        "dev:websocket": "nodemon server-websocket.js",
+        "db:studio": "drizzle-kit studio",
+        "db:push": "drizzle-kit push:sqlite",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "express",
+        "api",
+        "rest",
+        "nodejs",
+        "drizzle",
+        "sqlite",
+        "socketio",
+        "websocket",
+        "realtime"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "drizzle-orm": "^0.29.1",
+        "better-sqlite3": "^9.2.2",
+        "socket.io": "^4.6.1",
+        "ws": "^8.16.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1",
+        "drizzle-kit": "^0.20.6"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    }
+}

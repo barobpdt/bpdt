@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트리 메뉴 예제</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* 메뉴 탭 (항상 보임) */
+        .menu-tab {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border-radius: 0 12px 12px 0;
+            cursor: pointer;
+            box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+
+        .menu-tab:hover {
+            width: 60px;
+            box-shadow: 4px 4px 30px rgba(102, 126, 234, 0.8);
+        }
+
+        /* 사이드 메뉴 */
+        .side-menu {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: 4px 0 30px rgba(0, 0, 0, 0.3);
+            transition: left 0.4s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .menu-tab:hover+.side-menu,
+        .side-menu:hover {
+            left: 0;
+        }
+
+        /* 스크롤바 */
+        .side-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .side-menu::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+
+        /* 메뉴 헤더 */
+        .menu-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* 메뉴 리스트 */
+        .menu-items {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .menu-item>a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item>a:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+            color: #667eea;
+        }
+
+        .menu-icon {
+            margin-right: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .menu-text {
+            flex: 1;
+        }
+
+        .arrow {
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+            color: #999;
+        }
+
+        /* 하위 메뉴 */
+        .submenu {
+            list-style: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .menu-item:hover>.submenu {
+            max-height: 500px;
+        }
+
+        .menu-item:hover>a .arrow {
+            transform: rotate(90deg);
+            color: #667eea;
+        }
+
+        .submenu li a {
+            display: block;
+            padding: 0.8rem 1.5rem 0.8rem 3rem;
+            color: #555;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .submenu li a::before {
+            content: '• ';
+            color: #667eea;
+        }
+
+        .submenu li a:hover {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            padding-left: 3.5rem;
+        }
+
+        /* 구분선 */
+        .menu-divider {
+            height: 1px;
+            background: #ddd;
+            margin: 1rem 1.5rem;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            padding: 3rem;
+            padding-left: 5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .info-box ul {
+            margin-left: 1.5rem;
+        }
+
+        .info-box li {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 메뉴 탭 -->
+    <div class="menu-tab">☰</div>
+
+    <!-- 사이드 메뉴 -->
+    <nav class="side-menu">
+        <div class="menu-header">📱 메뉴</div>
+        <ul class="menu-items">
+            <li class="menu-item">
+                <a href="#home">
+                    <span class="menu-icon">🏠</span>
+                    <span class="menu-text">홈</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a href="#products">
+                    <span class="menu-icon">📦</span>
+                    <span class="menu-text">제품</span>
+                    <span class="arrow">▶</span>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#electronics">전자제품</a></li>
+                    <li><a href="#clothing">의류</a></li>
+                    <li><a href="#books">도서</a></li>
+                    <li><a href="#food">식품</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a href="#services">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-text">서비스</span>
+                    <span class="arrow">▶</span>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#consulting">컨설팅</a></li>
+                    <li><a href="#development">개발</a></li>
+                    <li><a href="#design">디자인</a></li>
+                    <li><a href="#marketing">마케팅</a></li>
+                </ul>
+            </li>
+
+            <div class="menu-divider"></div>
+
+            <li class="menu-item">
+                <a href="#company">
+                    <span class="menu-icon">🏢</span>
+                    <span class="menu-text">회사소개</span>
+                    <span class="arrow">▶</span>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#about">회사 개요</a></li>
+                    <li><a href="#history">연혁</a></li>
+                    <li><a href="#team">팀 소개</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a href="#portfolio">
+                    <span class="menu-icon">💼</span>
+                    <span class="menu-text">포트폴리오</span>
+                    <span class="arrow">▶</span>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#web">웹 프로젝트</a></li>
+                    <li><a href="#mobile">모바일 앱</a></li>
+                    <li><a href="#design">디자인 작업</a></li>
+                </ul>
+            </li>
+
+            <div class="menu-divider"></div>
+
+            <li class="menu-item">
+                <a href="#support">
+                    <span class="menu-icon">💬</span>
+                    <span class="menu-text">고객지원</span>
+                    <span class="arrow">▶</span>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#faq">자주 묻는 질문</a></li>
+                    <li><a href="#contact">문의하기</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a href="#settings">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-text">설정</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+        <div class="content-card">
+            <h1>🎯 트리 메뉴 예제</h1>
+            <p>화면 왼쪽에 보이는 <strong>그라데이션 탭(☰)</strong>에 마우스를 올려보세요!</p>
+
+            <div class="info-box">
+                <h3>💡 사용 방법</h3>
+                <ul>
+                    <li>왼쪽 그라데이션 탭(☰)에 마우스를 올리면 메뉴가 나타납니다</li>
+                    <li>화살표(▶)가 있는 메뉴에 마우스를 올리면 하위 메뉴가 펼쳐집니다</li>
+                    <li>메뉴에서 마우스를 떼면 자동으로 숨겨집니다</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h3>✨ 주요 기능</h3>
+                <ul>
+                    <li><strong>트리 구조:</strong> 계층적 메뉴 구조로 정보를 체계적으로 정리</li>
+                    <li><strong>호버 효과:</strong> 마우스를 올리면 부드럽게 확장</li>
+                    <li><strong>자동 숨김:</strong> 메뉴에서 마우스를 떼면 자동으로 숨김</li>
+                    <li><strong>순수 CSS:</strong> JavaScript 없이 CSS만으로 구현</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
