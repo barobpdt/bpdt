@@ -28,6 +28,8 @@
 				}
 			})
 		}
+		clog('init page =>', ws, app)
+		app.loadPage('test')
 		window.addEventListener('beforeunload', () => {
 			if (cf.timerIdx) {
 				clearInterval(cf.timerIdx)

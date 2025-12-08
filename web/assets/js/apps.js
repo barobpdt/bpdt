@@ -2,6 +2,7 @@
 페이지 공통설정 
 */
 const clog=window.console.log
+const tm = ()=> new Date().getTime()
 const randomKey = () => (new Date%9e64).toString(36)
 const isNull = a => a===null || typeof a == 'undefined'
 const isEmpty = a => isNull(a) || (typeof a=='string' && a=='' )

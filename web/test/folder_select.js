@@ -46,7 +46,8 @@ function initData(treeModule) {
 			return;
 		}
         try {
-            const response = await fetch('/api/folders?path='+encodeURIComponent(path))
+			const pp = 'C:/temp'
+            const response = await fetch('/api/folders?path='+encodeURIComponent(pp))
             const node = await response.json()
 			pageModule.rootNode = node
 			pageModule.initTreeData(node.children)
@@ -56,7 +57,7 @@ function initData(treeModule) {
         }
     }
 	initDrives()
-	return impl(pageModule, {initDrives, loadTree})
+	// return impl(pageModule, {initDrives, loadTree})
 }
  
 function initTree(treeId) {
@@ -105,7 +106,7 @@ function initTree(treeId) {
 	}
 
 	cf.initTreeData = function(data) {
-		const newData = data||[]
+		const newData = data||[]		
 		tree.jstree({
 			core: {
 				data: newData,

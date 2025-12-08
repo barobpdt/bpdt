@@ -1,8 +1,18 @@
+@baro.isHtmlTag(key) {
+	tag=key.lower()
+	if(tag.start('h')) {
+		c=key.value(1)
+		if(typeof(c,'num')) return true;
+	} else if(tag.eq('div','form','span','p','img','button','input','video','a','nav','header')) {
+		return true;
+	}
+	return false;
+}
 @baro.ignoreStyleProp(k) { return k.eq('id','key','class','varName','render','tag') }
 @baro.loadPage(fullpath) {
 	not(fullpath) {
 		fullpath = conf('baro.loadPagePath')
-		not(fullpath) fullpath='c:/temp/page-test.js'
+		not(fullpath) fullpath='c:/bpdt/project/page-test.js'
 	}
 	@baro.filePathInfo(fullpath).inject(watchPath, fileName)	
 	not(conf("cf.newline")) conf("cf.newline","\r\n",true)
@@ -29,24 +39,6 @@
 		print("페이지 로딩실패 : $err")
 	}
 }
-@baro.initLayoutVar(page, node, key) {
-	not(key) return print("레이아웃 노드 추가오류 키미정의", node);
-	varMap = page.get('@varMap')
-	if(@baro.isHtmlTag(key)) {
-		node.set('tag',key)
-	}
-	node.set('class',key)
-	if(varMap.isset(key)) {
-		key = Cf.val(key,'-',page.incrNum('@varIndex'))
-	} else {
-		varMap.set(key,true)
-	}
-	node.set('key', key)
-	nodeInitVal(node,'@html')
-	nodeInitVal(node,'@attr')
-	nodeInitVal(node,'@css')
-	nodeInitVal(node,'@event')
-}
 @baro.initPage(parent,page,src,template) {
 	nl = conf('cf.newline')
 	pageCode=page.pageCode
@@ -58,7 +50,7 @@
 	}
 	pageTemplatePath = conf('baro.pageTemplatePath')
 	not(pageTemplatePath) {
-		pageTemplatePath = 'C:/temp/page-template.txt'
+		pageTemplatePath = 'c:/bpdt/project/page-template.txt'
 		conf('baro.pageTemplatePath', pageTemplatePath)
 	}
 	not(isFile(pageTemplatePath)) return print("$pageCode 페이지 초기화 실패 페이지 템플릿 파일이 없습니다");
@@ -95,6 +87,27 @@
 	pageSrc = @baro.parseSource(parent, page, page, template,'value')
 	print("## pageSrc ==> $pageSrc")
 	@baro.changePageScript(parent, page, pageSrc)
+}
+@baro.initLayoutVar(page, node, key) {
+	not(key) return print("레이아웃 노드 추가오류 키미정의", node);
+	varMap = page.get('@varMap')
+	if(@baro.isHtmlTag(key)) {
+		node.set('tag',key)
+	}
+	node.set('class',key)
+	if(key.eq('space')) {
+		node.set('flex','1')
+	}
+	if(varMap.isset(key)) {
+		key = Cf.val(key,'-',page.incrNum('@varIndex'))
+	} else {
+		varMap.set(key,true)
+	}
+	node.set('key', key)
+	nodeInitVal(node,'@html')
+	nodeInitVal(node,'@attr')
+	nodeInitVal(node,'@css')
+	nodeInitVal(node,'@event')
 }
 
 @baro.parsePages(parent, &s, template) {
@@ -571,7 +584,7 @@ function ${renderFunc} {
 			if(cc.eq('>')) {
 				body=s.match('<>','<>',1)
 				print("@@ <><> html : $body")
-				cur.appendText('html',body)
+				cur.appendText('@html',body)
 				continue;
 			}			
 			sp=s.cur()
@@ -642,6 +655,37 @@ function ${renderFunc} {
 	}
 	return;
 }
+@baro.colorMap(page, param) {
+	map=page.addNode('@colorMap')
+	idx = 1
+	if(param ) {
+		a=param.get(0)
+		if(typeof(a,'bool') && a) {
+			map.removeAll()
+		}
+		if(typeof(a,'num')) idx=a
+	}
+	not(map.childCount()) {
+		db=Baro.db('data_map')
+		not(db.open()) db.open('data_map.db')
+		sp=Math.random(0,10).toInt();
+		sp*=4;
+		sql="select idx, color from color_map order by like_num desc limit $sp, 4"
+		root = db.fetchAll(sql)
+		while(cur, root) {
+			cur.inject(idx, color)
+			map.addNode().with(idx,color)
+		}
+	}
+	n=idx-1;
+	cur= map.child(idx)
+	if(cur) {
+		c=cur.color
+	} else {
+		c=randomColor()
+	}
+	return "$c"
+}
 @baro.funcVal(parent, page, node, fnm, &param, prev) {
 	nl = conf('cf.newline')
 	if(fnm.eq('css')) return _css(param);
@@ -693,6 +737,9 @@ function ${renderFunc} {
 	}
 	else if(fnm.eq('randomColor')) {
 		ss=randomColor()
+	}
+	else if(fnm.eq('colorMap')) {
+		ss=@baro.colorMap(page, arr)
 	}
 	else if(fnm.eq('color')) {
 		if(arr.size()>2) {
@@ -751,8 +798,9 @@ function ${renderFunc} {
 		}
 		src=@baro.parseSource(parent,page,node,str,'value')
 		ss = @baro.getStyleText(parent,page,src)
+		className = @baro.getClassName(page, node.class)
 		css=#[
-#${page.pageId} .${node.class}${expr} {
+${className}${expr} {
 	${ss}
 }]
 		nodeAppendText(page,'@css', css, nl)
@@ -784,7 +832,7 @@ function ${renderFunc} {
 		}
 	} else {
 		if(type.eq('value','js','css')) {
-			return s;
+			return s.trim();
 		}
 		param = s
 		ss.add(_paramVal())
@@ -979,7 +1027,8 @@ function ${renderFunc} {
 		ai:alignItems,
 		jc:justifyContent,
 		shadow: boxShadow,
-		ctt: content
+		ctt: content,
+		hint: placeholder
 	])
 	map.startTick = System.tick()
 	return map;	
@@ -1017,7 +1066,7 @@ function ${renderFunc} {
 		if(bcls) {
 			k=@baro.styleKey(key), v=ss
 			if(@baro.isEmpty(v)) v="''"
-			sty="${k}:${v}"			
+			sty="${k}:${v};"			
 			result.add(sty)
 		} else {
 			c=key.ch()
@@ -1035,9 +1084,13 @@ function ${renderFunc} {
 	map = @baro.styleMap()
 	key = map.get(k.lower()) not(key) key=k	
 	if(key.eq('col')) key='column'
-	if( typeof(val,'bool') && val ) {	
+	else if(key.eq('c')) key='color'
+	if( typeof(val,'bool') && val ) {
 		if(key.eq('flexWrap','pointerEvent','listStyle')) {
 			_addSty(key,'none')
+		}
+		else if(key.eq('alignItems','justifyContent')) {
+			_addSty(key,'center')
 		}
 		else if(key.eq('pointer','row','column','vbox','hbox')) {
 			switch(key) {
@@ -1049,11 +1102,11 @@ function ${renderFunc} {
 				_addSty('flexDirection','column')
 			case vbox: 
 				_addSty('display','flex')
-				_addSty('flexDirection','row')
+				_addSty('flexDirection','column')
 				_addSty('height','100%') 
 			case hbox: 
 				_addSty('display','flex')
-				_addSty('flexDirection','column')
+				_addSty('flexDirection','row')
 				_addSty('width','100%')
 			default:
 			}
@@ -1103,6 +1156,7 @@ function ${renderFunc} {
 	}
 	return result;
 }
+
 @baro.makeHtmlProps(parent, page, node) {
 	not(node) { 
 		layout = page.get('@layout')
@@ -1117,16 +1171,8 @@ function ${renderFunc} {
 		}
 		not( node.isset('id') ) {
 			node.id = page.pageId
-			while(cur, node) {
-				if(cur.isset('^css')) continue;
-				not(cur.isset('width')) {
-					not(cur.isset('w')) cur.set('w','100%')
-				}
-				not(cur.isset('height')) {
-					not(cur.isset('h')) cur.set('flex','1')
-				}
-			}
 		}
+		print("makeHtmlProps node=>$node", layout)
 	}
 	map = @baro.styleMap()	
 	_addProp=func(k,v) {
@@ -1147,13 +1193,14 @@ function ${renderFunc} {
 		if(k.start('on')) {
 			fnm = k.trim(2)
 			ss.add(node.varName, ".on('$fnm',($fparam)=>")
-			if(fsrc.findPos("\n")) {
+			if(fsrc.find("\n")) {
 				ss.add("{$fsrc}")
 			} else {
 				ss.add(fsrc)
 			}
 			ss.add(')')
 			nodeAppendText(node,'@event', ss, conf("cf.newline"))
+		} else if(k.eq('if')) {
 		} else if(k.eq('init')) {
 			nodeAppendText(page,'@funcsInit', fsrc, conf("cf.newline"))
 		} else {
@@ -1166,7 +1213,11 @@ function ${renderFunc} {
 			nodeAppendText(page,'@funcs', ss, conf("cf.newline"))
 		}
 	};
-	arr=node.get('@keyArray') not(typeof(arr,'array')) return print("html props 키배열 오류");
+	arr=node.get('@keyArray') 
+	not(typeof(arr,'array')) {
+		arr=node.keys()
+		print("html props 키배열 오류", node, arr)
+	}
 	while(k, arr) {
 		if(@baro.ignoreStyleProp(k)) continue;		
 		val=node.get(k)
@@ -1184,9 +1235,34 @@ function ${renderFunc} {
 			}
 			continue;
 		}
-		src=@baro.parseSource(parent,page,node,val,'value')
+		if(typeof(val,'bool')) {
+			src=val
+		} else {
+			src=@baro.parseSource(parent,page,node,val,'value')
+		}
 		@baro.addHtmlStyle(parent,page,node,k,src)
 	}
+	if(node.isset('hbox') || node.isset('vbox')) {
+		while(cur, node) {
+			if(cur.isset('^css')) continue;
+			if(node.isset('hbox')) {				
+				not(cur.isset('height')) {
+					addNodeProp(cur, 'h','100%')
+				}
+				not(cur.isset('width')) {
+					not(cur.isset('w')) addNodeProp(cur, 'flex','1')
+				}
+			} else {
+				not(cur.isset('width')) {
+					addNodeProp(cur, 'w','100%')
+				}
+				not(cur.isset('height')) {
+					not(cur.isset('h')) addNodeProp(cur, 'flex','1')
+				}
+			}
+		}
+	}
+	
 	if(node.id) {
 		val = Cf.val("id=",Cf.jsValue(node.id))
 		nodeAppendText(node,'@attr', val, ' ')
@@ -1218,13 +1294,10 @@ function ${renderFunc} {
 			}
 			continue
 		}
-		if(typeof(val,'bool')) {
-			result = @baro.addHtmlStyle(parent,page,node,k,val,true)			
-		} else {
-			key=map.get(k) not(key) key=k			
-			result = Cf.val(@baro.styleKey(key),':',val)
-		}
-		replaceVal = replaceFindText(ss,"$key:",result,';')
+		key=map.get(k) not(key) key=k
+		result = @baro.addHtmlStyle(parent,page,node,k,val,true)
+		not(result) continue;
+		replaceVal = replaceFindText(ss,"${key}:",result,';')
 		if(replaceVal) {
 			ss=replaceVal
 		} else {
@@ -1252,17 +1325,6 @@ function ${renderFunc} {
 		return s
 	}
 	return Cf.jsValue("$s")
-}
-
-@baro.isHtmlTag(key) {
-	tag=key.lower()
-	if(tag.start('h')) {
-		c=key.value(1)
-		if(typeof(c,'num')) return true;
-	} else if(tag.eq('div','span','p','img','button','input','video','a','nav','header')) {
-		return true;
-	}
-	return false;
 }
 @baro.varName(&s) {
 	not(typeof(s,'string')) return;
@@ -1318,16 +1380,16 @@ function ${renderFunc} {
 	}
 }
 
-replaceFindText(&str, replace, value, sep) {
-	pos = _find(str)
+replaceFindText(s, replace, value, sep) {
+	pos = _find(s)
 	if(typeof(pos,'num')) {
-		return _replace(str,pos)
+		return _replace(s,pos)
 	}
 	return false;
 	
 	_replace = func(&str, pos) {		
 		if(pos>0) {
-			ss=str.value(0,pos,true)
+			ss=s.value(0,pos,true)
 		} else {
 			ss=''
 		}
@@ -1341,6 +1403,7 @@ replaceFindText(&str, replace, value, sep) {
 	_find = func(&str) { 
 		while(str.valid()) {
 			left = str.findPos(replace,1,1) not(str.valid()) return false;
+			print("xxxxxx", replace, str)
 			not(left.ch()) return str.cur();
 			c=left.ch(-1) not(c) return str.cur();
 			if( c.eq(sep) ) {
@@ -1396,6 +1459,15 @@ nodeReuse(node) {
 		}
 	}
 	return node;
+}
+addNodeProp(node,k,v) {
+	a=node.get('@keyArray')
+	if(a) {
+		if(a.find(k)) return;
+		a.add(k)
+	}
+	print('@@ addNodeProp ', k, v, a)
+	node.set(k,v)
 }
 catchError() {
 	err=Cf.error() not(err) return false;
@@ -1454,61 +1526,4 @@ catchError() {
 	}
 	fn.set('prevTick', System.tick())
 }
-
-/* temp/test.js
-##> test {
-	bg:#0f0
-}
-screen {full}
-	circle {hidden, 
-		css(
-			abs, bottom:0,w:20px,aspect-ratio:1/1, bg:@[bg]
-			shadow(
-				0 0 10px @[bg],
-				0 0 20px @[bg],
-				0 0 30px @[bg],
-				0 0 50px @[bg]	
-			)
-			rad: 50%
-			ani: glow 5s linear forwards
-			kf( glow =>
-				0% { tf:translateY(0); opacity:1 }
-				50% { opacity:1}
-				100% { tf:translateY(-100vh); opacity:0; }
-			)
-		) 
-		before(
-			abs,ctt,x:25%,y:100%,h:100vh,opacity:0.5,bg:linear-gradient(@[bg],transparent)
-		)
-	}
-end
-<js>
-	const line = () => {
-		const circle = $('<div class="circle"/>').appendTo(@[screen])
-		circle.css({
-			width:parseInt(Math.random() *12),
-			left:parseInt(Math.random() * $(window).width()),
-			animationDuration: parseInt(Math.random()*3)+2+'s'
-		})
-		setTimeout(() => circle.remove(), 5000)
-	}	
-</js>
-
-<init>
-	clog('init test page', line)
-	setPageInterval(line,1000)
-</init>
-
-
-#page-template.js
-(function() {
-	loadStyle(`
-@[pageCss]
-	`)
-	@[pageFuncs]
-	function initPage(page, content) {
-		@[pageInit]
-	}
-	makePage('@[pageCode]', initPage)
-})()
-*/
+ 

@@ -1,0 +1,66 @@
+include('classes/common/baro-parse')
+include('classes/common/baro-server')
+include('classes/common/json')
+Cf.debug('clear')
+@baro.loadPage()
+@baro.websocketStart(object('baro.pages'))
+
+##> test.js 감시폴더에 포함
+root=Cf.rootNode()
+config = root.get('@watcherFiles').get('webpageWatcher')
+names = config.watcherNames
+names.add('test.js')
+
+##> 네온 데이터베이스 연결
+psql 'postgresql://mytest_owner:Bvbh6LgkJV8R@ep-fancy-bonus-a8xl2bvb-pooler.eastus2.azure.neon.tech/mytest?sslmode=require&channel_binding=require'
+
+##> 색상표 맵정보
+
+db=Baro.db('data_map')
+db.open('data_map.db')
+db.exec('drop table color_map')
+db.exec('create table color_map (map_idx, idx, r,g,b,color,like_num integer,d)')
+src=fileRead('C:\project\funny_music\정리\색상표-html.txt')
+parse_color(db,src,true)
+
+root = db.fetchAll('select idx, color from color_map order by like_num desc limit 0, 12')
+while(cur, root) {
+	print(">>$cur")
+}
+
+parse_colorhunt(db, &s, deleteAll) {
+	// https://colorhunt.co/
+	if(deleteAll) db.exec('delete from color_map')
+	map_idx=1
+	node=_node()
+	while(s.valid()) {
+		s.findPos('<div class="palette">',0,1) not(s.ch()) break;
+		ss=s.match('<div','</div>') if(typeof(ss,'bool')) continue;
+		ss.findPos('>')
+		s.findPos('<span>') not(s.ch()) break;
+		num = s.findPos('</span>').trim()
+		if(num.find(',')) {
+			like_num=num.replace(',','') 
+		}
+		else {
+			like_num=num
+		}
+		s.findPos('<span class="date">')
+		d = s.findPos('</span>').trim()
+		while(ss.valid(),n) {
+			idx = n+1;
+			ss.findPos('background-color: rgb(') not(ss.ch()) break;
+			v=ss.findPos(')')
+			print("v==$v")
+			r=v.findPos(',').trim()
+			g=v.findPos(',').trim()	
+			b=v.findPos(',').trim()
+			c=color(r,g,b)
+			color="$c"
+			node.with(map_idx, idx, r,g,b,color,like_num,d)
+			db.exec("insert into color_map  (map_idx, idx, r,g,b,color,like_num,d) values (#{map_idx}, #{idx}, #{r},#{g},#{b},#{color},#{like_num},#{d})", node)
+		}
+		map_idx++;
+		print("mapIdx==$map_idx")
+	}
+}

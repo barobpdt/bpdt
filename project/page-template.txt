@@ -1,0 +1,10 @@
+(function() {
+	loadStyle(`
+@[pageCss]
+	`)
+	@[pageFuncs]
+	function initPage(page, pageLayoutElement) {
+		@[pageInit]
+	}
+	makePage('@[pageCode]', initPage)
+})()
