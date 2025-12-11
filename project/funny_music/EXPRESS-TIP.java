@@ -1,3 +1,8 @@
+##> neon 사용법
+	const sql = neon(DATABASE_URL)
+	const result = await sql`insert into tbl (a,b,c) values (a,b,c) RETURNING *`
+	clog(result[0])
+
 ##> 게시글 CRUD cros 적용
 import express from 'express';
 import cors from 'cors';
@@ -456,3 +461,159 @@ app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
 app.listen(PORT, () => {
   console.log("Server is running on PORT:", PORT);
 });
+
+
+##> 카카오 인증구현
+
+[backend]
+app.post('/auth', auth);
+const auth = async (req, res) => {
+  const { authToken } = req.body;
+  try {
+    const kakaoResponse = await axios
+      .post(
+        'https://kauth.kakao.com/oauth/token',
+        {},
+        {
+          header: {
+            'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+          },
+          params: {
+            grant_type: 'authorization_code',
+            client_id: ENV.KAKAO_REST_API_KEY,
+            code: authToken,
+            redirect_uri: `http://localhost:3000/auth?social_provider=kakao`,
+          },
+        }
+      )
+      .then((res) => res.data.access_token);
+      console.log('카카오응답', kakaoResponse);
+	res.send(kakaoResponse);
+	// kakaoResponse => 
+	//	access_token, token_type:'bearer', expires_in, 
+	//	scope:'profile_nickname', refresh_token, refresh_token_expires_in
+  } catch (err) {
+    console.log('에러', err);
+  }
+};
+
+[frontend 호출]
+const Auth = () => {
+  const navigate = useNavigate();
+  const authMutation = async (authToken: string) => {
+    const code = await axios
+      .post('http://localhost:4000/auth', {
+        authToken,
+      })
+      .then((res) => res.data);
+    return code;
+  };
+  useEffect(() => {
+  	// url parameter의 code를 authToken으로 저장한다.
+    const authToken = new URL(window.location.href).searchParams.get('code');
+    try {
+      if (!authToken) return;
+      authMutation(authToken);
+      // 토큰 전송후 '/'페이지로 리다이렉트
+      navigate('/');
+    } catch (err) {
+      alert(err);
+    }
+  }, []);
+  return <>auth loading..</>;
+};
+export default Auth;
+
+##> 카카오 인증구현 (별도 라우트 만드는 경우)
+[src/Router/kakaoRoutes.ts]
+import { Request, Response, Router } from "express";
+import { setUsers } from "../Firebase/user";
+import dotenv from "dotenv";
+import axios from "axios";
+import qs from "qs";
+export const kakaoRouter = Router();
+
+/* login 이후 나타나는 callback page */
+kakaoRouter.get("/oauth/callback/kakao", async (req: Request, res: Response) => {
+  /* access token 발급 */
+  let token: any;
+  try {
+    token = await axios({
+      method: "POST",
+      url: "https://kauth.kakao.com/oauth/token",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      data: qs.stringify({
+        grant_type: "authorization_code",
+        client_id: ENV.CLIENT_ID,
+        redirectUri: ENV.REDIRECT_URI,
+        code: req.query.code as string,
+      }),
+    });
+  } catch (e: any) {
+    res.json(e.data);
+    return;
+  }
+
+  /* access token 발급받은 뒤 사용자 정보 가져옴 */
+  let user: any;
+  try {
+    user = await axios({
+      method: "GET",
+      url: "https://kapi.kakao.com/v2/user/me",
+      headers: {
+        Authorization: `Bearer ${token.data.access_token}`,
+      },
+    });
+  } catch (e: any) {
+    res.json(e.data);
+    return;
+  }
+
+  /* 가지고 온 사용자 정보 DB */
+  await setUsers(user.data); 
+  /*
+  const userData = user.data
+  const userInfo = {
+    _id: userData.id,
+    email: userData.kakao_account.email,
+    name: userData.kakao_account.profile.nickname,
+  };
+  */
+  /* session 저장 */
+  req.session.userData = { 
+	_id: userData.id, 
+	name: userData.kakao_account.profile.nickname };
+  res.redirect("http://localhost:4000/main");
+});
+
+[서버시작]
+import express from "express";
+import { sessionConfig } from "./Config/sessionConfig";
+import { kakaoRouter } from "./Router/kakaoRoutes";
+
+const app = express();
+const PORT = process.env.PORT;
+
+/* kakao login */
+app.use(sessionConfig);
+app.use(kakaoRouter);
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
+[frontend]
+const auth = (e: React.FormEvent<HTMLFormElement>) => {
+	e.preventDefault();
+	const kakaoAuth = `https://kauth.kakao.com/oauth/authorize?client_id=${rest_api_key}&redirect_uri=${redirect_uri}&response_type=code`;
+	window.location.assign(kakaoAuth);
+};
+return (
+<>
+  <Form onSubmit={auth}>
+	<KakaoSignin>Kakao Signin</KakaoSignin>
+  </Form>
+</>
+);

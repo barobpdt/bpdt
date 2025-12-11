@@ -354,12 +354,12 @@ function ${renderFunc} {
 		}
 	}
 }
-@baro.parseProps(parent,page, node, &s) {
+@baro.parseProps(parent,page, node, &s, ignoreProp) {
 	if(typeof(s,'bool')) return print('@baro.parseProps 매치오류');
 	arr = node.addArray('@keyArray').reuse()
 	while(s.valid()) {
 		c=s.ch() not(c) break;
-		if(c.eq(',')) {
+		if(c.eq(',',';')) {
 			s.incr()
 			continue;
 		}		
@@ -399,11 +399,15 @@ function ${renderFunc} {
 		}
 		
 		bprop=false, bsty=false
-		if(c.eq(':','=')) {
-			if(c.eq(':')) {
+		if(c.eq(':','=')) {			
+			if(ignoreProp) {
 				bsty=true
-			} else{
-				bprop=true
+			} else {
+				if(c.eq(':')) {
+					bsty=true
+				} else{
+					bprop=true
+				}
 			}
 			c=s.incr().ch()
 		}
@@ -432,7 +436,7 @@ function ${renderFunc} {
 			not(arr.find(key)) arr.add(key)
 		} else if(c.eq('{')) {
 			cur = node.addNode(k)
-			@baro.parseProps(parent,page,cur,s.match())
+			@baro.parseProps(parent,page,cur,s.match(),ignoreProp)
 		} else if(c.eq('[')) {
 			arr = node.addArray(k)
 			@baro.parseArray(parent,page,node,arr,s.match())
@@ -1313,6 +1317,16 @@ ${className}${expr} {
 	while(c.eq('-','.')) c=s.incr().next().ch()
 	return when(c.eq('('), true)
 }
+@baro.lastIndent(&s) {
+	if(s.find("\n")) {
+		left =s.findLast("\n")
+		a=left.right()
+		return indentText(a);
+	} else if(s) {
+		return indentText(s);
+	}
+	return;
+}
 @baro.jsVal(s) {
 	ss=''
 	if(typeof(s,'string')) {
@@ -1526,4 +1540,16 @@ catchError() {
 	}
 	fn.set('prevTick', System.tick())
 }
- 
+@baro.conf(name, def, overwrite) {
+	k="baro.$name"
+	if(def && overwrite) {
+		conf(k,def,true)
+		return def;
+	}
+	v=conf(k)	
+	not(v) {
+		v=def
+		if(v) conf(k,v,true)
+	}
+	return v;
+}

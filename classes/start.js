@@ -330,6 +330,26 @@ isFolder(fullPath, makeCheck) {
 	}
 	return folder;
 }
+pathJoin() {
+	ss=''
+	while(a,args(), n) {
+		not(typeof(a,'string')) return print("pathJoin 오류 메게변수 오류 ",args())
+		if(a.find('\')) a=a.replace('\','/')
+		c=a.ch(-1)
+		if(c.eq('/')) a=a.value(0,-1)
+		if(n) {
+			ss.add('/')
+		}
+		c=a.ch()
+		if(c.eq('/')) {
+			ss.add(a.value(1))
+		} else {
+			ss.add(a)
+		}
+		print("a>>$a")
+	}
+	return ss;
+}
 fileRead(path) {
 	fo=Baro.file('read'); // 파일객체 생성
 	not(fo.open(path,'read')) {
