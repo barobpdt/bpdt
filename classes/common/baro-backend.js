@@ -36,25 +36,37 @@
 	@baro.copyBackendSource(backend)
 }
 @baro.loadBackend(backend, &s, reset) {
-	print(">> load backend $backend, info=$s")
+	not(backend) backend=object('baro.backend')
+	print(">> load backend start reset==$reset", )
 	_isProps = func(s) {
 		c=s.ch()
 		return when(c.eq('{'),true);
 	};
+	
 	type='', base=null, cur=null
 	while(s.valid()) {
 		left = s.findPos('##>')
-		if(type) {
-			src=left // @baro.parseBackend(backend, cur, left)
-			print(">> parse backend type=====$type start")
+		if(type) { 
+			name = cur.get('@name')
+			confCode="baro.${type}:${name}#modify"
+			if(conf(confCode)==left) {
+				not(reset) continue;
+			} else {
+				backend.set("@${type}_modify", true)				
+				cur.set('@modify',true)
+				conf(confCode,left,true)
+			}
+			print(">> parse backend type=====$type $confCode start")
 			if(type.eq('config')) {
-				@baro.configFuncVal(backend, cur, src)
+				@baro.parseConfig(backend, cur, left)
 			} else if(type.eq('route')) {
-				@baro.parseRoute(backend, cur, src)
+				@baro.parseRoute(backend, cur, left)
 			} else if(type.eq('sql')) {
-				@baro.sqlFuncVal(backend, cur, src)
+				@baro.sqlFuncVal(backend, cur, left)
 			} else if(type.eq('table')) {
-				@baro.tableFuncVal(backend, cur, src)
+				@baro.tableFuncVal(backend, cur, left)
+			} else {
+				@baro.parseConfig(backend, cur, left)
 			}
 			print("parse backend type=====$type end")
 		}
@@ -63,21 +75,28 @@
 		if(type.eq('routes')) type='route'
 		else if(type.eq('tables')) type='table'
 		base=backend.addNode("@$type")
-		if(reset) base.removeAll(true)
+		name=''
 		if(_isProps(s)) {
+			node={}
 			s.ch()
 			src=s.match(1)
-			node=_node()			
-			@baro.parseProps(backend, base, node, src,true)
-			name=node.name not(name) name='default'
-			cur=base.addNode(name)			
+			@baro.parseConfig(backend, node, src)
 			if(node.isset('@keyArray')) {
 				while(k,node.get('@keyArray')) {
-					cur.set(k,node.get(k))
+					if(k.eq('name')) continue;
+					v=node.get(k)
+					if(v) cur.set(k,v)
 				}
 			}
-			not(cur.name) cur.name = name
+			print(">> prop node==$node")
+			name=node.name
 		}
+		not(name) name='default'
+		cur=base.addNode(name)
+		if(reset) {
+			cur.removeAll(true)
+		}
+		cur.set('@name', name)
 	}	
 }
 @baro.copyBackendSource(backend) {
@@ -174,84 +193,161 @@ isSpace(&s) {
 	c=s.ch()
 	return when(c,false,true)
 }
-@baro.backendKeyValue(backend, node, &k, indent) {
-	not(k.find('.')) {
-		return when(backend.isset(k), backend.get(k), node.get(k));
-	}
-	nm=k.move()
-	cur=backend.get("@$nm")
-	not(cur) return print("$nm 타입 미정의 [백엔드 분석오류]")
-	c=k.ch()
-	if(c.eq('.')) {
-		k.incr()
-		sp=k.cur()
-		nm0=k.move()
-		c=k.ch()
+@baro.configKeyValue(backend, node, &s, type, value) {
+	ss='', cur=null
+	while(s.valid()) {
+		c=s.ch() not(c) break;
 		if(c.eq('.')) {
-			k.incr()
-			sub=cur.get(nm0)
-			nm1=k.trim()
-			not(sub) print("$nm 항목에 $nm0 을 찾을수없습니다")
-			print(">> ", nm, nm0, nm1, sub)
-			if( nm1 ) v=sub.get(nm1) else v=sub;			
-		} else if(cur.isset(nm0)) {
-			v=cur.get(nm0)
-		} else {
-			k.pos(sp)
-			nm0=k.trim()
-			while(sub, cur) {
-				if(sub.isset(nm0)) {
-					v=sub.get(nm0)
-					break;
+			s.incr()
+			if(@baro.isFunc(s)) {
+				continue;
+			}
+			name=s.move()
+			if(typeof(cur,'node')) {
+				if(cur.isset("^$name")) {
+					v=cur.ref("^$name")
+					cur=v.match(1)
+				} else {
+					cur=cur.get(name)
 				}
+			} else {
+				print("@@ configKeyValue 하위키를 찾을수 없습니다 name:$name", cur)
+				cur=null
+			}
+		} else if(s.start('&&')) {
+			not(cur) return;
+		} else if(s.start('||')) {
+			if(cur) return cur
+		}
+		if(@baro.isFunc(s)) {
+			fnm=s.findPos('(',0,1).trim()
+			fparam=s.match(1)
+			cur=@baro.backendFuncVal(backend,node,fnm,fparam)
+		} else {
+			root=null
+			name=s.move()
+			if(node.isset("^$name")) {
+				cur=node.get("^$name")
+				continue
+			}
+			c=s.ch()
+			if(backend.isset("@$name")) {
+				root=backend.get("@$name")
+				if(typeof(root,'node')) {					
+					if(c.eq('.')) {
+						s.incr()
+						name=s.move()
+						cur=root.get(name)
+						c=s.ch()
+						if(c.eq('.')) {
+							not(typeof(cur,'node')) cur=root.get('default')
+						}
+					}
+				}
+			} else {
+				if(node.isset(name)) {
+					cur=node.get(name)
+				} else if(backend.isset(name)) {
+					cur=backend.get(name)
+				} else {
+					root=backend.get('@config')
+					cur=root.get(name) 
+					if(c.eq('.')) {
+						not(typeof(cur,'node')) cur=root.get('default')
+					}
+				}
+			}
+			if(c.eq('.')) {
+				s.incr()
+				name=s.move()
+				if(typeof(cur,'node')) {
+					cur=cur.get(name)
+				}
+			} 
+			if( cur ) continue;
+			if( root) {
+				while(sub,root) {
+					if(sub.isset(name)) {
+						cur=sub
+						break;
+					}
+				}
+			}
+			if( type.eq('set')) {
+				not(cur) {
+					root=backend.get('@config')
+					if(root) {
+						cur=root.get('default')
+					}
+					not(cur) cur=backend
+				}
+				cur.set(name,@baro.backendValue(backend,node,value))
 			}
 		}
 	}
-	return v;
+	if( type.eq('value','string') ) {		
+		return @baro.backendValue(backend,node,cur);
+	}
+	return cur;
 }
+
 @baro.parseBackend(backend, node, &s, addCheck) {
 	Cf.error(true)
 	nl=conf('cf.newline')
-	ss='', skip=false, skipCnt=0, prevSize=0
+	prevSize=-1;
+	ss='', skip=false, skipCnt=0,val='';
 	while(s.valid(),idx) {
 		if(Cf.error()) return;
 		left=s.findPos('@[')
-		if(idx) {
-			if( prevSize.ne(ss.size()) ) ss.add(nl)
-		}
-		prevSize=ss.size()
-		not(isSpace(left)) {
+		if(isSpace(left)) {
+			if(prevSize!=ss.size()) {				
+				if( left.find("\n")) ss.add(nl)
+			}
+		} else {
 			ss.add(left)
 		}
 		not(s.ch()) break;
+		prevSize=ss.size()
 		indent=''
 		if(left.find("\n")) {
 			indent=@baro.lastIndent(left)
-		} else {
-			
 		}
-		ok=false
 		k=s.findPos(']'), def=''
 		if(lineCheck(k,'||')) {
-			key=k.findPos(':').trim()
-			def=k.trim()
-			k=key
+			v=@baro.configKeyValue(backend, node, k.findPos('||'),'value') not(v) v=k.trim()
+			if(v) ss.add(@baro.backendValue(backend,node,v))
+			continue;
 		}
-		else if(@baro.isFunc(k)) {
-			v=@baro.backendFuncVal(backend, node, k, indent)
-			if(v) ok=true
-		} else if(k.find('.')) {
-			v=@baro.backendKeyValue(backend,node, k, indent)
-		} else {			
-			if(node.isset(k)) {
-				v=node.get(k)
-				if(v) ok=true
-			} else if(backend.isset(k)) {
-				v=backend.get(k)
-				if(v) ok=true
+		ok=false
+		if(lineCheck(k,'?')) {
+			ok=@baro.configKeyValue(backend, node, k.findPos('?'))
+			c=k.ch()
+			if(c.eq('(')) {
+				val=k.match(1)
+				if(k.ch(':')) k.incr()
+			} else {
+				val=k.findPos(':')
 			}
+			if(ok) {
+				ss.add(@baro.backendValue(backend,node,val))
+			} else if(k.valid()) {
+				ss.add(@baro.backendValue(backend,node,k))
+			}
+			continue;
 		}
+		sp=s.cur()
 		c=s.ch()
+		if(c.eq('=')) {
+			s.incr()
+			val=_checkValue()
+			not(skip) {
+				@baro.backendValue(backend,node,k,'set',val)
+			}
+			continue
+		}
+		 
+		v=@baro.configKeyValue(backend,node, k, indent)
+		if(v) ok=true
 		if(c.eq('?')) {
 			s.incr()
 			v=_checkValue()
@@ -293,7 +389,7 @@ isSpace(&s) {
 		}
 		if(skip) continue;
 		if(ok) {
-			ss.add(v)
+			ss.add(@baro.backendValue(backend,node,v))
 		} else if(def) {
 			ss.add(def)
 		}
@@ -395,16 +491,14 @@ isSpace(&s) {
 		return false;
 	};
 }
-@baro.backendFuncVal(backend,node,&s) {
-	fnm = s.findPos('(',0,1).lower()	
-	fparam = s.match()
+@baro.backendFuncVal(backend,node,fnm,fparam) {
 	print(">> backendFuncVal $fnm")
 	if(fnm.eq('conf')) {
 		code = fparam.trim()
 		return @baro.conf(code)
 	}
 	if( fnm.eq('fields','binds','pk','tableinfo')) {
-		node = @baro.backendKeyValue(backend,node,"table.$fparam")
+		node = @baro.configKeyValue(backend,node,"table.$fparam")
 		return json().nodeStr(node)
 	} 
 	if( fnm.eq('eq')) {
@@ -448,7 +542,7 @@ isSpace(&s) {
 		cur.with(method, uri)
 		if(s.ch('{')) {
 			props=s.match(1)
-			@baro.parseProps(backend, node, cur, props,true)
+			@baro.parseConfig(backend, cur, props)
 		}
 		confCode = "baro.route:${node.name}#${uri}"
 		ep=funcsAppend(s)
@@ -529,7 +623,7 @@ isSpace(&s) {
 			if(fparam.start('=>',true)) {
 				vnm= fparam.trim()
 			}
-			sql = @baro.backendKeyValue(backend, node, "sql.$code")
+			sql = @baro.configKeyValue(backend, node, "sql.$code")
 			not(sql) {
 				sql="쿼리 코드 $code 미정의"
 				print("@@ $sql")
@@ -668,11 +762,12 @@ isSpace(&s) {
 		if(@baro.isFunc(info)) {
 			type=info.findPos('(',0,1).trim().lower()
 			size=info.match().trim()
-			cur.with(name,type,size,comment)
+			cur.with(name,type,size)
 		} else {
 			type=info.move().lower()
-			cur.with(name,type,comment)
+			cur.with(name,type)
 		}
+		if(comment) cur.set('comment', comment)
 		cur.set('fieldName', @baro.dbFieldName(name).upper())
 		while(info.valid()) {
 			c=info.ch() not(c) break;
@@ -681,8 +776,9 @@ isSpace(&s) {
 				continue;
 			}
 			if(@baro.isFunc(info)) {
-				fnm = info.move(), fparam=''
-				if(info.ch('(')) {
+				fnm = info.move().lower(), fparam=''
+				c=info.ch()
+				if(c.eq('(')) {
 					fparam=info.match()
 				}				
 				if(fnm.eq('def','default')) {
@@ -697,20 +793,49 @@ isSpace(&s) {
 					}
 					cur.set('def',true)
 					if(def) cur.set('defValue',def)
+				} else if(fnm.eq('fk')) {
+					cur.set('fk',true)
+					cur.set('fkValue',fparam)
+				} else if(fnm.eq('in')) {
+					fieldName=cur.set('fieldName')
+					ss=''
+					if(fieldName && ss ) {
+						while(fparam.valid()) {
+							a=fparam.findPos(',').trim()							
+							if(typeof(a,'num') ) {
+								ss.add(a)
+							} else {
+								c=a.ch()
+								if(c.eq()) ss.add(a) else ss.add("'",a,"'")
+							}
+						}
+						nodeAppendText('fieldCheck', "CHECK ($fieldName IN ($ss))", ' ')
+					}
+				} else if(fnm.eq('check')) {
+					nodeAppendText('fieldCheck', "CHECK ($fparam)", ' ')					
 				} else {
 					print("@@ $fnm 테이블 필드속성 미정의")
 				}
 			} else {
 				name = info.move()
-				cur.set(name,true)
+				if(name.eq('unique')) name='uniq'
+				if(name.eq('pk','fk','notnull','def','uniq')) {
+					cur.set(name,true)
+				} else {
+					nodeAppendText('fieldInfo', name, ' ')
+				}
 			}			
 		}
 		print(">> 테이블필드정보 : $cur")
 	}
 	nl=conf('cf.newline')
 	ss=''
+	fkCnt=0
+	while(cur, table) {
+		if( cur.isset('fkValue') ) fkCnt++;
+	}
 	while(cur, table, idx) {
-		cur.inject(fieldName, name, def, defValue, pk, fk, type, size, notnull)
+		cur.inject(fieldName, name, def, defValue, fk, pk, uniq, type, size, notnull, fieldCheck, fieldInfo)
 		if(idx) ss.add(',', nl)
 		not(type) type='text'
 		if(type.eq('flot')) {
@@ -718,13 +843,15 @@ isSpace(&s) {
 			not(size) size='10, 2'
 		} else if(type.eq('datetime','dt')) {
 			type='timestamp'
+		} else if(type.eq('num')) {
+			if(size) type='decimal' else type='integer'
 		} else if(type.eq('vc')) {
 			type='varchar'
 			not(size) size='255'
 		} else if(type.eq('uuid')) {
-			pk=true
 			def=true
-			defValue='uuid_generate_v4()'
+			defValue='gen_random_uuid()'
+			// defValue='uuid_generate_v4()'
 		} else if(type.eq('auto')) {
 			type='serial'
 		} else if(type.eq('int','num')) {
@@ -742,7 +869,7 @@ isSpace(&s) {
 			}
 			else {
 				if(type.eq('integer','decimal')) defValue='0'
-				else if(type.eq('timestamp')) defValue='NOW()'
+				else if(type.eq('timestamp')) defValue='CURRENT_TIMESTAMP'
 				else if(type.eq('date')) defValue='CURRENT_DATE'
 				else if(type.eq('time')) defValue='CURRENT_TIME'
 				else if(type.eq('char') && size.eq('1')) defValue='Y'
@@ -755,6 +882,32 @@ isSpace(&s) {
 				ss.add(" DEFAULT '$defValue'")
 			}
 		}
+		if(fk) {
+			s=cur.ref('fkValue')
+			aa=s.move(), bb=''
+			c=s.ch()
+			if(c.eq('.')) {
+				bb=s.incr().move()
+			}
+			if(aa) {
+				if(fieldInfo) fieldInfo.add(' ')
+				fieldInfo.add(aa) if(bb)fieldInfo.add(" ($bb)")
+			}			
+		}
+		if(uniq) { 
+			nodeAppendText(table, '@tableUniques', fieldName, ',')
+		}		
+		if(fieldCheck) {
+			ss.add(" $fieldCheck")
+			// ALTER TABLE ${table} ADD CHECK (${fieldName} >= 30000)
+		}
+		if(fieldInfo) {
+			ss.add(" $fieldInfo")
+		}
+	}
+	fields=table.get('@tableUniques')
+	if(fields) {
+		ss.add(',',nl,'UNIQUE(',fields,')')
 	}
 	return ss;
 }
@@ -781,16 +934,6 @@ isSpace(&s) {
 		sql.set('@source',s.match(1))
 	}
 }
-@baro.configFuncVal(backend,node,&s) {
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq(',')) {
-			s.incr()
-			continue;
-		}
-		not(@baro.isFunc(s)) return print("config 설정 시작오류 ", s)
-	}
-}
 @baro.dbFieldName(&s) {
 	not(typeof(s,'string')) return;
 	ss='', upper=false
@@ -804,23 +947,202 @@ isSpace(&s) {
 	}
 	return ss;
 }
+
 @baro.backendValue(backend,node,&s,indent) {
-	if(_isTagValue(s)) {
-		tag = s.incr().move()
-		s.incr()
-		props=s.findPos('=>')
-		return s;
-	} 
-	if(s.find('@[')) {
-		return @baro.parseBackend(backend,node,s)
-	}
-	return s;
-	
-	_isTagValue=func(s) {
+	not(s) return;
+	checkNull=func(&s) {
+		a=s.move().lower()
+		if( a.eq('null') && ~(s.ch()) ) return true;
+		return false;
+	};
+	isTagValue=func(s) {
 		c=s.ch()
 		if(c.eq('&')) {
 			
 		}
 		return false;
 	};
+	if(typeof(s,'string')) {
+		if(checkNull(s)) return;
+		if(isTagValue(s)) {
+			tag = s.incr().move()
+			s.incr()
+			props=s.findPos('=>')
+			return s;
+		} 
+		if(s.find('@[')) {
+			return @baro.parseBackend(backend,node,s)
+		}
+		return s;
+	}
+	if(typeof(s,'node')) {
+		cur=s
+		if(cur.isset('@value')) return cur.get('@value');
+	}
+	return "$s";
+	
+}
+@baro.parseConfigArray(parent, node, arr, &s ) {
+	not(typeof(arr,'array')) return print('@baro.parseConfigArray 배열 미정의');
+	if(typeof(s,'bool')) return print('@baro.parseConfigArray 매치오류');
+	arr.reuse()
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq(',')) {
+			s.incr()
+			continue;
+		}
+		if(c.eq()) { 
+			arr.add(s.match())
+			continue;
+		}
+		if(c.eq('{')) {
+			cur= node.addNode()
+			@baro.parseConfig(parent,node,s.match())
+			arr.add(cur)
+		} else if(c.eq('[')) {
+			a = node.addArray()
+			@baro.parseConfigArray(parent,node,a,s.match())
+			arr.add(a)
+		} else if(lineCheck(s,',')) {
+			v=s.findPos(',').trim()
+			arr.add(v)
+		} else {
+			v=s.findPos("\n").trim()
+			arr.add(v)
+		}
+	}
+	return arr;
+}
+trimLine(&s) {
+	nl=conf('cf.newline')
+	ss=''
+	while(s.valid(),n) {
+		not(s.ch()) break;
+		line=s.findPos("\n").trim() not(line)continue;
+		if(n) ss.add(nl)
+		ss.add(line)
+	}
+	return ss;
+}
+@baro.parseConfig(parent, node, &s, overwrite) {
+	if(typeof(s,'bool')) return print('@baro.parseConfig 매치오류');
+	not(typeof(node,'node')) return print('@baro.parseConfig 타겟노드오류');
+	arr = node.addArray('@keyArray').reuse()
+	addProp = func(k,v) {
+		if(arr.find(k)) {
+			not(overwrite) {
+				print("@@ parseConfig $k 가 중복등록되었습니다", node)
+				return;
+			}
+			arr.remove(k)
+			arr.add(k)
+		} else {
+			arr.add(k)
+		}
+		node.set(k,v)
+	};
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq(',',';')) {
+			s.incr()
+			continue;
+		}		
+		if(c.eq()) {
+			k=s.match()
+		} 
+		else {
+			sp=s.cur()
+			if(c.eq('@')) {
+				s.incr()
+			}
+			c=s.next().ch()
+			while(c.eq('-')) {
+				c=s.incr().next().ch()
+			}
+			k=s.trim(sp,s.cur(),true)
+		}
+		bprop=false
+		if(c.eq(':','=')) {			
+			bprop=true
+			c=s.incr().ch()
+		}
+		if(c.eq()) {
+			addProp(k,s.match())
+			continue
+		} 
+		if(c.eq('(')) {
+			v=trimLine(s.match(1))
+			addProp(k,v)
+			continue
+		}
+		if(@baro.isFunc(s)) {
+			sp=s.cur()
+			while(@baro.isFunc(s)) {
+				s.findPos('(',0,1)
+				s.match()
+				c=s.ch() 
+				if(c.eq(',',';')) s.incr().ch()
+			}
+			v = s.trim(sp,s.cur(),true)
+			addProp(k,v)
+			continue
+		}
+		if(c.eq('<')) {
+			if(s.start('<>')) {
+				addProp(k, s.match('<>','</>'))
+			} else {
+				sp=s.cur()
+				c=s.incr().next().ch()
+				while(c.eq('-')) {
+					c=s.incr().next().ch()
+				}
+				tag = s.trim(sp+1,s.cur(),true)
+				s.pos(sp)
+				src=s.match("<$tag","</$tag>",8) 
+				if(typeof(src,'bool')) {
+					print("@@ $tag 매칭오류")
+					s.pos(sp)
+					v=s.findPos("\n").trim()
+					addProp(k,v)
+				} else {
+					prop=src.findPos('>')				
+					addProp("@k","${tag}:${prop}")
+					addProp(k,src)
+				}
+			}
+			continue
+		}
+		if(c.eq('{','[')) {
+			sub=s.match(1)
+			if(c.eq('{')) {
+				cur = node.addNode(k)
+				@baro.parseConfig(parent,cur,sub)
+			} else {
+				arr = node.addArray(k)
+				@baro.parseConfigArray(parent,node,arr,sub)
+			}
+			continue
+		}
+		
+		if( bprop) {
+			if(lineCheck(s,',')) {
+				v=s.findPos(',').trim()
+			} else {
+				v=s.findPos("\n").trim()
+			}
+		} else {
+			v=true
+		}
+		addProp(k,v)
+	}
+	return node;
+}
+@baro.setNodeVersion() {
+	@baro.cmdRun(c,'node -v',func(&s) {
+		backend=object('baro.backend')
+		s.findPos("\n")
+		line=s.findPos("\n")
+		backend.set('@nodeVersion', line)
+	})
 }

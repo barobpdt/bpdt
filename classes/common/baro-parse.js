@@ -442,18 +442,22 @@ function ${renderFunc} {
 			@baro.parseArray(parent,page,node,arr,s.match())
 		} else if(c.eq('<')) {
 			sp=s.cur()
-			c=s.incr().next().ch()
-			while(c.eq('-')) {
-				c=s.incr().next().ch()
-			}
-			tag = s.trim(sp+1,s.cur(),true)
-			s.pos(sp)
-			src=s.match("<$tag","</$tag>",8) if(typeof(src,'bool')) return print("$tag 매칭오류", page.pageCode)
 			html=''
-			p=src.findPos('>')
-			html.add("<${tag}") if(p.ch()) html.add(" $p>") else html.add(">");
-			html.add(@baro.parseSource(parent,page,node,src,'value'))
-			html.add("</$tag>")
+			if(s.start('<>')) {
+				html.add(s.match('<>','</>'))
+			} else {
+				c=s.incr().next().ch()
+				while(c.eq('-')) {
+					c=s.incr().next().ch()
+				}
+				tag = s.trim(sp+1,s.cur(),true)
+				s.pos(sp)
+				src=s.match("<$tag","</$tag>",8) if(typeof(src,'bool')) return print("$tag 매칭오류", page.pageCode)				
+				p=src.findPos('>')
+				html.add("<${tag}") if(p.ch()) html.add(" $p>") else html.add(">");
+				html.add(@baro.parseSource(parent,page,node,src,'value'))
+				html.add("</$tag>")
+			}
 			node.set("@$k", html)
 		} else {			
 			if(bsty || bprop) {
@@ -1552,4 +1556,12 @@ catchError() {
 		if(v) conf(k,v,true)
 	}
 	return v;
+}
+
+tagCheck(obj, type) {
+	not(typeof(obj,'node')) return false;
+	if(obj.cmp('tag',type)) return true;
+	tag=obj.get('@tag')
+	chk = tag && tag.start(type)
+	return chk;
 }

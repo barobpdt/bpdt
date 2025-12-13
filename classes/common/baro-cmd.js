@@ -42,7 +42,7 @@
 	return obj;
 }
 @baro.cmdRun(param) {
-	if(_tagCheck(param,'process')) {
+	if(tagCheck(param,'process')) {
 		args(cmd,command,callback)
 		if( typeof(callback,'func')) {
 			cmd.set('@callbackResult', callback)
@@ -50,9 +50,9 @@
 		cmd.set('@logPrint', true)
 	} else {
 		args(command, callback)
-		cmd=@baro.cmdObject(callback)
+		cmd=@baro.cmd(callback)
 	}
-	not(_tagCheck(cmd,'process')) return print("@@ cmdRun 오류 $cmd 객체오류");
+	not(tagCheck(cmd,'process')) return print("@@ cmdRun 오류 $cmd 객체오류");
 	not( cmd.run() ) {
 		@baro.cmdStop(cmd)
 		cmd.cmdList.add('chcp 65001')
