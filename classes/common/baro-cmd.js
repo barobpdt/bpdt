@@ -1,4 +1,17 @@
-@baro.cmd(resultFunc) {
+@baro.cmd(param) {
+	if(param && typeof(param,'string')) {
+		args(name, callback)
+		cur = Baro.process(name)
+		if( typeof(callback,'func')) {
+			cur.set('@callbackResult', callback)
+		}
+		arr=cur.get('cmdList') 
+		if(typeof(arr,'array')) return cur;
+		cur.addArray('cmdList')
+		cur.set('@firstCall', true)
+		_event(cur, '@callback', @baro.cmdProc)		
+		return cur;
+	}
 	map=object('baro.objectMap')
 	arr=map.get('@cmdObjects')
 	cnt=0 if( typeof(arr,'array') ) cnt=arr.size()
@@ -35,8 +48,8 @@
 	not( obj ) {
 		obj = addCmd(arr.size()+1)
 	}
-	if( typeof(resultFunc,'func')) {
-		obj.set('@callbackResult', resultFunc)
+	if( typeof(param,'func')) {
+		obj.set('@callbackResult', param)
 	}
 	print("@@ cmdObject ok => ", obj.id)
 	return obj;
@@ -114,3 +127,4 @@
 		}
 	}
 }
+

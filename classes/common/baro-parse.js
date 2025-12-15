@@ -1565,3 +1565,97 @@ tagCheck(obj, type) {
 	chk = tag && tag.start(type)
 	return chk;
 }
+typeName(&s) {
+	ss='', upper=false
+	while(n=0, s.size()) {
+		c=s.ch(n) not(c) break;
+		if(c.eq('-')) {
+			upper=true
+			continue;
+		}
+		if(upper || n.eq(0)) {	
+			ss.add(c.upper())
+			upper=false
+		} else {
+			ss.add(c)
+		}
+	}
+	return ss;
+}
+
+@baro.jsonDataArray(&s,parentType) {
+		nm=null
+		while(s.valid()) {
+			c=s.ch() not(c) break;
+			if(c.eq('{')) {
+				a=s.match()
+				ss=@baro.jsonDataNode(a)
+				not(nm){
+					nm=parentType
+					types=object('baro.types')
+					types.appendText('@arrayTypes', "$parentType {$ss}")
+				}
+			} else if(c.eq()) {
+				a=s.match()
+				not(nm) nm='string'
+			} else {
+				v=s.findPos(',').trim()
+				not(nm) {					
+					if(typeof(v,'num')) nm='number'
+					else if(v.eq('true','false')) nm='boolean'
+					else nm='null'
+				}
+			}
+		}
+		return nm
+	}
+	@baro.jsonDataNode(&s,parentType) {
+		nl=conf('cf.newline')
+		ss=''
+		while(s.valid()) {
+			c=s.ch()not(c) break;
+			if(c.eq(',')) {
+				s.incr()
+				continue
+			}
+			not(c.eq()) break;
+			if(ss) {
+				ss.add(',',nl)
+			}
+			k=s.match()
+			c=s.ch()
+			not(c.eq(':')) break;
+			c=s.incr().ch()
+			 if(c.eq('[','{')) {
+				a=s.match(1)
+				tynm=typeName(k)
+				if(c.eq('{')) {
+					ty='node'
+					@baro.jsonDataNode(a,tyNm)
+					ss.add("$k:",tynm)
+				} else {					
+					ty='array'
+					nm=@baro.jsonDataArray(a,tynm)
+					ss.add("$k:$nm[]")
+				}
+				continue;
+			}
+			if(c.eq()) {
+				v=s.match()
+				ty='string'
+			} else {
+				v=s.findPos(',').trim()
+				if(typeof(v,'num')) {
+					ty='number'
+				} else {
+					ty='boolean'
+				}
+			}
+			ss.add("$k:$ty")
+		}
+		if(parentType) {
+			types=object('baro.types')
+			types.appendText('@nodeTypes', "$parentType {$ss}")
+		}
+		return ss;
+	}
