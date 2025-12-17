@@ -4,6 +4,7 @@
 const clog=window.console.log
 const tm = ()=> new Date().getTime()
 const randomKey = () => (new Date%9e64).toString(36)
+const isType = target => Object.prototype.toString.call(target).slice(8, -1)
 const isNull = a => a===null || typeof a == 'undefined'
 const isEmpty = a => isNull(a) || (typeof a=='string' && a=='' )
 const isObj = a => !isNull(a) && typeof a=='object';
@@ -21,7 +22,7 @@ const getJq = el => isEl(el) ? $(el) :
 	jqCheck(el)? el: 
 	typeof el=='string'? (('#'==el.charAt(0)|| el.indexOf('.')!=-1)? $(el): $(document.getElementById(el))): null;
 
-Object.prototype.update = function(...args) { return Object.assign(this,...args) }
+// Object.prototype.update = function(...args) { return Object.assign(this,...args) }
 Object.prototype.copy = function(...args) { return Object.assign({},this,...args) }
 Object.prototype.isset = function(name) { return this.hasOwnProperty(name) }
 Object.prototype.cmp = function(name, value) { return this.isset(name) && this[name]===value }

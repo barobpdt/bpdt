@@ -1317,6 +1317,7 @@ ${className}${expr} {
 	return ss;
 }
 @baro.isFunc(&s) {
+	not(s.ch()) return;
 	c=s.next().ch()
 	while(c.eq('-','.')) c=s.incr().next().ch()
 	return when(c.eq('('), true)

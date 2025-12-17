@@ -1,3 +1,25 @@
+@baro.frontendProc(&s) {
+	c=s.ch(-1)
+	print(">> frontendProc [$c] :: $s")
+}
+/*
+@baro.findBindPort(5173, func(port) {
+	if(port) return print("front 데몬이 실행중입니다")
+	print("xxxxxxx 프론트엔드 실행 시작 xxxxxxxxxxx")
+	@baro.viteRunDev()
+})
+*/
+@baro.viteRunDev(projectPath, logPath) {
+	not(projectPath) projectPath = 'C:/temp/vite/sample-baro1'
+	not(logPath) logPath='log.txt'	
+	npmCmd = 'npm run dev >> "$logPath" 2>&1'
+	cc=@baro.cmd('frontend')
+	@baro.cmdRun(cc, "cd $projectPath", @baro.frontendProc )
+	@baro.cmdRun(cc, _s(npmCmd) )
+	print("xxxxxxx 프론트엔드 실행중 xxxxxxxxxxx")
+}
+
+
 @baro.initBackend(projectFolder, mode, infoSource) {
 	backend = object("baro.backend")
 	not(backend.isset('@typeMap')) {
@@ -62,11 +84,11 @@
 			print(">> parse backend type=====$type $confCode start")
 			if(type.eq('config')) {
 				@baro.parseConfig(backend, cur, stripComment(left))
-			} else if(type.eq('route')) {
-				@baro.parseRoute(backend, cur, left)
 			} else if(type.eq('sql')) {
 				@baro.sqlFuncVal(backend, cur, left)
-			} else if(type.eq('table')) {
+			} else if(type.eq('routes')) {
+				@baro.parseRoute(backend, cur, left)
+			} else if(type.eq('tables')) {
 				@baro.tableFuncVal(backend, cur, left)
 			} else {
 				@baro.parseConfig(backend, cur, left)
@@ -80,10 +102,6 @@
 			ty=map.get(type) if(ty) type=ty
 		}
 		base=backend.addNode("@$type")
-		if(reset) {
-			arr=base.get('@keyArray') if(arr) arr.reuse()
-			cur.removeAll(true)
-		}
 		name=''
 		if(_isProps(s)) { 
 			s.ch()
@@ -92,7 +110,15 @@
 			name=base.name
 		}
 		not(name) name='default'
-		cur=base.get(name) not(cur)cur=base.addNode(name)
+		cur=base.get(name) 
+		if(cur) {
+			if(reset) {
+				arr=base.get('@keyArray') if(arr) arr.reuse()
+				cur.removeAll(true)
+			}
+		} else {
+			cur=base.addNode(name)
+		}
 		cur.set('@name', name)
 	}	
 }
@@ -193,6 +219,12 @@ isSpace(&s) {
 @baro.configKeyValue(backend, node, &s, type, value) {
 	ss='', cur=null, refNode = null
 	not(node) node=backend
+	getName = func() {
+		sp=s.cur()
+		c=s.next().ch()
+		while(c.eq('-')) c=s.next().ch()
+		return s.trim(sp,s.cur(),true);
+	};
 	while(s.valid()) {
 		c=s.ch() not(c) break;
 		if(c.eq('.')) {
@@ -200,10 +232,7 @@ isSpace(&s) {
 			if(@baro.isFunc(s)) {
 				continue;
 			}
-			sp=s.cur()
-			c=s.next().ch()
-			while(c.eq('-')) c=s.next().ch()
-			name=s.trim(sp,s.cur(),true)
+			name=getName()
 			if(typeof(cur,'node')) {
 				cur=cur.get(name)
 			} else {
@@ -220,95 +249,53 @@ isSpace(&s) {
 			fparam=s.match(1)
 			cur=@baro.backendFuncVal(backend,node,fnm,fparam)
 		} else {
-			root=null
-			sp=s.cur()
-			c=s.next().ch()
-			while(c.eq('-')) c=s.next().ch()
-			name=s.trim(sp,s.cur(),true)
-			root=null
-			parent=node.parentNode() not(parent) parent=backend
-			if(name.eq('this','parent','global')) {
-				if(name.eq('this')) {
-					cur=node.cur(name)
-				} else if(name.eq('parent')) {
-					cur=parent.cur(name)
-				} else {
-					cur=backend.cur(name)
-				}
-			} else {
-				checkDef=true
-				if(node.var(localVar) && node.isset(name) ) {
-					cur=node.get(name)
-				} else if(parent.isset(name)) {
-					if(node.isset(name)) {
-						cur=node.get(name)
-					} else {
-						cur=parent.get(name)
-					}
-				} else if(backend.isset("@$name")) {
-					cur=backend.get("@$name")
+			root=null 
+			name=getName()
+			c=s.ch()
+			cf=backend.get('@config') not(cf) return print("configKeyValue config변수 정의되지 않았습니다 name=$name")			
+			if( name.eq('this') ) {
+				cur=node
+			} else if(cf.isset("@$name")) {		
+				cur=cf.get("@$name")
+				refNode=cur
+			} else if(cf.isset('default')) { 
+				def=cf.get('default')
+				if(def.isset(name)) {
+					cur=def.get(name)
 					refNode=cur
-					root=cur
-				} else {
-					if(node.isset(name)) {
-						cur=node.get(name)
-					} else if(backend.isset(name)) {
-						cur=backend.get(name)
-					} else {
-						root=backend.get('@config')
-						if(root) {
-							def=root.get('default')
-							if(def && def.isset('@keyArray')) {
-								cur=def.get(name)
-								if(cur) refNode=def
-							} else {
-								cur=root.get(name)
-							}
-						}
-						checkDef=false
-					}
 				}
 			}
-			if(c.eq('.')) {
-				s.incr()
-				sp=s.cur()
-				c=s.next().ch()
-				while(c.eq('-')) c=s.next().ch()
-				name=s.trim(sp,s.cur(),true)
-				if(typeof(cur,'node')) {
-					cur=cur.get(name)
-					if(cur) {
-						if(typeof(cur,'node')) refNode=cur
-					} else {
-						if(checkDef && root) {
-							def=root.get('default')
-							if(def) {
-								cur=def.get(name)
-								if(cur) refNode=def
-							}
-						}
-					}
-				}
-			} 
-			if( cur ) continue;
-			if( root) {
-				while(sub,root) {
-					if(sub.isset(name)) {
-						cur=sub
-						if(cur) refNode=def
-						break;
-					}
+			if(cur) {
+				print(">> config $name 설정 ", cur)
+				continue;
+			}
+			if(node.isset(name)) {
+				cur=node.get(name)
+			} else {
+				parent=node.parentNode() not(parent) parent=backend
+				cur=parent.get(name)
+			}
+			if( cur ) {				
+				continue;
+			}
+			while(sub,cf) {
+				if(sub.isset(name)) {
+					refNode=sub
+					cur=sub.get(name)
+					break;
 				}
 			}			
 		}
-	}
+	}	
 	if( type.eq('ref')) {
+		not(refNode) refNode=node
 		@baro.parseBackend(backend,refNode,cur,name);
 		print("keyValue ref >> ", name, refNode, cur)
 		return refNode.get("&$name")
 	} 
-	if( type.eq('value','string') ) {		
-		return @baro.backendValue(backend,node,cur);
+	if( type.eq('value','string') ) {
+		not(refNode) refNode=node
+		return @baro.backendValue(backend,refNode,cur);
 	}
 	if( type.eq('set')) {
 		not(cur) {
@@ -1115,6 +1102,12 @@ trimLine(&s) {
 	}
 	return ss;
 }
+@baro.isSingleTag(tag,&s) {
+	left=s.findPos('>')
+	c=left.ch(-1)
+	if(c.eq('/')) return true;
+	return false;
+}
 @baro.parseConfig(parent, node, &s, mode) {
 	if(typeof(s,'bool')) return print('@baro.parseConfig 매치오류');
 	not(typeof(node,'node')) return print('@baro.parseConfig 타겟노드오류');
@@ -1157,6 +1150,17 @@ trimLine(&s) {
 			}
 			continue;
 		}
+		if(c.eq('&')) {
+			not(lineCheck(s,'{')) {
+				line=s.findPos("\n")
+				return print("@@ parseConfig 속성설정 시작오류 중괄호가 라인에 정의되지 않았습니다", line)
+			}
+			k=s.findPos('{',0,1).trim()
+			body=s.match(1)
+			cur=node.addNode(k)
+			@baro.parseConfig(backend, cur, body)
+			continue;
+		}
 		if(c.eq()) {
 			k=s.match()
 		} 
@@ -1171,6 +1175,16 @@ trimLine(&s) {
 			}
 			k=s.trim(sp,s.cur(),true)
 		}
+		if(c.eq('(')) {
+			v=trimLine(s.match(1))
+			addProp(k,v)
+			continue
+		}
+		if(c.eq('{')) {
+			addProp(k,s.match(1))
+			continue
+		}
+		
 		bprop=false
 		if(c.eq(':','=')) {			
 			bprop=true
@@ -1180,11 +1194,7 @@ trimLine(&s) {
 			addProp(k,s.match())
 			continue
 		} 
-		if(c.eq('(')) {
-			v=trimLine(s.match(1))
-			addProp(k,v)
-			continue
-		}
+		
 		if(@baro.isFunc(s)) {
 			sp=s.cur()
 			while(@baro.isFunc(s)) {
@@ -1207,18 +1217,23 @@ trimLine(&s) {
 					c=s.incr().next().ch()
 				}
 				tag = s.trim(sp+1,s.cur(),true)
-				s.pos(sp)
-				src=s.match("<$tag","</$tag>",8) 
-				if(typeof(src,'bool')) {
-					print("@@ $tag 매칭오류")
-					s.pos(sp)
-					v=s.findPos("\n").trim()
-					addProp(k,v)
+				if( @baro.isSingleTag(tag,s) ) {
+					prop=s.findPos('>')
+					c=prop.ch(-1)
+					if(c.eq('/')) {
+						sp=prop.cur()
+						prop=prop.value(sp,-1)
+					}
 				} else {
-					prop=src.findPos('>')				
-					addProp("@k","${tag}:${prop}")
-					addProp(k,src)
+					s.pos(sp)
+					src=s.match("<$tag","</$tag>",8) 
+					if(typeof(src,'bool')) {
+						return print("@@ $tag 매칭오류")
+					}
+					prop=src.findPos('>')
 				}
+				addProp("@k","${tag}:${prop}")
+				addProp(k,src)
 			}
 			continue
 		}
@@ -1234,9 +1249,11 @@ trimLine(&s) {
 			continue
 		}
 		
-		if( bprop) {
-			if(lineCheck(s,'@[')) {
+		if( bprop) { 
+			if( lineCheck(s,'@[') ) {
 				v=s.findPos("\n").trim()
+			} else if(lineCheck(s,';')) {
+				v=s.findPos(';').trim()
 			} else if(lineCheck(s,',')) {
 				v=s.findPos(',').trim()
 			} else {

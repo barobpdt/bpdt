@@ -1,4 +1,7 @@
 <api>
+	version(req, params) {
+		return '1.0.0'
+	}
 	drives(req, params, &uri) {
 		print("drives >> ", param, uri) 
 		while(path, System.driveList() ) {
