@@ -114,3 +114,149 @@ export const usePersistanceStore = create(
     }
   )
 );
+
+##> typscript 
+import library from '@/assets/data/library.json'
+import { unknownTrackImageUri } from '@/constants/images'
+import { Artist, Playlist, TrackWithPlaylist } from '@/helpers/types'
+import { Track } from 'react-native-track-player'
+import { create } from 'zustand'
+
+interface LibraryState {
+	tracks: TrackWithPlaylist[]
+	toggleTrackFavorite: (track: Track) => void
+	addToPlaylist: (track: Track, playlistName: string) => void
+}
+
+export const useLibraryStore = create<LibraryState>()((set) => ({
+	tracks: library,
+	toggleTrackFavorite: (track) =>
+		set((state) => ({
+			tracks: state.tracks.map((currentTrack) => {
+				if (currentTrack.url === track.url) {
+					return {
+						...currentTrack,
+						rating: currentTrack.rating === 1 ? 0 : 1,
+					}
+				}
+
+				return currentTrack
+			}),
+		})),
+	addToPlaylist: (track, playlistName) =>
+		set((state) => ({
+			tracks: state.tracks.map((currentTrack) => {
+				if (currentTrack.url === track.url) {
+					return {
+						...currentTrack,
+						playlist: [...(currentTrack.playlist ?? []), playlistName],
+					}
+				}
+
+				return currentTrack
+			}),
+		})),
+}))
+
+export const useTracks = () => useLibraryStore((state) => state.tracks)
+
+export const useFavorites = () => {
+	const favorites = useLibraryStore((state) => state.tracks.filter((track) => track.rating === 1))
+	const toggleTrackFavorite = useLibraryStore((state) => state.toggleTrackFavorite)
+
+	return {
+		favorites,
+		toggleTrackFavorite,
+	}
+}
+
+export const useArtists = () =>
+	useLibraryStore((state) => {
+		return state.tracks.reduce((acc, track) => {
+			const existingArtist = acc.find((artist) => artist.name === track.artist)
+
+			if (existingArtist) {
+				existingArtist.tracks.push(track)
+			} else {
+				acc.push({
+					name: track.artist ?? 'Unknown',
+					tracks: [track],
+				})
+			}
+
+			return acc
+		}, [] as Artist[])
+	})
+
+export const usePlaylists = () => {
+	const playlists = useLibraryStore((state) => {
+		return state.tracks.reduce((acc, track) => {
+			track.playlist?.forEach((playlistName) => {
+				const existingPlaylist = acc.find((playlist) => playlist.name === playlistName)
+
+				if (existingPlaylist) {
+					existingPlaylist.tracks.push(track)
+				} else {
+					acc.push({
+						name: playlistName,
+						tracks: [track],
+						artworkPreview: track.artwork ?? unknownTrackImageUri,
+					})
+				}
+			})
+
+			return acc
+		}, [] as Playlist[])
+	})
+
+	const addToPlaylist = useLibraryStore((state) => state.addToPlaylist)
+
+	return { playlists, addToPlaylist }
+}
+
+##> presist
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { getCookie, deleteCookie } from '@/utils/cookieUtil';
+
+export type userInfo = {
+  id: number;
+  name: string;
+};
+
+interface AuthProps {
+  user: userInfo | null; // 유저 정보
+  saveUser: (user: userInfo) => void; // 유저 정보 저장
+  isLogin: boolean; // 로그인 여부
+  checkLogin: () => void; // 로그인 여부 확인 함수
+  logout: () => void; // 로그아웃
+}
+
+export const useAuthStore = create(
+  persist<AuthProps>((set) => ({
+		user: null,
+		isLogin: false,
+		saveUser: (user) => {
+		  set({ user, isLogin: true });
+		},
+		checkLogin: () => {
+		  const accessToken = getCookie('accessToken');
+		  if (accessToken) {
+			set({ isLogin: true });
+		  } else {
+			set({ user: null, isLogin: false });
+		  }
+		},
+		logout: () => {
+		  deleteCookie('accessToken');
+		  set({ user: null, isLogin: false });
+		}
+	}),
+    {
+      name: 'authStore',
+      getStorage: () => {
+        return localStorage;
+      }
+    }
+  )
+);

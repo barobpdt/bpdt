@@ -35,7 +35,7 @@
 		fo.mkdir(projectFolder, true)
 	}
 	envPath=pathJoin(projectFolder,'.env')
-	@baro.filePathInfo(projectFolder).inject(basePath,projectName)
+	filePathInfo(projectFolder).inject(basePath,projectName)
 	backend.removeAll(true)
 	backend.with(projectFolder, mode, basePath, projectName)
 	backend.backendInitTick = System.tick()

@@ -8,7 +8,7 @@
 		if(typeof(arr,'array')) return cur;
 		cur.addArray('cmdList')
 		cur.set('@firstCall', true)
-		_event(cur, '@callback', @baro.cmdProc)
+		event(cur, '@callback', @baro.cmdProc)
 		return @baro.cmdRun(cur, 'cd');
 	}
 	map=object('baro.objectMap')
@@ -18,7 +18,7 @@
 		cur = arr.add(Baro.process("cmdObject_$n"))
 		cur.set('@firstCall', true)
 		cur.addArray('cmdList').reuse()
-		_event(cur, '@callback', @baro.cmdProc)
+		event(cur, '@callback', @baro.cmdProc)
 		return cur;
 	};
 	not(cnt) {

@@ -403,7 +403,7 @@
 		return node.parseResult(s);
 	}
 	name=node.name not(name) name=System.date("yyyyMMdd");
-	path=_s('c:/temp/${name}.html')
+	path=str('c:/temp/${name}.html')
 	fileWrite(path,s)
 	node.set('@saveFileName', path)
 	@job.addPost('openUrl', node)
@@ -415,7 +415,7 @@
 		print("@@ post test", node)
 		fileName = node.get('@saveFileName')
 		program=conf('job.sourceEditor') not(program) program='code'
-		cmd().run( _s('$program "$fileName" '))
+		cmd().run( str('$program "$fileName" '))
 	}
 }
 
@@ -429,7 +429,7 @@
 /*
 month='01'
 days=System.date(System.localtime("2025-$month-01"),'daysInMonth')
-data = _s('chartType=TOP&searchStartDate=2025-$month-01&searchEndDate=2025-$month-$days&strType=')
+data = str('chartType=TOP&searchStartDate=2025-$month-01&searchEndDate=2025-$month-$days&strType=')
 node.set('work_month', month)
 node.set('@method','POST')
 node.set('@data', data)
@@ -473,7 +473,7 @@ _dbFetch(db, sql, node, filter) {
 	not(filter) filter=''
 	if(filter) {
 		fn=Cf.funcNode()
-		query=_s(sql,fn)
+		query=str(sql,fn)
 	} else {
 		query=sql
 	}
@@ -542,10 +542,10 @@ _dbExec(db,sql,node) {
 	cmdline = func() {
 		log=logWriter('runcmd-in')
 		out=logReader('runcmd-out')
-		python=_s('${@python.path}/python')
-		pythonFilename = _s('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
-		srcPath = _s('${@sample.path}/apps') not(isFolder(srcPath)) return print("python 소스경로 오류=");
-		return _s('$python "$srcPath/run_cmd.py" --log "${log.logFileName}" --out "${out.logFileName}"');
+		python=str('${@python.path}/python')
+		pythonFilename = str('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
+		srcPath = str('${@sample.path}/apps') not(isFolder(srcPath)) return print("python 소스경로 오류=");
+		return str('$python "$srcPath/run_cmd.py" --log "${log.logFileName}" --out "${out.logFileName}"');
 	}
 	if( cmd ) {
 		runCheck = ~(cmd.run()) || cmd.cmp('@status','stay');
@@ -580,11 +580,11 @@ _dbExec(db,sql,node) {
 @python.cmdPip(line) {
 	not(line) line='pip list'
 	not(line.start('pip')) line = Cf.val('pip ',line)
-	python=_s('${@python.path}/python')
-	pythonFilename = _s('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
+	python=str('${@python.path}/python')
+	pythonFilename = str('$python.exe') not(isFile(pythonFilename)) return print("python 설치파일 찾기오류 경로:$pythonFilename");
 	map=object('baro.objectMap')
 	cmd = map.get('@cmdPip')
-	cmdline = _s('$python -m $line')
+	cmdline = str('$python -m $line')
 	if( cmd ) {
 		@job.cmdRun(cmd, cmdline)
 	} else {
@@ -603,7 +603,7 @@ _dbExec(db,sql,node) {
 @job.openSource#post(node) {
 	fullpath = node.fullpath
 	print(">> job.openSource start", node.fullpath)
-	@job.cmdRun(_s('notepade "$fullpath'))
+	@job.cmdRun(str('notepade "$fullpath'))
 }
 
 @python.execTimeout() {
@@ -691,7 +691,7 @@ funcParam(param) {
 @job.killPort(port) {
 	c=@job.cmdRun('cd') 
 	funcParam(c,'port')
-	@job.cmdRun(c, _s('netstat -ano | findstr $port'), func(&s) {
+	@job.cmdRun(c, str('netstat -ano | findstr $port'), func(&s) {
 		port = funcParam('port')
 		print("kill port ", this, port)
 		cc=@job.cmdRun('cd')
@@ -706,7 +706,7 @@ funcParam(param) {
 				pid=line.trim()
 				print("pid:$pid")
 				if(pid) {
-					@job.cmdRun(cc,_s('taskkill /PID $pid /F'))
+					@job.cmdRun(cc,str('taskkill /PID $pid /F'))
 				}
 			}
 		}
@@ -715,7 +715,7 @@ funcParam(param) {
 @job.killProg(name) {
 	c=@job.cmdRun('cd')
 	funcParam(c, 'name')
-	@job.cmdRun(c, _s('tasklist | findstr $name'), func(&s) {
+	@job.cmdRun(c, str('tasklist | findstr $name'), func(&s) {
 		name = funcParam('name')
 		cc=@job.cmdRun('cd')
 		while(s.valid()) {
@@ -727,8 +727,8 @@ funcParam(param) {
 			}
 			pid = s.move()
 			print("pid:$pid")
-			// @job.cmdRun(cc,_s('taskkill /im $name /F'))
-			@job.cmdRun(cc,_s('taskkill /PID $pid /F'))
+			// @job.cmdRun(cc,str('taskkill /im $name /F'))
+			@job.cmdRun(cc,str('taskkill /PID $pid /F'))
 		}
 	});
 }

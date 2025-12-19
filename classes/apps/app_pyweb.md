@@ -1,3 +1,39 @@
+_page(pcode,src) {
+	p = Cf.getObject('page', pcode)
+	s=stripJsComment(src)
+	s.ref()
+	c=s.ch()
+	if(p) {
+		not(c.eq('<')) p[$s]
+		return p;
+	}
+	not(c.eq('<')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
+	if(pcode.find(':')) {
+		pcode.split(':').inject(base, name)
+	} else {
+		base='test'
+		name=pcode
+	}
+	
+	sp=s.cur()
+	tag=s.incr().move()
+	s.pos(sp)
+	ss=s.match("<$tag", "</$tag>")
+	if(typeof(ss,'bool')) return print("$pcode 페이지 태그 매칭오류")
+	prop=ss.findPos('>')
+	src=_s('<widgets base="$base"><$tag id="$name" $prop>$ss</$tag></widgets>')
+	Cf.sourceApply(src)
+	p = Cf.getObject('page', "$base:$name")
+	not(typeof(p,'widget')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
+	if(s.ch()) {
+		p[$s]
+	}
+	if(p.init ) {
+		p.init()
+	}
+	return p;
+}
+
 ## 파이션 브라우저 열기
 ```javascript
 @baro.main() {

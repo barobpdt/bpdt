@@ -15,19 +15,18 @@ _node(code, reuse) {
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
-_log(&s) {
-	dt = System.date('hh:mm:ss')
-	line=firstLine(s)
-	print("$dt> $line")
+findServiceNode(cur) {
+	p=cur.parentNode()
+	while(n=0,100) {
+		if(p.isset('serviceName')) {
+			return p;
+		}
+		p=p.parentNode()
+		not(p) return;
+	}
+	return;
 }
-_sender() {
-	fn=Cf.funcNode('parent')
-	return fn.get('@sender');
-}
-_run(cmd, line) {
-	cmd.run(_s(line))
-} 
-_event(obj, eventName, fc, target, reset) {		
+event(obj, eventName, fc, target, reset) {		
 	not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
 	fn = obj.get(eventName)
 	if( typeof(fn,'func')) {
@@ -50,91 +49,53 @@ _event(obj, eventName, fc, target, reset) {
 	obj.set(eventName, fn) 
 	return fn;		
 }
-_page(pcode,src) {
-	p = Cf.getObject('page', pcode)
-	s=stripJsComment(src)
-	s.ref()
-	c=s.ch()
-	if(p) {
-		not(c.eq('<')) p[$s]
-		return p;
-	}
-	not(c.eq('<')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
-	if(pcode.find(':')) {
-		pcode.split(':').inject(base, name)
-	} else {
-		base='test'
-		name=pcode
-	}
-	
-	sp=s.cur()
-	tag=s.incr().move()
-	s.pos(sp)
-	ss=s.match("<$tag", "</$tag>")
-	if(typeof(ss,'bool')) return print("$pcode 페이지 태그 매칭오류")
-	prop=ss.findPos('>')
-	src=_s('<widgets base="$base"><$tag id="$name" $prop>$ss</$tag></widgets>')
-	Cf.sourceApply(src)
-	p = Cf.getObject('page', "$base:$name")
-	not(typeof(p,'widget')) return print("$pcode 페이지 생성 오류 (페이지 소스가 없습니다)");
-	if(s.ch()) {
-		p[$s]
-	}
-	if(p.init ) {
-		p.init()
-	}
-	return p;
-}
-_valid(v) {
-	chk = typeof(v,'num') || v;
-	return chk;
-}
-_varValue(k, fn, node) {
-	if(node && node.isVar(k)) return node.get(k);
-	not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
-	not(node) {
-		node=fn.get('@this')
-	}
-	if(typeof(node,'node')) {
-		fn=Cf.funcNode(node)
-		if(fn && fn.isset(k)) return fn.get(k);
-	}
-	if(k.eq('nl')) v="\r\n";
-	else if(k.eq('tab')) v="\t";
-	else v="[$k 미정의]"
-	return v;
-}
-_userVal(&s) {
-	c=s.ch() not(c) return ' ';
-	if(c.eq('@')) {
-		k=s.incr().trim()
-		v=conf(k) not(v) v="[conf $k 미정의]";
-		return v;
-	}
-	if(c.eq('#')) {
-		ss=''
-		k=s.incr().trim()
-		v=_getVarValue(k,fn)
-		v.ref()
-		while(v.valid()) {
-			k=v.findPos(',').trim()
-			not(k) break;
-			if(ss) ss.add(', ')
-			ss.add("#{$k}")
-		}
-		return ss;
-	}
-	return;
-}
-_getVarValue(&s,fn,node) {
+
+getVarValue(&s,fn,node) {
 	not(fn) fn=Cf.funcNode('parent')
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
 		while(c.eq('.')) c=s.next().ch()
 		return when(c,false,true);
 	};
+	varValue=func(k, fn, node) {
+		if(node && node.isVar(k)) return node.get(k);
+		not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
+		not(node) {
+			node=fn.get('@this')
+		}
+		if(typeof(node,'node')) {
+			fn=Cf.funcNode(node)
+			if(fn && fn.isset(k)) return fn.get(k);
+		}
+		if(k.eq('nl')) v="\r\n";
+		else if(k.eq('tab')) v="\t";
+		else v="[$k 미정의]"
+		return v;
+	};
+	userVal=func(&s) {
+		c=s.ch() not(c) return ' ';
+		if(c.eq('@')) {
+			k=s.incr().trim()
+			v=conf(k) not(v) v="[conf $k 미정의]";
+			return v;
+		}
+		if(c.eq('#')) {
+			ss=''
+			k=s.incr().trim()
+			v=_getVarValue(k,fn)
+			v.ref()
+			while(v.valid()) {
+				k=v.findPos(',').trim()
+				not(k) break;
+				if(ss) ss.add(', ')
+				ss.add("#{$k}")
+			}
+			return ss;
+		}
+		return;
+	};
 	not(isVar(s)) return eval(s, fn);
-	v=_userVal(s,fn) if(_valid(v)) return v;
+	v=userVal(s,fn) if(valid(v)) return v;
 	c=s.ch()
 	if(c.eq(':')) {
 		k='int'
@@ -145,7 +106,7 @@ _getVarValue(&s,fn,node) {
 	if(c.eq(':')) {
 		type=k
 		k=s.incr().move()
-		v=_varValue(k,fn,node)
+		v=varValue(k,fn,node)
 		if(type.eq('int')) {
 			if(typeof(v,'num')) {
 				v=v.toInt()
@@ -155,7 +116,7 @@ _getVarValue(&s,fn,node) {
 		}
 		return v;
 	}
-	ss=_varValue(k, fn, node)
+	ss=varValue(k, fn, node)
 	c=s.ch() not(c) return ss;
 	while(c.eq('.')) {
 		not(typeof(ss,'node')) return '';
@@ -170,7 +131,8 @@ _getVarValue(&s,fn,node) {
 	}
 	return ss;
 }
-_s(&s, fn, node) {
+
+str(&s, fn, node) {
 	if(typeof(fn,'node')) {
 		node=fn
 		fn=null
@@ -215,7 +177,7 @@ _s(&s, fn, node) {
 	}
 	return ss;
 } 
-_conf(&s) {
+confSearch(&s) {
 	not(s.ch()) return;
 	sp=s.cur()
 	c=s.next().ch()
@@ -256,36 +218,51 @@ _conf(&s) {
 	}
 	return ss;
 }
-global(code) {
-	root=Cf.rootNode("@global", true)
-	result = ''
-	switch(args().size()) {
-	case 0:
-		return root;
-	case 1: 
-		return root.get(code)
-	case 2:
-		args(code,value)
-		if( typeof(value,'null')) {
-			result = root.get(code)
-			root.set(code, '')
-		} else {
-			result = value
-			root.set(code, value)
-		}
-	default:
-	}
-	return result;
-}
+global(code) { return Cf.rootNode() }
 object(code, newCheck) {
 	not( code.find('.') ) return Cf.rootNode(code,true)
 	code.split('.').inject(a,b);
 	return Cf.getObject(a,b,true);
-} 
-firstLine(&s) {
+}
+checkError(msg) {
+	err=Cf.error()
+	if(err) {
+		print("@@ $msg [error]: $err");
+		return true;
+	}
+	return;
+}
+isFunc(&s) {
+	s.ch() not(c) return;
+	if(c.eq('@')) s.incr()
+	c=s.next().ch()
+	while(c.eq('-','.')) c=s.incr().next().ch()
+	return when(c.eq('('), true)
+}
+getLine(&s) {
+	not(s) return '[line blank]';
 	not(typeof(s,'string')) return "$s";
-	not(s.ch()) return "[NULL]";
-	return s.findPos("\n").trim();
+	s.ch()
+	line = s.findPos("\n").trim()
+	return line;
+}
+propValue(&s, propName) {
+	while(s.valid()) {
+		left=s.findPos(propName)
+		c=s.ch() not(c) break;
+		if(c.eq('=',':')) {
+			c=left.ch(-1)
+			if(c.is('alphanum')) continue;
+			c=s.incr().ch()
+			if(c.eq()) {
+				val=s.match()
+			} else {
+				val=s.findPos(", \t\n",4)
+			}
+			return val;
+		}
+	}
+	return;
 }
 stripComment(&s, mode) {
 	not(mode) mode=1;
@@ -313,11 +290,23 @@ stripJsComment(&s) {
 	rst=stripComment(s,1);
 	return stripComment(rst,2);
 }
-stripFileName(name) {
-	if(name.find('/')) name=right(name,'/')
-	if(name.find('.')) name=left(name,'.')
-	return name
+
+filePathInfo(path) {
+	a=_arr()
+	b=path.replace('\','/')
+	s=b.ref()
+	path=s.findLast('/')
+	if(path) {
+		filename=path.right()
+	} else {
+		path=b, filename=b
+	}
+	a.add(path,filename)
+	name=filename.findLast('.')
+	a.add(name)
+	return a;
 }
+fileTime(fullpath) { return Baro.file().modifyDate(fullpath) }
 isFile(fileName) { return Baro.file().isFile(fileName) }
 isFolder(fullPath, makeCheck) {
 	fo=Baro.file(); 
@@ -401,29 +390,17 @@ include(name, checkRealod) {
 	}
 	prevName = Cf.rootNode('@funcInfo').get('includeFileName') not(prevName) prevName=''
 	Cf.rootNode('@funcInfo').set('includeFileName', name)
-	base = stripFileName(filenm)
+	filePathInfo(filenm).inject(folder,filename,fname)
 	subName = null
-	if( base.find('#')) {
-		split(base,'#').inject(base, subName)
+	if( fname.find('#')) {
+		split(fname,'#').inject(fname, subName)
 	}
 	map.set(name, modify)
 	src=fileRead(filenm)
-	parseSource(stripJsComment(src), base, subName)
+	parseSource(stripJsComment(src), fname, subName)
 	Cf.rootNode('@funcInfo').set('includeFileName', prevName)
 }
-tag(tag, id) {
-	node = Cf.getObject().addNode('@newObject')
-	not(id) {
-		idx = node.incrNum(tag)
-		id = "${tag}_${idx}"
-	}
-	cur = node.addNode(id)
-	not(cur.id) {
-		cur.id=id
-		cur.tag=tag
-	}
-	return cur;
-}
+ 
 page(name, param) {
 	asize=args().size()
 	if(asize.eq(0)) {
@@ -564,40 +541,13 @@ applyFunc(src, module) {
 	} else {
 		call(src)
 	}
-}
-parseConf(name, &s) {
-	while(s.valid() ) {
-		c=s.ch() not(c) break;
-		not(c.eq('<')) break;
-		sp=s.cur()
-		tag = s.incr().move() s.pos(sp)
-		ss=s.match("<$tag","</$tag>")
-		if(typeof(ss,'bool')) return print("parseConf 설정등록 오류 ($tab 태그 매칭오류)")
-		prop=ss.findPos('>')
-		id=propVal(prop,'id')
-		if(id) {
-			if(tag.eq('json')) {
-				node=_node()
-				node.parseJson(ss)
-				data=json().nodeStr(node)
-			} else {
-				data=ss
-			}
-			conf("${name}.${id}", data, true)
-		}
-	}		
-}
+} 
 parseSource(&s, base, subName) {
 	map = null
 	pageBase = ''
 	widgetSource = ''
 	while(s.valid() ) {
-		c=s.ch() not(c) break;
-		if(c.eq('/')) {
-			c=s.ch(1)
-			if(c.eq('/')) s.findPos("\n") else s.match()
-			continue
-		}
+		c=s.ch() not(c) break;		
 		if(c.eq(',',';')) {
 			s.incr()
 			continue;

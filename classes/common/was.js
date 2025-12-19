@@ -3,7 +3,7 @@
 		node = Cf.getObject('api','api')
 		not(node) {
 			fo = Baro.file()
-			fnm = _s('${@web.rootPath}/api/api.js')
+			fnm = str('${@web.rootPath}/api/api.js')
 			not(isFile(fnm)) return print("$fnm API소스 파일 오류")
 			node = Cf.getObject('api','api', true)
 			fsrc = fileRead(fnm)
@@ -54,13 +54,13 @@
 			} else {
 				fileName="$webRoot/api/$service/${name}.js"
 				not(fo.isFile(fileName)) {
-					ss=_s('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
+					ss=str('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
 					return req.send(ss)
 				}
 				objectId = "$service/$name"
 				name = uri.findPos('/').trim()
 				not(name) {
-					ss=_s('{"error":"api호출 오류 ${fileName} 파일 $name 함수가 없습니다"}')
+					ss=str('{"error":"api호출 오류 ${fileName} 파일 $name 함수가 없습니다"}')
 					return req.send(ss)
 				}
 			}
@@ -68,7 +68,7 @@
 			if(fo.isFile(fileName) ) {
 				objectId=service
 			} else {
-				ss=_s('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
+				ss=str('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
 				return req.send(ss)
 			}
 		}

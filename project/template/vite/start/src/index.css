@@ -1,0 +1,37 @@
+/* Google font */
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-lexend: "Lexend", sans-serif;
+  --primary-clr: #c2f04d;
+  --secondary-clr: #f4f4f5;
+  --border-clr: #e4e4e7;
+}
+
+@layer base {
+  body {
+    @apply font-lexend bg-white text-neutral-900;
+  }
+}
+
+@layer utilities {
+  .container {
+    @apply px-5 sm:px-7 md:px-8 lg:px-16 max-w-7xl mx-auto;
+  }
+  .shadow-util {
+    @apply shadow-[3px_3px_0px_rgba(0,0,0,1)] border border-neutral-900;
+  }
+  .shadow-img {
+    @apply shadow-[5px_5px_0px_rgba(0,0,0,1)] border border-neutral-900;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  .section-title {
+    @apply text-3xl font-bold md:text-4xl;
+  }
+  .text {
+    @apply text-neutral-500 leading-relaxed;
+  }
+}

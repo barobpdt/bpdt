@@ -1,3 +1,35 @@
+apiCall(url) {
+	web=Baro.web()
+	web.call('http://localhost/api/version', @baro.apiCallProc)
+	return web.result
+}
+@baro.apiCallProc(type,data) {
+	if(type=='read') {
+		this.appendText('result', data)
+	} else if(type=='finish') {
+		print('apiCallProc 완료', this.url)
+	}
+}
+
+@baro.propValue(&s, propName) {
+	while(s.valid()) {
+		left=s.findPos(propName)
+		c=s.ch() not(c) break;
+		if(c.eq('=',':')) {
+			c=left.ch(-1)
+			if(c.is('alphanum')) continue;
+			c=s.incr().ch()
+			if(c.eq()) {
+				val=s.match()
+			} else {
+				val=s.findPos(", \t\n",4)
+			}
+			return value;
+		}
+	}
+	return;
+}
+
 @baro.isHtmlTag(key) {
 	tag=key.lower()
 	if(tag.start('h')) {
@@ -14,7 +46,7 @@
 		fullpath = conf('baro.loadPagePath')
 		not(fullpath) fullpath='c:/bpdt/project/page-test.js'
 	}
-	@baro.filePathInfo(fullpath).inject(watchPath, fileName)	
+	filePathInfo(fullpath).inject(watchPath, fileName)	
 	not(conf("cf.newline")) conf("cf.newline","\r\n",true)
 	parent = object('baro.pages')
 	parent.set('@style','')
@@ -479,11 +511,6 @@ function ${renderFunc} {
 			not(arr.find(key)) arr.add(key)
 		}
 	}
-}
-@baro.getLine(&s) {
-	s.ch()
-	line = s.findPos("\n").trim()
-	return line;
 }
 @baro.makeHtmlLayout(parent, page, &s) { 
 	layout = page.addNode('@layout').removeAll(true)
@@ -1317,7 +1344,8 @@ ${className}${expr} {
 	return ss;
 }
 @baro.isFunc(&s) {
-	not(s.ch()) return;
+	s.ch() not(c) return;
+	if(c.eq('@')) s.incr()
 	c=s.next().ch()
 	while(c.eq('-','.')) c=s.incr().next().ch()
 	return when(c.eq('('), true)
@@ -1493,30 +1521,17 @@ catchError() {
 	print("## catch error : $err")
 	return true;
 }
-@baro.filePathInfo(path) {
-	a=_arr()
-	b=path.replace('\','/')
-	s=b.ref()
-	path=s.findLast('/')
-	if(path) {
-		filename=path.right()
-	} else {
-		path=b, filename=b
-	}
-	a.add(path,filename)
-	name=filename.findLast('.')
-	a.add(name)
-	return a;
-}
-@baro.startWatcher(id, path) {
+@baro.startWatcher(id, path, callback) {
 	not(id) return print('@@ start watcher 아이디 미정의')
-	not(path) return print('@@ start watcher 경로 미정의')
+	not(isFolder(path)) return print('@@ start watcher $path 경로 미정의')
 	if(path.find('/')) {
 		path=path.replace('/','\')
 	}
-	id = 'webpageWatcher'
-	watcher = System.watcherFile(id, @baro.watcherFileProc )
-	watcher.start(path)	
+	not(typeof(callback,'func')) {
+		callback = @baro.watcherFileProc
+	}
+	watcher = System.watcherFile(id, callback)
+	watcher.start(path)
 	config = Cf.rootNode().get('@watcherFiles').get(id)
 	config.addArray('watcherNames')
 	return config;

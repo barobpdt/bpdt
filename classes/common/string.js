@@ -50,24 +50,31 @@ fv(&s, map) {
 	return rst;
 }
 
-format(&s, map) {
+format(&s, param) {
 	rst=''
-	fn=Cf.rootNode("@callFuncNode")
-	not(typeof(fn,"func")) fn=Cf.funcNode('parent')
-	arr=args()
+	arr=args(1), map=null
+	if(typeof(param,'func')) {
+		args(fn, map, params)
+		if(typeof(params,'array')) arr=param
+	} else if(typeof(param,'array')) {
+		arr=param
+	} else if(typeof(param,'node')) {
+		map=param
+		fn=Cf.funcNode('parent')
+	}
 	while(s.valid()) {
 		left=s.findPos('#{')
 		rst.add(left)
 		not(s.valid()) break;
 		key=s.findPos('}').trim()
 		if(typeof(key,'num')) {
-			val=arr.get(key+1)
+			val=arr.get(key)
 		} else {
-			val = ''
-			if(typeof(map,'node')) {
-				val = map.get(key)
+			if( map && map.isset(key)) {
+				val=map.get(key)
+			} else {
+				val=fn.get(key)
 			}
-			not(val) val=fn.get(key)
 		}
 		rst.add(val)
 	}
