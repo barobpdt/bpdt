@@ -1,7 +1,9 @@
 @baro.cmd(param) {
 	arr=object('baro.objectMap').addArray('@cmdObjects')
 	addCmd = func(id) {
-		cur = arr.add(Baro.process(id)) if(cur.isset('@callback')) return cur;
+		cur=Baro.process(id) if(arr.find(cur)) return cur;
+		arr.add(cur) 
+		if(cur.isset('@callback')) return cur;
 		@baro.cmdStop(cur)
 		event(cur, '@callback', @baro.cmdProc)
 		return cur;
