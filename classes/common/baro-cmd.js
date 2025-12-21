@@ -8,11 +8,6 @@
 		event(cur, '@callback', @baro.cmdProc)
 		return cur;
 	};
-	not(arr.size()) {
-		cmdCount=conf('baro.maxCmdCount') 		
-		not(cmdCount) cmdCount=4
-		while(n=1,cmdCount) addCmd("cmdObject_$n"))
-	}
 	if(param && typeof(param,'string')) {
 		args(name, callback)		
 		cur = addCmd(name)
@@ -20,6 +15,11 @@
 			cur.set('@callbackResult', callback)
 		}		
 		return @baro.cmdRun(cur, 'cd');
+	}
+	not(arr.size()) {
+		cmdCount=conf('baro.maxCmdCount') 		
+		not(cmdCount) cmdCount=4
+		while(n=1,cmdCount) addCmd("cmdObject_$n"))
 	}
 	
 	obj=null

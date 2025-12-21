@@ -25,7 +25,6 @@
 	- 로그파일, 출력파일 변경체크해서 실시간으로 명령을 수행하도록 한다
 	
 */
-
 pythonCommand {
 	import sys
 	import os

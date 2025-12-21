@@ -376,7 +376,6 @@
 		}
 	} 
 }
-
 @baro.configKeyValue(root, node, &s, type, value) {
 	not(s.ch()) return;
 	not(node) node=root
@@ -423,7 +422,7 @@
 				if(typeof(refNode,'node')) {
 					cur=refNode
 				} else {
-					refNode=base.get('@default')
+					refNode=base
 				}
 			} else {
 				cur=base
@@ -432,12 +431,16 @@
 			refNode=cf.get(name)
 			if(typeof(refNode,'node')) {
 				cur=refNode
+			} else {
+				refNode=cf
 			}
 		} else if(cf.isset('@default')) { 
 			def=cf.get('@default')
 			if(typeof(def,'node') && def.isset(name)) {
 				refNode=def
 				cur=def.get(name)
+			} else {
+				refNode=cf
 			}
 		}
 		not(cur) {
@@ -451,7 +454,7 @@
 		not(cur) {
 			print(">> refNode========$refNode")
 			if(refNode) {
-				while(sub,refNode.parentNode()) {
+				while(sub,refNode ) {
 					if(sub.isset(name)) {
 						refNode=sub
 						cur=sub.get(name)
@@ -1442,13 +1445,12 @@
 		if(c.eq('{','(')) {
 			source = s.match(1)
 			if(c.eq('{')) {
-				addProp(k,trimLine(source))
-			} else {
 				addProp(k,removeIndentText(source))
+			} else {
+				addProp(k,trimLine(source))
 			}
 			continue
-		} 
-		
+		}
 		bprop=false
 		if(c.eq(':','=')) {			
 			bprop=true

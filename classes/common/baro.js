@@ -727,22 +727,29 @@ getJsonNode(&s,node,fn,map) {
 	print(">> getJsonNode json:{$node}")
 	return node; 
 }
-configValue(key) {
+configValue(key, root) {
 	findService = func(cur) {
 		p=cur.parentNode()
-		while(n=0,100) {
+		while(isValid(p)) {
 			if(p.isset('serviceName')) {
 				return p;
 			}
 			p=p.parentNode()
-			not(p) return;
 		}
 		return;
 	};
-	root=findService(this) not(root) return print("configValue 오류 (service 루트로드를 찾을수 없습니다)")
+	not(root) {
+		root=findService(this) not(root) return print("configValue 오류 (service 루트로드를 찾을수 없습니다)");
+	}
 	return @baro.configKeyValue(root, this, key, 'value');
 }
-cv(key) { return configValue(key) }
+cv(key, rootCode) {
+	if(rootCode) {
+		root=object('baro.services').addNode(rootCode) 
+		return configValue(key, root);
+	}
+	return configValue(key) 
+}
 
 
 @baro.setPythonPath() {
