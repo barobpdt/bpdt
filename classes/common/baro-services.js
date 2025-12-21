@@ -1,194 +1,3 @@
-@baro.frontendProc(&s) {
-	c=s.ch(-1)
-	print(">> frontendProc [$c] :: $s")
-}
-@baro.configFileModifyCheck() {
-	args().inject(type,name,check)
-	print(">> configFileModifyCheck",type,name,check, this)
-}
-parseConfigProps(&s) {
-	node=_node()
-	@baro.parseConfig(findServiceNode(this),node,s)
-	return node;
-}
-log(s) {
-	fn=Cf.funcNode('parrent')
-	param=args(1)
-	msg=format(s,fn,this,param)
-	print("log>>$msg")
-}
-parseTemplate(&s, map) {
-	print(">> parse template $s $map =========")
-}
-varEndPos(&s) {
-	fn=Cf.funcNode('parent')
-	type=''
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq()) break;
-		if(c.eq(',')) break;
-		if(c.is('oper')) {
-			type='oper'
-			s.incr()
-			continue;
-		}
-		c=s.next().ch()
-		while(c.eq('.')) {
-			type='sub'
-			c=s.next().ch()
-		}
-		if(c.eq('(')) {
-			type='func'
-			s.match()
-		}
-	}
-	fn.set('@endPosType', type)
-	return s.cur();
-}
-getJsonArray(&s,node,arr,fn,map) {
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq(',')) {
-			s.incr()
-			continue;
-		}
-		if(c.eq('{','[')) {
-			src=s.match(1)
-			if(c.eq('{') {
-				cur=node.addNode()
-				getJsonNode(src,cur,fn,map)
-				cur.set('@parentArray', arr)
-				arr.add(cur)
-				
-			} else {
-				arrSub=node.addArray()
-				getJsonArray(src,node,arrSub,fn,map)
-				arr.add(arrSub)
-			}
-			continue;
-		}
-		val=''
-		if(c.eq()) {
-			if(c.eq("'")) {
-				val=s.match()
-			} else {
-				val=fmt(s.match(),fn,map)
-			}
-		} else if(@baro.isFunc(s)) {
-			fnm=s.findPos('(',0,1).trim()
-			fparam=s.match()
-			val=getVarValue("$fnm($fparam)")
-		} else {
-			ep=varEndPos(s)
-			type=Cf.funcNode().set('@endPosType')
-			if(sp<ep) {
-				v=s.trim(sp,ep,true)
-				if(type) {
-					val=getVarValue(v)
-				} else {
-					if(fn.isset(v)) {
-						val=fn.get(v)
-					} else if(map.isset(v)) {
-						val=map.get(v)
-					} else {
-						val=configValue(v)
-					}
-				}
-			} else {
-				break;
-			}
-		}
-		arr.add(val)
-	}
-	return arr;
-}
-getJsonNode(&s,node,fn,map) {
-	not(node) node=_node()
-	not(fn) fn=Cf.funcNode('parent')
-	not(map) map=this
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq(',')) {
-			s.incr()
-			continue;
-		}
-		k=s.move(),val=''
-		c=s.ch() 
-		not(c.eq(':')) {
-			v=k
-			if(fn.isset(v)) {
-				val=fn.get(v)
-			} else if(map.isset(v)) {
-				val=map.get(v)
-			} else {
-				val=configValue(v)
-			}
-			node.set(k,v)
-			continue;
-		} 
-		c=s.incr().ch()
-		sp=s.cur()
-		if(c.eq('{','[')) {
-			src=s.match(1)
-			if(c.eq('{') {
-				cur=node.addNode(k)
-				getJsonNode(src,cur,fn,map)
-			} else {
-				arr=node.addArray(k)
-				getJsonArray(src,node,arr,fn,map)
-			}
-			continue;
-		}
-		if(c.eq()) {
-			if(c.eq("'")) {
-				val=s.match()
-			} else {
-				val=fmt(s.match(),fn,map)
-			}
-		} else if(@baro.isFunc(s)) {
-			fnm=s.findPos('(',0,1).trim()
-			fparam=s.match()
-			val=getVarValue("$fnm($fparam)")
-		} else {
-			ep=varEndPos(s)
-			type=Cf.funcNode().set('@endType')
-			if(sp<ep) {
-				v=s.trim(sp,ep,true)
-				if(type) {
-					val=getVarValue(v)
-				} else {
-					if(fn.isset(v)) {
-						val=fn.get(v)
-					} else if(map.isset(v)) {
-						val=map.get(v)
-					} else {
-						val=configValue(v)
-					}
-				}
-			} else {
-				break;
-			}
-		}
-		node.set(k,val)
-	}
-	print(">> getJsonNode json:{$node}")
-	return node; 
-}
-configValue(key) {
-	findService = func(cur) {
-		p=cur.parentNode()
-		while(n=0,100) {
-			if(p.isset('serviceName')) {
-				return p;
-			}
-			p=p.parentNode()
-			not(p) return;
-		}
-		return;
-	};
-	root=findService(this) not(root) return print("configValue 오류 (service 루트로드를 찾을수 없습니다)")
-	return @baro.configKeyValue(root, this, key, 'value');
-}
 @baro.evalSourceParse(&s,node) {
 	not(s.ch()) return;
 	ss=''
@@ -208,48 +17,6 @@ configValue(key) {
 	return ss;
 }
 
-/*
-@baro.findBindPort(5173, func(port) {
-	if(port) return print("front 데몬이 실행중입니다")
-	print("xxxxxxx 프론트엔드 실행 시작 xxxxxxxxxxx")
-	@baro.viteRunDev()
-})
-*/
-@baro.viteCreate(projectPath, projectName) {
-	cc=@baro.cmd('npm')
-	not(projectPath) projectPath='c:/temp/vite'
-	@baro.cmdRun(cc, 'cd c:/temp/vite')
-	@baro.cmdRun(cc, 'npm create vite@latest sample-tailwind -- --template react')
-	@baro.cmdRun(cc, 'cd sample-tailwind')
-	@baro.cmdRun(cc, 'npm install react-router-dom')
-	@baro.cmdRun(cc, 'npm install -D tailwindcss@3 postcss autoprefixer')
-	@baro.cmdRun(cc, 'npx tailwindcss init -p')
-	tailwinConfigFile = 'c:/temp/vite/tailwind.config.js'
-	src=fileRead(tailwinConfigFile)
-	saveConfig(src)
-	saveConfig=func(&s) {
-		ss=''
-		content='"./index.html", "./src/**/*.{js,ts,jsx,tsx}"'
-		left=s.findPos('content:') 
-		c=s.ch()
-		not(c)return print("@@ tailwinConfig 파일 수정오류 (경로:$tailwinConfigFile)")
-		s.match()
-		ss.add(left)
-		ss.add("content: [$content]")
-		ss.add(s)
-		fileWrite(tailwinConfigFile,ss)
-	};
-	@baro.viteRunDev(pathJoin(projectPath,projectName) )
-}
-@baro.viteRunDev(projectPath, logPath) {
-	not(projectPath) projectPath = 'C:/temp/vite/sample-baro1'
-	not(logPath) logPath='log.txt'	
-	npmCmd = 'npm run dev >> "$logPath" 2>&1'
-	cc=@baro.cmd('frontend')
-	@baro.cmdRun(cc, "cd $projectPath", @baro.frontendProc )
-	@baro.cmdRun(cc, _s(npmCmd) )
-	print("xxxxxxx 프론트엔드 실행중 xxxxxxxxxxx")
-}
 @baro.initService(mode, param) {
 	services = object("baro.services")
 	services.set('path',System.path())
@@ -313,25 +80,31 @@ configValue(key) {
 	base.set('FULL_PATH', fullPath)
 }
 @baro.loadService(root, &s, reset) {
-	not(root) root=object('baro.services')
-	print(">> load ${root.serviceName} start")
+	if(typeof(root,'string')) {
+		serviceName=root
+		root=object('baro.services').addNode(serviceName)
+		root.set('serviceName', serviceName)
+	}
+	print(">> baro.loadService [${root.serviceName}] start 소스사이즈:", s.size())
 	_isProps = func(s) {
 		c=s.ch()
 		return when(c.eq('{'),true);
 	};	
+	evalCheckArray = []
+	evalCheckArray.reuse()
 	type='', base=null, cur=null
 	while(s.valid()) {
-		left = s.findPos('##>')
+		left = s.findPos('##>',1)
 		if(type) { 
 			ok=true
 			name = cur.get('@name')
 			confCode="baro.${type}:${name}#modify"
 			if( left.eq(conf(confCode)) ) {
-				print(">> $confCode 변경된 내용이 없습니다 ")
-				if( cur.isset('@modify')) { 
-					cur.set('@modify',false)
+				if( cur.isset('@modify')) { 					
+					print(">> $confCode 변경된 내용이 없습니다 ")
 					not(reset) ok=false
 				}
+				cur.set('@modify',false)
 			} else {
 				root.set("@${type}_modify", true)				
 				cur.set('@modify',true)
@@ -339,18 +112,20 @@ configValue(key) {
 			}
 			if(ok ) {
 				print(">> loadService type=====$type $confCode start")
-				checkInit = true
+				not(type.eq('funcs')) {
+					if(left.find('@eval')) evalCheckArray.add(cur)
+				}
 				if(type.eq('config')) {
-					@baro.parseConfig(root, cur, stripComment(left))					
+					@baro.parseConfig(root, cur, stripComment(left))
 				} else if(type.eq('pages')) {
 					print("pages==".left.size() )
-				} else if(type.eq('funcs')) {					
+				} else if(type.eq('funcs')) {
+					currentFileName = root.get('@currentFileName') not(currentFileName) currentFileName=cur.name
 					funcInfo=Cf.rootNode('@funcInfo')
-					funcInfo.set('includeFileName', "${root.serviceName}::${cur.name}")
+					funcInfo.set('includeFileName', "${root.serviceName}::${currentFileName}")
 					src=stripJsComment(left)
 					call(src);
 					funcInfo.set('includeFileName','')
-					checkInit = false
 				} else if(type.eq('sql')) {
 					@baro.sqlFuncVal(root, cur, left)
 				} else if(type.eq('routes')) {
@@ -358,10 +133,7 @@ configValue(key) {
 				} else if(type.eq('tables')) {
 					@baro.tableFuncVal(root, cur, left)
 				} else {
-					@baro.parseConfig(root, cur, left)
-				}
-				if(checkInit) {
-					@baro.initConfig(root,cur)
+					@baro.parseConfig(root, cur, stripComment(left))
 				}
 				print("parse root type=====$type end")
 			}
@@ -380,7 +152,7 @@ configValue(key) {
 		if(_isProps(s)) { 
 			s.ch()
 			params=s.match(1)
-			nm=propValue(param,'name')
+			nm=propValue(params,'name')
 			if(nm) name=nm
 		}
 		not(name) name='@default'
@@ -395,9 +167,15 @@ configValue(key) {
 			cur=base.addNode(name)
 			@baro.parseConfig(root, cur, params)
 		}
-	}	
+	}
+	if( evalCheckArray.size()) {
+		while(cur, evalCheckArray) {
+			@baro.initConfig(root,cur)
+		}
+	}
+	print("evalCheckArray==$evalCheckArray")
+	return root;
 }
-
 @baro.evalValue(src, node) {
 	if(typeof(src,'bool')) {
 		return print("@@ evalValue 실행오류 괄포매칭 오류")
@@ -414,12 +192,11 @@ configValue(key) {
 	fn=Cf.funcNode('parent')
 	print(">> initConfig keyArray==$ka")
 	while(k, ka) {
-		s=config.ref(k)		
-		if(s.start('@eval')) {
-			s.findPos('(',0,1)
-			src=@baro.evalSourceParse(s.match(1))
-			val=@baro.evalValue(src, config)
-			config.set(k,val)
+		s=config.ref(k)
+		not(typeof(s,'string')) continue;
+		if(s.start('@eval=>',true)) {
+			src=@baro.evalSourceParse(s)
+			config.set(k,@baro.evalValue(src, config))
 		}
 	}
 }
@@ -517,7 +294,7 @@ configValue(key) {
 				async=true
 			}
 			val=''
-			if(@baro.isFunc(line)) {
+			if(isFunc(line)) {
 				vnm=line.findPos('(',0,1).trim()
 				param=line.match()
 				if(body) {
@@ -611,7 +388,7 @@ configValue(key) {
 		while(c.eq('-')) c=s.next().ch()
 		return s.trim(sp,s.cur(),true);
 	};
-	if( @baro.isFunc(s)) {
+	if( isFunc(s)) {
 		fnm=s.findPos('(',0,1)
 		fparam=s.match(1)
 		cur=@baro.serviceFuncVal(root, node, fnm, fparam)
@@ -689,7 +466,7 @@ configValue(key) {
 	while(s.valid()) {
 		not(c.eq('.')) break;
 		s.incr()
-		if(@baro.isFunc(s)) {
+		if(isFunc(s)) {
 			fnm=s.findPos('(',0,1)
 			fparam=s.match(1)
 			ref=when(cur,cur,refNode)
@@ -730,7 +507,7 @@ configValue(key) {
 		if(str.find('@[')) return @baro.parseService(root,node,str);
 		sp=str.cur()		
 		c=str.ch()
-		if(@baro.isFunc(str)) {
+		if(isFunc(str)) {
 			name=str.move()
 			if(name.eq('get')) {
 				name=str.match().trim()
@@ -990,7 +767,7 @@ configValue(key) {
 		}		
 		if(c.eq()) {
 			val=s.match()			
-		} else if(@baro.isFunc()) {
+		} else if(isFunc()) {
 			fnm=s.move()
 			fparam=s.match(1)
 			val=@baro.serviceFuncVal(root,node,fnm,fparam)
@@ -1171,7 +948,7 @@ configValue(key) {
 				if(c.eq('*')) s.match(1) else s.findPos("\n");
 				continue;
 			}
-			not(@baro.isFunc(s)) break;
+			not(isFunc(s)) break;
 			fnm = s.findPos('(',0,1).lower()
 			fparam = s.match(1)
 			cur.appendText('@funcs',"${fnm}(${fparam})")
@@ -1268,7 +1045,7 @@ configValue(key) {
 	node.set('@funcsVal', '')
 	node.addArray('@varNames').reuse()
 	while(s.valid()) {
-		not(@baro.isFunc(s)) break;
+		not(isFunc(s)) break;
 		fnm =s.findPos('(',0,1)
 		fparam = s.match(1)
 		fsrc=funcVal(fnm, fparam)
@@ -1365,7 +1142,7 @@ configValue(key) {
 		}
 		name=info.move(), type='text', size=''
 		cur=table.addNode(name)
-		if(@baro.isFunc(info)) {
+		if(isFunc(info)) {
 			type=info.findPos('(',0,1).trim().lower()
 			size=info.match().trim()
 			cur.with(name,type,size)
@@ -1381,7 +1158,7 @@ configValue(key) {
 				info.incr()
 				continue;
 			}
-			if(@baro.isFunc(info)) {
+			if(isFunc(info)) {
 				fnm = info.move().lower(), fparam=''
 				c=info.ch()
 				if(c.eq('(')) {
@@ -1482,7 +1259,7 @@ configValue(key) {
 				else if(type.eq('bool')) defValue='true'
 				else defValue=''
 			}
-			if(@baro.isFunc(defValue)|| typeof(defValue,'num') || defValue.eq('CURRENT_DATE','CURRENT_TIME','true','false')) {
+			if(isFunc(defValue)|| typeof(defValue,'num') || defValue.eq('CURRENT_DATE','CURRENT_TIME','true','false')) {
 				ss.add(" DEFAULT $defValue")
 			} else if(defValue) {
 				ss.add(" DEFAULT '$defValue'")
@@ -1533,7 +1310,7 @@ configValue(key) {
 			comment.add(cmt)			
 			continue
 		} 
-		not(@baro.isFunc(s)) return print("sql 설정 시작오류 ", s)
+		not(isFunc(s)) return print("sql 설정 시작오류 ", s)
 		name = s.findPos('(',0,1).trim() not(name) break;		
 		sql=node.addNode(name)
 		sql.set('@name',name)
@@ -1608,27 +1385,12 @@ configValue(key) {
 	}
 	return arr;
 }
-trimLine(&s) {
-	nl=conf('cf.newline')
-	ss=''
-	while(s.valid(),n) {
-		not(s.ch()) break;
-		line=s.findPos("\n").trim() not(line)continue;
-		if(n) ss.add(nl)
-		ss.add(line)
-	}
-	return ss;
-}
-@baro.isSingleTag(tag,&s) {
-	left=s.findPos('>')
-	c=left.ch(-1)
-	if(c.eq('/')) return true;
-	return false;
-}
+
 @baro.parseConfig(parent, node, &s, mode) {
+	not(s) return;
+	not(typeof(node,'node')) return print('@baro.parseConfig target노드 오류');
 	if(typeof(s,'bool')) return print('@baro.parseConfig 매치오류');
-	not(typeof(node,'node')) return print('@baro.parseConfig 타겟노드오류');
-	node.set('@serviceNode', parent)
+	// node.set('@serviceNode', parent)
 	arr=node.addArray('@keyArray')	
 	if(mode.eq('reset')) {
 		node.reuse()
@@ -1646,8 +1408,10 @@ trimLine(&s) {
 					Cf.funcNode('parent').set('node',sub)
 				}
 			} else {
-				print("@@ parseConfig $k 가 중복등록되었습니다", node)
-				if(conf('cf.skipOverwrite')=='Y') return;
+				if(conf('cf.skipOverwrite')=='Y') {
+					print("@@ parseConfig $k 가 중복등록되었습니다", node)
+					return;
+				}
 			}
 		} else {
 			arr.add(k)
@@ -1674,30 +1438,40 @@ trimLine(&s) {
 			}
 			k=s.trim(sp,s.cur(),true)
 		}
-		
-		if(c.eq('(')) {
-			v=trimLine(s.match(1))
-			addProp(k,v)
+		print("============ parseConfig $k [$c] ===========")
+		if(c.eq('{','(')) {
+			source = s.match(1)
+			if(c.eq('{')) {
+				addProp(k,trimLine(source))
+			} else {
+				addProp(k,removeIndentText(source))
+			}
 			continue
-		}
-		if(c.eq('{')) {
-			addProp(k,s.match(1))
-			continue
-		}
+		} 
 		
 		bprop=false
 		if(c.eq(':','=')) {			
 			bprop=true
 			c=s.incr().ch()
 		}
+		if(s.start('@eval',true)) {
+			c=s.ch()
+			if(c.eq('{','(')) {
+				source=s.match(1)					
+				addProp(k,"@eval=>$source")
+			} else {
+				return print("@eval 함수 시작오류")
+			}
+			continue;
+		}
 		if(c.eq()) {
 			addProp(k,s.match())
 			continue
 		} 
 		
-		if(@baro.isFunc(s)) {
+		if(isFunc(s)) {
 			sp=s.cur()
-			while(@baro.isFunc(s)) {
+			while(isFunc(s)) {
 				s.findPos('(',0,1)
 				s.match()
 				c=s.ch() 
@@ -1768,12 +1542,4 @@ trimLine(&s) {
 		addProp(k,v)
 	}
 	return node;
-}
-@baro.setNodeVersion() {
-	@baro.cmdRun(c,'node -v',func(&s) {
-		root=object('baro.services')
-		s.findPos("\n")
-		line=s.findPos("\n")
-		root.set('@nodeVersion', line)
-	})
 }

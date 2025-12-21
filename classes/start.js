@@ -49,28 +49,32 @@ event(obj, eventName, fc, target, reset) {
 	obj.set(eventName, fn) 
 	return fn;		
 }
-
+isValid(s) {
+	not(s) return false;
+	if(typeof(s,'array') && ~(s.size()) ) return false;
+	return true;
+}
+varValue(k, fn, node) {
+	if(node && node.isVar(k)) return node.get(k);
+	not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
+	not(node) {
+		node=fn.get('@this')
+	}
+	if(typeof(node,'node')) {
+		fn=Cf.funcNode(node)
+		if(fn && fn.isset(k)) return fn.get(k);
+	}
+	if(k.eq('nl')) v="\r\n";
+	else if(k.eq('tab')) v="\t";
+	else v="[$k 미정의]"
+	return v;
+}
 getVarValue(&s,fn,node) {
 	not(fn) fn=Cf.funcNode('parent')
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
 		while(c.eq('.')) c=s.next().ch()
 		return when(c,false,true);
-	};
-	varValue=func(k, fn, node) {
-		if(node && node.isVar(k)) return node.get(k);
-		not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
-		not(node) {
-			node=fn.get('@this')
-		}
-		if(typeof(node,'node')) {
-			fn=Cf.funcNode(node)
-			if(fn && fn.isset(k)) return fn.get(k);
-		}
-		if(k.eq('nl')) v="\r\n";
-		else if(k.eq('tab')) v="\t";
-		else v="[$k 미정의]"
-		return v;
 	};
 	userVal=func(&s) {
 		c=s.ch() not(c) return ' ';
@@ -82,7 +86,7 @@ getVarValue(&s,fn,node) {
 		if(c.eq('#')) {
 			ss=''
 			k=s.incr().trim()
-			v=_getVarValue(k,fn)
+			v=getVarValue(k,fn)
 			v.ref()
 			while(v.valid()) {
 				k=v.findPos(',').trim()
@@ -95,7 +99,7 @@ getVarValue(&s,fn,node) {
 		return;
 	};
 	not(isVar(s)) return eval(s, fn);
-	v=userVal(s,fn) if(valid(v)) return v;
+	v=userVal(s,fn) if(isValid(v)) return v;
 	c=s.ch()
 	if(c.eq(':')) {
 		k='int'
@@ -124,7 +128,7 @@ getVarValue(&s,fn,node) {
 		c=s.ch()
 		not(c) {
 			v=ss.get(k)
-			not(_valid(v)) v=ss.member("$k")
+			not(isValid(v)) v=ss.member("$k")
 			return v;
 		}
 		ss=ss.get(k)
@@ -148,7 +152,7 @@ str(&s, fn, node) {
 		if(c.eq('{')) {
 			src=s.match(1)
 			if(typeof(src,'bool')) break;
-			ss.add(_getVarValue(src,fn,node))
+			ss.add(getVarValue(src,fn,node))
 			continue;
 		}
 		k=s.move()
@@ -156,7 +160,7 @@ str(&s, fn, node) {
 		if(c.eq(':')) {
 			type=k
 			k=s.incr().move()
-			v=_varValue(k,fn,node)
+			v=varValue(k,fn,node)
 			if(type.eq('int')) {
 				if(typeof(v,'num')) {
 					v=v.toInt()
@@ -168,12 +172,12 @@ str(&s, fn, node) {
 			cur=fn.get(k) if(node && typeof(node,'node')) cur=node.get(k)
 			if(typeof(cur,'node')) {
 				k=s.match().trim()
-				v=_varValue(k,fn,cur)
+				v=varValue(k,fn,cur)
 			}
 		} else {
-			v=_varValue(k,fn,node)
+			v=varValue(k,fn,node)
 		}
-		if(_valid(v)) ss.add(v)
+		if(isValid(v)) ss.add(v)
 	}
 	return ss;
 } 
@@ -212,8 +216,8 @@ confSearch(&s) {
 	ss=''
 	while(cur, node) {
 		cur.inject(grp, cd, data)
-		info = firstLine(data)
-		line=_s('$grp.$cd $info $nl')
+		info = getLine(data)
+		line=str('$grp.$cd $info $nl')
 		ss.add(line)
 	}
 	return ss;
@@ -246,6 +250,78 @@ getLine(&s) {
 	line = s.findPos("\n").trim()
 	return line;
 }
+lastLine(&s) {
+	if( s.find("\n")) {
+		left=s.findLast("\n")
+		return left.right();
+	} else if(s) {
+		return s;
+	}
+}
+jsValue(s) {
+	ss=''
+	if(typeof(s,'string')) {
+		if(typeof(s,'num')) {
+			return s;
+		} else {
+			return Cf.jsValue(s)
+		}
+	} else if(typeof(s,'bool','number')) {
+		return s
+	}
+	return Cf.jsValue("$s")
+}
+getVarName(&s) {
+	not(typeof(s,'string')) return;
+	ss='', upper=false
+	while(n=0,s.size()) {
+		c=s.ch(n) not(c) break;
+		if(c.eq('_','-')) {
+			upper=true
+			continue;
+		}
+		if(c.eq('/')) {
+			c='_'
+			continue;
+		} 
+		if(c.eq(' ') || c.is('oper')) {
+			break;
+		}
+		if(upper){
+			ss.add(c.upper())
+			upper=false
+		} else {
+			ss.add(c)
+		}
+	}
+	return ss;
+}
+getStyleKeyName(&s) {
+	not(typeof(s,'string')) return;
+	ss='', upper=false
+	while(n=0,s.size()) {
+		c=s.ch(n)
+		if(c.is('upper')) {
+			if(n) ss.add('-',c.lower())
+		} else {
+			ss.add(c)
+		}
+	}
+	return ss;
+}
+getDbFieldName(&s) {
+	not(typeof(s,'string')) return;
+	ss='', upper=false
+	while(n=0,s.size()) {
+		c=s.ch(n)
+		if(c.is('upper')) {
+			if(n) ss.add('_',c.upper())
+		} else {
+			ss.add(c.upper())
+		}
+	}
+	return ss;
+}
 propValue(&s, propName) {
 	while(s.valid()) {
 		left=s.findPos(propName)
@@ -264,6 +340,7 @@ propValue(&s, propName) {
 	}
 	return;
 }
+
 stripComment(&s, mode) {
 	not(mode) mode=1;
 	rst='';
@@ -574,7 +651,7 @@ parseSource(&s, base, subName) {
 			not(base) {
 				base = propVal(prop,'base') not(base) base ='test'
 			}
-			widgetSource.add(_s('<widgets base="$base">$ss</widgets>'))
+			widgetSource.add(str('<widgets base="$base">$ss</widgets>'))
 		} else if( tag.eq('script') ) {
 			module=propVal(prop, 'module')
 			if( module ) { 

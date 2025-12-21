@@ -1,15 +1,4 @@
-apiCall(url) {
-	web=Baro.web()
-	web.call('http://localhost/api/version', @baro.apiCallProc)
-	return web.result
-}
-@baro.apiCallProc(type,data) {
-	if(type=='read') {
-		this.appendText('result', data)
-	} else if(type=='finish') {
-		print('apiCallProc 완료', this.url)
-	}
-}
+ 
 
 @baro.propValue(&s, propName) {
 	while(s.valid()) {
@@ -1427,39 +1416,7 @@ ${className}${expr} {
 	}
 }
 
-replaceFindText(s, replace, value, sep) {
-	pos = _find(s)
-	if(typeof(pos,'num')) {
-		return _replace(s,pos)
-	}
-	return false;
-	
-	_replace = func(&str, pos) {		
-		if(pos>0) {
-			ss=s.value(0,pos,true)
-		} else {
-			ss=''
-		}
-		size = replace.size()
-		str.pos(pos+size)
-		str.findPos(sep,1,1)
-		ss.add(value)
-		if(str.ch()) ss.add(str)
-		return ss;
-	};
-	_find = func(&str) { 
-		while(str.valid()) {
-			left = str.findPos(replace,1,1) not(str.valid()) return false;
-			print("xxxxxx", replace, str)
-			not(left.ch()) return str.cur();
-			c=left.ch(-1) not(c) return str.cur();
-			if( c.eq(sep) ) {
-				return str.cur()
-			}
-		}
-		return false;
-	};
-}
+
 nodeAppendText(node,key,value,sep,replace) {
 	ss=node.get(key)
 	if(replace && ss ) {
@@ -1476,16 +1433,16 @@ nodeAppendText(node,key,value,sep,replace) {
 }
 trimChar(s,ch) {
 	not(ch) ch='0'
-	pos=s.size()-1;
+	last=s.size()-1;
 	while(n=pos, 0) {
 		c=s.ch(n)
 		if(c.ne(ch)) {
-			if(n.eq(pos)) return s;
-			pos=n+1
+			if(n.eq(last)) return s;
+			last=n+1
 			break;
 		}
 	}
-	return s.trim(0,pos,true)
+	return s.trim(0,last,true)
 }
 nodeInitVal(node, key, val) {
 	if(node.isset(key)) {
@@ -1572,31 +1529,6 @@ catchError() {
 		if(v) conf(k,v,true)
 	}
 	return v;
-}
-
-tagCheck(obj, type) {
-	not(typeof(obj,'node')) return false;
-	if(obj.cmp('tag',type)) return true;
-	tag=obj.get('@tag')
-	chk = tag && tag.start(type)
-	return chk;
-}
-typeName(&s) {
-	ss='', upper=false
-	while(n=0, s.size()) {
-		c=s.ch(n) not(c) break;
-		if(c.eq('-')) {
-			upper=true
-			continue;
-		}
-		if(upper || n.eq(0)) {	
-			ss.add(c.upper())
-			upper=false
-		} else {
-			ss.add(c)
-		}
-	}
-	return ss;
 }
 
 @baro.jsonDataArray(&s,parentType) {

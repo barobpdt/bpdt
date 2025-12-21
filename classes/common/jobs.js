@@ -29,7 +29,7 @@
 	}
 	global=Cf.rootNode()
 	global.addArray('@timerPostList') 
-	_event(global,'onTimeout', @job.timerProc)
+	event(global,'onTimeout', @job.timerProc)
 	System.globalTimer(250)
 }
 @job.timerProc() {

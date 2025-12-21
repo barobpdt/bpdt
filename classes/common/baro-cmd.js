@@ -1,39 +1,31 @@
 @baro.cmd(param) {
-	if(param && typeof(param,'string')) { args(name, callback)
-		cur = Baro.process(name)
-		if( typeof(callback,'func')) {
-			cur.set('@callbackResult', callback)
-		}
-		arr=cur.get('cmdList') 
-		if(typeof(arr,'array')) return cur;
-		cur.addArray('cmdList')
-		cur.set('@firstCall', true)
-		event(cur, '@callback', @baro.cmdProc)
-		return @baro.cmdRun(cur, 'cd');
-	}
-	map=object('baro.objectMap')
-	arr=map.get('@cmdObjects')
-	cnt=0 if( typeof(arr,'array') ) cnt=arr.size()
-	addCmd = func(n) {
-		cur = arr.add(Baro.process("cmdObject_$n"))
-		cur.set('@firstCall', true)
-		cur.addArray('cmdList').reuse()
+	arr=object('baro.objectMap').addArray('@cmdObjects')
+	addCmd = func(id) {
+		cur = arr.add(Baro.process(id)) if(cur.isset('@callback')) return cur;
+		@baro.cmdStop(cur)
 		event(cur, '@callback', @baro.cmdProc)
 		return cur;
 	};
-	not(cnt) {
-		arr=map.addArray('@cmdObjects')
-		maxCmdCount=@baro.conf('maxCmdCount') 
-		not(maxCmdCount) {
-			maxCmdCount=4
-			conf('baro.maxCmdCount', maxCmdCount, true)
-		}
-		while(n=1,maxCmdCount) addCmd(n)
+	not(arr.size()) {
+		cmdCount=conf('baro.maxCmdCount') 		
+		not(cmdCount) cmdCount=4
+		while(n=1,cmdCount) addCmd("cmdObject_$n"))
 	}
+	if(param && typeof(param,'string')) {
+		args(name, callback)		
+		cur = addCmd(name)
+		if( typeof(callback,'func')) {
+			cur.set('@callbackResult', callback)
+		}		
+		return @baro.cmdRun(cur, 'cd');
+	}
+	
 	obj=null
 	while(cur, arr) {
+		not(cur.id.start('cmdObject_')) continue;
 		if(cur.cmp('@mode', 'persist')) continue;
 		if(cur.cmp('@status','start')) continue;
+		if(cur.isset('@jobCallbackFunc')) continue;
 		tick=cur.get('@endTick')
 		if(tick) {
 			dist=System.tick() - tick;
@@ -45,7 +37,8 @@
 		break;
 	}
 	not( obj ) {
-		obj = addCmd(arr.size()+1)
+		idx=arr.size()+1;
+		obj = addCmd("cmdObject_$idx")
 	}
 	if( typeof(param,'func')) {
 		obj.set('@callbackResult', param)
@@ -97,11 +90,18 @@
 	cmd.set('@firstCall', true)
 	cmd.set('@logPrint', false)
 	not(cmd.run()) {
-		print("@@ ${cmd.id}가 이미 중지된 상태입니다")
+		// print("@@ ${cmd.id}가 이미 중지된 상태입니다")
 		return;
 	}
 	cmd.stop()
 }
+@baro.cmdAllStop() {
+	arr=object('baro.objectMap').addArray('@cmdObjects')
+	while(cur, arr) {
+		@baro.cmdStop(cur)
+	}
+}
+
 @baro.cmdProc(type,data) {
 	if(type=='read') {
 		this.appendText('cmdResult', data);
@@ -112,21 +112,33 @@
 				print("@@ firstCall RESULT:${this.cmdResult}")
 				this.set('@firstCall', false)
 			} else {
-				cb=this.get('@callbackResult')
-				if(typeof(cb,'func')) {
-					call(cb, this, this.ref(cmdResult))
-				} else {
-					print(">> cmd proc 결과:", this.cmdResult )
+				if( this.isset('@jobCallbackFunc') ) {
+					print(">> job callback 사용중")
+				} else {				
+					cb=this.get('@callbackResult')
+					if(typeof(cb,'func')) {
+						call(cb, this, this.ref(cmdResult))
+					} else {
+						print(">> cmd proc 결과:", this.cmdResult )
+					}
 				}
 			}
 			this.set('@status','result')
 			@baro.cmdRun(this)
 		} else if(this.get('@logPrint')) {
+			if( this.isset('@jobCallbackFunc') ) {
+				return;
+			}
+			cb=this.get('@callbackResult')
+			if(typeof(cb,'func')) {
+				call(cb, this, true, data)
+			}
 			prog = this.ref('@line').move()
-			print("$prog >> $data")
+			log("$prog >> $data")
 		}
 	}
 }
+
 @baro.parseCmdResult(s) {
 	ss=''
 	while(s.valid()) {
@@ -138,7 +150,17 @@
 	}
 	return ss;
 }
-
+@baro.cmdCallback(&s) {
+	not(s.ch()) return;
+	if( s.start('echo %userprofile%', true) ) {
+		not(s.ch()) return;
+		line = s.findPos("\n").trim()
+		conf('cf.userprofile', line, true)
+		print("@@ cmd callbakc >>userprofile = $line 설정")
+		return;
+	}
+	print("cmd callbakc>> $s")
+}
 @baro.findBindPort(tcpPort, checkCallback) {
 	cmd=@baro.cmd('userProc')
 	funcParam(cmd,'type','findBindPort')
