@@ -85,13 +85,13 @@
 		root=object('baro.services').addNode(serviceName)
 		root.set('serviceName', serviceName)
 	}
-	print(">> baro.loadService [${root.serviceName}] start 소스사이즈:", s.size())
-	_isProps = func(s) {
+	isProps = func(s) {
 		c=s.ch()
 		return when(c.eq('{'),true);
 	};	
+	
+	print(">> baro.loadService [${root.serviceName}] start 소스사이즈:", s.size())
 	evalCheckArray = []
-	evalCheckArray.reuse()
 	type='', base=null, cur=null
 	while(s.valid()) {
 		left = s.findPos('##>',1)
@@ -111,9 +111,9 @@
 				conf(confCode,left,true)
 			}
 			if(ok ) {
-				print(">> loadService type=====$type $confCode start")
-				not(type.eq('funcs')) {
-					if(left.find('@eval')) evalCheckArray.add(cur)
+				print(">> loadService type=====$type $confCode start") 
+				if(left.find('@eval')) {
+					evalCheckArray.add(cur)
 				}
 				if(type.eq('config')) {
 					@baro.parseConfig(root, cur, stripComment(left))
@@ -124,7 +124,8 @@
 					funcInfo=Cf.rootNode('@funcInfo')
 					funcInfo.set('includeFileName', "${root.serviceName}::${currentFileName}")
 					src=stripJsComment(left)
-					call(src);
+					source=@baro.getFuncSource(cur,src)
+					call(source);
 					funcInfo.set('includeFileName','')
 				} else if(type.eq('sql')) {
 					@baro.sqlFuncVal(root, cur, left)
@@ -149,7 +150,7 @@
 		base=root.addNode("@$type")
 		
 		params=null
-		if(_isProps(s)) { 
+		if(isProps(s)) { 
 			s.ch()
 			params=s.match(1)
 			nm=propValue(params,'name')
@@ -175,6 +176,75 @@
 	}
 	print("evalCheckArray==$evalCheckArray")
 	return root;
+}
+@baro.getFuncSource(cur, &s) {
+	src='', arr=cur.addArray('@keyArray')
+	nl=conf('cf.newline')
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq(';',',')) {
+			s.incr()
+			continue;
+		}
+		sp=s.cur()
+		if(c.eq('@')) {
+			s.incr()
+		}
+		c=s.next().ch()
+		if(c.eq('.')) c=s.next().ch()
+		if(c.eq('=')) {
+			k=s.trim(sp,s.cur(),true)
+			c=s.incr().ch()
+			if(s.start('@eval',true)) {
+				c=s.ch()
+				if(c.eq('(','{')) {
+					val=s.match(1)
+					if(typeof(val,'bool')) {
+						log("@eval 괄호 매칭오류")
+						break;
+					}
+					cur.set(k, "@eval=>$val")
+					arr.add(k)
+				} else {
+					log("@eval 시작오류")
+					break;
+				}
+			}
+		} else if(c.eq('{')) {
+			k=s.trim(sp,s.cur(),true)
+			val=s.match(1)
+			if(typeof(val,'bool')) {
+				log("$k 괄호 매칭오류")
+				break;
+			}
+			if(k.eq('@eval')) {
+				cur.set(k, "@eval=>$val")
+			} else {
+				cur.set(k, removeIndentText(val))
+			}
+			arr.add(k)
+		} else if(c.eq('(')) {
+			k=s.trim(sp,s.cur(),true)
+			s.match()
+			if(s.ch('{')) {
+				val=s.match(1)
+				if(typeof(val,'bool')) {
+					log("$k 함수 괄호 매칭오류")
+					break;
+				}
+				ep=s.cur()
+				src.add(s.value(sp,ep,true), nl)
+			} else {
+				log("$k 함수 시작오류")
+				break;
+			}
+		} else {
+			k=s.trim(sp,s.cur(),true)
+			log("$k 함수 시작 오류 [$c]")
+			break;
+		}
+	}
+	return src;
 }
 @baro.evalValue(src, node) {
 	if(typeof(src,'bool')) {
@@ -452,19 +522,19 @@
 			}	
 		}
 		not(cur) {
+			not(refNode) { 
+				refNode=cf
+			}
 			print(">> refNode========$refNode")
-			if(refNode) {
-				while(sub,refNode ) {
-					if(sub.isset(name)) {
-						refNode=sub
-						cur=sub.get(name)
-						break;
-					}
+			while(sub,refNode ) {
+				if(sub.isset(name)) {
+					refNode=sub
+					cur=sub.get(name)
+					break;
 				}
 			}
 		}
 	}
-	not(refNode) refNode=node
 	c=s.ch()
 	while(s.valid()) {
 		not(c.eq('.')) break;

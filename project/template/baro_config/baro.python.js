@@ -2,20 +2,25 @@
 	RUN_PATH = c:/temp 
 	
 	run = @eval{
-		execPythonCommand()
+		test()
 	}
 	
 ##> func {name=python}
 	execPythonCommand() {
-		
-		savePath= pathJoin(cv('python.RUN_PATH'),'pythonCommand.py')
-		inFile= pathJoin(cv('python.RUN_PATH'),'python-in.log')
-		outFile= pathJoin(cv('python.RUN_PATH'),'python-out.log')		
+		savePath	= pathJoin(cv('python.RUN_PATH'),'pythonCommand.py')
+		inFile		= pathJoin(cv('python.RUN_PATH'),'python-in.log')
+		outFile		= pathJoin(cv('python.RUN_PATH'),'python-out.log')		
 		fileWrite(savePath, cv('source.pythonCommand'))
 		command = str('"${savePath}" --in "${inFile}" --out "${outFile}"')
 		print("execPythonCommand : $command")
 		runPython(command)
 		fileWrite(infile, cv('source.webdriverOpen'))
+	}
+	test() {
+		print("test function call !!!")
+	}
+	@eval {
+		test()
 	}
 	
 ##> source {name=funcTest}
