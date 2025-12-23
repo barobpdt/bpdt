@@ -16,12 +16,7 @@
 		runPython(command)
 		fileWrite(infile, cv('source.webdriverOpen'))
 	}
-	test() {
-		print("test function call !!!")
-	}
-	@eval {
-		test()
-	}
+	
 	
 ##> source {name=funcTest}
 /* 

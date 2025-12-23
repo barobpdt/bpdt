@@ -458,45 +458,7 @@ copyNodeField(src, dest, field) {
 		dest.set(field,a)
 	}
 }
-findField(root, field, val) {
-	while( cur, root ) {
-		if( cur.cmp(field, val) ) return cur;
-		if( cur.childCount() ) {
-			find=findField(cur, field, val);
-			if( find ) return find;
-		}
-	}
-	return null;
-}
-findTag(root, tag) {
-	while( cur, root ) {
-		if( cur.cmp("tag", tag) ) return cur;
-		if( cur.childCount() ) {
-			find=findTag(cur,tag);
-			if( find ) return find;
-		}
-	}
-	return null;
-}
-findId( root, id) {
-	while(cur, root) {
-		if(cur.cmp("id",id))return cur;
-		if( cur.childCount() ) {
-			find=findId(cur,id);
-			if( find ) return find;
-		}
-	}
-	return;
-} 
-setArray(arr, idx, node) {
-	not(typeof(idx,"num")) return arr;
-	if(idx.lt(arr.size()) ) {
-		arr.set(idx, node);
-	} else {
-		arr.add(node);
-	} 
-	return arr;
-}	
+	
 arrayFind(arr, key) {
 	not(typeof(arr,'array')) return false;
 	idx=arr.find(key);

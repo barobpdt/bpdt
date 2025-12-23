@@ -1,45 +1,39 @@
 @baro.cmd(param) {
-	arr=object('baro.objectMap').addArray('@cmdObjects')
-	addCmd = func(id) {
-		cur=Baro.process(id) if(arr.find(cur)) return cur;
-		arr.add(cur) 
-		if(cur.isset('@callback')) return cur;
+	cmdObjects=object('baro.objectMap').addArray('@cmdObjects')
+	addCmd = func(id, proc) {
+		cur=Baro.process(id) 
+		if(cmdObjects.find(cur) ) return cur;
+		cmdObjects.add(cur)
 		@baro.cmdStop(cur)
-		event(cur, '@callback', @baro.cmdProc)
+		if(typeof(proc, 'func')) 
+			event(cur, '@callback', proc)
+		else 
+			event(cur, '@callback', @baro.cmdProc)
 		return cur;
 	};
-	if(param && typeof(param,'string')) {
-		args(name, callback)		
-		cur = addCmd(name)
+	if(typeof(param,'string')) {
+		args(name, callback, proc)		
+		cur = addCmd(name, proc)
+		cur.set('@mode','persist')
 		if( typeof(callback,'func')) {
 			cur.set('@callbackResult', callback)
-		}		
-		return @baro.cmdRun(cur, 'cd');
+		}
+		// @baro.cmdRun(cur, 'cd');
+		return cur;
 	}
-	not(arr.size()) {
-		cmdCount=conf('baro.maxCmdCount') 		
-		not(cmdCount) cmdCount=4
-		while(n=1,cmdCount) addCmd("cmdObject_$n"))
-	}
-	
 	obj=null
-	while(cur, arr) {
-		not(cur.id.start('cmdObject_')) continue;
-		if(cur.cmp('@mode', 'persist')) continue;
-		if(cur.cmp('@status','start')) continue;
-		if(cur.isset('@jobCallbackFunc')) continue;
+	while(cur, cmdObjects) {
+		if(cur.cmp('@mode','persist') || cur.cmp('@status','start') ) continue;
 		tick=cur.get('@endTick')
 		if(tick) {
 			dist=System.tick() - tick;
-			if( dist < 500 ) {
-				continue;
-			}
+			if( dist < 500 ) continue;
 		}
 		obj = cur;
 		break;
 	}
 	not( obj ) {
-		idx=arr.size()+1;
+		idx=cmdObjects.size()+1;
 		obj = addCmd("cmdObject_$idx")
 	}
 	if( typeof(param,'func')) {
@@ -55,7 +49,6 @@
 		if( typeof(callback,'func')) {
 			cmd.set('@callbackResult', callback)
 		}
-		cmd.set('@logPrint', true)
 	} else {
 		args(command, callback)
 		cmd=@baro.cmd(callback)
@@ -63,17 +56,19 @@
 	not(tagCheck(cmd,'process')) return print("@@ cmdRun 오류 $cmd 객체오류");
 	not( cmd.run() ) {
 		@baro.cmdStop(cmd)
-		cmd.cmdList.add('chcp 65001')
-		cmd.cmdList.add(command)
+		cmdList = nodeArrayVar(cmd,'@cmdList')
+		cmdList.add('chcp 65001')
+		cmdList.add(command)
 		cmd.run('cmd')
 		return cmd;
 	}
 	if( cmd.cmp('@status','start') ) {
+		cmdList = nodeArrayVar(cmd,'@cmdList')
 		if(command) {
-			cmd.cmdList.add(command)
+			cmdList.add(command)
 		}
 	} else {
-		not(command) command = cmd.cmdList.pop()
+		not(command) command = nodeArrayVar(cmd,'@cmdList').pop()
 		if( command ) {
 			print("@@ baro.cmdRun COMMAND:$command")
 			cmd.set('cmdResult','')
@@ -86,16 +81,13 @@
 	return cmd;
 } 
 @baro.cmdStop(cmd) {
-	cmd.cmdList.reuse()
+	nodeArrayVar(cmd,'@cmdList',true)
 	cmd.set('cmdResult','')
 	cmd.set('@status', 'stop')
 	cmd.set('@firstCall', true)
-	cmd.set('@logPrint', false)
-	not(cmd.run()) {
-		// print("@@ ${cmd.id}가 이미 중지된 상태입니다")
-		return;
+	if(cmd.run()) {
+		cmd.stop()
 	}
-	cmd.stop()
 }
 @baro.cmdAllStop() {
 	arr=object('baro.objectMap').addArray('@cmdObjects')
@@ -113,27 +105,23 @@
 			if( this.get('@firstCall') ) {
 				print("@@ firstCall RESULT:${this.cmdResult}")
 				this.set('@firstCall', false)
-			} else {
-				if( this.isset('@jobCallbackFunc') ) {
-					print(">> job callback 사용중")
-				} else {				
-					cb=this.get('@callbackResult')
-					if(typeof(cb,'func')) {
-						call(cb, this, this.ref(cmdResult))
-					} else {
-						print(">> cmd proc 결과:", this.cmdResult )
-					}
+			} else {				
+				cb=this.get('@callbackResult')
+				result=this.ref(cmdResult)
+				if(typeof(cb,'string')) {
+					logAppend(cb).write("##> $result\r\n\r\n")
+				} else if(typeof(cb,'func')) {
+					call(cb, this, this.ref(cmdResult))
+				} else {
+					print(">> cmd proc 결과:", this.cmdResult )
 				}
 			}
 			this.set('@status','result')
 			@baro.cmdRun(this)
-		} else if(this.get('@logPrint')) {
-			if( this.isset('@jobCallbackFunc') ) {
-				return;
-			}
+		} else if(this.get('@logPrint')) {			
 			cb=this.get('@callbackResult')
-			if(typeof(cb,'func')) {
-				call(cb, this, true, data)
+			if(typeof(cb,'string')) {
+				logAppend(cb).write(data)
 			}
 			prog = this.ref('@line').move()
 			log("$prog >> $data")

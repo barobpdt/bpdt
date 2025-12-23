@@ -1,4 +1,8 @@
 <script module="@json">
+	init(prefix, useIndent) {
+		@childPrefix	= nvl(prefix,'children')
+		@useIndent		= useIndent
+	}
 	checkVal( val ) {
 		chk = typeof(val,'num') || typeof(val,'bool') || typeof(val,'null') 
 		if(chk) return chk;
@@ -55,10 +59,8 @@
 						rst.add(Cf.jsValue(key), ':', val )
 						continue;
 					}
-					if(typeof(val,'node')) {
+					if(typeof(val,'node','array')) {
 						rst.add(Cf.jsValue(key), ':', this.nodeStr(val) );
-					} else if(typeof(val,'array')) {
-						rst.add(Cf.jsValue(key), ':', this.arrayStr(val) );
 					} else {
 						if( typeof(val,'num') || val.eq('true','false') ) {
 							rst.add(Cf.jsValue(key), ':', val )
@@ -110,10 +112,8 @@
 					rst.add(Cf.jsValue(key), ':', val )
 					continue;
 				}
-				if(typeof(val,'node')) {
+				if(typeof(val,'node','array')) {
 					rst.add(Cf.jsValue(key), ':', this.nodeStr(val) );
-				} else if(typeof(val,'array')) {
-					rst.add(Cf.jsValue(key), ':', this.arrayStr(val) );
 				} else {
 					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
 				}
@@ -134,61 +134,111 @@
 		return rst;
 	}
 	
-	nodeStr(node, depth) {
-		not(depth) depth=1;
-		if(node.cmp('tag','array')) return this.arrayStr(node, depth);
-		if(depth>4) return Cf.jsValue("node");
-		rst='';
-		rst.add("{");
+	jsonValue(obj, depth) {	
+		nl=conf('cf.newline')
+		findChild = func(node, sub) {
+			while(cur,node) {
+				if(cur==sub) return cur;
+			}
+			return;
+		};
+		arrayValue = func(arr, depth) {
+			rst=''
+			if(depth) rst.add(nl)
+			rst.add("[");
+			num=0, depth+=1;
+			while( val, arr ) {
+				if(typeof(val,'func')) continue;
+				if( num++ ) rst.add(','); 
+				if( @json.checkVal(val) ) {
+					rst.add( val )
+					continue;
+				}
+				if(typeof(val,'node','array')) {
+					if(useIndent) {
+						rst.add(nl)
+						while(n=0, n<depth, n++ ) rst.add("\t");
+					}
+					rst.add( this.jsonValue(val,depth) );			
+				} else {
+					rst.add( Cf.jsValue(val) )
+				}
+				num++; 
+			}
+			if(useIndent) {
+				depth-=1;
+				rst.add(nl)
+				while(n=0, n<depth, n++ ) rst.add("\t");
+			}
+			rst.add("]");
+		}
+		not(depth) depth=0;
+		if(typeof(obj,'array')) return arrayValue(obj,depth);
+		if(typeof(obj,'node')) {
+			node=obj
+		} else {
+			node=_node()
+		}
+		rst=''
+		rst.add('{')
 		num=0, depth+=1;
 		while( key, node.keys() ) {	
 			if( key.ch('@') ) continue;
 			if( key.eq('children') ) continue;
 			val=node.get(key);
 			if(typeof(val,'func')) continue;
-			if( num++ ) rst.add(','); 
+			if( num++ ) rst.add(',');
+			if(useIndent) {
+				rst.add(nl)
+				while(n=0, n<depth, n++ ) rst.add("\t");
+			}
 			if( @json.checkVal(val) ) {
-				rst.add(Cf.jsValue(key), ':', val )
+				rst.add( Cf.jsValue(key), ':', val )
 				continue;
 			}
-			if(typeof(val,'node')) {
-				rst.add(Cf.jsValue(key), ':', this.nodeStr(val,depth) );
-			} else if(typeof(val,'array')) {
-				rst.add(Cf.jsValue(key), ':', this.arrayStr(val,depth) );
+			if(typeof(val,'node','array')) {
+				if(typeof(val,'node') && findChild(node,val)) {
+					rst.add( Cf.jsValue(key), ':', Cf.jsValue('[node]') );
+				} else {
+					rst.add( Cf.jsValue(key), ':', this.jsonValue(val,depth) );
+				}
 			} else {
-				rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
+				rst.add( Cf.jsValue(key), ':', Cf.jsValue(val) )
 			}
+		}
+		if( node.childCount() && this.member(childPrefix)) {
+			if( num++ ) rst.add(',')
+			if(useIndent) {	
+				rst.add(nl)
+				while(n=0, n<depth, n++ ) rst.add("\t");
+				depth+=1;
+			}
+			rst.add( Cf.jsValue(childPrefix), ': [')
+			while(cur, node, childIndex) {
+				if(childIndex) rst.add(',')
+				if(useIndent) {	
+					rst.add(nl)
+					while(n=0, n<depth, n++ ) rst.add("\t");
+				}
+				rst.add( this.jsonValue(cur,depth) )
+			}
+			if(useIndent) {
+				depth-=1;
+				rst.add(nl)
+				while(n=0, n<depth, n++ ) rst.add("\t");
+			}
+			rst.add(']')
+		}
+		if(useIndent) {
+			depth-=1;
+			rst.add(nl)
+			while(n=0, n<depth, n++ ) rst.add("\t");
 		}
 		rst.add("}");
 		return rst;
 	}
-	arrayStr(arr, depth) {
-		not(depth) depth=1;
-		if(depth>4) return Cf.jsValue("array");
-		rst='';
-		rst.add("[");
-		num=0, depth+=1;
-		while( val, arr ) {	
-			if( key.ch('@') ) continue; 
-			if(typeof(val,'func')) continue;
-			if( num++ ) rst.add(','); 
-			if( @json.checkVal(val) ) {
-				rst.add( val )
-				continue;
-			}
-			if(typeof(val,'node')) {
-				rst.add( this.nodeStr(val,depth) );
-			} else if(typeof(val,'array')) {
-				rst.add(  this.arrayStr(val,depth) );
-			} else {
-				rst.add( Cf.jsValue(val) )
-			}
-			num++; 
-		}
-		rst.add("]");
-		return rst;
-	}
+	 
 	toString(node) {
-		return this.nodeStr(node)
+		return this.jsonValue(node)
 	} 
 </script>

@@ -26,6 +26,45 @@ findServiceNode(cur) {
 	}
 	return;
 }
+findField(root, field, val) {
+	while( cur, root ) {
+		if( cur.cmp(field, val) ) return cur;
+		if( cur.childCount() ) {
+			find=findField(cur, field, val);
+			if( find ) return find;
+		}
+	}
+	return null;
+}
+findTag(root, tag) {
+	while( cur, root ) {
+		if( cur.cmp("tag", tag) ) return cur;
+		if( cur.childCount() ) {
+			find=findTag(cur,tag);
+			if( find ) return find;
+		}
+	}
+	return null;
+}
+findId( root, id) {
+	while(cur, root) {
+		if(cur.cmp("id",id))return cur;
+		if( cur.childCount() ) {
+			find=findId(cur,id);
+			if( find ) return find;
+		}
+	}
+	return;
+} 
+setArray(arr, idx, node) {
+	not(typeof(idx,"num")) return arr;
+	if(idx.lt(arr.size()) ) {
+		arr.set(idx, node);
+	} else {
+		arr.add(node);
+	} 
+	return arr;
+}
 event(obj, eventName, fc, target, reset) {		
 	not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
 	fn = obj.get(eventName)
@@ -54,86 +93,72 @@ isValid(s) {
 	if(typeof(s,'array') && ~(s.size()) ) return false;
 	return true;
 }
+isFullpath(s) {
+	not(s) return false;
+	c=s.ch(1)
+	if(c.eq(':')) {
+		return true;
+	}
+	return false;
+}
 varValue(k, fn, node) {
-	if(node && node.isVar(k)) return node.get(k);
-	not(fn) fn=Cf.funcNode('parent') if(fn.isset(k)) return fn.get(k);
+	not(fn) fn=Cf.funcNode('parent') 
+	if(fn.isset(k)) return fn.get(k);
+	
 	not(node) {
 		node=fn.get('@this')
 	}
 	if(typeof(node,'node')) {
+		if(node.isVar(k)) return node.get(k);
 		fn=Cf.funcNode(node)
 		if(fn && fn.isset(k)) return fn.get(k);
 	}
-	if(k.eq('nl')) v="\r\n";
-	else if(k.eq('tab')) v="\t";
-	else v="[$k 미정의]"
-	return v;
+	print("@@ varValue [$k] 변수 미정의");
+	return;
 }
 getVarValue(&s,fn,node) {
-	not(fn) fn=Cf.funcNode('parent')
+	not(typeof(s,'string')) return;
+	if(s.start('conf.',true)) {
+		return conf(s.trim())
+	} 
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
 		while(c.eq('.')) c=s.next().ch()
 		return when(c,false,true);
-	};
-	userVal=func(&s) {
-		c=s.ch() not(c) return ' ';
-		if(c.eq('@')) {
-			k=s.incr().trim()
-			v=conf(k) not(v) v="[conf $k 미정의]";
-			return v;
-		}
-		if(c.eq('#')) {
-			ss=''
-			k=s.incr().trim()
-			v=getVarValue(k,fn)
-			v.ref()
-			while(v.valid()) {
-				k=v.findPos(',').trim()
-				not(k) break;
-				if(ss) ss.add(', ')
-				ss.add("#{$k}")
-			}
-			return ss;
-		}
-		return;
-	};
-	not(isVar(s)) return eval(s, fn);
-	v=userVal(s,fn) if(isValid(v)) return v;
+	};	
+	not(fn) fn=Cf.funcNode('parent')
+	not(isVar(s)) {
+		return eval(s, fn)
+	} 
+	k=s.move()
+	val=varValue(k,fn,node)
 	c=s.ch()
-	if(c.eq(':')) {
-		k='int'
-	} else {
-		k=s.move()
+	not(c) return val;
+	while(c.eq('.')) {
+		not(typeof(val,'node')) {
+			return;
+		}
+		k=s.incr().move()
+		val=val.get(k)
 		c=s.ch()
 	}
 	if(c.eq(':')) {
-		type=k
-		k=s.incr().move()
-		v=varValue(k,fn,node)
+		type=s.incr().move()		
 		if(type.eq('int')) {
-			if(typeof(v,'num')) {
-				v=v.toInt()
+			if(typeof(val,'num')) {
+				val=val.toInt()
 			} else {
-				v=0
+				val=0
+			}
+		} else if(type.eq('json')) {
+			if(typeof(val,'node')) {
+				val=json(val)
+			} else {
+				val='{}'
 			}
 		}
-		return v;
 	}
-	ss=varValue(k, fn, node)
-	c=s.ch() not(c) return ss;
-	while(c.eq('.')) {
-		not(typeof(ss,'node')) return '';
-		k=s.incr().move()
-		c=s.ch()
-		not(c) {
-			v=ss.get(k)
-			not(isValid(v)) v=ss.member("$k")
-			return v;
-		}
-		ss=ss.get(k)
-	}
-	return ss;
+	return val;
 }
 
 str(&s, fn, node) {
@@ -213,12 +238,12 @@ confSearch(&s) {
 		}
 	}
 	node=db.fetchAll("select grp, cd, data from conf_info where 1=1 $filter")
-	ss=''
+	ss='', nl=conf('cf.newline')
 	while(cur, node) {
 		cur.inject(grp, cd, data)
 		info = getLine(data)
-		line=str('$grp.$cd $info $nl')
-		ss.add(line)
+		line=str('$grp.$cd $info')
+		ss.add(line, nl)
 	}
 	return ss;
 }
@@ -321,19 +346,20 @@ getDbFieldName(&s) {
 		}
 	}
 	return ss;
-}
-propValue(&s, propName) {
-	while(s.valid()) {
-		left=s.findPos(propName)
-		c=s.ch() not(c) break;
-		if(c.eq('=',':')) {
+}  
+propValue(&prop, key) {
+	while(prop.valid()) {
+		left=prop.findPos(key)
+		ch=prop.ch() not(ch) break;
+		if(ch.eq('=',':') ) {
 			c=left.ch(-1)
 			if(c.is('alphanum')) continue;
-			c=s.incr().ch()
-			if(c.eq()) {
-				val=s.match()
+			
+			ch=prop.incr().ch();
+			if(ch.eq()) {
+				val=prop.match().value();
 			} else {
-				val=s.findPos(", \t\n",4)
+				val=prop.findPos(" ,\t\n",4).trim();
 			}
 			return val;
 		}
@@ -649,11 +675,11 @@ parseSource(&s, base, subName) {
 		prop=ss.findPos('>')
 		if( tag.eq('widgets','pages') ) {
 			not(base) {
-				base = propVal(prop,'base') not(base) base ='test'
+				base = propValue(prop,'base') not(base) base ='test'
 			}
 			widgetSource.add(str('<widgets base="$base">$ss</widgets>'))
 		} else if( tag.eq('script') ) {
-			module=propVal(prop, 'module')
+			module=propValue(prop, 'module')
 			if( module ) { 
 				if( module.ch('@') ) {
 					module=module.value(1)
@@ -675,22 +701,54 @@ parseSource(&s, base, subName) {
 		Cf.rootNode('@funcInfo').set('pageBase', '')
 	}
 }
-addObjectArrayVar(obj, name, val) {
-	a=obj.var("$name")
+nodeVar(obj, name, value) {
+	not(typeof(name,'string')) {
+		print("@@ nodeVar 이름오류", args())
+		return;
+	}
+	not(typeof(obj,'node') ) {
+		print("@@ nodeVar [$name] 매개변수오류", args())
+		return;
+	}
+	vnm=when(name.ch('@'),name,"@$name")
+	asize=args().size()
+	if(asize==3) {
+		obj.set(vnm, value)
+		return value;
+	} else {
+		not(obj.isVar(vnm)) {
+			print("@@ nodeVar $vnm 변수 미설정")
+			return;
+		}
+		return obj.get(vnm)
+	}
+}
+nodeArrayVar(obj, name, reset) {
+	not(typeof(name,'string')) {
+		print("@@ nodeArrayVar 이름오류", args())
+		return _arr();
+	}
+	not(typeof(obj,'node') ) {
+		print("@@ nodeArrayVar 매개변수오류", args())
+		return _arr();
+	}
+	vnm=when(name.ch('@'),name,"@$name")
+	a=obj.get(vnm)
 	not(typeof(a,'array')) {
 		a = obj.newArray()
-		obj.var("$name", a)
+		obj.set(vnm, a)
 	}
-	not(a.find(val)) a.add(val)
-	return a
+	if(reset) {
+		a.reuse()
+	}
+	return a;
 }
-findObjectArrayVar(obj, name, val) {
-	a=obj.var("$name")
-	not(typeof(a,'array')) return;
-	idx=a.find(val);
-	return idx.ne(-1);
+addArrayVar(obj, name, val) {
+	a=nodeArrayVar(obj,name)
+	if(a.find(val)) return false;
+	a.add(val)
+	return true;
 }
-
 addModule(obj, moduleName) {
 	asize=args().size()
 	if(asize.eq(0)) {
@@ -700,10 +758,13 @@ addModule(obj, moduleName) {
 		obj=this
 		args(moduleName)
 	}
-	if( moduleName.ch('@')) moduleName = moduleName.value(1)
-	print("addModule => ", moduleName)
-	if( findObjectArrayVar(obj,'moduleList',moduleName) ) return obj;
-	// ex) editor#myedit
+	modules=nodeArrayVar(obj,'moduleList')
+	if( moduleName.ch('@')) {
+		moduleName = moduleName.value(1)
+	}
+	if( modules.find(moduleName) ) {
+		return obj;
+	}
 	subName = ''
 	if( moduleName.find(':')) {
 		split(moduleName,':').inject(subFuncName, subName)
@@ -730,7 +791,7 @@ addModule(obj, moduleName) {
 		}
 	}
 	obj.var(useModule, true)
-	addObjectArrayVar(obj,'moduleList',moduleName)
+	addArrayVar(obj,'moduleList',moduleName)
 	return obj
 }
 isEventName(&s) {

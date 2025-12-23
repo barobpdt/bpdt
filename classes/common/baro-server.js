@@ -66,7 +66,7 @@
 @baro.websocketSendMessage(client, type, data) {
 	param=_node()
 	param.parseJson(data)
-	data = json().nodeStr(param)
+	data = json(param)
 	message = Cf.val('{"type":', Cf.jsValue(type), ', "data":', data, '}')
 	if( client) {
 		print("@@ websocketSendMessage message: $message")

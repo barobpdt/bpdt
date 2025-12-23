@@ -1,4 +1,8 @@
 ##> func {name=jobs }
+	@eval {
+		print("jobs function => webResult
+	}
+
 	/* 웹호출 결과 출력 (api 호출) */
 	webResult(web, url, method, data, headerJson) {
 		not(method) method='GET'
@@ -15,10 +19,10 @@
 	@user.webCallback(type,data) {
 		if(type=='error') return log('webResult 오류 객체:#{0} 메시지#{1}', this, data);
 		if(type=='read') this.appendText('@webResult', data)
-	}	
+	}
 
 
-##> func {name=fileCheck note=파일변경여부 체크해서 자동반영}
+##> func {name=fileCheck, note=파일변경여부 체크해서 자동반영}
 
 	/* 서비스별(프로트,백앤드,api 등) 파일감시 목록추가  */
 	addWatchFile(serviceMode, fullpath) {

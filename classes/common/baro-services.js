@@ -79,7 +79,7 @@
 	base=config.get('@default')
 	base.set('FULL_PATH', fullPath)
 }
-@baro.loadService(root, &s, reset) {
+@baro.loadService(root, &s, reset, skipEval) {
 	if(typeof(root,'string')) {
 		serviceName=root
 		root=object('baro.services').addNode(serviceName)
@@ -89,16 +89,16 @@
 		c=s.ch()
 		return when(c.eq('{'),true);
 	};	
-	
-	print(">> baro.loadService [${root.serviceName}] start 소스사이즈:", s.size())
+	serviceName = root.get('serviceName')
+	print(">> baro.loadService [$serviceName] start 소스사이즈:", s.size())
 	evalCheckArray = []
 	type='', base=null, cur=null
 	while(s.valid()) {
 		left = s.findPos('##>',1)
 		if(type) { 
 			ok=true
-			name = cur.get('@name')
-			confCode="baro.${type}:${name}#modify"
+			name = cur.get('name')
+			confCode="${serviceName}.${type}:${name}#modify"
 			if( left.eq(conf(confCode)) ) {
 				if( cur.isset('@modify')) { 					
 					print(">> $confCode 변경된 내용이 없습니다 ")
@@ -112,13 +112,20 @@
 			}
 			if(ok ) {
 				print(">> loadService type=====$type $confCode start") 
-				if(left.find('@eval')) {
+				if( left.find('@eval')) {
 					evalCheckArray.add(cur)
 				}
 				if(type.eq('config')) {
 					@baro.parseConfig(root, cur, stripComment(left))
 				} else if(type.eq('pages')) {
 					print("pages==".left.size() )
+				} else if(type.eq('modules')) {
+					if(name.eq('@default')) {
+						name='common'
+					}
+					src=stripJsComment(left)
+					source=@baro.getFuncSource(cur,src)
+					applyFunc(source, name)
 				} else if(type.eq('funcs')) {
 					currentFileName = root.get('@currentFileName') not(currentFileName) currentFileName=cur.name
 					funcInfo=Cf.rootNode('@funcInfo')
@@ -144,11 +151,12 @@
 		if(type.eq('page','app')) {
 			if(type.eq('app')) name='app'
 			type='pages'
+		} else if(type.eq('module')) {
+			type='modules'
 		} else if(type.eq('func','function')) {
 			type='funcs'
 		}
 		base=root.addNode("@$type")
-		
 		params=null
 		if(isProps(s)) { 
 			s.ch()
@@ -169,16 +177,17 @@
 			@baro.parseConfig(root, cur, params)
 		}
 	}
-	if( evalCheckArray.size()) {
+	if( evalCheckArray.size() ) {
+		print("evalCheckArray==$evalCheckArray")
 		while(cur, evalCheckArray) {
-			@baro.initConfig(root,cur)
+			@baro.evalCall(root,cur,skipEval)
 		}
 	}
-	print("evalCheckArray==$evalCheckArray")
 	return root;
 }
 @baro.getFuncSource(cur, &s) {
 	src='', arr=cur.addArray('@keyArray')
+	arr.reuse()
 	nl=conf('cf.newline')
 	while(s.valid()) {
 		c=s.ch() not(c) break;
@@ -191,26 +200,58 @@
 			s.incr()
 		}
 		c=s.next().ch()
-		if(c.eq('.')) c=s.next().ch()
+		while(c.eq('.')) c=s.next().ch()
+		k=s.trim(sp,s.cur(),true)
 		if(c.eq('=')) {
 			k=s.trim(sp,s.cur(),true)
 			c=s.incr().ch()
-			if(s.start('@eval',true)) {
-				c=s.ch()
-				if(c.eq('(','{')) {
-					val=s.match(1)
-					if(typeof(val,'bool')) {
-						log("@eval 괄호 매칭오류")
+			if(c.eq()) {
+				cur.set(k,s.match())
+				not(arr.find(k)) arr.add(k)
+				continue;
+			}
+			sp=s.cur()
+			if(c.eq('@')) c=s.incr().ch()
+			c=s.next().ch()
+			while(c.eq('.')) c=s.next().ch()
+			not(c.eq('(','{')) {
+				print(">> 함수소스 생성오류: 키 [$k] 형식오류 함수내 키설정시 따옴표 또는 괄호만 허용")
+				break;
+			}
+			kk=s.trim(sp,s.cur(),true)
+			if(kk.eq('func','function')) {
+				fparam=''
+				if(c.eq('(')) {
+					fparam=s.match()
+					c=s.ch()
+				} 
+				if(c.eq('{')) {
+					src=s.match(1)
+					if(typeof(src,'bool')) {
+						print(">> 함수소스 생성오류: [$k = $kk] 괄호매치 오류")
 						break;
 					}
-					cur.set(k, "@eval=>$val")
-					arr.add(k)
 				} else {
-					log("@eval 시작오류")
+					print(">> 함수소스 생성오류: [$k = $kk] 시작오류")
 					break;
 				}
+				src.add("${k}($fparam) {$src}" nl)
+			} else {
+				if(c.eq('(')) {
+					print(">> 함수소스 생성오류: [$kk] 값이 func 또는 function만 허용")
+					break;
+				}
+				source = s.match(1)
+				if(typeof(source,'bool')) {
+					print(">> 함수소스 생성오류: [$k = $kk] 괄호매칭 오류")
+					break;
+				}
+				cur.set(k, "$kk=>$source")
+				not(arr.find(k)) arr.add(k)
 			}
-		} else if(c.eq('{')) {
+			continue;
+		}
+		if(c.eq('{')) {
 			k=s.trim(sp,s.cur(),true)
 			val=s.match(1)
 			if(typeof(val,'bool')) {
@@ -222,8 +263,10 @@
 			} else {
 				cur.set(k, removeIndentText(val))
 			}
-			arr.add(k)
-		} else if(c.eq('(')) {
+			not(arr.find(k)) arr.add(k)
+			continue;
+		} 
+		if(c.eq('(')) {
 			k=s.trim(sp,s.cur(),true)
 			s.match()
 			if(s.ch('{')) {
@@ -246,6 +289,7 @@
 	}
 	return src;
 }
+
 @baro.evalValue(src, node) {
 	if(typeof(src,'bool')) {
 		return print("@@ evalValue 실행오류 괄포매칭 오류")
@@ -257,16 +301,23 @@
 	print(">> eval valuue ",src)
 	return eval(src,fn)
 }
-@baro.initConfig(root, config) {
+@baro.evalCall(root, config, skip) {
 	ka=config.get('@keyArray')
 	fn=Cf.funcNode('parent')
-	print(">> initConfig keyArray==$ka")
+	print(">> evalCall keyArray==$ka")
 	while(k, ka) {
 		s=config.ref(k)
 		not(typeof(s,'string')) continue;
-		if(s.start('@eval=>',true)) {
-			src=@baro.evalSourceParse(s)
-			config.set(k,@baro.evalValue(src, config))
+		ss=null
+		if(k.eq('@eval')) {
+			ss=s
+		} else if(s.start('@eval=>',true)) {
+			if(skip) continue;
+			ss=s
+		}
+		if(ss) {
+			src=@baro.evalSourceParse(ss)
+			config.set("@$k",@baro.evalValue(src, config))
 		}
 	}
 }
@@ -955,7 +1006,7 @@
 	}
 	if( fnm.eq('fields','binds','pk','tableinfo')) {
 		node = @baro.configKeyValue(root,node,"table.$fparam")
-		return json().nodeStr(node)
+		return json(node)
 	}	
 	if( fnm.eq('eq')) {
 		a=fparam.findPos(',').trim()
@@ -1468,7 +1519,13 @@
 	if(mode.eq('reset')) {
 		node.reuse()
 		arr.reuse()
-	}	
+	}
+	isDef = func(&s) {
+		if(s.ch('@')) s.incr()
+		c=s.next().ch()
+		while(c.eq('.')) c=s.next().ch()
+		return c.eq('{');
+	}
 	addProp = func(k,v) {
 		if(arr.find(k)) {			
 			if(mode.eq('overwrite')) {
@@ -1511,7 +1568,6 @@
 			}
 			k=s.trim(sp,s.cur(),true)
 		}
-		print("============ parseConfig $k [$c] ===========")
 		if(c.eq('{','(')) {
 			source = s.match(1)
 			if(c.eq('{')) {
@@ -1526,13 +1582,17 @@
 			bprop=true
 			c=s.incr().ch()
 		}
-		if(s.start('@eval',true)) {
-			c=s.ch()
+		if(isDef(s)) {
+			sp=s.cur()
+			if(s.ch('@')) s.incr()
+			c=s.next().ch()
+			while(c.eq('.')) c=s.next().ch()
+			kk=s.trim(sp,s.cur(),true)
 			if(c.eq('{','(')) {
 				source=s.match(1)					
-				addProp(k,"@eval=>$source")
+				addProp(k,"$kk=>$source")
 			} else {
-				return print("@eval 함수 시작오류")
+				return print("$kk def 시작오류")
 			}
 			continue;
 		}

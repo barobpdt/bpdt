@@ -580,7 +580,7 @@ isSpace(&s) {
 	}
 	if( fnm.eq('fields','binds','pk','tableinfo')) {
 		node = @baro.configKeyValue(backend,node,"table.$fparam")
-		return json().nodeStr(node)
+		return json(node)
 	} 
 	if( fnm.eq('keyValue')) {
 		p0=fparam.findPos(',').trim()
