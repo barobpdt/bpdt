@@ -33,7 +33,7 @@
 	return root;
 }
 @baro.hashmap(node, key, &s, reset) {	
-	if(node.isset(key)) {
+	if(node.isVar(key)) {
 		map=node.get(key)
 		if(reset) map.reuse()
 	} else {
@@ -100,7 +100,7 @@
 			name = cur.get('name')
 			confCode="${serviceName}.${type}:${name}#modify"
 			if( left.eq(conf(confCode)) ) {
-				if( cur.isset('@modify')) { 					
+				if( cur.isVar('@modify')) { 					
 					print(">> $confCode 변경된 내용이 없습니다 ")
 					not(reset) ok=false
 				}
@@ -290,17 +290,6 @@
 	return src;
 }
 
-@baro.evalValue(src, node) {
-	if(typeof(src,'bool')) {
-		return print("@@ evalValue 실행오류 괄포매칭 오류")
-	}
-	fn=Cf.funcNode()
-	if(typeof(node,'node')) {
-		fn.set('@this',node)
-	}
-	print(">> eval valuue ",src)
-	return eval(src,fn)
-}
 @baro.evalCall(root, config, skip) {
 	ka=config.get('@keyArray')
 	fn=Cf.funcNode('parent')
@@ -317,7 +306,7 @@
 		}
 		if(ss) {
 			src=@baro.evalSourceParse(ss)
-			config.set("@$k",@baro.evalValue(src, config))
+			config.set("@$k",runSource(src,config))
 		}
 	}
 }
@@ -332,7 +321,7 @@
 			continue;
 		}
 		while(k,va) {
-			if(store.isset(k)) store.set(k,'')
+			if(store.isVar(k)) store.set(k,'')
 		}
 		while(k,ka) {
 			src=@baro.configValue(root, store, store.ref(k))
@@ -524,7 +513,7 @@
 		if(name.eq('this')) {
 			if(c.eq('.')) {
 				name=getName(true)
-				if(node.isset(name)) {
+				if(node.isVar(name)) {
 					cur=node.get(name)
 				} else {
 					parent=node.parentNode() not(parent) parent=root
@@ -533,9 +522,9 @@
 			} else {
 				cur=node
 			}
-		} else if(node.isset(name)) {
+		} else if(node.isVar(name)) {
 			cur=node.get(name)
-		} else if(root.isset("@$name")) {
+		} else if(root.isVar("@$name")) {
 			base=root.get("@$name")		
 			if(c.eq('.')) {
 				name=getName(true)
@@ -548,16 +537,16 @@
 			} else {
 				cur=base
 			}
-		} else if(cf.isset(name)) {
+		} else if(cf.isVar(name)) {
 			refNode=cf.get(name)
 			if(typeof(refNode,'node')) {
 				cur=refNode
 			} else {
 				refNode=cf
 			}
-		} else if(cf.isset('@default')) { 
+		} else if(cf.isVar('@default')) { 
 			def=cf.get('@default')
-			if(typeof(def,'node') && def.isset(name)) {
+			if(typeof(def,'node') && def.isVar(name)) {
 				refNode=def
 				cur=def.get(name)
 			} else {
@@ -565,7 +554,7 @@
 			}
 		}
 		not(cur) {
-			if(node.isset(name)) {
+			if(node.isVar(name)) {
 				cur=node.get(name)
 			} else {
 				parent=node.parentNode() not(parent) parent=root
@@ -578,7 +567,7 @@
 			}
 			print(">> refNode========$refNode")
 			while(sub,refNode ) {
-				if(sub.isset(name)) {
+				if(sub.isVar(name)) {
 					refNode=sub
 					cur=sub.get(name)
 					break;
@@ -923,12 +912,12 @@
 			return print("@@ serviceFuncVal::value 함수 오류 설정노드 미정의 ", p0,p1);
 		}		
 		val=''
-		if(base.isset(name)) {
+		if(base.isVar(name)) {
 			refNode=base
 			val= base.get(name)
 		} else {
 			while(cur,base) {
-				if(cur.isset(name)) {
+				if(cur.isVar(name)) {
 					refNode=cur
 					val=cur.get(name);
 				}
@@ -1011,9 +1000,9 @@
 	if( fnm.eq('eq')) {
 		a=fparam.findPos(',').trim()
 		b=fparam.findPos(',').trim()
-		if(root.isset(a)) {
+		if(root.isVar(a)) {
 			return root.cmp(a,b)
-		} else if(node.isset(a)) {
+		} else if(node.isVar(a)) {
 			return node.cmp(a,b)
 		}
 		print(">> not eq $a, $b")
@@ -1185,7 +1174,7 @@
 	while(cur, base ) {
 		print(">>",cur)
 		while(sub,cur) {			
-			not(sub.isset('@funcs')) continue;
+			not(sub.isVar('@funcs')) continue;
 			src=@baro.parseService(root, sub, sub.ref('@funcs'))
 			print(">> make route cur src==$src", sub.uri)
 			@baro.routeFuncVal(root, sub, src)
@@ -1339,7 +1328,7 @@
 	ss=''
 	fkCnt=0
 	while(cur, table) {
-		if( cur.isset('fkValue') ) fkCnt++;
+		if( cur.isVar('fkValue') ) fkCnt++;
 	}
 	while(cur, table, idx) {
 		cur.inject(fieldName, name, def, defValue, fk, pk, uniq, type, size, notnull, fieldCheck, fieldInfo)
@@ -1471,7 +1460,7 @@
 	}
 	if(typeof(s,'node')) {
 		cur=s
-		if(cur.isset('@value')) return cur.get('@value');
+		if(cur.isVar('@value')) return cur.get('@value');
 	}
 	return "$s";
 	

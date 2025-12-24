@@ -15,26 +15,42 @@ _node(code, reuse) {
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
-findServiceNode(cur) {
-	p=cur.parentNode()
-	while(n=0,100) {
-		if(p.isset('serviceName')) {
-			return p;
+findParentNode(cur, field, val) {
+	not(typeof(cur,'node')) return;
+	asize=args().size()
+	check=func(cur) {
+		if(asize==3) {
+			if(cur.cmp(field,val)) return true;
+		} else {
+			if(cur.isVar(field)) return true;
 		}
+	};
+	p=cur
+	while(isValid(p)) {
+		if(check(p)) return p;
 		p=p.parentNode()
-		not(p) return;
 	}
 	return;
 }
 findField(root, field, val) {
-	while( cur, root ) {
-		if( cur.cmp(field, val) ) return cur;
-		if( cur.childCount() ) {
-			find=findField(cur, field, val);
-			if( find ) return find;
+	not(typeof(node,'node')) return;
+	asize=args().size()
+	check=func(cur) {
+		if(asize==3) {
+			if(cur.cmp(field,val)) return true;
+		} else {
+			if(cur.isVar(field)) return true;
 		}
+	};
+	while(cur, node) {
+		if(check(cur)) return cur;
+		if(asize==3) 
+			sub=findField(cur,field,val)
+		else 
+			sub=findField(cur,field)
+		if(sub) return sub;
 	}
-	return null;
+	return;
 }
 findTag(root, tag) {
 	while( cur, root ) {
@@ -88,9 +104,13 @@ event(obj, eventName, fc, target, reset) {
 	obj.set(eventName, fn) 
 	return fn;		
 }
+isNull(a) { return when(typeof(a,'null'),true) }
+
 isValid(s) {
 	not(s) return false;
-	if(typeof(s,'array') && ~(s.size()) ) return false;
+	if(typeof(s,'array') ) {
+		not(s.size()) return false;
+	}
 	return true;
 }
 isFullpath(s) {

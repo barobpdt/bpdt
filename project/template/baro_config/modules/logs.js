@@ -2,14 +2,46 @@
 	test = @eval{
 		logRead = logTail('test')
 		logWrite = logAppend('test')
-		log("logs test : $logRead, $logWrite member:${0}", logRead.member() )
+		print("======= logs start =======")
 		logWrite.append('test log start')
 		logWrite.append('hello world !!!')
 		data = logRead.timeout()
-		log("log timeout data==$data")
-		logData = logTail('logs').timeout()
-		print(">> logData == $logData")
+		print("log timeout data==$data")  
 	}
+	@eval {
+		print(".......... module::log 등록 ............")
+		path = conf('path.modules')
+		not(isFolder(path)) {
+			print("@@ 모듈경로가 존재하지 않습니다 $path 폴더를 생성하세요")
+		}
+		while(cur, getFileList(path)) {
+			cur.inject(name, fullPath)
+			print(">>$cur")  
+			// addWatchFile(fullPath,'modules',@user.procModuleChange)
+		}		
+		print(">> test : ",cv('test'))
+	}
+##> func {name=user}
+	@user.procModuleChange(mode,path) {
+		print("procModuleChangemode [$mode]>> $path")
+		loadConfigService(mode,path)
+	}
+	
+	runSource(&src, node) {
+		if(typeof(src,'bool')) {
+			return print("@@ evalValue 실행오류 괄포매칭 오류")
+		}
+		fn=Cf.funcNode()
+		if(typeof(node,'node')) {
+			fn.set('@this',node)
+		}
+		if(src.start('@eval=>',true)) {
+			root=findParentNode(fn.get('@this'),'seriveName')
+			log("${root.serviceName} 소스실행 시작 =====")
+		}
+		return eval(src,fn)
+	}
+
 	
 ##> func {name=logs}	 
 	logTail(name, fileName) {

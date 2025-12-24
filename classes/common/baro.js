@@ -4,13 +4,7 @@
 *
 ==============================================================*/
 initModule(reset, evalCall) {
-	templatePath = conf('path.template')
-	not(templatePath) {
-		templatePath = pathJoin(System.path(),'templates')
-		conf('path.template', templatePath, true)
-		print(">> 템플릿 경로추가 : $templatePath")
-	}
-	modulePath = pathJoin(templatePath, 'modules')
+	modulePath = conf('path.modules')
 	not(isFolder(modulePath)) {
 		print("$modulePath 모듈경로 미정의")
 		return;
@@ -95,40 +89,7 @@ runPython() {
 	print(">> runPython params => $params")
 	return call(runFunc, self, params);
 }
-runGlobalWorker(worker) {
-	worker.inject(wokerType, workerMode, workerTarget)
-	not( typeof(targetNode,'node') ) {
-		print("@@ runGlobalWorker 타입:$workerType 오류 대상노드 미정의")
-		worker.set('status','ready')
-		return;
-	}
-	result=''
-	switch(workerType) {
-	case cmdWorker:
-		cmd=targetNode, status=cmd.get('@statue')
-		if(status.eq('stop','start')) {
-			if(status.eq('stop')) {
-				@baro.cmdRun(cmd, 'cd')
-			}
-			return;
-		}
-		if( status.eq('stay')) {
-			-
-			= cmd.get('cmdResult')
-			next = cmd.var(nextCommand)
-			if( next ) {
-				@baro.cmdRun(cmd, next)
-				cmd.var(nextCommand, null)
-			}
-		}
-	case apiWorker:
-		
-	default:
-	}
-	if(typeof(workCallback,'func')) {
-		call(workCallback, targetNode, worker, result)
-	}
-}
+
 /* 웹호출 결과 출력 (api 호출) */
 webResult(url, method, data, headerJson) {
 	web=Baro.web('user')
@@ -184,7 +145,7 @@ addWatchFile(fullpath, serviceMode, callback) {
 	filePathInfo(fullpath).inject(folder, filename, name)
 	modifyTime=fileTime(fullpath)
 	cur=timerInfo.addNode('@watchFileInfo').addNode(fullpath)
-	cur.inject(serviceMode,fullpath,filename,name,modifyTime, callback)
+	cur.with(serviceMode,fullpath,filename,name,modifyTime, callback)
 	return cur;
 }
 
@@ -233,19 +194,14 @@ addCmdWorker(id, command, callback) {
 	web.set('@workerStatus','ready')
 	web.set('@error','')
 	web.logTail.timeout()
-	
-	 
 }
 @baro.workerCmdProc(type,&data) {
 	if(type=='read') {
-		data.ref()
+		this.logAppend.write(data)
 		c=data.ch(-1,true);
 		if(c=='>') {
-			command=data.findPos("\n").trim()
-			value=data.findLast("\n")
-			
-		} else {			
-			this.logAppend.write(data)
+			cmdInfo=json(this)
+			this.logAppend.write("finish##>> ${cmdInfo}\r\n\r\n")
 		}
 		return;
 	}
@@ -255,20 +211,20 @@ addCmdWorker(id, command, callback) {
 /* 전역 타이머 실행 */
 startGlobalTimer() {
 	if( global().get('@timerDelay') ) {
-		return log('global timer가 실행중입니다 #{0}', global().get('@timerDelay'))
+		return print('global timer가 실행중입니다 #{0}', global().get('@timerDelay'))
 	}
 	timerInfo = object('baro.globalTimerInfo')
 	event(global(),'onTimeout', @baro.procGlobalTimer)
 	// 500ms 마다 타이머 실행
 	System.globalTimer(500)
-	log("global timer 시작", timerInfo)
+	print("global timer 시작", timerInfo)
 	return timerInfo;
 }
 /* 전역 타이머 중지 */
 stopGlobalTimer() {
 	global().set('@timerDelay',0)
 	System.globalTimer(false)
-	log("global timer 중지됨")
+	print("global timer 중지됨")
 }
 /* 전역 타이머처리 콜백함수 */	
 @baro.procGlobalTimer() {
@@ -356,6 +312,55 @@ startFolderWatcher(path, callback) {
 		log("watcher changed : $type, $fullpath")
 	}
 	fn.set('prevTick', System.tick())
+}
+
+runSource(&src, node) {
+	if(typeof(src,'bool')) {
+		return print("@@ evalValue 실행오류 괄포매칭 오류")
+	}
+	fn=Cf.funcNode()
+	if(typeof(node,'node')) {
+		fn.set('@this',node)
+	}
+	if(src.start('@eval=>',true)) {
+		root=findParentNode(fn.get('@this'),'seriveName')
+		log("${root.serviceName} 소스실행 시작 =====")
+	}
+	return eval(stripComment(src), fn)
+}
+runGlobalWorker(worker) {
+	worker.inject(wokerType, workerMode, workerTarget)
+	not( typeof(targetNode,'node') ) {
+		print("@@ runGlobalWorker 타입:$workerType 오류 대상노드 미정의")
+		worker.set('status','ready')
+		return;
+	}
+	result=''
+	switch(workerType) {
+	case cmdWorker:
+		cmd=targetNode, status=cmd.get('@statue')
+		if(status.eq('stop','start')) {
+			if(status.eq('stop')) {
+				@baro.cmdRun(cmd, 'cd')
+			}
+			return;
+		}
+		if( status.eq('stay')) {
+			-
+			= cmd.get('cmdResult')
+			next = cmd.var(nextCommand)
+			if( next ) {
+				@baro.cmdRun(cmd, next)
+				cmd.var(nextCommand, null)
+			}
+		}
+	case apiWorker:
+		
+	default:
+	}
+	if(typeof(workCallback,'func')) {
+		call(workCallback, targetNode, worker, result)
+	}
 }
 
 @baro.frontendProc(&s) {
@@ -561,26 +566,7 @@ convertSource(&s) {
 	}
 	return ss;
 }
-@baro.findFieldValue(node,field,val) {
-	not(typeof(node,'node')) return;
-	asize=args().size()
-	check=func() {
-		if(asize==3) {
-			if(cur.cmp(field,val)) return true;
-		} else {
-			if(cur.isset(field)) return true;
-		}
-	};
-	while(cur, node) {
-		if(check()) return cur()
-		if(asize==3) 
-			sub=@baro.findFieldValue(cur,field,val)
-		else 
-			sub=@baro.findFieldValue(cur,field)
-		if(sub) return sub;
-	}
-	return;
-}
+
 @baro.colorMap(page, param) {
 	map=page.addNode('@colorMap')
 	idx = 1
@@ -846,7 +832,7 @@ getJsonArray(&s,node,arr,fn,map) {
 				} else {
 					if(fn.isset(v)) {
 						val=fn.get(v)
-					} else if(map.isset(v)) {
+					} else if(map.isVar(v)) {
 						val=map.get(v)
 					} else {
 						val=configValue(v)
@@ -877,7 +863,7 @@ getJsonNode(&s,node,fn,map) {
 			v=k
 			if(fn.isset(v)) {
 				val=fn.get(v)
-			} else if(map.isset(v)) {
+			} else if(map.isVar(v)) {
 				val=map.get(v)
 			} else {
 				val=configValue(v)
@@ -918,7 +904,7 @@ getJsonNode(&s,node,fn,map) {
 				} else {
 					if(fn.isset(v)) {
 						val=fn.get(v)
-					} else if(map.isset(v)) {
+					} else if(map.isVar(v)) {
 						val=map.get(v)
 					} else {
 						val=configValue(v)
@@ -934,18 +920,9 @@ getJsonNode(&s,node,fn,map) {
 	return node; 
 }
 configValue(key, root) {
-	findService = func(cur) {
-		p=cur.parentNode()
-		while(isValid(p)) {
-			if(p.isset('serviceName')) {
-				return p;
-			}
-			p=p.parentNode()
-		}
-		return;
-	};
 	not(root) {
-		root=findService(this) not(root) return print("configValue 오류 (service 루트로드를 찾을수 없습니다)");
+		root=findParentNode(this,'serviceName') 
+		not(root) return print("configValue 오류 (service 루트로드를 찾을수 없습니다)");
 	}
 	return @baro.configKeyValue(root, this, key, 'value');
 }
@@ -979,19 +956,7 @@ cv(key, rootCode) {
 	};
 	run('echo %userprofile%', userprofile)	
 }
-
-getParentNode(node, field, value) {	
-	p=node.parentNode()
-	while(isValid(p)) {
-		if(value) {
-			if(p.cmp(field,value)) return p;
-		} else {
-			if(p.isset(field)) return p;
-		}
-		p=p.parentNode()
-	}
-	return;
-}
+ 
 getFolderList(path, node, depthNumber, pathLength) {
 	asize=args().size()
 	if(asize==1 && typeof(path,'node') ) {

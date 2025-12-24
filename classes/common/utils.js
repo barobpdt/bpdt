@@ -272,27 +272,6 @@ arrayDeleteChild(arr) {
 공통 유틸리티함수
 */
 
-isNull(a) {
-	if(typeof(a,'num')) return false;
-	if(typeof(a,'null')) return true;
-	not(a) return true;
-	return false;
-}
-isValid(a) {
-	if(typeof(a,'null')) return false;
-	if(typeof(a,'num')) return true;
-	not(a) return false;
-	if(typeof(a,'array')) {
-		if(a.size()==0 ) return false;
-		return true;
-	}
-	if(typeof(a,'node')) {
-		a=a.keys()
-		if(a.size()==0 ) return false;
-		return true;
-	}
-	return true;
-}
 recalc(total, info) {
 	return _arr().recalc(total, info)
 }
