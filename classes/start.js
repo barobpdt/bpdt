@@ -15,6 +15,11 @@ _node(code, reuse) {
 	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
+catchError() {
+	err=Cf.error() not(err) return false;
+	print("## catch error : $err")
+	return true;
+}
 findParentNode(cur, field, val) {
 	not(typeof(cur,'node')) return;
 	asize=args().size()
@@ -103,6 +108,15 @@ event(obj, eventName, fc, target, reset) {
 	}
 	obj.set(eventName, fn) 
 	return fn;		
+}
+ 
+toLong(s) {
+	a=when(typeof(s,'number'),"$s",s)
+	return a.toLong()
+}
+toDouble(s) {
+	a=when(typeof(s,'number'),"$s",s)
+	return a.toDouble()		
 }
 isNull(a) { return when(typeof(a,'null'),true) }
 
@@ -225,7 +239,47 @@ str(&s, fn, node) {
 		if(isValid(v)) ss.add(v)
 	}
 	return ss;
-} 
+}
+left(&str, sep) {
+	not(sep) sep=',';
+	return str.findPos(sep).trim();
+}
+right(&str, sep) {
+	not(sep) sep='.';
+	if( str.find(sep)) str.findLast(sep)
+	return str.trim();
+}
+format(&s, param) {
+	rst=''
+	arr=args(1), map=null
+	if(typeof(param,'func')) {
+		args(fn, map, params)
+		if(typeof(params,'array')) arr=param
+	} else if(typeof(param,'array')) {
+		arr=param
+	} else if(typeof(param,'node')) {
+		map=param
+		fn=Cf.funcNode('parent')
+	}
+	while(s.valid()) {
+		left=s.findPos('#{')
+		rst.add(left)
+		not(s.valid()) break;
+		key=s.findPos('}').trim()
+		if(typeof(key,'num')) {
+			val=arr.get(key)
+		} else {
+			if( map && map.isset(key)) {
+				val=map.get(key)
+			} else {
+				val=fn.get(key)
+			}
+		}
+		rst.add(val)
+	}
+	return rst;
+}
+
 confSearch(&s) {
 	not(s.ch()) return;
 	sp=s.cur()
@@ -462,6 +516,34 @@ pathJoin() {
 	}
 	return ss;
 }
+relativePath(base, path) {
+	if(base ) {
+		base=base.trim();
+	} else {
+		base=System.path();
+	}
+	not(path ) return base;
+	while( path.ch('.') ) {
+		ch=path.ch(1);
+		// 경로 ./ 처리
+		if( ch.eq('/') ) {
+			path=path.value(2);
+		} 
+		// 경로 ../../ 처리
+		else if( ch.eq('.') ) {
+			ch=path.ch(2);
+			if( ch.eq("/") ) {
+				path=path.value(3);
+				not( base.find("/") ) return print("[relativePath] 기준경로 오류 (base:$base)");
+				base=base.findLast("/").trim();
+			} else {
+				return print("[relativePath] 경로오류 (path:$path)");
+			}
+		}
+	}
+	return pathJoin(base,path);
+} 
+
 fileRead(path) {
 	fo=Baro.file('read'); // 파일객체 생성
 	not(fo.open(path,'read')) {
@@ -485,7 +567,15 @@ fileWrite(path, buf) {
 	fo.write(buf);
 	fo.close();
 } 
-
+fileDelete(path) {
+	fo=Baro.file();
+	if(isFile(path)) {
+		result=fo.delete(path);
+	} else if(isFolder(path)) {
+		result=fo.rmDir(path);
+	}
+	return result;
+}
 /*
 페이지처리 함수
 */
@@ -531,37 +621,63 @@ page(name, param) {
 		p=this.parentWidget()
 		return when(p, p.pageNode(), this.pageNode());
 	}
+	base=''
 	moduleAdd = false
 	moduleCode = ''
 	if( asize.eq(1) ) {		
 		target=this
-	} else if(asize.eq(2)) { 
-		if(typeof(param,'bool')) {
+	} 
+	else if(asize.eq(2)) { 
+		target = this
+		if(typeof(param,'string')) {
+			args(base, name)
+		} 
+		else if(typeof(param,'bool')) {
 			args(name, moduleAdd)
-			target = this
-		} else if(typeof(param,'widget')) {
+		} 
+		else if(typeof(param,'widget')) {
 			args(name, target)
 		}
-		not(typeof(target,'widget')) return print("page 대상이 위젯이 아닙니다 (이름:$name)")
-	} else { 
+	}
+	else if(asize.eq(3)) { 
+		args(base, name, moduleCode)
+	} 
+	else { 
 		args(name, moduleAdd, target, moduleCode)
 	}
-	if( name.find(':') ) return Cf.getObject('page', name)
-	base = left(target.get('@baseCode'),':') not(base) return print("page 함수 호출오류 (페이지 base 코드오류)")
+	if( name.find(':') ) return Cf.getObject('page', name);
+	not(base) {
+		not(typeof(target,'widget')) return print("page 대상이 위젯이 아닙니다 (이름:$name)")
+		base = left(target.get('@baseCode'),':') 
+		not(base) return print("page 함수 호출오류 (페이지 base 코드오류)")
+	}
 	baseCode = "$base:$name"
-	page = Cf.getObject('page', baseCode) not(page) return print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
-	if( page.var(initUse) ) {
+	page = Cf.getObject('page', baseCode) 
+	not(page) return print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
+	if( page.var(useInit) ) {
 		return page;
 	}
-	addModule(page, '@page')
-	if( moduleCode ) baseCode = moduleCode
-	if( moduleAdd && baseCode ) {
-		addModule(page, baseCode)
+	if(page.module) {
+		if( moduleCode) {
+			if(moduleCode.eq(name)) {
+				addModule(page, '@page')
+			} else if(moduleCode.ne(page.module)) {
+				addModule(page, moduleCode)
+			}
+		}
+		moduleCode=page.module
+		addModule(page, moduleCode)
+	} else {
+		addModule(page, '@page')
+		if( moduleCode ) baseCode = moduleCode
+		if( moduleAdd && baseCode ) {
+			addModule(page, baseCode)
+		}
 	}
 	if(typeof(page.initPage,'func')) {
 		page.initPage()
 	}
-	page.var(initUse, true)
+	page.var(useInit, true)
 	return page;
 }
 dialog(name, param) {
@@ -590,7 +706,7 @@ dialog(name, param) {
 	baseCode = "$base:$name"
 	dialog = Cf.getObject('dialog', baseCode) not(dialog) return print("dialog 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
 	
-	if( dialog.var(initUse) ) {
+	if( dialog.var(useInit) ) {
 		return dialog
 	}
 	if( moduleCode ) baseCode = moduleCode
@@ -600,7 +716,7 @@ dialog(name, param) {
 	if(typeof(dialog.initDialog,'func')) {
 		dialog.initDialog()
 	}
-	dialog.var(initUse, true)
+	dialog.var(useInit, true)
 	return dialog;
 }
 widget(name) {
@@ -608,36 +724,35 @@ widget(name) {
 	if(asize.eq(0)) {
 		return allWidget(this)
 	}
-	if(asize.eq(1)) {
-		widget = this.member("$name")
-		not(typeof(widget,'widget')) widget = this.findWidget(name)
-		not(typeof(widget,'widget')) return print("widget 위젯 찾기오류 (이름:$name)")
-		return widget;
-	}
 	moduleName = ''
-	if(asize.eq(2)) {
+	if(asize.eq(1)) {
+		target=this;
+	}
+	else if(asize.eq(2)) {
 		if(typeof(name,'widget')) {
 			args(target, name)
 		} else {
 			args(name, moduleName) 
 		}
-	} else if(asize.eq(3)) {
+	} 
+	else if(asize.eq(3)) {
 		args(target, name, moduleName)
 	}	
 	not(typeof(target,'widget')) return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
 	widget = target.member("$name")
 	not(typeof(widget,'widget')) widget = target.findWidget(name)
 	not(typeof(widget,'widget')) return print("widget 위젯 찾기오류 (이름:$name)")
-	if( widget.var(initUse) ) {
+	if( widget.var(useInit) ) {
 		return widget
 	}
+	not(moduleName) moduleName=widget.module
 	if( moduleName ) {
-		addModule(widget, baseCode)
+		addModule(widget, moduleName)
 	}
 	if(typeof(widget.initWidget,'func')) {
 		widget.initWidget()
 	}
-	widget.var(initUse, true)
+	widget.var(useInit, true)
 	return widget;	
 }
 

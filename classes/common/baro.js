@@ -140,6 +140,11 @@ loadConfigService(serviceMode, fullpath, reset, skipEval) {
 /* 파일감시 경로를 추가한다 */
 addWatchFile(fullpath, serviceMode, callback) {
 	not(serviceMode) serviceMode='common'
+	not(typeof(callback,'func')) {
+		callback=func(serviceMode, fullpath) {
+			return loadConfigService(serviceMode, fullpath, false, true)
+		}
+	}
 	timerInfo = object('baro.globalTimerInfo')
 	timerInfo.useWatchFile = true	
 	filePathInfo(fullpath).inject(folder, filename, name)
@@ -148,6 +153,7 @@ addWatchFile(fullpath, serviceMode, callback) {
 	cur.with(serviceMode,fullpath,filename,name,modifyTime, callback)
 	return cur;
 }
+
 
 /* API 결과처리 워커등록 */
 addApiWorker(id, logCallback ) {
@@ -238,7 +244,6 @@ stopGlobalTimer() {
 			// 현재파일 시간과 등록된 시간이 다르다면 파일 변경처리
 			if(fileTime(fullpath) != modifyTime) {
 				log("$fileName 변경됨 서비스등록 처리")
-				not(typeof(callback,'func')) callback=call('loadConfigService')
 				callback(serviceMode,fullpath)
 				cur.modifyTime=fileTime(fullpath)
 				return;
@@ -731,7 +736,59 @@ trimZero(s) {
 	}
 	return s.trim(0,last,true);
 }
-replaceFindText(s, replace, value, sep) {
+configValueEndPos(&s) {
+	c=s.ch()
+	if(c.eq('=',':')) c=s.incr().ch()
+	if(c.eq()) s.match()
+	else if(c.eq('{','[')) s.match(1)
+	else if(c.eq('<')) {
+		if(s.start('<>')) {
+			s.match('<>','</>')
+		} else {
+			sp=s.cur()
+			c=s.incr().next().ch()
+			if(c.eq('-','.')) c=s.incr().next().ch()
+			ep=s.cur()
+			tag=s.trim(sp+1,ep,true)
+			s.pos(sp)
+			s.match("<$tag","</$tag>")
+		}
+	} 
+	else if(isFunc(s)) {
+		s.findPos('(',0,1)
+		s.match()
+		c=s.ch()
+		if(c.eq('{')) {
+			s.match(1)
+		}
+	}
+	else {
+		s.findPos(" ,\t\n")
+	}
+	return s.cur();
+}
+/* 문자열중 찾는 문자가 있다면 속성까지 모드 바꾸줜다 
+	예) s: width=100, height=50
+		replace:	width
+		value:		width=500
+		결과: width=500, height=50
+*/
+
+nodeAppendText(node,key,value,sep,replace) {
+	ss=node.get(key)
+	if(replace && ss ) {
+		result = replaceConfigText(ss,replace,value,sep)
+		if(result) {
+			node.set(key,result)
+			return;
+		}
+	}
+	if(sep) {
+		if(ss) node.appendText(key,sep)
+	}
+	node.appendText(key,value)
+}
+replaceConfigText(s, replace, value, sep) {
 	pos = _find(s)
 	if(typeof(pos,'num')) {
 		return _replace(s,pos)
@@ -746,24 +803,41 @@ replaceFindText(s, replace, value, sep) {
 		}
 		size = replace.size()
 		str.pos(pos+size)
-		str.findPos(sep,1,1)
+		if(sep) {
+			str.findPos(sep,1,1)
+		} else {
+			sp=s.cur()
+			ep=configValueEndPos(s)
+			if(sp<ep) {
+				str.pos(ep)
+			}
+		}
 		ss.add(value)
 		if(str.ch()) ss.add(str)
 		return ss;
 	};
 	_find = func(&str) { 
 		while(str.valid()) {
-			left = str.findPos(replace,1,1) not(str.valid()) return false;
-			print("xxxxxx", replace, str)
-			not(left.ch()) return str.cur();
-			c=left.ch(-1) not(c) return str.cur();
-			if( c.eq(sep) ) {
-				return str.cur()
-			}
+			left = str.findPos(replace,1,1) not(str.valid()) return false;			
+			c=left.ch(-1)
+			if(c.is('alphanum')) continue;
+			c=str.ch(1)
+			if(c.is('alphanum')) continue;
+			return s.cur();
 		}
 		return false;
 	};
 }
+randomColor() {
+	hue=System.rand(360).toInt(); 
+	return Baro.color('hsl', hue, 100, 100);
+}
+randomIcon() {
+	num=System.rand(360).toInt();
+	Baro.db('icons').fetch("select type, id from icons where type='vicon' limit $num,1"  ).inject( type, id);
+	return "$type.$id";
+}
+
 /* 노드 전체 초기화 (값만 null로 설정) */
 nodeReuse(node) {
 	not(typeof(node,'node')) return;
@@ -789,6 +863,7 @@ setNodeKeyValue(node,k,v) {
 	print('@@ addNodeProp ', k, v, a)
 	node.set(k,v)
 }
+/* array 값을 json 형태 문자열로 생성(함수/태그 등 확장기능포함) */
 getJsonArray(&s,node,arr,fn,map) {
 	while(s.valid()) {
 		c=s.ch() not(c) break;
@@ -846,7 +921,7 @@ getJsonArray(&s,node,arr,fn,map) {
 	}
 	return arr;
 }
-
+/* node 값을 json 형태 문자열로 생성(함수/태그 등 확장기능포함) */
 getJsonNode(&s,node,fn,map) {
 	not(node) node=_node()
 	not(fn) fn=Cf.funcNode('parent')
@@ -919,6 +994,8 @@ getJsonNode(&s,node,fn,map) {
 	print(">> getJsonNode json:{$node}")
 	return node; 
 }
+
+/* Config Value 설정값 리턴 (설정 root 가 없다면 현재노드 기준 부모 노드를 찾는다)*/
 configValue(key, root) {
 	not(root) {
 		root=findParentNode(this,'serviceName') 
@@ -926,12 +1003,19 @@ configValue(key, root) {
 	}
 	return @baro.configKeyValue(root, this, key, 'value');
 }
+
+/* Config Value 처리 wrap 함수 */
 cv(key, rootCode) {
-	if(rootCode) {
-		root=object('baro.services').addNode(rootCode) 
-		return configValue(key, root);
+	if(key.find(':')) {
+		key.split(':').inject(key, rootCode)
 	}
-	return configValue(key) 
+	if(rootCode) {
+		root=object('baro.services').get(rootCode)
+		not(root) return print("cv 오류 (service 루트로드를 찾을수 없습니다)");
+		return configValue(key, root);
+	} else {
+		return configValue(key) 
+	}
 }
 
 

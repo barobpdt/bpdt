@@ -116,7 +116,9 @@
 					evalCheckArray.add(cur)
 				}
 				if(type.eq('config')) {
-					@baro.parseConfig(root, cur, stripComment(left))
+					@baro.parseConfig(root, cur, stripJsComment(left))
+				} else if(type.eq('template')) {
+					@baro.parseConfig(root, cur, left)
 				} else if(type.eq('pages')) {
 					print("pages==".left.size() )
 				} else if(type.eq('modules')) {
@@ -141,7 +143,7 @@
 				} else if(type.eq('tables')) {
 					@baro.tableFuncVal(root, cur, left)
 				} else {
-					@baro.parseConfig(root, cur, stripComment(left))
+					@baro.parseConfig(root, cur, stripJsComment(left))
 				}
 				print("parse root type=====$type end")
 			}
@@ -291,13 +293,14 @@
 }
 
 @baro.evalCall(root, config, skip) {
-	ka=config.get('@keyArray')
 	fn=Cf.funcNode('parent')
+	ka=config.get('@keyArray')
 	print(">> evalCall keyArray==$ka")
 	while(k, ka) {
 		s=config.ref(k)
 		not(typeof(s,'string')) continue;
 		ss=null
+		if(k.ch('#')) continue;
 		if(k.eq('@eval')) {
 			ss=s
 		} else if(s.start('@eval=>',true)) {
@@ -506,7 +509,7 @@
 		c=s.ch()
 		cf=root.get('@config') 
 		not(cf) {
-			print("@@ configKeyValue config변수 정의되지 않았습니다 name=$name")
+			// print("@@ configKeyValue config변수 정의되지 않았습니다 name=$name")
 			cf=root
 		}
 		
@@ -565,12 +568,34 @@
 			not(refNode) { 
 				refNode=cf
 			}
-			print(">> refNode========$refNode")
-			while(sub,refNode ) {
-				if(sub.isVar(name)) {
-					refNode=sub
-					cur=sub.get(name)
-					break;
+			if(refNode==root) {
+				print(">> refNode == root")
+				while(sub,refNode ) {
+					while(base,sub) {
+						if(base.isVar(name)) {
+							cur=base.get(name)
+							break;
+						}
+					}
+				}
+			} else {
+				print(">> refNode========$refNode")
+				while(sub,refNode ) {
+					if(sub.isVar(name)) {
+						refNode=sub
+						cur=sub.get(name)
+						break;
+					}
+				}
+				not(cur) {
+					while(sub,root) {
+						while(base,sub) {
+							if(base.isVar(name)) {
+								cur=base.get(name)
+								break;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1543,19 +1568,25 @@
 			s.incr()
 			continue;
 		}
+		if(c.eq('/')) {
+			c=s.ch(1)
+			if(c.eq('/')) s.findPos("\n") else s.match()
+			continue;
+		}
 		if(c.eq()) {
 			k=s.match()
 		} 
 		else {
 			sp=s.cur()
-			if(c.eq('@')) {
+			if(c.eq('@','#')) {
 				s.incr()
 			}
 			c=s.next().ch()
 			while(c.eq('-')) {
 				c=s.incr().next().ch()
 			}
-			k=s.trim(sp,s.cur(),true)
+			ep=s.cur()
+			k=s.trim(sp,ep,true)
 		}
 		if(c.eq('{','(')) {
 			source = s.match(1)

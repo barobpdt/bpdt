@@ -1,4 +1,4 @@
-<script module="@editor">
+##> module {name=Editor}
 	editorSearch(mode) {	
 		if( mode&KEY.ctrl ) {
 			str = this.text('select');
@@ -25,30 +25,7 @@
 		}
 		return true;
 	}
-	editorStartIndent( &str) {
-		flag = 0x100 | 1;
-		in = str.match('{','}',flag);
-		if(typeof(in,'bool')) return false;
-		not( in.find("\n") ) return false;	// 매칭문자열이 같은줄이라면 무시한다
-		indent = str.findLast("\n").right();
-		// #2  에디터 현재 위치 내용에 따른 처리
-		line = this.sp().spText('lineStart');
-		val = '';
-		if( line.check(" \t") ) {
-			pos = this.pos();
-			start = pos-line.size();
-			this.movePos(start).movePos(pos,true);
-		} else { 
-			val.add("\n");
-		}
-		// #3. indent 를 넣어준다.
-		if( indent ) {
-			val.add( indentText(indent) );
-		} else {
-			val.add( indentText(str) );
-		}
-		return val;
-	}
+
 	editorCopyLine( mode) {
 		sp=0, ep=0;
 		if( this.is('select') ) {
@@ -138,11 +115,10 @@
 		}
 		return true;
 	}
-</script>
 
-<script module="@editor:editorSource">
+##> module {name=EditorSource }
 	init() {
-		addModule('editor')
+		addModule('Editor')
 	}
 	onCursorChange() {
 		editor=this;
@@ -194,33 +170,17 @@
 			}
 			return this.editorKeyEnter(mode);
 		}
-		if( key.eq(KEY.Tab) ) {
-			if( this.editorSourceKeyMap(true)) return true;
-			return this.tabPositionsMove( mode&KEY.ctrl );
-		}
 		switch( key ) {
 		case KEY.F3:	return this.editorSearch(mode);
-		case 34:	return this.editorKeyString('"');
-		case 39:	return this.editorKeyString("'");
-		case 41:	return this.startBlockMark("(");
-		case 93:	return this.startBlockMark("[");
-		case 123:	return this.braketStart();
-		case 125:	return this.braketEnd();
 		default:
 		}
 		if( mode&KEY.ctrl ) {
 			if( key.eq(KEY.S, KEY.R, KEY.B) ) {
 				return page().runScript(key);
-			} else if(key.eq(KEY.E) ) {
-				return page().keyMapInput();
-			} else if(key.eq(KEY.Q) ) {
-				return page().keyTemplateInput();
 			} else if(key.eq(KEY.F) ) {
 				return page().searchFocus(editor);
 			} else if(key.eq(KEY.D) ) {
 				return this.editorCopyLine(mode); 
-			} else if(key.eq(KEY.K) ) { 
-				return page().keymapInfo(editor);
 			} else if(key.eq(KEY.Up)) {
 				return this.editorUpPress(editor);
 			} else if(key.eq(KEY.Down)) {
@@ -229,157 +189,11 @@
 		}
 		this.prevKey=key;
 	}
-	tabPositionsMove( back ) {
-		tabArray=this.var(tapPositions);
-		not(tabArray&&tabArray.size()) return false;
-		pos=this.pos();
-		if( back ) {
-			idx=this[tabPositionsIndex--];
-			if( idx.lt(0) ) {
-				this[tabPositionsIndex=0];
-				idx=0;
-			}
-		} else {
-			idx=this[tabPositionsIndex++];
-		}
-		end=this.pos('end');
-		pt=tabArray.get(idx);
-		print("#### pt ####", pt, idx );
-		not( pt ) {
-			return _finish();
-		}
-		pt.inject(sp,ep);
-		if( sp>=end ) {
-			if( sp.eq(end) ) {
-				this.movePos(sp);
-			}
-			return _finish();
-		}
-		size=ep-sp;
-		if( size>1 ) {
-			this.select(sp,ep);
-		} else {
-			this.movePos(sp);
-		}
-		return true;
-
-		_finish=func() {
-			this.tabPositionsIndex=0;
-			tabArray.reuse();
-			return true;
-		}
-	}
+ 
 	editorContentChange( pos, add, remove ) {
-		tabArray=this.var(tapPositions);
-		not( tabArray.size() ) return;
-		if( add.eq(remove) ) {
-		return;
-		}
-		if( add ) {
-			/* 한글입력 처리 */
-			n1=add-remove;
-			if( n1.eq(1) ) {
-				/* 한글입력 경우 */
-				pos=this.pos()-1;
-				add=1, remove=0;
-			} else if( n1.lt(0) && add.gt(1) ) {
-				/* 선택 한글입력 경우 */
-				pos=this.pos();
-				remove-=add;
-				add=0;
-			}
-		}
-
-		if( remove ) {
-			arr=_arr();
-			end=this.pos('end');
-			end+=remove;
-			while( idx=0, idx<tabArray.size(); idx++ ) {
-				cur=tabArray.get(idx);
-				cur.inject(sp,ep);
-				if( sp.gt(end) ) {
-					arr.add(cur);
-					break;
-				}
-				if( pos.ge(ep) ) {
-					continue;
-				}
-				chk=pos.gt(sp) && pos.lt(ep);
-
-				if( chk ) {
-					size=ep-sp;
-					if( remove.ge(size) ) {
-						arr.add(cur);
-					} else {
-						ep-=remove;
-					}
-				} else {
-					epos=pos+remove;
-					if( epos.lt(sp) ) {
-						sp-=remove, ep-=remove;
-					} else if( epos.gt(ep) ) {
-						arr.add(cur);
-					} else {
-						ep-=remove;
-					}
-				}
-				tabArray.set( idx, Baro.point(sp, ep) );
-			}
-			while( cur, arr ) {
-				tabArray.remove(cur);
-			}
-		}
-		if( add ) {
-			while( idx=0, idx<tabArray.size(), idx++ ) {
-				tabArray.get(idx).inject(sp,ep);
-				if( pos.gt(ep) ) continue;
-				if( sp.eq(ep) ) {
-					chk=sp.eq(pos);
-				} else {
-					chk=pos.ge(sp) && pos.le(ep);
-				}
-				if( chk ) {
-					ep+=add;
-				} else {
-					sp+=add, ep+=add;
-				}
-				tabArray.set(idx, Baro.point(sp,ep) );
-			}
-		}
-		return tabArray;
 	}
 	editorSourceKeyMap(tab) { 
 		if(this.is("select")) return false;
-		ch=this.text('prevChar');
-		code='';
-		if(tab) {
-		code=this.sp().spText('prevChar', 'prevWord');
-		len=code.length();
-		code.add("`");
-		} else if(ch.eq(" ")) {
-			text=this.sp().spText('prevChar','prevWord','prevChar');
-			ch=text.ch();
-		not(ch.eq('/')) return false;
-		code=text.trim();
-		len=text.length();
-		chk=4;
-		}
-		not(len) return false;
-		map=this.var(keyMap);
-		not(map ) return false;
-		str=map.get(code);
-		if( str) {
-			pos=this.pos();
-			this.select(pos-len, pos);
-			if(str.find("\n")) {
-				line=this.text("lineStart");
-				indent=indentText(line);
-				this.insertIndent(str, indent);
-			} else {
-				this.insert(str, true);
-			}
-			return true;
-		}
 		return false;
 	}
 	editorTagInsert(tag) { 
@@ -426,7 +240,6 @@
 		if( ch.eq("{", ":", "[") ) {
 			val=line.trim();
 			c=this.text('nextChar');
-			print("#### keyEnter nextChar==$c ####", val);
 			if( ch.eq('{') && c.eq('}') ) {
 				this.insert("\n$indent\t^|\n$indent", true);
 				return true;
@@ -457,79 +270,5 @@
 		return true;
 	}
 	
-	
-	editorKeyString( c ) {
-		if( this.is('select') ) return false;
-		if( _check(c) ) return true;
-		str=this.text('prevWord');
-		ch=str.prevChar();
-		if( ch.eq('=',',','(') ) {
-			this.insert("$c^|$c", true);
-			return true;
-		}
-		_check=func(c) {
-			ch = this.text('nextChar');
-			if( ch.eq(c) ) {
-				cur=this.pos();
-				this.pos(cur+1);
-				return true;
-			}
-			return false;
-		};
-		return false;
-	} 
-	braketStart() {
-		if( this.isSyntaxString()) return false;
-		str=this.text('prevWord');
-		ch=str.prevChar();
-		print("#### $str, $ch ####");
-		if( str.start('else') || ch.eq(')') ) {
-			line=this.sp('lineStart').spText();
-			val=line.trim();
-			if( val.start('switch') ) {
-				this.insertIndent("{\ncase ^|:\ndefault:\n}");
-			} else {
-				this.insertIndent("{\n\t^|\n}");
-			}
-			return true;
-		}
-		return false;
-	}
-	braketEnd() {
-		if( this.isSyntaxString()) return false;
-		str=this.sp().spText('start');
-		str.add("}");
-		indent = this.editorStartIndent( str );
-		if( indent ) {
-			this.insert(indent);
-		}
-		return false;
-	}
-	startBlockMark(ch) { 
-		if( ch.eq('(')) {
-			start="(", end=")";
-		} else {
-			start="[", end="]";
-		}
-		str=this.sp().spText(-128);
-		str.add(end);
-		str.ref();
-		ep=str.cur(-1);
-		in=str.match(start,end,0x101);
-		if(typeof(in,'bool')) return false;
-		if(in.size() ) {
-			sp=str.cur(-1);
-			sp+= 1;
-			len=str.pos(sp,ep).length();
-			if(len>2) {
-				pos = this.pos() - len;
-				this.insert(end);
-				this.mark( pos, pos+1 );
-				return true;
-			}
-		}
-		return false;
-	}
-
-	
-</script>
+	 
+ 

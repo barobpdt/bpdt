@@ -753,7 +753,7 @@ function ${renderFunc} {
 		if(fnm.eq('randomFloat')) {
 			a=Math.random(a,b)
 			aa=Math.round(c,2)
-			ss=trimChar("$aa")
+			ss=trimZero("$aa")
 		} else {
 			aa=Math.random(a,b).toInt()
 			ss="$aa"
@@ -1321,7 +1321,7 @@ ${className}${expr} {
 		key=map.get(k) not(key) key=k
 		result = @baro.addHtmlStyle(parent,page,node,k,val,true)
 		not(result) continue;
-		replaceVal = replaceFindText(ss,"${key}:",result,';')
+		replaceVal = replaceConfigText(ss,"${key}:",result,';')
 		if(replaceVal) {
 			ss=replaceVal
 		} else {
@@ -1417,33 +1417,6 @@ ${className}${expr} {
 }
 
 
-nodeAppendText(node,key,value,sep,replace) {
-	ss=node.get(key)
-	if(replace && ss ) {
-		result = replaceFindText(ss,replace,value,sep)
-		if(result) {
-			node.set(key,result)
-			return;
-		}
-	}
-	if(sep) {
-		if(ss) node.appendText(key,sep)
-	}
-	node.appendText(key,value)
-}
-trimChar(s,ch) {
-	not(ch) ch='0'
-	last=s.size()-1;
-	while(n=pos, 0) {
-		c=s.ch(n)
-		if(c.ne(ch)) {
-			if(n.eq(last)) return s;
-			last=n+1
-			break;
-		}
-	}
-	return s.trim(0,last,true)
-}
 nodeInitVal(node, key, val) {
 	if(node.isset(key)) {
 		not(val) val=null
@@ -1473,11 +1446,7 @@ addNodeProp(node,k,v) {
 	print('@@ addNodeProp ', k, v, a)
 	node.set(k,v)
 }
-catchError() {
-	err=Cf.error() not(err) return false;
-	print("## catch error : $err")
-	return true;
-}
+
 @baro.startWatcher(id, path, callback) {
 	not(id) return print('@@ start watcher 아이디 미정의')
 	not(isFolder(path)) return print('@@ start watcher $path 경로 미정의')
