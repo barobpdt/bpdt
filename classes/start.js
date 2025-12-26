@@ -86,11 +86,37 @@ setArray(arr, idx, node) {
 	} 
 	return arr;
 }
-event(obj, eventName, fc, target, reset) {		
-	not(typeof(obj,'node')) return print('@@ job event 객체 오류', obj, fc) 
+log(param) {
+	self=Cf.funcNode().get('@this') not(self) self=_node('logs')
+	fn=Cf.funcNode('parent')
+	msg=str(param,fn,self)
+	while(c,args(1), n) {
+		idx=n+1;
+		msg.add("\n\tparam$idx: $c")
+	}
+	date=System.date('hh:mm:ss')
+	func=call('logAppend')
+	if(func) {
+		logAppend('logs').append("logs $date>> $msg")
+		if(global().flag(0x40000)) {
+			print("log>>$msg")
+		}
+	} else {
+		print("log>>$msg")
+	}
+}
+
+event(obj, eventName, fc, param) {		
+	not(typeof(obj,'node')) return print('@@ event 객체 오류', obj, fc) 
+	reset=false, target=null
+	if(typeof(param,'bool')) {
+		reset=param
+	} 
+	else if(typeof(param,'node')) {
+		target=param
+	}
 	fn = obj.get(eventName)
 	if( typeof(fn,'func')) {
-		print("xxxxxxxx", args())
 		not(reset) {
 			print("＠＠ $eventName 함수가 이미등록되었습니다")
 			return fn;
@@ -98,7 +124,7 @@ event(obj, eventName, fc, target, reset) {
 	}
 	fcType = typeof(fc)
 	not( fcType.eq('funcRef') ) {		
-		if(fc) print("@@ job event  함수타입 오류 (타입:$fcType)")
+		if(fc) log("@@ job event  함수타입 오류 (타입:$fcType)")
 		return;
 	}
 	fn=Cf.funcNode(fc, obj)
@@ -106,7 +132,8 @@ event(obj, eventName, fc, target, reset) {
 		fn.set('@sender', obj);
 		fn.set('@this',target)
 	}
-	obj.set(eventName, fn) 
+	obj.set(eventName, fn)
+	log('${obj.tag} $eventName 이벤트 등록')
 	return fn;		
 }
  
@@ -893,7 +920,7 @@ addModule(obj, moduleName) {
 		obj=this
 		args(moduleName)
 	}
-	modules=nodeArrayVar(obj,'moduleList')
+	modules=nodeArrayVar(obj,'@moduleList')
 	if( moduleName.ch('@')) {
 		moduleName = moduleName.value(1)
 	}
@@ -924,6 +951,9 @@ addModule(obj, moduleName) {
 			}
 			call(fcInit, obj, params)
 		}
+	} else {
+		print("@@addModule 오류 [$subFuncName 모듈 미정의]")
+		return;
 	}
 	obj.var(useModule, true)
 	addArrayVar(obj,'moduleList',moduleName)

@@ -176,16 +176,6 @@ parseProp(node, tag, &prop) {
 	}
 }
 
-
-splitSep(&s, sep, arr) {
-	not(sep) sep=',';
-	if(arr) arr.reuse() else arr=[];
-	while(s.valid()) {
-		val=s.findPos(sep).trim();
-		arr.add(val);
-	}
-	return arr;
-}
 priceComma( val ) {
 	if( typeof(val,'string')) {
 		won=val.trim();

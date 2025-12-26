@@ -79,7 +79,7 @@
 	base=config.get('@default')
 	base.set('FULL_PATH', fullPath)
 }
-@baro.loadService(root, &s, reset, skipEval) {
+@baro.loadService(root, &s, reset, evalAll) {
 	if(typeof(root,'string')) {
 		serviceName=root
 		root=object('baro.services').addNode(serviceName)
@@ -182,7 +182,7 @@
 	if( evalCheckArray.size() ) {
 		print("evalCheckArray==$evalCheckArray")
 		while(cur, evalCheckArray) {
-			@baro.evalCall(root,cur,skipEval)
+			@baro.evalCall(root,cur,evalAll)
 		}
 	}
 	return root;
@@ -292,10 +292,10 @@
 	return src;
 }
 
-@baro.evalCall(root, config, skip) {
+@baro.evalCall(root, config, evalAll) {
 	fn=Cf.funcNode('parent')
 	ka=config.get('@keyArray')
-	print(">> evalCall keyArray==$ka")
+	print(">> evalCall keyArray==$ka $evalAll")
 	while(k, ka) {
 		s=config.ref(k)
 		not(typeof(s,'string')) continue;
@@ -304,7 +304,7 @@
 		if(k.eq('@eval')) {
 			ss=s
 		} else if(s.start('@eval=>',true)) {
-			if(skip) continue;
+			not(evalAll) continue;
 			ss=s
 		}
 		if(ss) {

@@ -19,7 +19,8 @@
 	}
 	@eval {
 		src=cv('layout')
-		print("src==$src")
+		a=cv('test1')
+		print("src==>$src, a==$a")
 	}
 
 ##> widget
@@ -144,18 +145,18 @@ layout: <>
 
 ##> module {name=ConfigLogPanel}
 	initPage() {
-			@editor=widget('editor')
-			@logTitle=widget('logTitle')	
-			@logInfo=widget('logInfo')
-		}
-		appendLog(str) {
-			editor.append(str, true);
-		}
-		clearLog() {
-			editor.clear();
-			Cf.debug('clear')
-			page('editPanel').editorFocus()
-		}
-		apiResult(socket, uri, &data, param) {
-			this.appendLog("$uri => $data")
-		}
+		@editor=widget('editor')
+		@logTitle=widget('logTitle')	
+		@logInfo=widget('logInfo')
+	}
+	appendLog(str) {
+		editor.append(str, true);
+	}
+	clearLog() {
+		editor.clear();
+		Cf.debug('clear')
+		page('editPanel').editorFocus()
+	}
+	apiResult(socket, uri, &data, param) {
+		this.appendLog("$uri => $data")
+	}
