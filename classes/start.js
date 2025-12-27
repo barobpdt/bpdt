@@ -162,6 +162,15 @@ isFullpath(s) {
 	}
 	return false;
 }
+splitSep(&s, sep) {
+	arr=[];
+	not(sep) sep=',';
+	while(s.valid()) {
+		val=s.findPos(sep).trim();
+		arr.add(val);
+	}
+	return arr;
+}
 varValue(k, fn, node) {
 	not(fn) fn=Cf.funcNode('parent') 
 	if(fn.isset(k)) return fn.get(k);

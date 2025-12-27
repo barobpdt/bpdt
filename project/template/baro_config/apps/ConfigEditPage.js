@@ -14,15 +14,72 @@
 		src=cv('widget.layout')
 		page('test02:main').close()		
 		page = @apps.loadPage(src,'test02','main')
-
-		print(".......... page ..........", page, src )
+		this.var(page, page)
 	}
-	@eval {
+	tray = @eval {
 		src=cv('layout')
-		a=cv('test1')
-		print("src==>$src, a==$a")
+		a=cv('actions')
+		node={}
+		node.parseJson(cv('actions'))
+		page=this.var(page)
+		tray = page.tray()
+		tray.contextMenu(node.trayActions)
+		tray.icon('vicon:application_lightning')
+		tray.show()
+		print(">> node", page, node.trayActions, tray)
+		this.var(tray, tray)
 	}
+	grid-add: @eval {
+		this.inject(@page, @tray) 
+		page.inject(@baseCode)
+		splitSep(baseCode,':').inject(base, id)
+		// 그리드 생성
+		grid=object("grid.${base}:gridTest")
+		grid.id='gridTest'
+		grid.tag='grid'
+		Cf.createWidget(grid)
+		// 레이아웃에 추가
+		vbox=page.child(0)
+		vbox.addChild(grid)
+		this.with(@grid)
+	}
+	grid-model = @eval {
+		this.inject(@grid)
+		grid.var(baseCode, "${base}:gridTest")
+		grid.fields('name,addr,phone,email') 
+		grid.update() 
+	}
+	node-test= @eval {
+		this.inject(@grid)
+		node={}
+		node.parseJson(cv('data.actions'))
+		this.set('actions', node)
+		print(">> ", grid, this.actions )
+	}
+	
+	@eval {
+		o=cv('actions.trayActions')
+		print("o->$o")
+	}
+	
+##> data 	
+	actions {
+		trayActions: [
+			{id:menu.apiForm, text:API관리, icon:'vicon:application_lightning', type:page}
+			{id:menu.htmlTemplateForm, text:HTML템플릿관리, menuText:HTML템플릿, icon:'vicon:html_go', type:page}
+			{id:menu.dbTableForm, text:DB테이블관리, icon:'vicon:database_gear', type:page}
+			{id:menu.dbConnectMng, text:DB연결관리, icon:'vicon:database_connect', type:page}
+			{id:menu.codeMng, text:공통코드관리, icon:'vicon:table_gear', type:page}
+			{id:menu.appMenuMng, text:앱메뉴관리, icon:'vicon:application_view_tile', type:page}
+			{id:menu.langMngPage, text:다국어관리, icon:'vicon:keyboard_magnify', type:page}
+			{id:menu.close, text:프로그램 종료, icon:'icons:close'}
+			{id:sourceEditor, text:실행툴열기, icon:'vicon:script_code'}
+			{id:locknlock, text:락앤락툴열기, icon:'ficon:blog-tumblr'}
+		]
+	}
+	
 
+	
 ##> widget
 layout: <>
 	<page id="main" title="로그출력 페이지" module="ConfigEditPage">

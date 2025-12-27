@@ -146,6 +146,12 @@
 					@baro.parseConfig(root, cur, stripJsComment(left))
 				}
 				print("parse root type=====$type end")
+			} else {
+				if( type.eq('config') && left.find('@eval') ) {
+					not( evalCheckArray.find(cur) ) {
+						evalCheckArray.add(cur)
+					}
+				}
 			}
 		}
 		not(s.ch()) break
