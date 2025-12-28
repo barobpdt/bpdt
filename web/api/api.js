@@ -1,14 +1,37 @@
 <api>
-	version(req, params) {
+	version(req, param) {
 		return '1.0.0'
 	}
-	drives(req, params, &uri) {
-		print("drives >> ", param, uri) 
+	drives(req, param, &uri) {
 		while(path, System.driveList() ) {
 			name = path.ch()
-			params.addNode().with(name,path)
+			param.addNode().with(name,path)
 		}
-		return params;
+		data=json(param,'data')
+		return req.send(data);
+	}
+	cmdTest(req, param, &uri) {
+		param.type='api'
+		param.reqObject = req
+		param.command='ipconfig'
+		param.endCheck=false
+		param.startTick = System.tick()
+		addCmdWorker('test', param, func(result,param) {
+			req=param.reqObject
+			if(req) {
+				req.send(result)
+			}
+			param.endCheck=true
+		})
+		while(notValid(param.endCheck)) {
+			dist=System.tick()-param.startTick;
+			if(dist>10000) {
+				print("@@ API cmdTest timeout ($dist ms)")
+				break;
+			}
+			System.sleep(100)
+		}
+		return;
 	}
 	folders(req, params, &uri) {
 		path = params.path

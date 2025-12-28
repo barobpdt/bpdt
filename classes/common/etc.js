@@ -74,11 +74,3 @@
 	
 
 </script>
-
-<script module="@logTail">
-	
-</script>
-
-<script module="@logWriter">
-	
-</script>

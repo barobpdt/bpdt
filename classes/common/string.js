@@ -28,28 +28,6 @@ ff(&s) {
 	}
 	return ss
 } 
-fv(&s, map) {
-	rst=''
-	fn=Cf.funcNode('parent')
-	arr=args()
-	while(s.valid()) {
-		left=s.findPos('#{')
-		rst.add(left)
-		not(s.valid()) break;
-		key=s.findPos('}').trim()
-		if(key.find('(')) {
-			val=eval(key)
-		} else {
-			val=fn.get(key)
-			not(val) {				
-				if(map) val=map.get(val)
-			}
-		}
-		rst.add(val)
-	}
-	return rst;
-}
-
 format(&s, param) {
 	rst=''
 	arr=args(1), map=null
@@ -305,38 +283,6 @@ indentText( &s ) {
 	return s.value(sp,ep,true);
 }
 
-splitLine(&s, sep) {
-	ss="";
-	n=0;
-	while(s.valid()) {
-		line=s.findPos("\n");
-		not(line.ch()) continue;
-		if(n && sep) ss.add(sep);
-		ss.add(line.trim());
-	}
-	return ss;
-}
-split(&str, sep, arr) {		
-	not(arr) arr=when(sep,_arr(),[]);
-	not(sep) sep=",";
-	while(str.valid()) {
-		val=str.findPos(sep).trim();
-		if(val) arr.add(val)
-	}
-	return arr;
-}
-splitComma(&s) {
-	return s.split(",");
-}
-	
-findNumberPos(&s) {
-	while(s.valid() ) {
-	pos=s.cur();
-	val=s.move()
-	if( val.is('num') ) return pos;
-	}
-	return s.cur();
-}
 lpad(val, num) {
 	not( num ) num=4;
 	if( typeof(val,'number') ) {
@@ -354,33 +300,7 @@ lpad(val, num) {
 	} else {
 		return strVal;
 	}
-}
-strStripIndent(&s) {
-	ln="\r\n"
-	ss='', idx=0;
-	endCheck = func(&s) { return when(s.ch(), false, true) }
-	while(s.valid()) {
-		left=s.findPos("\n")
-		in=indentText(left)
-		inSize=in.size()
-		line=left.trim()
-		not(line) continue;
-		not(idx) {
-			firstSize=inSize
-		} else {
-			ss.add(indent)
-		}
-		if(firstSize<inSize) {
-			ss.add(in.value(firstSize),line)
-		} else {
-			ss.add(line)
-		}
-		if(endCheck(s)) break;
-		ss.add(ln)
-		idx++;
-	}
-	return ss;
-}
+} 
 strLineCount(&s) {
 	cnt=0
 	while(s.valid()) {

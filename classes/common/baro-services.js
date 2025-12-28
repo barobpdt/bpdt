@@ -17,21 +17,7 @@
 	return ss;
 }
 
-@baro.initService(mode, param) {
-	services = object("baro.services")
-	services.set('path',System.path())
-	root=services.addNode(mode)	
-	root.set('serviceName', mode)
-	switch(mode) {
-	case backend: @baro.initBackend(root,param)
-	case frontend: @baro.initFrontend(root,param)
-	case mobile: @baro.initMobile(root,param)	
-	default: return print("@@ initService 오류 [$mode] 서비스 미정의")
-	}
-	if( checkError('initService 실행종료') ) return;
-	services.set('currentService', root)
-	return root;
-}
+
 @baro.hashmap(node, key, &s, reset) {	
 	if(node.isVar(key)) {
 		map=node.get(key)
@@ -46,26 +32,6 @@
 	}
 	return map	
 }
-@baro.configSource(param) {
-	if(param.find('##>')) src=param
-	else if(isFile(param)) src=fileRead(param)
-	else return print("configSource 소스오류 (매개변수가 파일경로나 설정내용이 아닙니다)", param)
-	return src;
-}
-@baro.initBackend(root,param) {
-	src=@baro.configSource(param)
-	not(src) return print("initBackend 백앤드서비스 초기화 실패 ", param)	
-	not(root) root = object("baro.services").addNode('backend')
-	Cf.error(true) 
-	@baro.loadService(root,src)
-	@baro.makeBackendFiles(root)
-}
-@baro.initFrontend(root,param) {	
-	src=@baro.configSource(param)
-	not(src) return print("initFrontend 프론트앤드서비스 초기화 실패 ", param);
-	not(root) root = object("baro.services").addNode('frontend')
-	@baro.loadService(root,src)
-}
 
 @baro.createServiceFolder(root, mode) {
 	config = root.get('@config') not(config) return print("@@createServiceFolder 설정노드가 없습니다(모드:$mode)")
@@ -79,19 +45,23 @@
 	base=config.get('@default')
 	base.set('FULL_PATH', fullPath)
 }
-@baro.loadService(root, &s, reset, evalAll) {
-	if(typeof(root,'string')) {
-		serviceName=root
-		root=object('baro.services').addNode(serviceName)
-		root.set('serviceName', serviceName)
+
+@baro.loadService(serviceNode, &s, reset, evalAll) {
+	if(typeof(serviceNode,'string')) {
+		group=object("baro.serviceGroup").addNode('baroCommon')
+		serviceName=serviceNode
+		serviceNode=group.addNode(serviceName)
+		serviceNode.set('serviceName', serviceName)
 	}
 	isProps = func(s) {
 		c=s.ch()
 		return when(c.eq('{'),true);
-	};	
-	serviceName = root.get('serviceName')
+	};
+	debug=conf('cf.useDebug')
+	serviceName = serviceNode.get('serviceName')
 	print(">> baro.loadService [$serviceName] start 소스사이즈:", s.size())
 	evalCheckArray = []
+	error=false
 	type='', base=null, cur=null
 	while(s.valid()) {
 		left = s.findPos('##>',1)
@@ -106,7 +76,7 @@
 				}
 				cur.set('@modify',false)
 			} else {
-				root.set("@${type}_modify", true)				
+				serviceNode.set("@${type}_modify", true)				
 				cur.set('@modify',true)
 				conf(confCode,left,true)
 			}
@@ -116,36 +86,43 @@
 					evalCheckArray.add(cur)
 				}
 				if(type.eq('config')) {
-					@baro.parseConfig(root, cur, stripJsComment(left))
+					@baro.parseConfig(serviceNode, cur, left)
+				} else if(type.eq('funcs','modules')) {
+					currentFileName = serviceNode.get('@currentFileName') 
+					not(currentFileName) currentFileName=cur.name
+					// source=@baro.getFuncSource(cur,left)
+					if(debug) {
+						not(@baro.parseFuncs(cur,left)) {
+							error=true
+						}
+					}
+					not(error) {
+						funcInfo=Cf.rootNode('@funcInfo')
+						funcInfo.set('includeFileName', "${serviceNode.serviceName}::${currentFileName}")				
+						if(type.eq('modules')) {
+							if(name.eq('@default')) {
+								name='common'
+							}
+							applyFunc(left, name)
+						} else {						
+							applyFunc(left)
+						}
+						funcInfo.set('includeFileName','')
+					}
 				} else if(type.eq('template')) {
-					@baro.parseConfig(root, cur, left)
+					@baro.parseConfig(serviceNode, cur, left)
 				} else if(type.eq('pages')) {
 					print("pages==".left.size() )
-				} else if(type.eq('modules')) {
-					if(name.eq('@default')) {
-						name='common'
-					}
-					src=stripJsComment(left)
-					source=@baro.getFuncSource(cur,src)
-					applyFunc(source, name)
-				} else if(type.eq('funcs')) {
-					currentFileName = root.get('@currentFileName') not(currentFileName) currentFileName=cur.name
-					funcInfo=Cf.rootNode('@funcInfo')
-					funcInfo.set('includeFileName', "${root.serviceName}::${currentFileName}")
-					src=stripJsComment(left)
-					source=@baro.getFuncSource(cur,src)
-					call(source);
-					funcInfo.set('includeFileName','')
 				} else if(type.eq('sql')) {
-					@baro.sqlFuncVal(root, cur, left)
+					@baro.sqlFuncVal(serviceNode, cur, left)
 				} else if(type.eq('routes')) {
-					@baro.parseRoute(root, cur, left)
+					@baro.parseRoute(serviceNode, cur, left)
 				} else if(type.eq('tables')) {
-					@baro.tableFuncVal(root, cur, left)
+					@baro.tableFuncVal(serviceNode, cur, left)
 				} else {
-					@baro.parseConfig(root, cur, stripJsComment(left))
+					@baro.parseConfig(serviceNode, cur, left)
 				}
-				print("parse root type=====$type end")
+				print("parse serviceNode type=====$type end")
 			} else {
 				if( type.eq('config') && left.find('@eval') ) {
 					not( evalCheckArray.find(cur) ) {
@@ -164,7 +141,7 @@
 		} else if(type.eq('func','function')) {
 			type='funcs'
 		}
-		base=root.addNode("@$type")
+		base=serviceNode.addNode("@$type")
 		params=null
 		if(isProps(s)) { 
 			s.ch()
@@ -173,27 +150,73 @@
 			if(nm) name=nm
 		}
 		not(name) name='@default'
-		cur=base.get(name) 
+		cur=base.get(name)
+		cur.set('@type', type)
 		if(cur) {
 			if(reset) {
 				arr=base.get('@keyArray') if(arr) arr.reuse()
 				cur.removeAll(true)
-				@baro.parseConfig(root, cur, params)
+				@baro.parseConfig(serviceNode, cur, params)
 			}
 		} else {
 			cur=base.addNode(name)
-			@baro.parseConfig(root, cur, params)
+			@baro.parseConfig(serviceNode, cur, params)
 		}
 	}
 	if( evalCheckArray.size() ) {
-		print("evalCheckArray==$evalCheckArray")
 		while(cur, evalCheckArray) {
-			@baro.evalCall(root,cur,evalAll)
+			@baro.evalCall(serviceNode,cur,evalAll)
 		}
 	}
-	return root;
+	return serviceNode;
+}
+
+@baro.parseFuncs(cur, &s, moduleName) {	
+	comment=''
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq('/')) {
+			c=s.ch(1)
+			if(c.eq('/')) cmt=s.findPos("\n") else cmt=s.match(1);
+			if(comment) comment.add(conf('cf.newline'))
+			comment.add(cmt)
+			continue;
+		}
+		sp=s.cur()
+		if(c.eq('@')) s.incr()
+		c=s.next().ch()
+		while(c.eq('.','#','-')) {
+			c=s.incr().next().ch()
+		}
+		ep=s.cur()
+		if(c.eq('(')) {
+			fnm=s.trim(sp,ep,true)
+			fparam=s.match()
+			c=s.ch()
+			if(c.eq('{')) {
+				fsrc=s.match(1)
+				if(typeof(fsrc,'bool')) {
+					log("error::parseFuncs 함수소스 매치오류 (함수명:$fnm)")
+					return false;
+				}
+			} else {
+				log("error::parseFuncs 함수소스 시작오류 $fnm [$c]")
+				return false;
+			}
+			sub=cur.addNode(fnm)
+			sub.funcName=fnm
+			sub.funcParam=fparam
+			
+		} else {
+			fnm=s.trim(sp,ep,true)
+			log("error::parseFuncs 함수 시작오류 $fnm [$c]")
+			return false;
+		}
+	}
+	return true;
 }
 @baro.getFuncSource(cur, &s) {
+	not(s.ch()) return;
 	src='', arr=cur.addArray('@keyArray')
 	arr.reuse()
 	nl=conf('cf.newline')
@@ -301,7 +324,6 @@
 @baro.evalCall(root, config, evalAll) {
 	fn=Cf.funcNode('parent')
 	ka=config.get('@keyArray')
-	print(">> evalCall keyArray==$ka $evalAll")
 	while(k, ka) {
 		s=config.ref(k)
 		not(typeof(s,'string')) continue;
@@ -309,12 +331,14 @@
 		if(k.ch('#')) continue;
 		if(k.eq('@eval')) {
 			ss=s
-		} else if(s.start('@eval=>',true)) {
-			not(evalAll) continue;
-			ss=s
+		} else if(evalAll) {
+			if(s.start('@eval=>',true)) {			
+				ss=s
+			}
 		}
 		if(ss) {
-			src=@baro.evalSourceParse(ss)
+			// src=@baro.evalSourceParse(ss)
+			src = stripJsComment(ss)
 			config.set("@$k",runSource(src,config))
 		}
 	}
@@ -1567,7 +1591,8 @@
 			arr.add(k)
 		}
 		node.set(k,v)
-	};	
+	};
+	comment=''
 	while(s.valid()) {
 		c=s.ch() not(c) break;
 		if(c.eq(',',';')) {
@@ -1576,7 +1601,9 @@
 		}
 		if(c.eq('/')) {
 			c=s.ch(1)
-			if(c.eq('/')) s.findPos("\n") else s.match()
+			if(c.eq('/')) cc=s.findPos("\n") else cc=s.match()
+			if(comment) comment.add(' ')
+			comment.add(cc)
 			continue;
 		}
 		if(c.eq()) {
@@ -1593,6 +1620,10 @@
 			}
 			ep=s.cur()
 			k=s.trim(sp,ep,true)
+		}
+		if(comment ) {
+			node.set("#${k}:comment", comment)
+			comment=''
 		}
 		if(c.eq('{','(')) {
 			source = s.match(1)

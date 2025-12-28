@@ -203,7 +203,11 @@
 					rst.add( Cf.jsValue(key), ':', this.jsonValue(val,depth) );
 				}
 			} else {
-				rst.add( Cf.jsValue(key), ':', Cf.jsValue(val) )
+				if( typeof(val,'num') || val.eq('true','false','null') ) {
+					rst.add(Cf.jsValue(key), ':', val )
+				} else {
+					rst.add(Cf.jsValue(key), ':', Cf.jsValue(val) )
+				}
 			}
 		}
 		if( node.childCount() && this.member(childPrefix)) {

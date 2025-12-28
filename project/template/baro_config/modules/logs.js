@@ -8,42 +8,16 @@
 		data = logRead.timeout()
 		print("log timeout data==$data")  
 	}
+	
 	@eval {
-		print(".......... module::log 등록 ............")
-		path = conf('path.modules')
-		not(isFolder(path)) {
-			print("@@ 모듈경로가 존재하지 않습니다 $path 폴더를 생성하세요")
-		}
-		while(cur, getFileList(path)) {
-			cur.inject(name, fullPath)
-			print(">>$cur")  
-			// addWatchFile(fullPath,'modules',@user.procModuleChange)
-		}		
-		print(">> test : ",cv('test'))
-	}
-##> func {name=user}
-	@user.procModuleChange(mode,path) {
-		print("procModuleChangemode [$mode]>> $path")
-		loadConfigService(mode,path)
+		print("logs 시작")
 	}
 	
-	runSource(&src, node) {
-		if(typeof(src,'bool')) {
-			return print("@@ evalValue 실행오류 괄포매칭 오류")
-		}
-		fn=Cf.funcNode()
-		if(typeof(node,'node')) {
-			fn.set('@this',node)
-		}
-		if(src.start('@eval=>',true)) {
-			root=findParentNode(fn.get('@this'),'seriveName')
-			log("${root.serviceName} 소스실행 시작 =====")
-		}
-		return eval(src,fn)
-	}
-
-	
-##> func {name=logs}	 
+##> func {name=logs}
+	/* 로그객체 생성후 리턴 [로그 파일 변경시 끝에서 읽기]
+		- 파일명 미지정시 프로그램 data/logs 폴더에 이름과 날짜로 로그파일 자동생성
+		
+	*/	
 	logTail(name, fileName) {
 		not(name) name='baro'
 		obj=object("logTail.$name")
@@ -66,6 +40,9 @@
 		}
 		return addModule(obj, 'logTail', name, fullpath)
 	}
+	/* 로그내용 추가객체 생성후 리턴 
+		- 파일명 미지정시 프로그램 data/logs 폴더에 이름과 날짜로 로그파일 자동생성
+	*/
 	logAppend(name, fileName) {
 		not(name) name='baro'
 		obj=object("logAppend.$name")

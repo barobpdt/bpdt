@@ -1,18 +1,44 @@
-_arr(code, reuse) {
+_arr(code) {
 	not( code ) {
 		return Cf.array();
 	}
-	arr=Cf.rootNode().addArray("_arr.$code");
-	if( typeof(reuse,"bool") && reuse ) arr.reuse();
+	if(typeof(code,'bool')) {
+		idx=global().incrNum('_arr.presist_idx')
+		a=global().addArray('_arr.presist')
+		if(idx==256) {
+			idx=0
+			global().set("_arr.presist_idx",1)
+		}
+		if(idx<a.size()) {
+			arr=a.get(idx).reuse()
+		} else {
+			arr=a.add(Cf.newArray())
+		}
+	} else {
+		arr=global().addArray("_arr.$code")
+	}
 	return arr;
 }
-_node(code, reuse) {
+_node(code) {
 	not( code ) {
 		return Cf.node();
 	}
-	node=Cf.rootNode("_node.$code", true)
+	if(typeof(code,'bool')) {
+		idx=global().incrNum('_node.presist_idx')
+		a=global().addArray('_node.presist')
+		if(idx==256) {
+			idx=0
+			global().set("_node.presist_idx",1)
+		}
+		if(idx<a.size()) {
+			node=a.get(idx).reuse()
+		} else {
+			node=a.add(Cf.newNode())
+		}
+	} else {
+		node=Cf.rootNode("_node.$code", true)
+	}
 	not(node.var(tag)) node.var(tag, code)
-	if( typeof(reuse,"bool") && reuse ) node.removeAll(true)
 	return node;
 }
 catchError() {
@@ -76,7 +102,31 @@ findId( root, id) {
 		}
 	}
 	return;
-} 
+}
+recalc(total, info) {
+	return _arr().recalc(total, info)
+}
+dividPos(param) {
+	if(typeof(param,'array')) {
+		a=param
+	} else {
+		args(total,info)
+		a=recalc(total,info)	
+	}
+	b=_arr(), sx=0
+	b.add(sx)
+	while(n, range(0,a.size()-1) ) {
+		sx+=a.get(n)
+		b.add(sx)
+	}
+	return b;
+}
+range(sp,ep) {
+	a=[]
+	while(n=sp, n<ep, n++) a.add(n)
+	return a;
+}
+
 setArray(arr, idx, node) {
 	not(typeof(idx,"num")) return arr;
 	if(idx.lt(arr.size()) ) {
@@ -103,6 +153,16 @@ log(param) {
 		}
 	} else {
 		print("log>>$msg")
+	}
+	if(msg.start('error::')) return print("$msg")
+}
+parseJson(node,&str,checkStr) {
+	node.removeAll(true)
+	node.parseJson(str)
+	if(checkStr) {
+		return json(node,'data');
+	} else {
+		return node;
 	}
 }
 
@@ -145,6 +205,23 @@ toDouble(s) {
 	a=when(typeof(s,'number'),"$s",s)
 	return a.toDouble()		
 }
+checkFunc(functionName) {
+	return object('@inc.userFunc').get(functionName);
+}
+checkModule(moduleName) {
+	return object('user.subfuncMap').get(moduleName);
+}
+isObject(name) {
+	splitSep(name,'.').inject(a,b)
+	return Cf.getObject(a,b);
+}
+isEventName(&s) {
+	if(s.start('on',true)) {
+		c=s.ch()
+		if(c.is('upper')) return true;
+	}
+	return false;
+}
 isNull(a) { return when(typeof(a,'null'),true) }
 
 isValid(s) {
@@ -174,7 +251,6 @@ splitSep(&s, sep) {
 varValue(k, fn, node) {
 	not(fn) fn=Cf.funcNode('parent') 
 	if(fn.isset(k)) return fn.get(k);
-	
 	not(node) {
 		node=fn.get('@this')
 	}
@@ -194,6 +270,7 @@ getVarValue(&s,fn,node) {
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
 		while(c.eq('.')) c=s.next().ch()
+		if(c.eq('?',':')) return true;
 		return when(c,false,true);
 	};	
 	not(fn) fn=Cf.funcNode('parent')
@@ -212,7 +289,30 @@ getVarValue(&s,fn,node) {
 		val=val.get(k)
 		c=s.ch()
 	}
-	if(c.eq(':')) {
+	if(c.eq('?')) {
+		s.incr()		
+		c=s.ch()
+		if(c.eq('[')) {
+			ss=s.match(1)
+			not(val) {
+				c=s.ch()
+				if(c.eq(':')) {
+					c=s.incr().ch()
+					if(c.eq('[')) ss=s.match(1) else ss=s					
+				} else {
+					ss=''
+				}
+			}			
+		} else {
+			ss=s.findPos(':')
+			not(val) {
+				ss=s
+			}
+		}
+		val=''
+		if(ss) val=str(ss,fn,node)
+	}
+	else if(c.eq(':')) {
 		type=s.incr().move()		
 		if(type.eq('int')) {
 			if(typeof(val,'num')) {
@@ -252,26 +352,7 @@ str(&s, fn, node) {
 		}
 		k=s.move()
 		c=s.ch(0)
-		if(c.eq(':')) {
-			type=k
-			k=s.incr().move()
-			v=varValue(k,fn,node)
-			if(type.eq('int')) {
-				if(typeof(v,'num')) {
-					v=v.toInt()
-				} else {
-					v=0
-				}
-			}
-		} else if(c.eq('[')) {
-			cur=fn.get(k) if(node && typeof(node,'node')) cur=node.get(k)
-			if(typeof(cur,'node')) {
-				k=s.match().trim()
-				v=varValue(k,fn,cur)
-			}
-		} else {
-			v=varValue(k,fn,node)
-		}
+		v=varValue(k,fn,node)
 		if(isValid(v)) ss.add(v)
 	}
 	return ss;
@@ -642,7 +723,7 @@ include(name, checkRealod) {
 	filePathInfo(filenm).inject(folder,filename,fname)
 	subName = null
 	if( fname.find('#')) {
-		split(fname,'#').inject(fname, subName)
+		splitSep(fname,'#').inject(fname, subName)
 	}
 	map.set(name, modify)
 	src=fileRead(filenm)
@@ -804,7 +885,7 @@ allWidget(parent, arr) {
 	return arr;
 }
 
-applyFunc(src, module) {
+applyFunc(&src, module) {
 	if( module ) {
 		if(module.ch('@')) {
 			module=module.value(1)
@@ -813,7 +894,7 @@ applyFunc(src, module) {
 		Cf.sourceApply("<func>$src</func>")
 		Cf.rootNode('@funcInfo').set('refName', '')
 	} else {
-		call(src)
+		Cf.sourceApply("<func>$src</func>")
 	}
 } 
 parseSource(&s, base, subName) {
@@ -938,13 +1019,13 @@ addModule(obj, moduleName) {
 	}
 	subName = ''
 	if( moduleName.find(':')) {
-		split(moduleName,':').inject(subFuncName, subName)
+		splitSep(moduleName,':').inject(subFuncName, subName)
 	} else {
 		subFuncName = moduleName
 	}
 	funcInfo = object('user.subfuncMap').get(subFuncName)
-	result = addModuleFunc(obj, subFuncName, funcInfo, subName) 
-	if( result ) {
+	initCount = addModuleFunc(obj, subFuncName, funcInfo, subName) 
+	if( initCount ) {
 		if( subName ) {
 			fcInit = obj.get("init_$subName")
 		} else {
@@ -960,20 +1041,10 @@ addModule(obj, moduleName) {
 			}
 			call(fcInit, obj, params)
 		}
-	} else {
-		print("@@addModule 오류 [$subFuncName 모듈 미정의]")
-		return;
-	}
+	} 
 	obj.var(useModule, true)
 	addArrayVar(obj,'moduleList',moduleName)
 	return obj
-}
-isEventName(&s) {
-	if(s.start('on',true)) {
-		c=s.ch()
-		if(c.is('upper')) return true;
-	}
-	return false;
 }
 
 addModuleFunc(obj, subFuncName, &funcs, subName) {

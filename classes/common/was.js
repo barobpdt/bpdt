@@ -3,7 +3,7 @@
 		node = Cf.getObject('api','api')
 		not(node) {
 			fo = Baro.file()
-			fnm = str('${@web.rootPath}/api/api.js')
+			fnm = str('${conf.web.rootPath}/api/api.js')
 			not(isFile(fnm)) return print("$fnm API소스 파일 오류")
 			node = Cf.getObject('api','api', true)
 			fsrc = fileRead(fnm)
@@ -218,7 +218,7 @@
 	}
 	start(port, path) {
 		not(port) port=80;
-		not(path) path=Cf.val(System.path(),"/web");
+		not(path) path=pathJoin(System.path(),"web");
 		not(conf('web.rootPath')) conf('web.rootPath',path,true)
 		was.start(port,path);
 		@status = 'start'
@@ -400,7 +400,7 @@
 		fo=Baro.file()
 		map=Baro.was().urlMap()
 		not(path ) {
-			path=Cf.val(webRoot(),'/router')
+			path=pathJoin(webRoot(),'router')
 		}
 		not(pathLen) {
 			global("routerPath",path)
