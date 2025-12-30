@@ -57,18 +57,23 @@
 		c=s.ch()
 		return when(c.eq('{'),true);
 	};
+	map=global().addNode('@evalCallMap')	
 	debug=conf('cf.useDebug')
 	serviceName = serviceNode.get('serviceName')
 	print(">> baro.loadService [$serviceName] start 소스사이즈:", s.size())
 	evalCheckArray = []
 	error=false
-	type='', base=null, cur=null
+	type='', base=null, cur=null, evalDefault=null
+	okCnt=0
 	while(s.valid()) {
 		left = s.findPos('##>',1)
 		if(type) { 
 			ok=true
-			name = cur.get('name')
-			confCode="${serviceName}.${type}:${name}#modify"
+			name = cur.get('name')			
+			confCode="${serviceName}.${type}:${name}#modify"			
+			not(cur.isVar('@confCode')) {
+				cur.set('@confCode',confCode)
+			}
 			if( left.eq(conf(confCode)) ) {
 				if( cur.isVar('@modify')) { 					
 					print(">> $confCode 변경된 내용이 없습니다 ")
@@ -81,12 +86,17 @@
 				conf(confCode,left,true)
 			}
 			if(ok ) {
+				okCnt++;
 				print(">> loadService type=====$type $confCode start") 
 				if( left.find('@eval')) {
-					evalCheckArray.add(cur)
+					if(type.eq('config')) {
+						evalCheckArray.add(cur)
+					} else {
+						not(map.get(confCode)) evalCheckArray.add(cur)
+					}
 				}
 				if(type.eq('config')) {
-					@baro.parseConfig(serviceNode, cur, left)
+					@baro.parseConfig(serviceNode, cur, left)					
 				} else if(type.eq('funcs','modules')) {
 					currentFileName = serviceNode.get('@currentFileName') 
 					not(currentFileName) currentFileName=cur.name
@@ -124,9 +134,11 @@
 				}
 				print("parse serviceNode type=====$type end")
 			} else {
-				if( type.eq('config') && left.find('@eval') ) {
-					not( evalCheckArray.find(cur) ) {
-						evalCheckArray.add(cur)
+				if( type.eq('config') && name.eq('@default')) {
+					// 한번실행 체크
+					check = map.get(confCode)
+					if( left.find('@eval') && ~(check) ) {
+						evalDefault = cur
 					}
 				}
 			}
@@ -163,9 +175,12 @@
 			@baro.parseConfig(serviceNode, cur, params)
 		}
 	}
+	if( okCnt && evalDefault ) {		
+		evalCheckArray.add(evalDefault)
+	}
 	if( evalCheckArray.size() ) {
 		while(cur, evalCheckArray) {
-			@baro.evalCall(serviceNode,cur,evalAll)
+			@baro.evalCall(serviceNode,cur,evalAll,map)
 		}
 	}
 	return serviceNode;
@@ -206,6 +221,7 @@
 			sub=cur.addNode(fnm)
 			sub.funcName=fnm
 			sub.funcParam=fparam
+			sub.funcSource=fsrc
 			
 		} else {
 			fnm=s.trim(sp,ep,true)
@@ -321,25 +337,38 @@
 	return src;
 }
 
-@baro.evalCall(root, config, evalAll) {
+@baro.evalCall(root, config, evalAll, map) {
+	confCode=config.get('@confCode')
 	fn=Cf.funcNode('parent')
 	ka=config.get('@keyArray')
+	if(cur.get('SET_EVAL')) {
+		evalAll=true
+	}
 	while(k, ka) {
 		s=config.ref(k)
 		not(typeof(s,'string')) continue;
-		ss=null
 		if(k.ch('#')) continue;
+		 
+		ss=null
 		if(k.eq('@eval')) {
+			applyCheck=false
 			ss=s
 		} else if(evalAll) {
-			if(s.start('@eval=>',true)) {			
+			if(s.start('@eval=>',true)) {
+				applyCheck=true
 				ss=s
 			}
 		}
 		if(ss) {
 			// src=@baro.evalSourceParse(ss)
 			src = stripJsComment(ss)
-			config.set("@$k",runSource(src,config))
+			result = runSource(src,config)
+			if(applyCheck) {
+				config.set("@$k",result)
+			} else if( typeof(result,'bool') && result ) {
+				// 실행결과가 true 라면 한번만 실행되도록 한다
+				map.set(confCode, true)
+			}
 		}
 	}
 }
@@ -586,18 +615,20 @@
 				refNode=cf
 			}
 		}
-		not(cur) {
+		if(isNull(cur)) {
+			not(refNode) { 
+				refNode=cf
+			}
 			if(node.isVar(name)) {
 				cur=node.get(name)
+			} else if(refNode.isVar(name)) {
+				cur=refNode.get(name) 
 			} else {
 				parent=node.parentNode() not(parent) parent=root
 				cur=parent.get(name)
 			}	
-		}
-		not(cur) {
-			not(refNode) { 
-				refNode=cf
-			}
+		}		
+		if(isNull(cur)) {
 			if(refNode==root) {
 				print(">> refNode == root")
 				while(sub,refNode ) {
@@ -617,7 +648,7 @@
 						break;
 					}
 				}
-				not(cur) {
+				if(isNull(cur)) {
 					while(sub,root) {
 						while(base,sub) {
 							if(base.isVar(name)) {
@@ -650,14 +681,14 @@
 			cur=null
 		}
 	}
-	not(cur) return;
+	if( isNull(cur)) return;
 	if( type.eq('ref')) {
 		@baro.parseService(root,refNode,cur,name);
 		print("keyValue ref >> ", name, refNode, cur)
 		return refNode.get("&$name")
 	} 
 	if( type.eq('value','string') ) {		
-		return @baro.configValue(root,refNode,cur);
+		return valueOf(cur, type.eq('string'));
 	}
 	if( type.eq('set')) {		
 		if(typeof(cur,'node')) {
@@ -1500,18 +1531,9 @@
 }
 
 @baro.configValue(root,node,&s,indent) {
-	not(s) return;
-	checkNull=func(&s) {
-		a=s.move().lower()
-		if( a.eq('null') && ~(s.ch()) ) return true;
-		return false;
-	};	
-	if(typeof(s,'string')) {
-		if(checkNull(s)) return;		
-		if(s.find('@[')) {
-			return @baro.parseService(root,node,s)
-		}
-		return s;
+	not(s) return;	
+	if(typeof(s,'string')) {		
+		return valueOf(s);
 	}
 	if(typeof(s,'node')) {
 		cur=s

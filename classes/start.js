@@ -122,11 +122,15 @@ dividPos(param) {
 	return b;
 }
 range(sp,ep) {
-	a=[]
+	a=_arr()
 	while(n=sp, n<ep, n++) a.add(n)
 	return a;
 }
-
+checkTick(tick, dist) {
+	not(tick) tick=0
+	d=System.tick() - tick;
+	return d.lt(dist);
+}
 setArray(arr, idx, node) {
 	not(typeof(idx,"num")) return arr;
 	if(idx.lt(arr.size()) ) {
@@ -222,7 +226,10 @@ isEventName(&s) {
 	}
 	return false;
 }
-isNull(a) { return when(typeof(a,'null'),true) }
+isNull(s) { 
+	if(typeof(s,'bool','number')) return false;	
+	return when(s,false,true) 
+}
 
 isValid(s) {
 	not(s) return false;
@@ -231,6 +238,7 @@ isValid(s) {
 	}
 	return true;
 }
+notValid(s) { return when(isValid(s),false,true) }
 isFullpath(s) {
 	not(s) return false;
 	c=s.ch(1)
@@ -250,33 +258,41 @@ splitSep(&s, sep) {
 }
 varValue(k, fn, node) {
 	not(fn) fn=Cf.funcNode('parent') 
-	if(fn.isset(k)) return fn.get(k);
+	if(fn.isset(k)) {
+		return fn.get(k);
+	}
 	not(node) {
 		node=fn.get('@this')
 	}
 	if(typeof(node,'node')) {
-		if(node.isVar(k)) return node.get(k);
+		if(node.isVar(k)) {
+			return node.get(k);
+		}
 		fn=Cf.funcNode(node)
-		if(fn && fn.isset(k)) return fn.get(k);
+		if(fn && fn.isset(k)) {
+			return fn.get(k);
+		}
 	}
 	print("@@ varValue [$k] 변수 미정의");
 	return;
 }
-getVarValue(&s,fn,node) {
+getVarValue(&s,fn,node,onlyValue) {
 	not(typeof(s,'string')) return;
-	if(s.start('conf.',true)) {
-		return conf(s.trim())
-	} 
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
 		while(c.eq('.')) c=s.next().ch()
 		if(c.eq('?',':')) return true;
 		return when(c,false,true);
-	};	
-	not(fn) fn=Cf.funcNode('parent')
-	not(isVar(s)) {
-		return eval(s, fn)
+	};
+	if(s.start('conf.',true)) {
+		return conf(s.trim())
 	} 
+	not(onlyValue) {
+		not(fn) fn=Cf.funcNode('parent')
+		not(isVar(s)) {
+			return eval(s, fn)
+		} 
+	}
 	k=s.move()
 	val=varValue(k,fn,node)
 	c=s.ch()
@@ -288,6 +304,9 @@ getVarValue(&s,fn,node) {
 		k=s.incr().move()
 		val=val.get(k)
 		c=s.ch()
+	}
+	if(onlyValue) {
+		return val;
 	}
 	if(c.eq('?')) {
 		s.incr()		
@@ -338,6 +357,9 @@ str(&s, fn, node) {
 	} 
 	not(fn) {
 		fn=Cf.funcNode('parent')
+	}
+	not(typeof(node,'node')) {
+		node=fn.get('@this')
 	}
 	ss=''
 	while(s.valid()) {
@@ -486,6 +508,34 @@ jsValue(s) {
 		return s
 	}
 	return Cf.jsValue("$s")
+}
+valueOf(s, convert) {
+	if(typeof(s,'string')) {
+		if(typeof(s,'num')) {
+			return when(s.find('.'), s.toDouble(), s.toInt());
+		}		
+		if(s.eq('true','false')) {
+			return when(s.eq('true'), true, false);
+		}
+		if(s.eq('null')) {
+			return null;
+		}
+		return s.trim();
+	} 
+	if(convert) {		
+		if(typeof(s,'node','array')) {		
+			if(typeof(s,'array')) {
+				node=_node()
+				node.array=s
+			} else {
+				node=s
+			}
+			return json(node,true,false)
+		}
+		return "$s";
+	} else {
+		return s;
+	}
 }
 getVarName(&s) {
 	not(typeof(s,'string')) return;
@@ -661,7 +711,7 @@ relativePath(base, path) {
 	return pathJoin(base,path);
 } 
 
-fileRead(path) {
+fileRead(path) {	
 	fo=Baro.file('read'); // 파일객체 생성
 	not(fo.open(path,'read')) {
 		return print("readFile open error (경로 $path)");
@@ -669,6 +719,12 @@ fileRead(path) {
 	src = fo.read();
 	fo.close()
 	return src;
+}
+fileReadAll(path,offset) {
+	return Baro.file().readAll(path, offset);
+}
+fileSave(path, buf) {
+	return Baro.file().writeAll(path, buf);
 }
 fileWrite(path, buf) {
 	fo=Baro.file('save');

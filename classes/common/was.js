@@ -1,16 +1,31 @@
 <script>
-	isApiRootInfo(&s,&b) {
+	isApiRootInfo(&service) {
+		fnm = str('${conf.web.rootPath}/api/api.js')
+		fo = Baro.file()
 		node = Cf.getObject('api','api')
-		not(node) {
-			fo = Baro.file()
-			fnm = str('${conf.web.rootPath}/api/api.js')
-			not(isFile(fnm)) return print("$fnm API소스 파일 오류")
+		not(isFile(fnm)) {
+			print("@@ $fnm API소스 파일이 없습니다")
+			return;
+		}
+		checkSource=false
+		if(node) {
+			lastTm = node.get('lastModifyTm')		
+			modifyTm = fo.modifyDate(fileName)
+			if(lastTm!=modifyTm ) {
+				node.set('lastModifyTm', modifyTm)
+				checkSource=true
+			}
+		}
+		else {
 			node = Cf.getObject('api','api', true)
+			checkSource=true
+		}
+		if(checkSource) {
 			fsrc = fileRead(fnm)
 			apiSourceApply(node, fsrc)	
 			node.set('lastModifyTm', fo.modifyDate(fnm))
 		}
-		fcNm = s.trim()
+		fcNm = service.trim()
 		fc=node.get(fcNm)
 		return typeof(fc,'func');
 	}
@@ -34,42 +49,43 @@
 				}
 			}
 		}
+		fo=Baro.file('api')
 		uri=param.ref('@uri')
 		webRoot = conf('web.rootPath')
-		if( isApiRootInfo(service, uri) ) {
-			fileName = "$webRoot/api/api.js"
-			name=service
-			if(url.find('/')) {
-				uri.findPos('/')
+		if( isApiRootInfo(service) ) {
+			if(service.eq(uri)) {
+				print("xxx isApiRootInfo called xxx", service, uri)
+				uri=''
 			}
-			service = 'api'
+			fileName = "$webRoot/api/api.js"
+			name=service			
+			objectId = 'api'
 		} else {
 			fileName = "$webRoot/api/${service}.js"	
 			name=uri.findPos('/').trim();
-		}
-		fo=Baro.file('api')
-		if( uri.find('/') ) {
-			if(fo.isFile(fileName) ) {
-				objectId=service
+			if( uri.find('/') ) {
+				if(fo.isFile(fileName) ) {
+					objectId=service
+				} else {
+					fileName="$webRoot/api/$service/${name}.js"
+					not(fo.isFile(fileName)) {
+						ss=str('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
+						return req.send(ss)
+					}
+					objectId = "$service/$name"
+					name = uri.findPos('/').trim()
+					not(name) {
+						ss=str('{"error":"api호출 오류 ${fileName} 파일 $name 함수가 없습니다"}')
+						return req.send(ss)
+					}
+				}
 			} else {
-				fileName="$webRoot/api/$service/${name}.js"
-				not(fo.isFile(fileName)) {
+				if(fo.isFile(fileName) ) {
+					objectId=service
+				} else {
 					ss=str('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
 					return req.send(ss)
 				}
-				objectId = "$service/$name"
-				name = uri.findPos('/').trim()
-				not(name) {
-					ss=str('{"error":"api호출 오류 ${fileName} 파일 $name 함수가 없습니다"}')
-					return req.send(ss)
-				}
-			}
-		} else {
-			if(fo.isFile(fileName) ) {
-				objectId=service
-			} else {
-				ss=str('{"error":"api호출 오류 ${fileName} 파일이 없습니다"}')
-				return req.send(ss)
 			}
 		}
 		serviceNode=Cf.getObject("api", objectId, true)

@@ -10,28 +10,29 @@
 		data=json(param,'data')
 		return req.send(data);
 	}
+	addCmd(req, param, &uri) {
+		addCmdWorker('api','cd')
+	}
+	appCommand(req, param, &uri) {
+		print("uri==$uri")
+		type=uri.findPos('/').trim()
+		line=uri.findPos('/').trim()
+		
+		addGlobalAppCommand("@@>$type:$line")
+	}
 	cmdTest(req, param, &uri) {
-		param.type='api'
-		param.reqObject = req
-		param.command='ipconfig'
-		param.endCheck=false
-		param.startTick = System.tick()
-		addCmdWorker('test', param, func(result,param) {
-			req=param.reqObject
-			if(req) {
-				req.send(result)
-			}
-			param.endCheck=true
-		})
-		while(notValid(param.endCheck)) {
-			dist=System.tick()-param.startTick;
-			if(dist>10000) {
-				print("@@ API cmdTest timeout ($dist ms)")
-				break;
-			}
-			System.sleep(100)
-		}
-		return;
+		command=uri.findPos('/').trim()
+		not(command) command='cd'
+		return @api.sendCmdResult(req,param,command)
+	}
+	cmdArray(req, param, &uri) {
+		a=param.addArray('commandList')
+		a.add('cd')
+		a.add('dir')
+		a.add('ipconfig')
+		a.add('npm list')
+		print(">> cmdTest command==$command ", param, args())
+		return @api.sendCmdResult(req,param)
 	}
 	folders(req, params, &uri) {
 		path = params.path
@@ -59,6 +60,42 @@
 </api>
 
 <func>
+	@api.sendCmdResult(req, param, command, maxTick) {
+		not(maxTick) maxTick=60000 // 60초
+		param.type='cmdResult'
+		param.reqObject = req		
+		param.endCheck=false
+		param.startTick = System.tick()
+		if(command) {
+			param.command=command
+		}
+		param.logCallback = func(result,param) {
+			req=param.reqObject
+			param.appendText('result', result)
+			if( isValid(param.commandList) ) {
+				print("수행할 명령이 남아 있습니다($param.commandList) 수행결과:$result")
+				return;
+			}
+			if(req && req.isConnect() ) {
+				req.send(param.result)
+			}
+			param.endCheck=true
+		};
+		cmd=addCmdWorker('aa', param)		
+		print(">> @api.sendCmdResult param=$param", cmd)
+		if(param.error) {
+			return param;
+		}
+		while(checkTick(param.startTick,maxTick)) {
+			not(req.isConnect()) {
+				break;
+			}
+			if( isValid(param.endCheck) ) {
+				break;
+			}
+			System.sleep(250)
+		}
+	}
 	@api.folderTree(path, root, depth) {
 		not(root) root = _node('listFolder').removeAll();
 		not(depth) depth = 0;
