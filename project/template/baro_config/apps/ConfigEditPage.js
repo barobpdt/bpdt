@@ -14,18 +14,20 @@
 		src=cv('widget.layout')
 		page('test02:main').close()		
 		page = @apps.loadPage(src,'test02','main')
-		this.with(@page)
+		this.var(page, page)
 	}
 	tray = @eval {
-		this.inject(@page)
+		src=cv('layout')
+		a=cv('actions')
 		node={}
 		node.parseJson(cv('actions'))
+		page=this.var(page)
 		tray = page.tray()
 		tray.contextMenu(node.trayActions)
 		tray.icon('vicon:application_lightning')
 		tray.show()
 		print(">> node", page, node.trayActions, tray)
-		this.with(@tray)
+		this.var(tray, tray)
 	}
 	grid-add: @eval {
 		this.inject(@page, @tray) 
@@ -55,21 +57,11 @@
 		print(">> ", grid, this.actions )
 	}
 	
-	run-test=@eval {
-		runSource(cv('test1'))
-		runSource(cv('tray'))
-		runSource(cv('grid-add'))
-		this.inject(@page, @tray, @grid)
-		print(">>",page, tray, grid)
-	}
 	@eval {
-		print("ConfigEditorPage 초기화 시작")
+		o=cv('actions.trayActions')
+		print("o->$o")
 	}
 	
-##> func
-	@widget.appendChild(layout, tag, id, props, target) {
-		widget=@widget.create()
-	}
 ##> data 	
 	actions {
 		trayActions: [

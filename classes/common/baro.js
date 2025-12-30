@@ -82,7 +82,7 @@ initApps(reset, useWatch) {
 }
 initTools(reset, useWatch) {
 	serviceNode=@baro.getServiceNode('baroCommon', 'tools')
-	path = pageJoin(conf('path.libs'), 'tools')
+	path = pathJoin(conf('path.libs'), 'tools')
 	not(isFolder(path)) {
 		print("initTools : $path 툴경로 미정의")
 		return;
@@ -346,7 +346,7 @@ addCmdWorker(id, command, logCallback) {
 		cmd.logCallback=logCallback
 	} else {
 		not(cmd.logCallback) {
-			cmd.logCallback = func(info,result) { print("##cmdWorker callback result::$result") };
+			cmd.logCallback = func(result, info) { print("##cmdWorker callback result::$result") };
 		}
 	}
 	not(cmd.workerMode) {
@@ -998,7 +998,6 @@ removeIndentText(&s) {
 insertIndentText(&s,indent) {
 	if(indent.ch()) return print("@@ insertIndentText 인덴트 추가는 공백만 가능합니다");
 	ss='',	nl=conf('cf.newline'), linenum=0;
-	print("xxxxxxxx start xxxxxxxx")
 	while(s.valid()) {
 		if(lineBlankCheck(s)) {
 			s.findPos("\n")
@@ -1006,7 +1005,6 @@ insertIndentText(&s,indent) {
 		}
 		if(linenum++) ss.add(nl)
 		line=s.findPos("\n").trim('right')
-		print(">> ", linenum, line)
 		ss.add(indent, line)
 	}
 	return ss;
@@ -1403,9 +1401,14 @@ getFolderList(path, node, depthNumber, pathLength) {
 	return node;
 }
 
-getFileList(path, node ) {
+getFileList(path, node, arr ) {
 	not(node) node=_node()
-	arr=_arr()
+	if(typeof(arr,'array')) {
+		checkChild= true
+	} else {
+		checkChild = false
+		arr=_arr()
+	}
 	relativePath = node.relativeName
 	not(path) {
 		not(relativePath) return print("@@ getFileList 경로가 없거나 부모노드 경로가 없습니다")
@@ -1424,6 +1427,8 @@ getFileList(path, node ) {
 					cur.relativeName = pathJoin(relativePath, name)
 				}
 				arr.add(cur)
+			} else if(checkChild) {
+				getFileList(fullPath,node,arr)
 			}
 		}
 	});

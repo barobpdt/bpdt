@@ -48,3 +48,47 @@
 	@baro.cmdRun(cc, _s(npmCmd) )
 	print("xxxxxxx 프론트엔드 실행중 xxxxxxxxxxx")
 }
+
+
+@baro.findBindPort(tcpPort, checkCallback) {
+	cmd=@baro.cmd('userProc')
+	funcParam(cmd,'type','findBindPort')
+	funcParam(cmd,'tcpPort,checkCallback')
+	@baro.cmdRun(cmd, "netstat -ano | findstr $tcpPort", @baro.userProc);
+
+	addCmdWorker("port_kill=>netstat -ano | findstr $tcpPort")
+	addCmdWorker("port_check=>netstat -ano | findstr $tcpPort")
+}
+
+@baro.userProc(&s) {
+	// tcpPort close
+	switch(funcParam('type')) {
+	case findBindPort:	
+		funcParam('tcpPort,checkCallback').inject(port,callback)
+		print(">> findBindPort start ======= PORT:$port")
+		while(s.valid()) {		
+			s.findPos('TCP')
+			not(s.ch()) break;
+			line = s.findPos("\n")			
+			line.findPos(":$port")
+			c=line.ch(0)
+			print(">> line:$line [$c]")
+			not(typeof(c,'num')) {
+				line.findPos('LISTENING')
+				pid=line.trim()
+				if(pid) {
+					if(typeof(callback,'func')) {
+						callback(pid)
+					} else if(callback) {
+						@baro.cmdRun(this, "taskkill /PID $pid /F" )
+					}
+					return;
+				}
+			}
+		}
+		print(">> findBindPort end $port 포트를 찾을수 없습니다")
+		if(typeof(callback,'func')) callback()
+	default:
+	}
+	// baro userProc end
+}

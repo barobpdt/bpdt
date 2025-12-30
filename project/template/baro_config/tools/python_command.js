@@ -28,8 +28,7 @@
 	quit-all = @eval {
 		call( @python.runCommand, this, "quit")
 		call( @python.webCommand, this, "quit")
-	}
-	 
+	}	 
 	save = @eval {
 		reset = cv('USE_RESET')
 		print( "python command>> start [USE_RESET:$reset]", typeof(reset) )
