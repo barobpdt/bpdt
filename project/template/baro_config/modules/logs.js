@@ -21,22 +21,28 @@
 	logTail(name, fileName) {
 		not(name) name='baro'
 		obj=object("logTail.$name")
-		if( obj.var(useModule)) {
-			return obj;
-		}
-		path=System.path()
-		if( fileName ) {			
-			if( isFullpath(fileName) ) {
-				fullpath=fileName
+		fullpath=null
+		not(obj.member(logFileName)) {
+			path=System.path()
+			if( fileName ) {			
+				if( isFullpath(fileName) ) {
+					fullpath=fileName
+				} else {
+					fullpath=pathJoin(path,fileName)
+				}
 			} else {
-				fullpath=pathJoin(path,fileName)
+				date=System.date("yyyyMMdd");
+				fullpath=pathJoin(path,"data/logs/${name}-${date}.log")
 			}
-		} else {
-			date=System.date("yyyyMMdd");
-			fullpath=pathJoin(path,"data/logs/${name}-${date}.log")
+			not( isFile(fullpath) ) {
+				fileWrite(fullpath, "== $name log tail 시작 ==\n");
+			}
 		}
-		not( isFile(fullpath) ) {
-			fileWrite(fullpath, "== $name log tail 시작 ==\n");
+		if( obj.var(useModule)) {
+			if(fullpath ) {
+				obj.member(logFileName, fullpath)
+			}
+			return obj;
 		}
 		return addModule(obj, 'logTail', name, fullpath)
 	}
@@ -46,22 +52,28 @@
 	logAppend(name, fileName) {
 		not(name) name='baro'
 		obj=object("logAppend.$name")
-		if(obj.var(useModule)) {
-			return obj;
-		}
-		path=System.path()
-		if( fileName ) {
-			if(isFullpath(fileName)) {
-				fullpath=fileName
+		fullpath=null
+		not(obj.member(logFileName)) {
+			path=System.path()
+			if( fileName ) {
+				if(isFullpath(fileName)) {
+					fullpath=fileName
+				} else {
+					fullpath=pathJoin(path,fileName)
+				}
 			} else {
-				fullpath=pathJoin(path,fileName)
+				date=System.date("yyyyMMdd");
+				fullpath=pathJoin(path,"/data/logs/${name}-${date}.log")
 			}
-		} else {
-			date=System.date("yyyyMMdd");
-			fullpath=pathJoin(path,"/data/logs/${name}-${date}.log")
+			not( isFile(fullpath) ) {
+				fileWrite(fullpath, "== $name log append 시작 ==\n");
+			}
 		}
-		not( isFile(fullpath) ) {
-			fileWrite(fullpath, "== $name log append 시작 ==\n");
+		if(obj.var(useModule)) {
+			if(fullpath ) {
+				obj.member(logFileName, fullpath)
+			}
+			return obj;
 		}
 		return addModule(obj, 'logAppend', name, fullpath)
 	}	
@@ -128,10 +140,13 @@
 		}
 		return null;
 	}
-	closeLog() {
+	closeLog(reset) {
 		if( fileLog.open() ) fileLog.close();
 		this.member(status, 0);
-		this.member(startTime, 0);
+		if(reset) {
+			this.member(startTime, 0)
+			this.member(logFileName,'')
+		}
 	}	
 
 ##> module { name=logAppend }
@@ -154,8 +169,11 @@
 	appendLog(data) {
 		fileLogAppend.append(data);
 	}
-	closeLog() {
+	closeLog(reset) {
 		if( fileLogAppend.open() ) fileLogAppend.close();
 		this.member(status, 0);
-		this.member(startTime, 0);
+		if(reset) {
+			this.member(startTime, 0);
+			this.member(logFileName,'')
+		}
 	}

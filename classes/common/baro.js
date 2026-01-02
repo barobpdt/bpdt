@@ -4,7 +4,7 @@
 *
 ==============================================================*/
 initService() {
-	useWatch=true
+	conf('cf.useWatch', true, true)
 	// conf('cf.useDebug', true, true)
 	if( conf('path.modules') ) {		
 		initModules(true, useWatch)
@@ -62,7 +62,8 @@ initService() {
 	groups.set('@currentService', serviceNode)
 	return serviceNode;
 }
-initModules(reset, useWatch) {
+initModules(reset) {
+	useWatch=conf('cf.useWatch')
 	serviceNode=@baro.getServiceNode('baroCommon', 'modules')
 	modulePath = conf('path.modules')
 	not(isFolder(modulePath)) {
@@ -71,7 +72,8 @@ initModules(reset, useWatch) {
 	}
 	setConfigPath(serviceNode, modulePath,useWatch,reset)
 }
-initApps(reset, useWatch) {
+initApps(reset) {
+	useWatch=conf('cf.useWatch')
 	serviceNode=@baro.getServiceNode('baroCommon', 'apps')
 	appsPath = conf('path.apps') 
 	not(isFolder(appsPath)) {
@@ -80,7 +82,8 @@ initApps(reset, useWatch) {
 	}
 	setConfigPath(serviceNode, appsPath, useWatch, reset)
 }
-initTools(reset, useWatch) {
+initTools(reset) {
+	useWatch=conf('cf.useWatch')
 	serviceNode=@baro.getServiceNode('baroCommon', 'tools')
 	path = pathJoin(conf('path.libs'), 'tools')
 	not(isFolder(path)) {
@@ -452,10 +455,31 @@ startGlobalTimer() {
 	return timerInfo;
 }
 /* 전역 타이머 중지 */
-stopGlobalTimer() {
+stopGlobalTimer(workerClose) {
+	timerInfo = object('baro.globalTimerInfo')
 	global().set('@timerDelay',0)
 	System.globalTimer(false)
 	print("global timer 중지됨")
+	if(workerClose) {
+		watcher=global().get('@watcherFiles')
+		if( isObject(watcher) ) {
+			while( cur, watcher) {
+				cur.set('@callback', null)
+			}
+		}
+		while(worker, timerInfo.get('@workerList')) {
+			if( tagCheck(worker,'process')) {
+				worker.set('@workerStatus','stop')
+				worker.get('@workerJobList').reuse()
+				worker.logTail.closeLog(true)
+				worker.logAppend.closeLog(true)
+				worker.close()
+			}
+			else if( tagCheck(worker,'process')) {
+				worker.stop()
+			}
+		}
+	}
 }
 /* 전역 타이머처리 콜백함수 */	
 @baro.procGlobalTimer() {
@@ -552,19 +576,16 @@ runSource(&src, node) {
 	}
 	return eval(stripComment(src), fn)
 }
-getSource(&s, param) {
-	if(typeof(param,'node')) {
-		args(1,node,fn)
-	} 
-	else if(typeof(param,'func')) {
-		args(1,fn,node)
+getSource(&s,node,fn) {
+	not(typeof(node,'node')) {
+		node=this
+		not(node) node=_node()
 	}
 	not(fn) {
 		fn=Cf.funcNode('parent')
 	}
-	not(typeof(node,'node')) {
-		node=fn.get('@this')
-	}
+	fnCur=Cf.funcNode()
+	fnCur.set('endPos', 0)
 	ss=''
 	while(s.valid()) {
 		left = s.findPos('@[',0,1)
@@ -581,18 +602,64 @@ getSource(&s, param) {
 	}
 	return ss;
 	
-	isVar = func(s) {
-		c=s.next().ch() not(c) return true;
+	isVar = func(&s) {
+		c=s.next().ch() 
 		while(c.eq('.')) c=s.next().ch()
+		fnCur.set('endPos', s.cur())
+		not(c) return true;	
+		if(startWith(s,'&&','||','?')) return true;
 		return when(c,false,true);
 	};	
-	getValue=func(key,node,fn) {
-		not(typeof(key,'string')) return;
-		if(key.start('conf.',true)) {
-			return conf(key)
+	getValue=func(&s,node,fn) {
+		not(typeof(s,'string')) return;
+		if( s.start('conf.',true)) {
+			return conf(s)
 		}
-		val=getVarValue(key,fn,node,true)
-		not(val) val=configValue(key, node)
+		sp=s.cur()
+		key=s.trim(sp,endPos,true)
+		val=getVarValue(key,fn,node)
+		if(isNull(val)) {
+			val=configValue(key, node)
+		}
+		s.pos(endPos)
+		if(startWith(s,'&&','||','?')) {
+			c=s.ch()
+			if(c.eq('?')) {
+				c=s.incr().ch()
+				if(c.eq('(')) {
+					src=s.match(1)
+				} else {
+					src=s.findPos(':',1,1)
+				}
+				if(val) {
+					val=getSource(src,node,fn)
+				} else {
+					c=s.ch()
+					if(c.eq(':')) {
+						c=s.incr().ch()
+						if(c.eq('(')) {
+							src=s.match(1)
+						} else {
+							src=s
+						}
+						val=getSource(src,node,fn)
+					} else {
+						val=''
+					}
+				}
+			} 
+			else if(s.start('&&',true)) {
+				if(val) {
+					val=getSource(s,node,fn)
+				} else {
+					val=''
+				}
+			} else if(s.start('||',true)) {
+				if(isNull(val)) {
+					val=getSource(s,node,fn)
+				}
+			}
+		}
 		return val;
 	};
 }
@@ -1317,7 +1384,8 @@ configValue(key, self, serviceNode) {
 	not(serviceNode) {
 		serviceNode=findParentNode(self,'serviceName') 
 		not(serviceNode) {
-			return print("configValue 오류 (service 루트로드를 찾을수 없습니다)");
+			// return print("configValue 오류 (service 루트로드를 찾을수 없습니다)");
+			return;
 		}
 	}
 	return @baro.configKeyValue(serviceNode, self, key, 'value');

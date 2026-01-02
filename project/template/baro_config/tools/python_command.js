@@ -1,11 +1,32 @@
-##>config
+##> config
 	RUN_PATH = c:/temp/python
-	USE_RESET = false
+	USE_RESET = true
 
 	@eval{
-		src= cv('db-blob-insert')
-		// runSource(src)
-		print("eval src", src )
+		svgPath = 'xxxxxxx svgPath xxxxxxx'
+		pngName = 'c/temp/test.png'
+		svgPath= cv('data.icon-reload')
+		
+		src=getSource(cv('command.save-png'))
+		
+		/*
+		a=@python.execLine('runCommand.py')
+		addCmdWorker('runCommand', a, @python.runProc)
+		savePath = pathJoin(cv('RUN_PATH'), 'runCommand.py')
+		source = cv('source.runCommand')
+		fileWrite(savePath, source)
+		src= cv('run')
+		runSource(src)
+		print("eval cmd==>", cmd )
+		cmd=addCmdWorker('python', "$py -m pip install cairosvg", @python.runProc)
+		cmd=addCmdWorker('python', "$py -m pip install --upgrade pip", @python.runProc)
+		
+		call( @python.runCommand, this, 'exec', 'command.setUrl')
+		py	= pathJoin(conf('python.path'), 'python.exe')
+		*/
+		result = call( @python.runCommand, this, "quit")
+		
+		print('run sourc =>', result )
 	}
 	apply-all = @eval {
 		configPath = pathJoin( conf('path.libs'), 'tools/python_command.js' )
@@ -59,7 +80,12 @@
 		sub.data=Cf.toBinary(ss)
 		x=db.exec("insert into test (id, data, prop) values ('test',#{data},'222')", sub)
 	}
+##> data
+	icon-reload {
+		<path style="fill:#2488FF;" d="M290.845,295.334l5.816,5.844l-90.96,90.96h181.48l-68.109-68.439 c15.535-14.474,28.635-31.564,38.452-50.335c13.856-26.498,21.181-56.405,21.181-86.489C378.705,83.832,294.874,0,191.831,0 S4.957,83.832,4.957,186.874c0,35.732,10.123,70.47,29.274,100.459c18.629,29.172,44.9,52.578,75.971,67.687l17.492-35.973 C76.66,294.23,44.957,243.585,44.957,186.874C44.957,105.887,110.844,40,191.831,40s146.874,65.887,146.874,146.874 C338.705,228.236,321.068,267.667,290.845,295.334z"></path>
+	}
 
+	
 ##> func {name=python}
 	@python.runProc(result, target) {
 		print("##@python.runProc $result", target)
@@ -174,7 +200,7 @@
 
 ##> source
 runCommand {
-	    import sys
+    import sys
     import os
     # 현재 스크립트의 상위 디렉토리를 Python path에 추가
     # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -542,19 +568,15 @@ save-png {
 	  stroke-linecap="round"
 	  stroke-linejoin="round"
 	>
-	  <path d="m14 11 4-4 4 4" />
-	  <path d="M18 16V7" />
-	  <path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16" />
-	  <path d="M3.304 13h6.392" />
+	  @[svgPath]
 	</svg>
 	"""
-
 	cairosvg.svg2png(
 		bytestring=svg_content.encode("utf-8"),
-		write_to="icon.png",
-		output_width=256,
-		output_height=256
+		write_to="@[pngName||c:/temp/test.png]",
+		output_width=@[imgWidth||256],
+		output_height=@[imgHeight||256]
 	)
-	print("icon.png 생성 완료")
+	log("icon.png 생성 완료")
 }
 

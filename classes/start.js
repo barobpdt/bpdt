@@ -83,6 +83,16 @@ findField(root, field, val) {
 	}
 	return;
 }
+startWith(&s) {
+	not(s.ch()) return false;
+	arr=args()
+	while(v, arr, n) {
+		if(n) {
+			if(s.start(v)) return true;
+		}
+	}
+	return false;
+}
 findTag(root, tag) {
 	while( cur, root ) {
 		if( cur.cmp("tag", tag) ) return cur;
@@ -215,9 +225,15 @@ checkFunc(functionName) {
 checkModule(moduleName) {
 	return object('user.subfuncMap').get(moduleName);
 }
-isObject(name) {
-	splitSep(name,'.').inject(a,b)
-	return Cf.getObject(a,b);
+isObject(obj) {
+	if(typeof(obj,'node','array')) {
+		return true;
+	}
+	if(typeof(obj,'string')) {
+		splitSep(obj,'.').inject(a,b)
+		return Cf.getObject(a,b);
+	}
+	return false;
 }
 isEventName(&s) {
 	if(s.start('on',true)) {
@@ -276,7 +292,7 @@ varValue(k, fn, node) {
 	print("@@ varValue [$k] 변수 미정의");
 	return;
 }
-getVarValue(&s,fn,node,onlyValue) {
+getVarValue(&s,fn,node) {
 	not(typeof(s,'string')) return;
 	isVar = func(s) {
 		c=s.next().ch() not(c) return true;
@@ -287,12 +303,10 @@ getVarValue(&s,fn,node,onlyValue) {
 	if(s.start('conf.',true)) {
 		return conf(s.trim())
 	} 
-	not(onlyValue) {
-		not(fn) fn=Cf.funcNode('parent')
-		not(isVar(s)) {
-			return eval(s, fn)
-		} 
-	}
+	not(fn) fn=Cf.funcNode('parent')
+	not(isVar(s)) {
+		return eval(s, fn)
+	} 
 	k=s.move()
 	val=varValue(k,fn,node)
 	c=s.ch()
@@ -304,9 +318,6 @@ getVarValue(&s,fn,node,onlyValue) {
 		k=s.incr().move()
 		val=val.get(k)
 		c=s.ch()
-	}
-	if(onlyValue) {
-		return val;
 	}
 	if(c.eq('?')) {
 		s.incr()		

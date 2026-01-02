@@ -571,48 +571,49 @@
 			// print("@@ configKeyValue config변수 정의되지 않았습니다 name=$name")
 			cf=root
 		}
-		
-		if(name.eq('this')) {
-			if(c.eq('.')) {
-				name=getName(true)
-				if(node.isVar(name)) {
-					cur=node.get(name)
-				} else {
-					parent=node.parentNode() not(parent) parent=root
-					cur=parent.get(name)
-				}
-			} else {
-				cur=node
+		if(name.ch('@')) {
+			name=name.value(1)
+			cfDef=cf.get('@default')
+			type=node.get('@type')
+			if( cfDef && cfDef.isVar(name) ) {
+				cur=cfDef.get(name)
+			} else if(type && root.isVar("@$type")) {
+				base=root.get("@$type")
+				cur=base.get(name)
 			}
-		} else if(node.isVar(name)) {
-			cur=node.get(name)
-		} else if(root.isVar("@$name")) {
-			base=root.get("@$name")		
-			if(c.eq('.')) {
-				name=getName(true)
-				refNode=base.get(name)
+			not(cur) return;
+		}
+		else {
+			if(node.isVar(name)) {
+				cur=node.get(name)
+			} else if(root.isVar("@$name")) {
+				base=root.get("@$name")		
+				if(c.eq('.')) {
+					name=getName(true)
+					refNode=base.get(name)
+					if(typeof(refNode,'node')) {
+						cur=refNode
+					} else {
+						refNode=base
+					}
+				} else {
+					cur=base
+				}
+			} else if(cf.isVar(name)) {
+				refNode=cf.get(name)
 				if(typeof(refNode,'node')) {
 					cur=refNode
 				} else {
-					refNode=base
+					refNode=cf
 				}
-			} else {
-				cur=base
-			}
-		} else if(cf.isVar(name)) {
-			refNode=cf.get(name)
-			if(typeof(refNode,'node')) {
-				cur=refNode
-			} else {
-				refNode=cf
-			}
-		} else if(cf.isVar('@default')) { 
-			def=cf.get('@default')
-			if(typeof(def,'node') && def.isVar(name)) {
-				refNode=def
-				cur=def.get(name)
-			} else {
-				refNode=cf
+			} else if(cf.isVar('@default')) { 
+				def=cf.get('@default')
+				if(typeof(def,'node') && def.isVar(name)) {
+					refNode=def
+					cur=def.get(name)
+				} else {
+					refNode=cf
+				}
 			}
 		}
 		if(isNull(cur)) {
@@ -673,7 +674,6 @@
 			continue;
 		}
 		name=getName()
-		print(">> name==$name", cur)
 		if(typeof(cur,'node')) {
 			cur=cur.get(name)
 		} else {

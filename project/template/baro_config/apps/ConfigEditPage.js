@@ -58,8 +58,7 @@
 	}
 	
 	@eval {
-		o=cv('actions.trayActions')
-		print("o->$o")
+		
 	}
 	
 ##> data 	
