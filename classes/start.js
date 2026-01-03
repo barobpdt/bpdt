@@ -526,18 +526,12 @@ jsValue(s) {
 	}
 	return Cf.jsValue("$s")
 }
+typeVal(&s) {
+	return when(typeof(s,'string'), s.typeValue(), s);
+}	
 valueOf(s, convert) {
 	if(typeof(s,'string')) {
-		if(typeof(s,'num')) {
-			return when(s.find('.'), s.toDouble(), s.toInt());
-		}		
-		if(s.eq('true','false')) {
-			return when(s.eq('true'), true, false);
-		}
-		if(s.eq('null')) {
-			return null;
-		}
-		return s;
+		return s.typeValue();
 	} 
 	if(convert) {		
 		if(typeof(s,'node','array')) {		
