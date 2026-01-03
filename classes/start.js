@@ -780,76 +780,63 @@ include(name, checkRealod) {
 		filenm = name
 	}
 	
-	not( isFile(filenm) ) return print("include 오류 ($filenm 파일이 없습니다)")
+	not( isFile(filenm) ) {
+		return print("include 오류 ($filenm 파일이 없습니다)")
+	}
 	map=object('map.include') 
-	modify=Baro.file().modifyDate(filenm)
-	not(checkRealod) {
-		tm=map.get(name)
-		if(tm==modify) {
+	modify=fileTime(filenm)
+	not(checkRealod) { 
+		if( map.get(name)==modify) {
 			print("include 경로 $name 이미 등록", tm, prevName)
 			Cf.rootNode('@funcInfo').set('includeFileName', prevName)
 			return;
 		}
 	}
-	prevName = Cf.rootNode('@funcInfo').get('includeFileName') not(prevName) prevName=''
+	prevName = Cf.rootNode('@funcInfo').get('includeFileName') 
+	not(prevName) prevName=''
 	Cf.rootNode('@funcInfo').set('includeFileName', name)
-	filePathInfo(filenm).inject(folder,filename,fname)
-	subName = null
-	if( fname.find('#')) {
-		splitSep(fname,'#').inject(fname, subName)
-	}
+	filePathInfo(filenm).inject(folder,null,fname)
+	
 	map.set(name, modify)
 	src=fileRead(filenm)
-	parseSource(stripJsComment(src), fname, subName)
+	parseSource(stripJsComment(src), fname)
 	Cf.rootNode('@funcInfo').set('includeFileName', prevName)
 }
 pageLoad(&src, base, pageId) {
-	not(base) base='test'
-	not(pageId) pageId='main'
+	if(base.find(':')) {
+		splitSep(base,':').inject(base, pageId)
+	} else {
+		not(base) base='test'
+		not(pageId) pageId='main'
+	}
 	source =str( '<widgets base="$base">$src</widgets>')
 	Cf.rootNode('@funcInfo').set('pageBase', base)
 	Cf.sourceApply(source)
 	Cf.rootNode('@funcInfo').set('pageBase', '')
-	return page(base, pageId, pageId);
+	return page("$base:$pageId");
 }
-page(name, param) {
+page(name, moduleCode) {
+	target=this
 	asize=args().size()
 	if(asize.eq(0)) {
-		not(this) return print("page 함수 호출오류 (this 미정의)")
-		p=this.parentWidget()
-		return when(p, p.pageNode(), this.pageNode());
-	}
-	base=''
-	moduleAdd = false
-	moduleCode = ''
-	if( asize.eq(1) ) {		
-		target=this
-	} 
-	else if(asize.eq(2)) { 
-		target = this
-		if(typeof(param,'string')) {
-			args(base, name)
-		} 
-		else if(typeof(param,'bool')) {
-			args(name, moduleAdd)
-		} 
-		else if(typeof(param,'widget')) {
-			args(name, target)
+		not(target) {
+			return print("page 함수 호출오류 (this 미정의)")
 		}
+		p=target.parentWidget()
+		return when(p, p.pageNode(), target.pageNode());
 	}
-	else if(asize.eq(3)) { 
-		args(base, name, moduleCode)
-	} 
-	else { 
-		args(name, moduleAdd, target, moduleCode)
+	if( name.find(':') ) {
+		baseCode=name
+	} else {
+		not(typeof(target,'widget')) {
+			return print("page 대상이 위젯이 아닙니다 (이름:$name)")
+		}
+		splitSep(target.var(baseCode), ':').inject(base, targetName) 
+		not(base) {
+			return print("page 함수 호출오류 (페이지 base 코드오류)");
+		}
+		baseCode = "$base:$name"
 	}
-	if( name.find(':') ) return Cf.getObject('page', name);
-	not(base) {
-		not(typeof(target,'widget')) return print("page 대상이 위젯이 아닙니다 (이름:$name)")
-		base = left(target.get('@baseCode'),':') 
-		not(base) return print("page 함수 호출오류 (페이지 base 코드오류)")
-	}
-	baseCode = "$base:$name"
 	page = Cf.getObject('page', baseCode) 
 	not(page) {
 		return print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
@@ -857,22 +844,12 @@ page(name, param) {
 	if( page.var(useInit) ) {
 		return page;
 	}
-	if(page.module) {
-		if( moduleCode) {
-			if(moduleCode.eq(name)) {
-				addModule(page, '@page')
-			} else if(moduleCode.ne(page.module)) {
-				addModule(page, moduleCode)
-			}
-		}
+	addModule(page, 'page')
+	not(moduleCode) {
 		moduleCode=page.module
+	}
+	if( moduleCode ) {
 		addModule(page, moduleCode)
-	} else {
-		addModule(page, '@page')
-		if( moduleCode ) baseCode = moduleCode
-		if( moduleAdd && baseCode ) {
-			addModule(page, baseCode)
-		}
 	}
 	if(typeof(page.initPage,'func')) {
 		page.initPage()
@@ -880,38 +857,33 @@ page(name, param) {
 	page.var(useInit, true)
 	return page;
 }
-dialog(name, param) {
-	moduleAdd = false
-	moduleCode = ''
-	asize=args().size()
-	if( asize.eq(1) ) {		
-		target=this
-	} else if(asize.eq(2)) {
-		if(typeof(param,'bool')) {
-			args(name, moduleAdd)
-			target = this
-		} else if(typeof(param,'widget')) {
-			args(name, target)
+dialog(name, moduleCode) {
+	target=this
+	 
+	if( name.find(':') ) {
+		baseCode=name
+	} else {
+		not(typeof(target,'widget')) {
+			return print("dialog 대상이 위젯이 아닙니다 (이름:$name)")
 		}
-		not(typeof(target,'widget')) return print("dialog 대상이 위젯이 아닙니다 (이름:$name)")
-	} else { 
-		args(name, moduleAdd, target, moduleCode, reload)
-		if(reload) {
-			path = object('@inc.userFunc').get("${moduleCode}#initDialog")
-			if(path ) include(path)
+		splitSep(target.var(baseCode), ':').inject(base, targetName) 
+		not(base) {
+			return print("dialog 함수 호출오류 (페이지 base 코드오류)");
 		}
-	}	
-	if( name.find(':') ) return Cf.getObject('dialog', name)
-	base = left(target.get('@baseCode'),':') not(base) return print("dialog 함수 호출오류 (페이지 base 코드오류)")
-	baseCode = "$base:$name"
-	dialog = Cf.getObject('dialog', baseCode) not(dialog) return print("dialog 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
-	
-	if( dialog.var(useInit) ) {
-		return dialog
+		baseCode = "$base:$name"
 	}
-	if( moduleCode ) baseCode = moduleCode
-	if( moduleAdd && baseCode ) {
-		addModule(dialog, baseCode)
+	dialog = Cf.getObject('dialog', baseCode) 
+	not(dialog) {
+		return print("dialog 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
+	}
+	if( dialog.var(useInit) ) {
+		return dialog;
+	}
+	not(moduleCode) {
+		moduleCode=dialog.module
+	}
+	if( moduleCode ) {
+		addModule(dialog, moduleCode)
 	}
 	if(typeof(dialog.initDialog,'func')) {
 		dialog.initDialog()
@@ -919,30 +891,11 @@ dialog(name, param) {
 	dialog.var(useInit, true)
 	return dialog;
 }
-widget(name) {
-	asize = args().size()
-	moduleName = ''
-	switch(asize) {
-	case 0:
-		return allWidget(this);
-	case 1:	
-		target=this;
-	case 2:
-		if(typeof(name,'widget')) {
-			args(target, name)
-		} else {
-			args(name, moduleName) 
-		}
-	case 3:
-		args(target, name, moduleName)
-	}
-	not(typeof(target,'widget')) {
-		return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
-	}
-	base=''
-	if( target.var(baseCode) ) {
-		splitSep(target.var(baseCode),':').inject(base, targetName)
-	}	
+widget(name, moduleCode) {
+	target=this
+	if(typeof(name,'widget')) {
+		args(target, name, moduleCode)
+	} 
 	if(name.find('.')) {
 		splitSep(name,'.').inject(pageCode, name)
 		page=page("$base:$pageCode")
@@ -950,6 +903,13 @@ widget(name) {
 			return print("@@ widget 함수 오류 $pageCode 페이지를 찾을 수 없습니다");
 		}
 		target=page
+	}
+	not(typeof(target,'widget')) {
+		return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
+	}
+	base=''
+	if( target.var(baseCode) ) {
+		splitSep(target.var(baseCode),':').inject(base, targetName)
 	}
 	widget = target.member("$name")
 	not(typeof(widget,'widget')) {
@@ -964,12 +924,11 @@ widget(name) {
 	if(base ) {
 		widget.set('@baseCode', "$base:$name")
 	}
-	
-	not(moduleName) {
-		moduleName=widget.module
+	not(moduleCode) {
+		moduleCode=widget.module
 	}
-	if( moduleName ) {
-		addModule(widget, moduleName)
+	if( moduleCode ) {
+		addModule(widget, moduleCode)
 	}
 	if(typeof(widget.initWidget,'func')) {
 		widget.initWidget()
@@ -1002,8 +961,7 @@ applyFunc(&src, module) {
 		Cf.sourceApply("<func>$src</func>")
 	}
 } 
-parseSource(&s, base, subName) {
-	map = null
+parseSource(&s, base) {
 	pageBase = ''
 	widgetSource = ''
 	while(s.valid() ) {
@@ -1012,13 +970,8 @@ parseSource(&s, base, subName) {
 			s.incr()
 			continue;
 		}
-		not(c.eq('<')) {
-			if( map ) break;
-			if( base && subName ) {
-				applyFunc(s, "${base}:${subName}")
-			} else {
-				applyFunc(s)
-			}
+		not(c.eq('<')) {		
+			applyFunc(s)
 			return 
 		}
 		if( s.start('<!--')) {
@@ -1037,16 +990,6 @@ parseSource(&s, base, subName) {
 			widgetSource.add(str('<widgets base="$base">$ss</widgets>'))
 		} else if( tag.eq('script') ) {
 			module=propValue(prop, 'module')
-			if( module ) { 
-				if( module.ch('@') ) {
-					module=module.value(1)
-				} else {
-					subName=module
-					not(module.find(':')) {
-						module = "${base}:${subName}"
-					}
-				}	
-			} 
 			applyFunc(ss, module)		
 		} else {
 			print("parseSource 오류 태그 $tag 가 정의되지 않았습니다")
@@ -1111,14 +1054,8 @@ resetModule(obj) {
 	obj.var(moduleList).reuse()
 }
 addModule(obj, moduleName) {
-	asize=args().size()
-	if(asize.eq(0)) {
-		obj=this
-		moduleName = obj.var(baseCode)
-	} else if(asize.eq(1)) {
-		obj=this
-		args(moduleName)
-	}
+	print("add module args ==> ", args())
+	params=args(2)
 	modules=nodeArrayVar(obj,'@moduleList')
 	if(moduleName.find(',')) {
 		while(name, splitSep(moduleName)) {
@@ -1132,34 +1069,13 @@ addModule(obj, moduleName) {
 	return obj;
 	
 	loadModule = func(moduleName) {
-		if( moduleName.ch('@')) {
-			moduleName = moduleName.value(1)
-		}
 		if( modules.find(moduleName) ) {
 			return obj;
-		}
-		subName = ''
-		if( moduleName.find(':')) {
-			splitSep(moduleName,':').inject(subFuncName, subName)
-		} else {
-			subFuncName = moduleName
-		}
-		funcInfo = object('user.subfuncMap').get(subFuncName)
-		initCount = addModuleFunc(obj, subFuncName, funcInfo, subName) 
-		if( initCount ) {
-			if( subName ) {
-				fcInit = obj.get("init_$subName")
-			} else {
-				fcInit = obj.get("init")
-			}
+		} 
+		funcInfo = object('user.subfuncMap').get(moduleName) 
+		if( addModuleFunc(obj, moduleName, funcInfo) ) {
+			fcInit = obj.get("init")
 			if( typeof(fcInit,'func') ) {
-				if(asize.eq(0)) {
-					params=args()
-				} else if(asize.eq(0)) {
-					params=args(1)
-				} else {
-					params=args(2)
-				}
 				call(fcInit, obj, params)
 			}
 		} 
@@ -1167,27 +1083,14 @@ addModule(obj, moduleName) {
 	};
 }
 
-addModuleFunc(obj, subFuncName, &funcs, subName) {
+addModuleFunc(obj, moduleName, &funcs, subName) {
+	not(funcs.ch()) return;
 	cnt = 0
-	not(funcs) return cnt;
 	while(funcs.valid()) {
-		a=funcs.findPos(',')
-		fnm = a.trim() not(fnm) break;
-		fc=call("${subFuncName}.${fnm}") not(typeof(fc,'func')) continue;
-		if(subName) {
-			not(fnm.find('#')) continue;
-			aa = left(fnm,'#') not(subName.eq(aa)) continue;
-			bb = right(fnm,'#')
-			if(bb.eq('init')) {
-				bb.add("_$subName")
-				cnt++
-			}
-			fnm = bb
-		} else {
-			if(fnm.find('#')) continue;
-			if(fnm.eq('init')) {
-				cnt++
-			}
+		fnm=funcs.findPos(',').trim() not(fnm) break;
+		fc=call("${moduleName}.${fnm}") not(typeof(fc,'func')) continue;
+		if(fnm.eq('init')) {
+			cnt++
 		}
 		if(isEventName(fnm)) {
 			fn=Cf.funcNode(fc,obj)
@@ -1196,7 +1099,7 @@ addModuleFunc(obj, subFuncName, &funcs, subName) {
 		} else {
 			obj.set(fnm, fc)
 		}
-		print("모듈함수 ${subFuncName}.${fnm} 등록")
+		print("모듈함수 ${moduleName}.${fnm} 등록")
 	}
 	return cnt;
 }

@@ -155,7 +155,7 @@
 		@logFileName=logFileName;
 		@startTime=System.localtime();
 		@fileLogAppend=Baro.file("logAppend_$name")
-	}	
+	}
 	write(data) {
 		not( fileLogAppend.open() ) {
 			not( fileLogAppend.open(logFileName,'append') ) return print("로그파일 첨부오류 (파일명:$logFileName)");

@@ -1,4 +1,4 @@
-<script module="@editor">
+<script module="editor">
 	editorSearch(mode) {	
 		if( mode&KEY.ctrl ) {
 			str = this.text('select');
@@ -140,10 +140,8 @@
 	}
 </script>
 
-<script module="@editor:editorSource">
-	init() {
-		addModule('editor')
-	}
+<script module="EditorSource">
+	
 	onCursorChange() {
 		editor=this;
 		dist=editor.timeVal(changeTick) not(dist) return editor.timeVal(changeTick, true);

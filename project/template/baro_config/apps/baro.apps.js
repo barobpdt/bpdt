@@ -146,3 +146,27 @@
 		}
 		dc.restore()
 	}
+	
+##> func {name=service, note=기본제공 서비스}
+	startPythonCommand() {
+		py=pathJoin(conf('python.path'), 'python.exe')
+		// addCmdWorker('runCommand', "$py -m pip list", @python.runProc)
+		line=@python.execLine('runCommand.py')
+		cmd=Baro.process('runCommand')
+		if(cmd.cmp('@workerStatus', 'run') ) {
+			print("runCommand가 실행중입니다");
+		} else {
+			addCmdWorker('runCommand', line, @python.runProc)
+		}		
+		
+		return true;
+	}
+	startPythonWebview() {
+		line=@python.execLine('webCommand.py')
+		cmd=Baro.process('webCommand')
+		if(cmd.cmp('@workerStatus', 'run') ) {
+			print("webCommand가 실행중입니다");
+		} else {
+			addCmdWorker('webCommand', a, @python.webProc)
+		}
+	}

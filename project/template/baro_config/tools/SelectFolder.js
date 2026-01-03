@@ -1,17 +1,18 @@
 ##> config { name=SelectFolder }
 	@eval { 
-		runSrc('make-icons') 
-		
-		if(this.var(checkPage)) {
-			return;
-		}
+		/*
+		runSrc('pageOpen') 
+		runSrc('make-icons')
+		*/
+		print('SelectFolder Load')
+	}
+	pageOpen = @eval {
 		src=cv('layout.pages')
 		// page('SelectFolder:main').close()
 		page = pageLoad(src,'SelectFolder1')
 		if(page) {
 			page.open()
 		}
-		this.var(checkPage, true)
 	}
 	make-icons = @eval {
 		icons=object('icon.extIcons')

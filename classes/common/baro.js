@@ -360,7 +360,6 @@ addWebDownloadWorker(id, targetNode, logCallback ) {
 		web.logAppend = logAppend(wid)
 		event(web,'@callback',@baro.workerWebProc)
 	}
-	targetNode.var(webObject, web)
 	// requestInfo: url, method, data, headerJson
 	nodeArrayVar(web,'@workerJobList').add(targetNode)
 	addArrayVar(timerInfo,'@workerList',web)
@@ -474,6 +473,40 @@ addCmdWorker(id, command, logCallback) {
 		msg=str('##error>> cmd error="$data" id="$id" command="$command"')
 		this.logAppend.apeend("\r\n$msg\r\n")
 		return this.var(error, data)
+	}
+}
+
+
+/* 사용자 워커등록 */
+addUserWorker(id, targetNode, callbackWorker ) {
+	not(typeof(targetNode,'node')) {
+		return print("@@addWebDownloadWorker 대상노드 미정의");
+	}
+	worker = Baro.worker(id)
+	not(worker.var(callback)) {
+		worker.start(@baro.userWorker)
+	}
+	if(typeof(callbackWorker,'func')) {
+		targetNode.callbackWorker=callbackWorker
+	} else {
+		not(targetNode.callbackWorker) {
+			targetNode.callbackWorker=func(node) { print("##userWorker callback  node::$node") };
+			targetNode.callbackWorker=func(node) { print("##userWorker callback  node::$node") };
+		}
+	}
+	worker.push(targetNode)
+	return worker;
+}
+@baro.userWorker(node) {
+	not(typeof(node,'node')) {
+		print("user worker stay mode !!!")
+		return;
+	}
+	callback = node.callbackWorker
+	if(typeof(callback,'func')) {
+		callback(node)
+	} else {
+		print("@@ userWorekr 콜백함수 미정의 (노드:$node)")
 	}
 }
 
