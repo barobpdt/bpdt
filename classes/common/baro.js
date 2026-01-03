@@ -4,7 +4,7 @@
 *
 ==============================================================*/
 initService() {
-	conf('cf.useWatch', true, true)
+	// conf('cf.useWatch', true, true)
 	// conf('cf.useDebug', true, true)
 	if( conf('path.modules') ) {		
 		initModules(true, useWatch)
@@ -12,6 +12,7 @@ initService() {
 	if( conf('path.apps') ) {		
 		initApps(true, useWatch)
 	}
+	initWidget()
 	was().start(80, conf('web.rootPath'))
 	startGlobalTimer()
 }
@@ -193,7 +194,7 @@ runPython() {
 
 /* 웹호출 결과 출력 (api 호출) */
 webResult(url, method, data, headerJson) {
-	web=Baro.web('user')
+	web=webObject()
 	not(method) method='GET'
 	if(method=='POST') {
 		web.set('data',data)
@@ -308,11 +309,14 @@ webRequestInfo(url, method, data, header) {
 	return ss;
 }
 /* API 결과처리 워커등록 */
-addApiWorker(id, requestInfo, logCallback ) {	
+addApiWorker(id, targetNode, logCallback ) {
+	not(typeof(targetNode,'node')) {
+		return print("@@addApiWorker 대상노드 미정의");
+	}	
 	timerInfo = object('baro.globalTimerInfo')
 	timerInfo.useWorker = true
 	timerInfo.lock=true
-	web=Baro.web(id)
+	web=webObject(id)
 	if(typeof(logCallback,'func')) {
 		web.logCallback=logCallback
 	} else {
@@ -325,9 +329,40 @@ addApiWorker(id, requestInfo, logCallback ) {
 		web.logTail = logTail("workerapi_$id")
 		web.logAppend = logAppend("workerapi_$id")
 		event(web,'@callback',@baro.workerWebProc)
-	}
+	}	
 	// requestInfo: url, method, data, headerJson
-	nodeArrayVar(web,'@workerJobList').add(requestInfo)
+	nodeArrayVar(web,'@workerJobList').add(targetNode)
+	addArrayVar(timerInfo,'@workerList',web)
+	timerInfo.lock=false
+	return web;
+}
+
+/* 다운로드처리 워커등록 */
+addWebDownloadWorker(id, targetNode, logCallback ) {
+	not(typeof(targetNode,'node')) {
+		return print("@@addWebDownloadWorker 대상노드 미정의");
+	}
+	timerInfo = object('baro.globalTimerInfo')
+	timerInfo.useWorker = true
+	timerInfo.lock=true
+	wid="download_$id"
+	web=webObject(wid)
+	if(typeof(logCallback,'func')) {
+		web.logCallback=logCallback
+	} else {
+		not(web.logCallback) {
+			web.logCallback=func(result,info) { print("##apiWorker callback ${this.url}  result::$result") };
+		}
+	}
+	not(web.workerMode) {
+		web.workerMode = 'DownloadWorker'
+		web.logTail = logTail(wid)
+		web.logAppend = logAppend(wid)
+		event(web,'@callback',@baro.workerWebProc)
+	}
+	targetNode.var(webObject, web)
+	// requestInfo: url, method, data, headerJson
+	nodeArrayVar(web,'@workerJobList').add(targetNode)
 	addArrayVar(timerInfo,'@workerList',web)
 	timerInfo.lock=false
 	return web;
@@ -398,10 +433,10 @@ addCmdWorker(id, command, logCallback) {
 		this.set('@error',data)
 	}
 	if(type=='finish') {
-		this.inject(url, fileName, @error)
-		msg=str('##finish>> web ${error?[error="$error" ]}url="$url" file="$fileName"')
+		this.inject(url, targetNode, @error)
+		msg=str('##finish>> web ${error?[error="$error" ]}url="$url" target="$targetNode"')
 		this.logAppend.append("\r\n$msg\r\n")
-		this.logCallback(this.logTail.timeout())
+		this.logCallback(this.logTail.timeout(), targetNode)
 		this.set('@progressCnt', 0)
 		this.set('@workerStatus','finish')
 	}
@@ -665,7 +700,9 @@ getSource(&s,node,fn) {
 }
 
 @baro.workerDownPath(obj) {
-	not(typeof(obj,'node')) return log("error::workerDownPath 객체오류");
+	not(typeof(obj,'node')) {
+		return log("error::workerDownPath 객체오류");
+	}
 	obj.inject(tag,id)
 	// path='C:/temp/worker'
 	path=pathJoin(System.path(),'data/worker')
@@ -676,12 +713,14 @@ getSource(&s,node,fn) {
 	return pathJoin(path, str('$tag-$id-$idx.data'));
 }
 
-runGlobalWorker(target) {
-	not(typeof(target,'node')) return log("error::runGlobalWorker 대상노드가 없습니다");
-	target.inject(@workerStatus, @workerJobList, workerMode)
+runGlobalWorker(node) {
+	not(typeof(node,'node')) {
+		return log("error::runGlobalWorker 대상노드가 없습니다");
+	}
+	node.inject(@workerStatus, @workerJobList, workerMode)
 	not(workerStatus) workerStatus='stay'
-	if(tagCheck(target,'process')) {
-		cmd=target
+	if(tagCheck(node,'process')) {
+		cmd=node
 		not(cmd.run()) {
 			cmd.set('@workerStatus', 'stay')
 			cmd.run('cmd', @baro.workerCmdProc)
@@ -725,17 +764,23 @@ runGlobalWorker(target) {
 		return;
 	} 
 	
-	if(tagCheck(target,'web')) {
-		web=target
+	if(tagCheck(node,'web')) {
+		web=node
 		if( web.is('start')) {
-			workerStatus='run'
+			web.set('@workerStatus', 'run')
 		} else {
-			info=workerJobList.pop()
-			if(info) {
+			targetNode=workerJobList.pop()
+			if(targetNode ) {
+				targetNode.inject(url, method, data, header, downloadFilename)
+				not(downloadFilename) {
+					downloadFilename=@baro.workerDownPath(web)
+				}
 				web.data=''
-				parseJsonNode(web,info)
-				cmd.var(webStartTick, System.tick())
-				web.download(web.url, @baro.workerDownPath(web))
+				parseJsonNode(web,webRequestInfo(url, method, data, header))
+				web.set('@webStartTick', System.tick())
+				web.set('@workerStatus', 'ready')
+				web.targetNode=targetNode
+				web.download(url,downloadFilename)
 			}
 		}
 	}
@@ -1435,11 +1480,11 @@ getFolderList(path, node, depthNumber, pathLength) {
 		path=node.fullPath
 	}
 	not(node) {
-		node=_node()		
+		node=_node()
 	}
 	not(path) return print("@@ getFolderList 경로 미설정 노드:$node")
 	not(pathLength) {
-		root=getParentNode(node,'@rootPath')
+		root=findParentNode(node,'@rootPath')
 		if(root) {
 			rootPath = root.get('@rootPath')
 			pathLength= rootPath.size()
@@ -1466,6 +1511,7 @@ getFolderList(path, node, depthNumber, pathLength) {
 			}
 		}
 	});
+	node.childLoad = true
 	return node;
 }
 
@@ -1480,7 +1526,7 @@ getFileList(path, node, arr ) {
 	relativePath = node.relativeName
 	not(path) {
 		not(relativePath) return print("@@ getFileList 경로가 없거나 부모노드 경로가 없습니다")
-		root=getParentNode(node,'@rootPath')
+		root=findParentNode(node,'@rootPath')
 		not(root) return print("@@ getFileList 최상위 노드 경로가 없습니다")
 		path=pathJoin(root.get('@rootPath'), relativePath)
 		print("path == $path ")
@@ -1490,7 +1536,7 @@ getFileList(path, node, arr ) {
 		while(info.next()) {			
 			info.inject(type,fullPath,name,modifyDt)
 			if(type.eq('file')) {				
-				cur=node.addNode().with(type, name, fullPath, modifyDt)
+				cur=node.addNode().with(type, name, fullPath, size, modifyDt)
 				if( relativePath ) {
 					cur.relativeName = pathJoin(relativePath, name)
 				}

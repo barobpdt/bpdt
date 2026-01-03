@@ -1,0 +1,118 @@
+<widgets>
+  <page margin="6" onInit() {
+      this.put(grid, type, id, search);
+      classSub(grid, "grid");
+  }>
+    <hbox>
+      <label text="타입"><input onKeyDown(key) {grid.search(this)} id="type">
+      <label text="아이디"><input onKeyDown(key) {grid.search(this)} id="id">
+      <space>
+      <button id="search" icon="vicon.magnifier_default" text="조회" onClick() {grid.search(this)}>
+    </hbox>
+    <grid stetch="1">
+  </page>
+</widgets>
+
+
+<inline>
+  onClose() {
+    print("icon page close");
+    return "hide";
+  }
+  onResize() {
+    print("page resize")
+  }
+</inline>
+
+<sql id="grid">
+##> search
+  select id, type, prop, use, tm
+  from icons
+  where 1=1
+    #[typeVal? and type=#{typeVal}]
+    #[idVal? and id like #{idVal}||'%']
+  limit #{offset}, 50
+</sql>
+
+<inline id="grid">
+onInit() {
+  db=Baro.db("icons");
+  root=Baro.model("icons");
+  fields="icon,아이콘,100 | name,이름,flex | prop,속성,90 | tm,등록일,150";
+  this.model(root, gridFields(fields) );
+  this.var(headerFontSize, 13);
+  this.var(headerHeight, 32);
+  this.search(this);
+}
+onResize() {
+  print("resize")
+
+}
+onDraw(d, node, idx, state ) {
+  rc=d.rect().incrX(5);
+  d.pen("#555");
+  switch(idx) {
+  case 0:
+    code="${node.type}.${node.id}";
+    d.image(rc.center(16,16), code);
+  case 1:
+    code="${node.type}.${node.id}";
+    d.text(rc, code);
+  case 2:
+    d.text(node.prop,"center");
+  case 3:
+    date=System.date(node.tm,"yyyy-MM-dd");
+    d.text(state.toHex(),"center");
+  default:
+  }
+  if(state&STYLE.Select) {
+    print("select")
+  }
+  over=state&STYLE.MouseOver;
+  clr=when(over,"#faa","#ccc");
+  d.pen(2,clr,"dot");
+  d.line(rc.lb(), true);
+  d.line(rc.rb());
+}
+onDoubleClicked(node) {
+  print("doubl click $node")
+}
+onFetchMore(node) {
+  not(node) {
+    if( this.timeVal(fetchTick).lt(100) ) return false;
+    this.timeVal(fetchTick,true);
+    total=root.childCount();
+    return when(total.eq(root.offset), true, false );
+  }
+  print("xxx node=>$node xxx");
+  search();
+}
+search(sender) {
+  use(root);
+  if(sender ) {
+    if(sender.tag.eq("input")) {
+      not( sender.var(key).eq(KEY.Enter,KEY.Return) ) return;
+      switch(sender.id) {
+        case type: id.focus();
+        case id: type.focus();
+      }
+    }
+    this.selectClear();
+    root[offset=0];
+    root.removeAll();
+  }
+  root.idVal=id.value();
+  root.typeVal=type.value();
+  db.fetchAll(this.sql#search, root);
+  not(root.offset) {
+    row=root.child(0);
+    if(row) this.scroll(row);
+  }
+  root[offset+=50];
+  this.update();
+}
+resizeFields() {
+  print("grid resize")
+  // makeGridResize(fields, this);
+}
+</inline>

@@ -566,97 +566,56 @@
 	} else {
 		name=getName()
 		c=s.ch()
-		cf=root.get('@config') 
-		not(cf) {
-			// print("@@ configKeyValue config변수 정의되지 않았습니다 name=$name")
-			cf=root
-		}
+		cf=null
+		if(root.isVar('@config')) {
+			refNode=root.get('@config')
+			cf=refNode.get('@default')
+			not(cf) {
+				cf=refNode.child(0)
+			}
+		} 
+		not(cf) cf=root
 		if(name.ch('@')) {
 			name=name.value(1)
-			cfDef=cf.get('@default')
-			type=node.get('@type')
-			if( cfDef && cfDef.isVar(name) ) {
+			if( cf.isVar(name) ) {
 				cur=cfDef.get(name)
-			} else if(type && root.isVar("@$type")) {
-				base=root.get("@$type")
-				cur=base.get(name)
-			}
+			} 
 			not(cur) return;
 		}
 		else {
 			if(node.isVar(name)) {
 				cur=node.get(name)
 			} else if(root.isVar("@$name")) {
-				base=root.get("@$name")		
+				refNode=root.get("@$name")	
 				if(c.eq('.')) {
 					name=getName(true)
-					refNode=base.get(name)
-					if(typeof(refNode,'node')) {
-						cur=refNode
-					} else {
-						refNode=base
+					c=s.ch()
+					if(refNode.isVar(name)) {
+						cur=refNode.get(name)
 					}
-				} else {
-					cur=base
 				}
 			} else if(cf.isVar(name)) {
-				refNode=cf.get(name)
-				if(typeof(refNode,'node')) {
-					cur=refNode
-				} else {
-					refNode=cf
-				}
-			} else if(cf.isVar('@default')) { 
-				def=cf.get('@default')
-				if(typeof(def,'node') && def.isVar(name)) {
-					refNode=def
-					cur=def.get(name)
-				} else {
-					refNode=cf
-				}
+				cur=cf.get(name)
 			}
 		}
+		
 		if(isNull(cur)) {
-			not(refNode) { 
-				refNode=cf
-			}
-			if(node.isVar(name)) {
-				cur=node.get(name)
-			} else if(refNode.isVar(name)) {
-				cur=refNode.get(name) 
-			} else {
-				parent=node.parentNode() not(parent) parent=root
-				cur=parent.get(name)
-			}	
-		}		
-		if(isNull(cur)) {
-			if(refNode==root) {
-				print(">> refNode == root")
-				while(sub,refNode ) {
-					while(base,sub) {
-						if(base.isVar(name)) {
-							cur=base.get(name)
-							break;
-						}
-					}
-				}
-			} else {
-				print(">> refNode========$refNode")
+			if(refNode) {
 				while(sub,refNode ) {
 					if(sub.isVar(name)) {
-						refNode=sub
 						cur=sub.get(name)
 						break;
 					}
 				}
-				if(isNull(cur)) {
-					while(sub,root) {
-						while(base,sub) {
-							if(base.isVar(name)) {
-								cur=base.get(name)
-								break;
-							}
-						}
+			}
+		}
+		if(isNull(cur) && ~(c)) {
+			print(">> refNode not defined !!!! ", name)
+			while( sub,root ) {
+				while(base,sub) {
+					if(base.isVar(name)) {
+						cur=base.get(name)
+						break;
 					}
 				}
 			}
@@ -697,7 +656,6 @@
 	} 
 	return cur;
 }
-
 @baro.parseService(root, node, &s, parentKey) {
 	Cf.error(true)
 	nl=conf('cf.newline')

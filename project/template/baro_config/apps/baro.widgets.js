@@ -1,4 +1,8 @@
 ##> func { note=공통 위젯함수 }
+	initWidget() {
+		sty=object('font.bold')
+		sty.weight='bold'
+	}
 	@widget.create(tag, id, props, target) {
 		not(id) {
 			idx=global().incrNum('@widgetCreateIndex')
@@ -34,16 +38,17 @@
 			widget.parentWidget(parent);
 		}
 	}
+	
 	@tree.drawDefault(dc, node, index, state, over) { 
+		rc=@tree.drawSelect(dc, dc.rect(), state, over)
 		fa=this.fields()
-		rc=@tree.drawSelect(dc, dc.rect(), node, col, state, over)
 		field=fa.child(0).get('field')
 		node.rcIcon=rc.moveLeft(18,18,-2,0,true)
 		text=node.get(field)
-		dc.textSize(text).inject(tw, th)
+		// dc.textSize(text).inject(tw, th)
 		dc.text(rc, text)
 	}
-	@tree.drawSelect(dc, rc, node, col, state, over) {
+	@tree.drawSelect(dc, rc, state, over) {
 		if( state & STYLE.Selected ) {
 			rcBk=rc.x(0,true)
 			dc.fill( rcBk, '#c0c0a090' );
@@ -88,6 +93,7 @@
 		}
 		return rc.incrX(4);
 	}
+	
 	@grid.drawHeader(dc, text, index, order) {
 		rc=dc.rect(), fields=this.fields();
 		last=fields.childCount()-1;

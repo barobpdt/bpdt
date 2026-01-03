@@ -254,6 +254,12 @@ isValid(s) {
 	}
 	return true;
 }
+isColor(c) {
+	if(typeof(c,'string')) {
+		if(c.ch('#')) return true;
+	}
+	return when(typeof(c,'color'), true, false)
+}
 notValid(s) { return when(isValid(s),false,true) }
 isFullpath(s) {
 	not(s) return false;
@@ -531,7 +537,7 @@ valueOf(s, convert) {
 		if(s.eq('null')) {
 			return null;
 		}
-		return s.trim();
+		return s;
 	} 
 	if(convert) {		
 		if(typeof(s,'node','array')) {		
@@ -797,7 +803,15 @@ include(name, checkRealod) {
 	parseSource(stripJsComment(src), fname, subName)
 	Cf.rootNode('@funcInfo').set('includeFileName', prevName)
 }
- 
+pageLoad(&src, base, pageId) {
+	not(base) base='test'
+	not(pageId) pageId='main'
+	source =str( '<widgets base="$base">$src</widgets>')
+	Cf.rootNode('@funcInfo').set('pageBase', base)
+	Cf.sourceApply(source)
+	Cf.rootNode('@funcInfo').set('pageBase', '')
+	return page(base, pageId, pageId);
+}
 page(name, param) {
 	asize=args().size()
 	if(asize.eq(0)) {
@@ -837,7 +851,9 @@ page(name, param) {
 	}
 	baseCode = "$base:$name"
 	page = Cf.getObject('page', baseCode) 
-	not(page) return print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
+	not(page) {
+		return print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
+	}
 	if( page.var(useInit) ) {
 		return page;
 	}
@@ -905,31 +921,53 @@ dialog(name, param) {
 }
 widget(name) {
 	asize = args().size()
-	if(asize.eq(0)) {
-		return allWidget(this)
-	}
 	moduleName = ''
-	if(asize.eq(1)) {
+	switch(asize) {
+	case 0:
+		return allWidget(this);
+	case 1:	
 		target=this;
-	}
-	else if(asize.eq(2)) {
+	case 2:
 		if(typeof(name,'widget')) {
 			args(target, name)
 		} else {
 			args(name, moduleName) 
 		}
-	} 
-	else if(asize.eq(3)) {
+	case 3:
 		args(target, name, moduleName)
+	}
+	not(typeof(target,'widget')) {
+		return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
+	}
+	base=''
+	if( target.var(baseCode) ) {
+		splitSep(target.var(baseCode),':').inject(base, targetName)
 	}	
-	not(typeof(target,'widget')) return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
+	if(name.find('.')) {
+		splitSep(name,'.').inject(pageCode, name)
+		page=page("$base:$pageCode")
+		not(page) {
+			return print("@@ widget 함수 오류 $pageCode 페이지를 찾을 수 없습니다");
+		}
+		target=page
+	}
 	widget = target.member("$name")
-	not(typeof(widget,'widget')) widget = target.findWidget(name)
-	not(typeof(widget,'widget')) return print("widget 위젯 찾기오류 (이름:$name)")
+	not(typeof(widget,'widget')) {
+		widget = target.findWidget(name)
+	}
+	not(typeof(widget,'widget')) {
+		return print("widget 위젯 찾기오류 (이름:$name)");
+	}
 	if( widget.var(useInit) ) {
 		return widget
 	}
-	not(moduleName) moduleName=widget.module
+	if(base ) {
+		widget.set('@baseCode', "$base:$name")
+	}
+	
+	not(moduleName) {
+		moduleName=widget.module
+	}
 	if( moduleName ) {
 		addModule(widget, moduleName)
 	}
@@ -1068,6 +1106,10 @@ addArrayVar(obj, name, val) {
 	a.add(val)
 	return true;
 }
+resetModule(obj) {
+	obj.var(useModule, false)
+	obj.var(moduleList).reuse()
+}
 addModule(obj, moduleName) {
 	asize=args().size()
 	if(asize.eq(0)) {
@@ -1078,40 +1120,51 @@ addModule(obj, moduleName) {
 		args(moduleName)
 	}
 	modules=nodeArrayVar(obj,'@moduleList')
-	if( moduleName.ch('@')) {
-		moduleName = moduleName.value(1)
-	}
-	if( modules.find(moduleName) ) {
-		return obj;
-	}
-	subName = ''
-	if( moduleName.find(':')) {
-		splitSep(moduleName,':').inject(subFuncName, subName)
+	if(moduleName.find(',')) {
+		while(name, splitSep(moduleName)) {
+			loadModule(name)
+		}
 	} else {
-		subFuncName = moduleName
+		loadModule(moduleName)
 	}
-	funcInfo = object('user.subfuncMap').get(subFuncName)
-	initCount = addModuleFunc(obj, subFuncName, funcInfo, subName) 
-	if( initCount ) {
-		if( subName ) {
-			fcInit = obj.get("init_$subName")
-		} else {
-			fcInit = obj.get("init")
-		}
-		if( typeof(fcInit,'func') ) {
-			if(asize.eq(0)) {
-				params=args()
-			} else if(asize.eq(0)) {
-				params=args(1)
-			} else {
-				params=args(2)
-			}
-			call(fcInit, obj, params)
-		}
-	} 
+	
 	obj.var(useModule, true)
-	addArrayVar(obj,'moduleList',moduleName)
-	return obj
+	return obj;
+	
+	loadModule = func(moduleName) {
+		if( moduleName.ch('@')) {
+			moduleName = moduleName.value(1)
+		}
+		if( modules.find(moduleName) ) {
+			return obj;
+		}
+		subName = ''
+		if( moduleName.find(':')) {
+			splitSep(moduleName,':').inject(subFuncName, subName)
+		} else {
+			subFuncName = moduleName
+		}
+		funcInfo = object('user.subfuncMap').get(subFuncName)
+		initCount = addModuleFunc(obj, subFuncName, funcInfo, subName) 
+		if( initCount ) {
+			if( subName ) {
+				fcInit = obj.get("init_$subName")
+			} else {
+				fcInit = obj.get("init")
+			}
+			if( typeof(fcInit,'func') ) {
+				if(asize.eq(0)) {
+					params=args()
+				} else if(asize.eq(0)) {
+					params=args(1)
+				} else {
+					params=args(2)
+				}
+				call(fcInit, obj, params)
+			}
+		} 
+		addArrayVar(obj,'moduleList',moduleName)
+	};
 }
 
 addModuleFunc(obj, subFuncName, &funcs, subName) {

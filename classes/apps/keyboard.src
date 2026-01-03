@@ -1,0 +1,625 @@
+<pages>
+  <canvas id="keyboard">
+	onInit() {
+		root=this.newNode();
+		automata=Cf.automata();
+		backgroundImage=Cf.imageLoad("keyborad_bg.png");		
+		this.makeKeyMap('engLower');
+		this.makeKeyMap('engUpper');
+		this.makeKeyMap('korLower');
+		this.makeKeyMap('korUpper');
+		this.makeKeyMap('etc');
+		this.langMode='eng';
+		this[ingString]='';
+		this[doneString]='';
+		this[leftString]='';
+		this[rightString]='';
+		root.keyMap='KorLower';
+		root.canvasHeight=276;
+		root.inputHeight=46;
+		root.inputUse=false;
+		this.timer("focus",800);
+		showKeyboard();
+	}
+	onTimer() {
+		input=this.var(focusWidget);
+		not(input) return;
+		input.active();
+		input.focus();
+		this.var(focusWidget, null);
+	}
+	showKeyboard(var) {
+		input=null;
+		inputCheck=false;
+		if(typeof(var,"bool") ) {
+			inputCheck=var;
+			if(inputCheck) {				
+				input=inputKeyboardWidget(this); 
+			}
+		} else if(typeof(var,"widget") ) {
+			input=var;
+		}
+		root.rc=null;
+		root.inject(canvasHeight, inputHeight);
+		if( inputCheck ) {
+			canvasHeight+=inputHeight;
+			input.show();
+		}
+		root.with(inputCheck, inputWidget:input);
+		this.size(891,canvasHeight);
+		this.update();
+	}
+	hideKeyboard() {
+	}
+	makeKeyMap(code) {
+		str=conf("keyboard.${code}").ref();
+		keys=this.setNode(code, true);
+		row=0;
+		while( str.valid() ) {
+			line=str.findPos("\n");
+			not(line.ch()) continue;
+			while( line.valid(), c ) {
+				keys[k $row $c]=line.findPos(",").trim();
+			}
+			row++;
+		}
+	}
+	onDraw(dc) {
+		rc=dc.rect();
+		dc.mode();
+		not( rc.eq(root.rc) ) {
+			root.rc=rc;
+			recalcRect(rc);
+		}
+		drawKeyboard(dc, rc, backgroundImage);
+	}
+	onMouseDown(pt) {
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				while( c=0, c<11, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 1:
+				while( c=0, c<11, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 2:
+				while( c=0, c<12, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 3:
+				while( c=0, c<12, c++ ) {
+					if( c.eq(4,5,6,7) ) {
+						not( c.eq(4) ) continue;
+						rc=root[rcSpace];
+					} else {
+						rc=root[rc $n $c];
+					}
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			default:
+			}
+		}
+		_update=func() {
+			this.mouseDownRect=rc;
+			this.update();
+		};
+	}
+	onMouseUp(pt) {
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				while( c=0, c<11, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 1:
+				while( c=0, c<11, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 2:
+				while( c=0, c<12, c++ ) {
+					rc=root[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 3:
+				while( c=0, c<12, c++ ) {
+					if( c.eq(4,5,6,7) ) {
+						not( c.eq(4) ) continue;
+						rc=root[rcSpace];
+					} else {
+						rc=root[rc $n $c];
+					}
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			default:
+			}
+		}
+		_update();
+		_update=func(rc) {
+			if( this.mouseDownRect ) {
+				this.mouseDownRect=null;
+				this.update();
+			}
+			if( rc ) {
+				this.keyDown(n,c);
+			}
+		};
+	}
+	recalcRect(rc) {
+		ox=8, oy=8, bw=67, bh=60, gabX=6, gabY=7;
+		root.inject(inputUse, inputWidget);
+		if( root.inputUse) {
+			while(cur, vb(root, "input:$inputHeight, keyboard:*") ) {
+				switch(cur.id) {
+				case input:
+					rcGeo=this.mapGlobal(cur.rc.incr(4));
+					inputWidget.move(rcGeo);
+					inputWidget.show();
+				case keyboard:
+					rc=cur.rc;
+					rc.inject(sx, sy);
+				default:
+				}
+			}
+		} else {
+			rc.inject(sx, sy);
+		}
+		sy+=oy;
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				cx=sx+ox;
+				while( c=0, c<10, c++ ) {
+					root[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				w=876-cx;
+				if( w<60 ) w=110;
+				root[rc $n $c]=rc(cx,sy,w,bh);
+				sy+=bh+gabY;
+			case 1:
+				cx=sx+24;
+				while( c=0, c<10, c++ ) {
+					root[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				w=876-cx;
+				if( w<60 ) w=110;
+				root[rc $n $c]=rc(cx,sy,w,bh);
+				sy+=bh+gabY;
+			default:
+				cx=sx+ox;
+				while( c=0, c<12, c++ ) {
+					root[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				sy+=bh+gabY;
+				if( n.eq(3) ) {
+					r1=root[rc $n 4], r2=root[rc $n 7];
+					root[rcSpace]=mergeRect(r1,r2);
+				}
+			}
+		}
+	}
+	clear() {
+		automata.clear();
+		this[leftString]='';
+		this[doneString]='';
+		this[doingString]='';
+		this[ingString]='';
+	}
+	setInputText(addMode) {		
+		str='';
+		not(addMode.eq("doingString")) {
+			str.add(this[$addMode]);		
+		}
+		str.add(this[doingString]);
+		if( addMode.eq('leftString') ) {
+			str.add(this[rightString]);
+		}
+		input=root.inputWidget;
+		if(input) {
+			input.value(str);
+			this.var(focusWidget, input);
+		}
+	}
+	keyDown(n,c) {
+		this.inject(keyMode, langMode );
+		kid=langMode;
+		not(kid.eq("etc") ) {
+			kid="eng";
+			if( keyMode.eq("shift","shiftOn") ) {
+				kid.add("Upper");
+			} else {
+				kid.add("Lower");
+			}
+		} 
+		keyMap=this.get(kid);	
+		addMode=when( this[leftString], 'leftString','doneString');
+		ing=this[ingString];
+		switch(n ) {
+		case 0:
+			if( c.eq(10) ) {
+				if( ing ) {
+					if( ing.size().eq(1) ) {
+						this.clear();
+					} else {
+						this[ingString]=ing.value(0,-1);
+						automata.toString(this, addMode);
+					}
+				} else {
+					if( keyMode.eq("ctrl") ) {
+						this[$addMode]='';
+						this.keyMode='';
+					} else {
+						str=this[$addMode];
+						if(str) this[$addMode]=str.substr(0,-1);
+					}
+				}
+				this.setInputText(addMode);
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 1:
+			if( c.eq(10) ) {
+				_value("\n");
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 2:
+			if( c.eq(0,11) ) {
+				if( keyMode.eq("shift","shiftOn") ) {
+					this.keyMode=when(keyMode.eq("shift"),"shiftOn");
+				} else {
+					this.keyMode="shift";
+				}
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 3:
+			switch( c) {
+			case [9,10]:
+				input=root.inputWidget;
+				if(input) {
+					pos=input.pos();
+					if(c.eq(9) ) {
+						if(pos>0) pos--;
+					} else {
+						len=input.value().length();
+						if(pos<len) pos++;
+					}
+					input.pos(pos);
+					this.var(focusWidget, input);
+				}
+			case 0:
+				if( langMode.eq('etc') ) {
+					this.langMode=this.prevMode;
+				} else {
+					this.prevMode=langMode;
+					this.langMode='etc';
+				}
+			case 1:
+				if(keyMode.eq("ctrl") ) {
+					this.keyMode='';
+				} else {
+					this.keyMode='ctrl';
+				}
+			case 3:	_value( "\t" );
+			case 4:	_value( " " );
+			case 8:
+				if( langMode.eq('kor') ) {
+					this.langMode='eng';
+				} else {
+					this.langMode='kor';
+				}
+			case 11:
+				this.clear();
+			default:
+				_value( keyMap[k $n $c] );
+			}
+		default:
+		}
+		this.update();
+		_value=func(val ) {
+			switch( val ) {
+			case enter: val="\n";
+			case tab: val="\t";
+			case dot: val='.';
+			case comma:	val=',';
+			}
+			if( langMode.eq('kor') ) {
+				if( val.is("alpha") ) {
+					this[ingString].add(val);
+					automata.toString(this, addMode);
+				} else {
+					automata.toString(this, addMode);
+					this[doneString].add(this[doingString]);
+					this.clear();
+					this[$addMode].add(val);
+				}
+			} else {
+				automata.toString(this, addMode);
+				this[$addMode].add(val);
+			}
+			this.setInputText(addMode);
+			if( keyMode.eq("shift", "ctrl") ) {
+				this.keyMode='';
+			}  
+		};		
+	}
+  </canvas>
+
+  <canvas id="numberInput">
+	onInit() {
+		root=this.newNode();
+		this.size(360,416);		
+	}
+	onDraw(dc) {
+		rc=dc.rect();
+		dc.mode();
+		roundBox(dc, rc.incr(4), 10, color(220, 220, 220) );
+		not( rc.eq(root.rc) ) {
+			root.rc=rc;
+			recalcRect(rc);
+		}
+		drawChild(dc, root);
+		press=this.var(pressButton);
+		if(press) {
+			press.inject(rc, pressImage);
+			dc.image(rc, pressImage);
+		}
+	}
+	onMouseDown(pt) {
+		while( cur, root) {
+			while(sub, cur) {
+				not(sub.rc.contains(pt) ) continue;
+				sub.pressImage="pop_${sub.id}_p.png";
+				this.var(pressButton, sub);
+				return this.update();
+			}
+		}
+	}
+	onMouseUp(pt) {
+		while( cur, root) {
+			while(sub, cur) {
+				not(sub.rc.contains(pt) ) continue;
+				if(sub==this.var(pressButton)) {
+					pp().numberInputClick(sub);
+				}					
+				this.var(pressButton, null);
+				return this.update();				
+			}
+		}
+		if( this.var(pressButton) ) {
+			this.var(pressButton, null);
+			this.update();
+		}
+	}
+	recalcRect(rc) {
+		rowIdx=1, num=1;
+		while( rc, vbox(rc,"12,89,12,89,12,89,12,89,12"), row ) {
+			not(row%2) continue;
+			id="row${rowIdx}";
+			cur=root.addNode(id).with(id, rc);
+			rowIdx++;
+			while(rc, hbox(cur,"12,104,12,104,12,104,12"), col) {
+				not(col%2) continue;
+				if( num<10 ) {
+					id="num_0${num}";
+				} else if( num==10 ) {
+					id="num_00";
+				} else if( num==11 ) {
+					id="num_backspace";
+				} else if( num==12 ) {
+					id="num_clear";
+				}
+				image="pop_${id}_n.png";
+				cur.addNode(id).with(id, rc, image);
+				num++;
+			}
+		}
+	}	
+</canvas>
+
+<input id="inputKeyboard" >
+	onInit() {		
+		icon=Cf.imageLoad("list_del_n.png");
+		toolbutton=this.addNode("toolbutton").with(icon:"list_del_n.png", height:38);
+		this.styleSheet("font:16pt; color:#606060; padding-left:10px;");
+		this.inlineButton("create", toolbutton);
+		this.inlineButton("onClick", func() {
+			input=this.parentNode();
+			input.value("");
+		});		
+	}
+	onFocusIn() { 
+		this.timeVal(focusTick, true);
+	}
+</input>
+
+</pages>
+
+
+<func>
+
+drawKeyboard(dc, rc, background) { 
+	this.inject(langMode, keyMode);
+	kid=langMode;
+	not(kid.eq("etc") ) {
+		if( keyMode.eq("shift","shiftOn") ) {
+			kid.add("Upper");
+		} else {
+			kid.add("Lower");
+		}
+	}
+	keyMap=this.get(kid);
+	dc.fill('#1a1a1a');
+	// dc.image(rc, background);
+	dc.font('size:14pt, color:#fafafa');
+	while( n=0, n<4, n++ ) {
+		switch(n) {
+		case 0:
+			while( c=0, c<11, c++ ) {
+				rc=root[rc $n $c];
+				if( rc.eq(this.mouseDownRect) ) {
+					rc.incr(-4);
+					dc.fill(rc,'#80808a').rectLine(rc, 0, '#20202a');
+				} else {
+					dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
+				}
+				keyText();
+			}
+		case 1:
+			while( c=0, c<11, c++ ) {
+				rc=root[rc $n $c];
+				if( rc.eq(this.mouseDownRect) ) {
+					rc.incr(-2);
+					dc.fill(rc,'#80808a').rectLine(rc, 0, '#20202a');
+				} else {
+					dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
+				}
+				keyText();
+			}
+		case 2:
+			while( c=0, c<12, c++ ) {
+				rc=root[rc $n $c];
+				if( c.eq(0,11) ) {
+					if( rc.eq(this.mouseDownRect) ) {
+						dc.fill(rc,'#7a7070').rectLine(rc, 0, '#20202a');
+					} else if( keyMode.eq("shiftOn") ) {
+						dc.fill(rc,'#c06a7b').rectLine(rc, 0, '#d09ab0', 2);
+					} else if( keyMode.eq("shift") ) {
+						dc.fill(rc,'#9a9090').rectLine(rc, 0, '#20202a');
+					} else {
+							dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+					}
+					keyText();
+				} else {
+					if( rc.eq(this.mouseDownRect) ) {
+						rc.incr(-4);
+						dc.fill(rc,'#80808a').rectLine(rc, 0, '#20202a');
+					} else {
+						dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
+					}
+					keyText();
+				}
+			}
+		case 3:
+			while( c=0, c<12, c++ ) {
+				if( c.eq(4,5,6,7) ) {
+					not( c.eq(4) ) continue;
+					rc=root[rcSpace];
+					if( rc.eq(this.mouseDownRect) ) {
+						rc.incr(-2);
+						dc.fill(rc,'#80808a').rectLine(rc, 0, '#20202a');
+					} else {
+						dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
+					}
+				} else {
+					rc=root[rc $n $c], def=true;
+					if( c.eq(1) ) {
+						 if( keyMode.eq("ctrl") ) {
+							dc.fill(rc,'#9a9090').rectLine(rc, 0, '#20202a');
+						} else {
+							dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+						}
+						def=false;
+					} else if( c.eq(8) ) {
+						if( this.langMode.eq('kor') ) {
+							dc.fill(rc,'#707a7a').rectLine(rc, 0, '#40404a');
+							def=false;
+						}
+					}
+					if( def ) {
+						if( rc.eq(this.mouseDownRect) ) {
+							dc.fill(rc,'#7a7070').rectLine(rc, 0, '#20202a');
+						} else {
+							dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+						}
+					}
+					keyText();
+				}
+			}
+		default:
+		}
+	}
+	keyText=func() {
+		key=keyMap[k $n $c];
+		switch(key) {
+		case comma:	dc.text(rc,',' ,'center');
+		case dot:			dc.text(rc, '.','center');
+		case bs:
+			img=Cf.imageLoad('icon_bs.png');
+			dc.image( rc, img, "center");
+		case enter:
+			img=Cf.imageLoad('icon_enter.png');
+			dc.image( rc, img, "center");
+		case etc:
+			img=Cf.imageLoad('icon_etc.png');
+			dc.image( rc, img, "center");
+		default:
+			dc.text(rc, key, 'center');
+		}
+	};
+}
+inputKeyboardWidget(parent, rc) {
+	input=object("input.common/keyboard:inputKeyboard");
+	if( typeof(input,"widget") && parent ) {		
+		input.parentWidget(parent);
+		input.flags("child");
+		if(typeof(rc,"rect") ) {
+			rcGeo=parent.mapGlobal(rc);
+			input.move(rcGeo);
+			input.show();
+		}
+	}
+	return input;
+}
+
+</func>
+
+<conf id="keyboard.engLower">
+q,w,e,r,t,y,u,i,o,p,bs
+a,s,d,f,g,h,j,k,l,',enter
+shift,z,x,c,v,b,n,m,comma,dot,/,shift
+&123,Ctrl,etc,tab,space,-,-,-,Eng,<,>,ESC
+</conf>
+
+<conf id="keyboard.engUpper">
+Q,W,E,R,T,Y,U,I,O,P,bs
+A,S,D,F,G,H,J,K,L,",enter
+shift,Z,X,C,V,B,N,M,comma,dot,/,shift
+&123,Ctrl,etc,tab,space,-,-,-,Eng,<,>,ESC
+</conf>
+
+<conf id="keyboard.korUpper">
+ㅃ,ㅉ,ㄸ,ㄲ,ㅆ,ㅛ,ㅕ,ㅑ,ㅐ,ㅔ,bs
+ㅁ,ㄴ,ㅇ,ㄹ,ㅎ,ㅗ,ㅓ,ㅏ,ㅣ,",enter
+shift,ㅋ,ㅌ,ㅊ,ㅍ,ㅠ,ㅜ,ㅡ,comma,dot,/,shift
+&123,Ctrl,etc,tab,space,-,-,-,Kor,<,>,ESC
+</conf>
+
+<conf id="keyboard.korLower">
+ㅂ,ㅈ,ㄷ,ㄱ,ㅅ,ㅛ,ㅕ,ㅑ,ㅐ,ㅔ,bs
+ㅁ,ㄴ,ㅇ,ㄹ,ㅎ,ㅗ,ㅓ,ㅏ,ㅣ,',enter
+shift,ㅋ,ㅌ,ㅊ,ㅍ,ㅠ,ㅜ,ㅡ,comma,dot,/,shift
+&123,Ctrl,etc,tab,space,-,-,-,Kor,<,>,ESC
+</conf>
+
+<conf id="keyboard.etc">
+1,2,3,4,5,6,7,8,9,0,bs
+!,@,#,$,%,^,&,*,(,),enter
+◀,~,-,+,_,\,|,:,;,/,?,▶
+prev,Ctrl,etc,tab,space,-,-,-,fn,comma,dot,ESC
+</conf>
