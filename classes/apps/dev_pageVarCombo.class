@@ -1,0 +1,439 @@
+/*
+[sample]
+	layout: <page>
+		<hbox>
+			<hbox margin="8,5,2,5" spacing=0>
+				<combo id="pageVar" width=110><toolbutton id="pageVarPlus" icon="vicon.add_default">
+			</hbox>
+			<combo id="pageFunc" width=110>
+			<space>
+		</hbox>
+		<grid id="grid">;
+	</page>
+	onInit() {
+		loadClass('data/classes/pageVarCombo.class');
+		this.move(0,0);
+		this.size(100,800);
+		varCombo=pageVarCombo(this, this[pageVar], this[pageVarPlus]);
+		funcCombo=pageFuncCombo(this, this[pageFunc]);
+	}
+*/
+pageVarCombo {
+	pageVarCombo( page, combo, comboButton  ) {
+		this.addClass(common.Page);
+		db=instance('pages.model');
+		currentPage=null;
+		combo.delegate(true, 24);
+		combo.check('editable', true); 
+
+		combo.eventMap(onFocusIn, this.comboFocus);
+		combo.eventMap(onChange, this.comboChange);
+		combo.eventMap(onDraw, this.comboDraw, 'draw, index, state' );
+		if( comboButton ) {
+			comboButton.eventMap(onClick, this.comboButtonClick);
+		}
+		this.makeComboData();
+	}
+	makeComboData(curPage) {
+		@currentPage=nvl(curPage, page); 
+		root=instance("pageVar.model").rootNode();
+		info=Cf.info('funcVar', currentPage, 'init');
+		if( update ) {
+			not( arr ) arr=[];
+			arr.reuse();
+			while( cur, root ) {
+				if( cur[type].eq('var') ) {
+					arr.add(cur);
+				}
+			}
+			while( cur, arr ) {
+				root.remove(cur);
+			}
+		} else {
+			root.removeAll();
+			while( cur, currentPage.widgets() ) {
+				sub=root.addNode();
+				sub.initNode(cur);
+				sub[type]='widget';
+			}
+		}
+		_parse=func(&s) {
+			while( s.valid() ) {
+				line=s.findPos("\n");
+				id=line.findPos('=').trim();
+				if( id.ch().eq('@') ) continue;
+				sub=root.addNode();
+				sub[type]='var';
+				sub[id]=id;
+				if( line.find('(') ) {
+					sub[tag]=line.findPos('(');
+					sub[object]=line.findPos(')');
+				} else {
+					sub[tag]=line.trim();
+				}
+			}
+		};
+		_parse( info.ref() );
+		while( key, currentPage.keys(keys) ) {
+			if( key.eq('layout','tag') ) continue;
+			if( key.ch().eq('@') ) continue;
+			a=currentPage[$key], ty=typeof(a);
+			if( ty.eq("function") ) continue;
+			sub=root.addNode();
+			sub[type]='member';
+			sub[id]=key;
+			if( ty.eq("object") ) {
+				if( typeof(a,'class') ) {
+					sub[tag]=a[@className];
+					sub[object]='class';
+				} else if( typeof(a,'widget') ) {
+					sub[tag]=a[tag];
+				}
+			}
+			sub[tag]=typeof(a);
+		}
+
+		maxStr='';
+		while( cur, root ) {
+			str="$cur[id]\t[$cur[tag]]  $cur[object]";
+			if( maxStr.size()<str.size() ) {
+				maxStr=str;
+			}
+		}
+		combo.addText(maxStr, true);	
+		combo.removeAll().addItem(root, 'id', '=전역변수=');
+	}
+	/* combo*/
+	comboChange() {
+		this.comboVal=combo.value(), cur=null;
+		page.pageVarComboChange(this.comboVal, combo);
+	}
+	comboDraw(draw, index, state) {
+		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(combo, draw, index, state);
+		not( node ) return;
+		rc=draw.rect();
+		tag=node[tag];
+		if( node[object] ) {
+			tag.add(': ', node[object]);
+		}
+		w=draw.textWidth(tag)+15;
+		rcIcon=rc.width(18);
+		rc.incrX(20);
+		if( node[type].eq('widget') ) {
+			icon="vicon.brick_edit";
+		} else if( node[type].eq('member') ) {
+			icon="vicon.email_open";
+		} else {
+			icon="vicon.image_link";
+		}
+		draw.icon(rcIcon.center(16,16), icon);
+		draw.font(10).text(rc, node[id]);
+		if( tag ) {
+			draw.font(8).text(rc.move('end',w), "[$tag]", 'right');
+		}
+	}
+  
+	/* focous */
+	comboFocus() {
+		this.focusCombo=combo;
+		page.delay(callback() {
+			this.focusCombo.selectText(true);
+		}, this);
+	}
+ 	/* plusButton*/
+	comboButtonClick() {
+		popup=this.getPopup('pageVar',  tr('widget#grid.popup','pageVar'));
+  		popup.initPage(this);
+		class('page').openPopup(popup, page, comboButton, 550, 480);
+	}
+}
+
+pageFuncCombo {
+	pageFuncCombo( page, combo  ) {
+		db=instance('pages.model');
+		currentPage=null;
+		currentStep=null;
+		dataNode={};
+		combo.delegate(true, 24);
+		combo.check('editable', true); 
+
+		combo.eventMap(onFocusIn, this.comboFocus);
+		combo.eventMap(onChange, this.comboChange);
+		combo.eventMap(onDraw, this.comboDraw, 'draw, index, state' );
+		this.makeComboData();
+	}
+	makeComboData(curPage) {
+		not( curPage ) curPage=page;
+		dataNode.initNode();
+		keys=class('util').arr('pageKeys');
+		arrEvent=class('util').arr('pageEvent');
+		arrCtrlEvent=class('util').arr('pageCtrlEvent');
+		arrUserFunc=class('util').arr('pageUserFunc');
+		while( key, curPage.keys(keys) ) {
+			if( key.ch().eq('@') ) continue;
+			a=curPage[$key];
+			not( typeof(a).eq("function") ) continue;
+			param=Cf.funcParam(a);
+			if( key.eq('onInit') ) {
+				dataNode.addNode({funcName:$key, sort:1});
+			} else if( key.start('on') ) {
+				arrEvent.add({funcName:$key, funcParam:$param, sort:2}); 
+			} else if( key.find('.') ) {
+				arrCtrlEvent.add({funcName:$key, funcParam:$param, sort:3}); 
+			} else {
+				arrUserFunc.add({funcName:$key, funcParam:$param, sort:4});
+			} 
+		}
+		arrEvent.sort('funcName');
+		arrCtrlEvent.sort('funcName');
+		arrUserFunc.sort('funcName');
+		while( cur, arrEvent ) dataNode.addNode(cur);
+		while( cur, arrCtrlEvent ) dataNode.addNode(cur);
+		while( cur, arrUserFunc ) dataNode.addNode(cur);
+		maxStr='', maxSize=0;
+		while( cur, dataNode ) {
+			str="$cur[funcName]\t[$cur[funcParam]]";
+			size=str.size();
+			if( maxSize<size ) {
+				maxStr=str, maxSize=size;
+			}
+		}
+		combo.addText(maxStr, true);
+		combo.removeAll().addItem(dataNode, 'funcName', '=페이지 함수=');
+		@currentPage=curPage;
+	}
+
+	/* focous */
+	comboFocus() {
+		this.focusCombo=combo;
+		page.delay(callback() {
+			this.focusCombo.selectText(true);
+		}, this);
+	}
+ 
+	/* combo*/
+	comboChange() {
+		val=combo.value();
+		root=combo.rootNode(), cur=null;
+		not( val ) {
+			val=combo.text();
+			if( val ) {
+				cur=root.addNode();
+				cur.funcName=val;
+				cur.state(NODE.add, true);
+			}
+		}
+		this.comboVal=val;
+		not( val ) return;
+		page.pageFuncComboChange(val, combo);
+	}
+	comboDraw(draw, index, state) {
+		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(combo, draw, index, state);
+		not( node ) return;
+		rc=draw.rect();
+		param=node[funcParam]; 
+		w=draw.textWidth(param)+15;
+		rcIcon=rc.width(18);
+		rc.incrX(20);
+		switch( node[sort] ) {
+		case 1: icon="ficon.document-code";
+		case 2: icon="ficon.document-globe";
+		case 3: icon="ficon.document-epub";
+		case 4: icon="ficon.document-number";
+		case 5: icon="ficon.document-outlook";
+		}
+ 		draw.icon(rcIcon.center(16,16), icon);
+		draw.font(10).text(rc, node[funcName]);
+		if( param ) {
+			draw.font(8).text(rc.move('end',w), "($param)", 'right');
+		}
+	}
+}
+
+pageClassCombo {
+	pageClassCombo( page, inheritCombo, varCombo, funcCombo  ) {
+		this.addClassFunc(dev.page);
+		cf={};
+		db=instance('pages.model');
+		currentClass=null;
+		varCombo.delegate(true, 24);
+		varCombo.check('editable', true); 
+
+		funcCombo.delegate(true, 24);
+		funcCombo.check('editable', true); 
+
+		inheritCombo.eventMap(onChange, this.inheritComboChange);
+		varCombo.eventMap(onDraw, this.varComboDraw, 'draw, index, state' );
+		varCombo.eventMap(onDraw, this.varComboChange );
+		funcCombo.eventMap(onChange, this.funcComboChange );
+		funcCombo.eventMap(onDraw, this.funcComboDraw, 'draw, index, state' );
+		funcCombo.eventMap(onFocusIn, this.funcComboFocus);
+ 	}
+	makeComboData(cls) {
+		@currentClass=cls;
+		arr=this.arr('inherit'), checkNode=this.node('checkNode');
+		arr.add(cls[@className]);
+		addClassName=func(cls) {
+			while( className, cls[@addClass] ) {
+				if( checkNode[$className] ) continue;
+				checkNode[$className]=true;
+				if( className ) {
+					arr.add(className);
+					addClassName( Cf.info('class', className) );
+				}			
+			}
+		};
+		addClassName(cls);
+		inheritCombo.removeAll().addItem(arr, null, '==전체==');
+	}
+	funcComboFocus() {
+		this.focusCombo=funcCombo;
+		page.delay( callback() {
+			this.focusCombo.selectText();
+		}, this);
+	}
+	showAll() {
+		inheritCombo.findLayout().showAll();
+	}
+	hideAll() {
+		inheritCombo.findLayout().hideAll();
+	}
+	inheritComboChange() {
+		className=inheritCombo.value();
+		not( className ) {
+			this.initClassCombo(currentClass, true);
+			return;
+		}
+		cls=currentClass;
+		not( className.eq(cls[@className]) ) {
+			cls=Cf.info('class', className);
+		}
+		this.initClassCombo(cls);
+		funcCombo.focus();
+	}
+
+	funcComboChange() {
+		/* 클래스 함수가 변경시 : 해당 함수 미리보기 화면 팝업 */
+		cur=this.comboChangeValue('funcCombo');
+ 
+		/* 클래스 정보 세팅 */
+		inherit=this.inheritCombo;
+		inheritClassName=inherit.value();
+		if( inheritClassName ) {
+			cur[class_grp]=inheritClassName.find('.').trim();
+			cur[class_nm]=inheritClassName.find('.').right().trim();
+		} else {
+			if( cur.state(NODE.add) ) {
+				this.alert("전체 클래스에서는 클래스 함수를 추가할수 없습니다. 클래스를 선택하세요");
+				inherit.showPopup();
+				return;
+			}
+			arr=inherit.rootNode();
+			while( className, arr ) {
+				not( className.find('.') ) continue;
+				cur[class_grp]=className.find('.').trim();
+				cur[class_nm]=className.find('.').right().trim();
+				if( db.count("select count(1) from class_info where class_grp=#{class_grp} and class_nm=#{class_nm} and class_func=#{class_func}", cur) ) {
+					inheritClassName=className;
+					break;
+				}
+			}
+		}
+		not( cur[src] ) {
+			db.fetch("select case when length(class_src)==0 then class_data else class_src end as src from class_info where class_grp=#{class_grp} and class_nm=#{class_nm} and class_func=#{class_func}", cur);
+		}
+		cur[inheritClassName]=inheritClassName;
+		cur[currentClass]=this.currentClass;
+		/*  메인페이지 인터페이스 */
+		page.classFuncComboChange( cur );
+	}
+	varComboChange() {
+		this.varComboVal=varCombo.value();
+	}
+
+	varComboDraw(draw, index, state) {
+		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(varCombo, draw, index, state);
+		not( node) return;
+		rc=draw.rect();
+		w=draw.textWidth(node[type])+10;
+ 		draw.font(10).text(rc.incrX(4,true), node[var]);
+		draw.font(8).text(rc.move('end',w), "[${node[type]}]", 'right');
+	}
+	funcComboDraw(draw, index, state) {
+ 		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(funcCombo, draw, index, state);
+		not( node ) return;
+		rc=draw.rect();
+		if( node[type] ) {
+			rcIcon=rc.width(20).center(16,16);
+			rc.incrX(20);
+			if( node[type].eq('A') ) {
+				draw.icon(rcIcon,"ficon.document-attribute-c");
+			} else {
+				ty=node[type].lower();
+				draw.icon(rcIcon,"ficon.document-attribute-$ty");
+			}
+		} else {
+			rc.incrX(4);
+		}
+		draw.font(10).text(rc, node[class_func]);
+		if( node[class_param] ) {
+			w=draw.textWidth(node[class_param])+30;
+			draw.font(8).text(rc.move('end',w), "($node[class_param])",'right' );
+		}
+	}
+	initClassCombo(cls, all) {
+		str=Cf.info('funcVar', cls, 'member').str();
+		node=this.node('classVar');
+		maxStr='';
+		while( str.valid() ) {
+			line=str.findPos("\n");
+			not( line.ch() ) break;;
+			not( line.find('=') ) continue;
+			var=line.findPos('=').trim();
+			if( var.ch().eq('@') ) continue;
+			cur=node.addNode();
+			cur[var]=var;
+			cur[type]=line.trim();
+			val="$cur[var]\t    [$cur[type]]"; 
+			if( maxStr.size() < val.size() ) maxStr=val;		
+		}
+		varCombo.addText(maxStr, true);
+		varCombo.removeAll().addItem(node,'var','==클래스 변수==');
+		
+		funcCombo.removeAll();
+		node=this.node('classFunc');
+		if( all ) {
+			arr=cls.keys().sort();
+			while( key,  arr ) {
+				if( key.ch().eq('@') ) continue;
+				fc=cls[$key];
+				not( typeof(fc).eq("function") ) continue;
+				cur=node.addNode();
+				cur[class_func]=key;
+				cur[class_param]=Cf.funcParam(fc);
+			}
+		} else {
+			s=cls[@className];
+			not(s ) s=inheritCombo.value();
+			if( s.find('.') ) {
+				node[class_grp]=s.find('.').trim();
+				node[class_nm]=s.find('.').right().trim();
+				db.fetchAll("select class_func, class_param, type from class_info where class_grp=#{class_grp} and class_nm=#{class_nm} order by type", node);
+			} else {
+				node[class_nm]=cls[@className];
+				db.fetchAll("select class_func, class_param from class_info where class_nm=#{class_nm} order by type", node);
+			}
+		}
+		maxStr='';
+		while( cur, node ) {
+			val="$cur[class_func] $cur[type]\t  $cur[class_param] ";
+			if( maxStr.size() < val.size() ) maxStr=val;
+		}
+		funcCombo.addText(maxStr, true);
+		funcCombo.addItem(node, 'class_func', '==클래스 함수==');
+	}
+}

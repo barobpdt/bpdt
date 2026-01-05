@@ -656,6 +656,7 @@
 	} 
 	return cur;
 }
+
 @baro.parseService(root, node, &s, parentKey) {
 	Cf.error(true)
 	nl=conf('cf.newline')

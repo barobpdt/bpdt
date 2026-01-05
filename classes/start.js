@@ -64,22 +64,20 @@ findParentNode(cur, field, val) {
 	return;
 }
 findField(root, field, val) {
-	not(typeof(node,'node')) return;
-	asize=args().size()
-	check=func(cur) {
-		if(asize==3) {
-			if(cur.cmp(field,val)) return true;
-		} else {
-			if(cur.isVar(field)) return true;
-		}
-	};
-	while(cur, node) {
-		if(check(cur)) return cur;
+	not(typeof(root,'node')) return;
+	asize=args().size() 
+	while(cur, root) {
 		if(asize==3) 
-			sub=findField(cur,field,val)
+			if(cur.cmp(field,val)) return cur;			
 		else 
-			sub=findField(cur,field)
-		if(sub) return sub;
+			if(cur.isVar(field)) return cur;
+		if(cur.childCount()) {
+			if(asize==3) 
+				sub=findField(cur,field,val)
+			else
+				sub=findField(cur,field)
+			if(sub) return sub;
+		}
 	}
 	return;
 }
@@ -225,6 +223,18 @@ checkFunc(functionName) {
 checkModule(moduleName) {
 	return object('user.subfuncMap').get(moduleName);
 }
+getObjectList(name) {
+	arr=[]
+	fnm="${name}."
+	root=Cf.getObject()
+	while(k, root.keys()) {
+		if(k.start(fnm)) {
+			arr.add( root.get(k) )
+			print("k==$k")
+		}
+	}
+	return arr;
+}
 isObject(obj) {
 	if(typeof(obj,'node','array')) {
 		return true;
@@ -253,6 +263,9 @@ isValid(s) {
 		not(s.size()) return false;
 	}
 	return true;
+}
+notValid(s) {
+	return when(isValid(s),false,true)
 }
 isColor(c) {
 	if(typeof(c,'string')) {
@@ -526,6 +539,21 @@ jsValue(s) {
 	}
 	return Cf.jsValue("$s")
 }
+printAll(prefix) {
+	not(prefix) prefix='printAll'
+	fn=Cf.funcNode('parent')
+	s=fn.get()
+	s.ref()
+	ss=">> $prefix {\n\t"
+	a=_arr()
+	while(s.valid()) {
+		line=s.findPos("\n").trim() not(line) break;
+		a.add(line)
+	}
+	ss.add(a.sort().join("\n\t"))
+	ss.add("\n}\n")
+	log(ss)
+}
 typeVal(&s) {
 	return when(typeof(s,'string'), s.typeValue(), s);
 }	
@@ -599,16 +627,23 @@ getDbFieldName(&s) {
 	}
 	return ss;
 }  
-propValue(&prop, key) {
+propValue(&prop, key, checkOnly) {
 	while(prop.valid()) {
+		not(prop.find(key)) return;
 		left=prop.findPos(key)
-		ch=prop.ch() not(ch) break;
-		if(ch.eq('=',':') ) {
+		c=prop.ch() 
+		if(checkOnly) {
+			if(c.is('alphanum')) continue;
 			c=left.ch(-1)
 			if(c.is('alphanum')) continue;
-			
-			ch=prop.incr().ch();
-			if(ch.eq()) {
+			return true;
+		}		
+		not(c) break;		
+		if(c.eq('=',':') ) {
+			c=left.ch(-1)
+			if(c.is('alphanum')) continue;			
+			c=prop.incr().ch();
+			if(c.eq()) {
 				val=prop.match().value();
 			} else {
 				val=prop.findPos(" ,\t\n",4).trim();
@@ -763,36 +798,34 @@ fileDelete(path) {
 /*
 페이지처리 함수
 */
-include(name, checkRealod) {
-	not(name.find('.')) {
-		name.add('.js')
-	}
-	path = conf('include.path')
-	if(path) {
-		filenm = "$path/$name"
-	} else {
-		filenm = name
+include(name) {
+	if( name.find('#') ) {	
+		splitSep(name,'#').inject(service,fullname)
+		filePathInfo(fullname).inject(folder,null,fname)
+		name="$service::$fname"
+	} else {	
+		not(name.find('.')) {
+			name.add('.js')
+		}
+		path = conf('include.path') not(path) path=System.path()
+		fullname = "$path/$name"
+		filePathInfo(fullname).inject(folder,null,fname)
 	}
 	
-	not( isFile(filenm) ) {
-		return print("include 오류 ($filenm 파일이 없습니다)")
+	not( isFile(fullname) ) {
+		return print("include 오류 ($fullname 파일이 없습니다)")
 	}
 	map=object('map.include') 
-	modify=fileTime(filenm)
-	not(checkRealod) { 
-		if( map.get(name)==modify) {
-			print("include 경로 $name 이미 등록", tm, prevName)
-			Cf.rootNode('@funcInfo').set('includeFileName', prevName)
-			return;
-		}
+	modify=fileTime(fullname)
+	if( map.get(name)==modify) {
+		print("include 경로 $name 이미 등록", modify)
+		return;
 	}
 	prevName = Cf.rootNode('@funcInfo').get('includeFileName') 
 	not(prevName) prevName=''
-	Cf.rootNode('@funcInfo').set('includeFileName', name)
-	filePathInfo(filenm).inject(folder,null,fname)
-	
+	Cf.rootNode('@funcInfo').set('includeFileName', name)	
 	map.set(name, modify)
-	src=fileRead(filenm)
+	src=fileRead(fullname)
 	parseSource(stripJsComment(src), fname)
 	Cf.rootNode('@funcInfo').set('includeFileName', prevName)
 }
@@ -956,44 +989,127 @@ applyFunc(&src, module) {
 	}
 } 
 parseSource(&s, base) {
-	pageBase = ''
-	widgetSource = ''
+	c=s.ch()
+	not(c.eq('<')) {
+		applyFunc(s)
+		return
+	}
+	isOneLine = func(&s) {
+		while(s.valid()) {
+			if(lineBlankCheck(s)) {
+				s.findPos("\n")
+				continue;
+			}
+			line=s.findPos("\n")
+			if(s.ch()) {
+				break;
+			}
+			return true;
+		}
+		return false;
+	};
+	getData = func(&s) {
+		if(isOneLine(s)) {
+			return s.trim()
+		} else {
+			return removeIndentText(s)
+		}
+	};
+	not(base) base='test'
+	debug=conf('cf.useDebug')
+	widgetSource=''
+	evalSource=''
 	while(s.valid() ) {
-		c=s.ch() not(c) break;		
-		if(c.eq(',',';')) {
-			s.incr()
-			continue;
-		}
-		not(c.eq('<')) {		
-			applyFunc(s)
-			return 
-		}
-		if( s.start('<!--')) {
+		c=s.ch() 
+		not(c.eq('<')) {
+			break;
+		} 
+		if(s.start('<!--')) {
 			s.match('<!--', '-->')
 			continue;
 		}
 		sp=s.cur()
-		tag = s.incr().move() s.pos(sp)
+		tag = s.incr().move() 
+		s.pos(sp)
 		ss=s.match("<$tag","</$tag>")
-		if(typeof(ss,'bool')) return print("parseSource 함수오류 ($tab 태그 매칭오류)")
+		if(typeof(ss,'bool')) {
+			return print("parseSource 함수오류 ($tab 태그 매칭오류)")
+		}
 		prop=ss.findPos('>')
+		if( propValue(prop,'skip',true) ) {
+			continue;
+		}
 		if( tag.eq('widgets','pages') ) {
-			not(base) {
-				base = propValue(prop,'base') not(base) base ='test'
+			baseName=propValue(prop,'base')
+			if(baseName) {
+				base=baseName
 			}
-			widgetSource.add(str('<widgets base="$base">$ss</widgets>'))
-		} else if( tag.eq('script') ) {
-			module=propValue(prop, 'module')
+			widgetSource.add(ss)
+		} else if( tag.eq('script') ) {			
+			module=propValue(prop,'module')
+			if(debug) {
+				type=module
+				not(type) type=propValue(prop,'type')
+				if(type) {
+					node=object("script.$base")
+					not(type) type='default'
+					if( ss.eq(node.get(type)) ) {
+						print("@@ source not change $base:$type")
+						continue;
+					}
+					node.set(type,ss)
+				}
+			}
 			applyFunc(ss, module)		
+		} else if( tag.eq('eval') ) {
+			evalSource.add(ss)
+		} else if( tag.eq('conf') ) {			
+			name=propValue(prop, 'name')
+			if(name) {
+				src=getData(ss)
+				prev=conf(name)
+				if( propValue(prop,'first',true) ) {
+					not(prev) conf(name, src, true)
+				}
+				else {
+					not(prev.eq(src)) {
+						print("conf add $name", ss.size())
+						conf(name, src, true)
+					}
+				}
+			}
+		} else if( tag.eq('data') ) {
+			name=propValue(prop, 'name')
+			type=propValue(prop, 'type') not(type) type='text'
+			src=getData(ss)
+			if(type.eq('json')) {
+				if(name) {
+					dataCode="data.$base:$name"
+				} else {
+					dataCode="data.$base"
+				}			
+				node=object(dataCode)
+				node.parseJson(src)
+			} else {
+				node=object("data.$base")
+				not(name) name='default'
+				node.set(name,src)
+			}
+		} else if( tag.eq('sample') ) {
+			continue;
 		} else {
-			print("parseSource 오류 태그 $tag 가 정의되지 않았습니다")
+			widgetSource.add("<$tag $prop>$ss</$tag>")
 		}
 	}
 	if( widgetSource ) {
 		Cf.rootNode('@funcInfo').set('pageBase', base)
-		Cf.sourceApply(widgetSource)
+		Cf.sourceApply(str('<widgets base="$base">$widgetSource</widgets>'))
 		Cf.rootNode('@funcInfo').set('pageBase', '')
 	}
+	if( evalSource ) {
+		target=page("$base:main") not(target) target=_node('evalNode')
+		runSource(evalSource,target)
+	} 
 }
 nodeVar(obj, name, value) {
 	not(typeof(name,'string')) {
@@ -1048,7 +1164,7 @@ resetModule(obj) {
 	obj.var(moduleList).reuse()
 }
 addModule(obj, moduleName) {
-	print("add module args ==> ", args())
+	// print("add module args ==> ", args())
 	params=args(2)
 	modules=nodeArrayVar(obj,'@moduleList')
 	if(moduleName.find(',')) {
@@ -1093,7 +1209,7 @@ addModuleFunc(obj, moduleName, &funcs, subName) {
 		} else {
 			obj.set(fnm, fc)
 		}
-		print("모듈함수 ${moduleName}.${fnm} 등록")
+		// print("모듈함수 ${moduleName}.${fnm} 등록")
 	}
 	return cnt;
 }

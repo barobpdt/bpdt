@@ -1,0 +1,51 @@
+Popup {
+	Popup(parentCtrl, controlNode ) {
+		parentCtrl.inject(db, cf, xmlNode);
+		pageNode=null;
+		this.addClass(common.Kiosk);
+		this.addClassFunc(common.KioskUtil);
+		this.initControl();
+ 	}
+	initControl() {
+		root=controlNode;
+		fileName="namzatang/pageXml/${root[id]}.xml";
+		if( Class.file().isFile(fileName) ) {
+			this.loadXml(fileName, root);
+		}
+		@pageNode=root.child(0);
+		if( pageNode[tag].eq('Page') ) {
+			pageNode[rect]=root[rect];
+		}
+	}
+	openPopup() {
+		cf.popupStartTick=System.tick();
+		cf.popupWindow=this;
+		this.conf();
+		this.update();
+	}
+	conf() {
+		if( cf.popupWindow!=this ) return;
+		this.confGrid(pageNode);
+	}
+	draw(draw, root) {
+		if( cf.popupWindow!=this ) return;
+		this.drawControl(draw, pageNode);
+ 	}
+	mouseDown(pos) {
+		if( cf.popupWindow!=this ) return;
+		this.mouseDownControl(pageNode, pos);
+	}
+	mouseUp(pos) {
+		if( cf.popupWindow!=this ) return;
+		this.mouseUpControl(pageNode, pos);
+	}
+	/* 이미지 버튼 클릭 처리 */
+	imageButtonClick(node) {
+		if( cf.popupWindow!=this ) return;
+		switch(node[id]) {
+		case 'cancel':		cf.popupWindow=null;
+		case 'ok': 
+		}
+	}
+ 
+}

@@ -1,0 +1,335 @@
+PreviewFunctionImpl {
+	PreviewFunctionImpl(page, pageCd ) {
+		this.addPage(common.Page);
+		db =instance('pages.model');
+		if( page.funcGroup ) {
+			funcGroup=page.funcGroup;
+			funcName=page.funcName;
+			funcGroup.eventMap(onFocusIn, this.funcGroupFocus);
+			funcGroup.eventMap(onChange, this.funcGroupChange);
+			funcGroup.eventMap(onDraw, this.funcGroupDraw, 'draw, index, state' );
+			funcGroup.check('editable', true);
+			funcGroup.delegate(true, 24);
+
+			funcName.eventMap(onFocusIn, this.funcNameFocus);
+			funcName.eventMap(onChange, this.funcNameChange);
+			funcName.eventMap(onDraw, this.funcNameDraw, 'draw, index, state' );
+			funcName.check('editable', true);
+			funcName.delegate(true, 24);
+		}
+
+		if( page.funcHist ) {
+			funcHist=page.funcHist;
+			funcHist.eventMap(onChange, this.funcHistChange);
+			if( page.closeAll ) page.closeAll.eventMap(onClick, this.funcHistCloseAll);
+ 			if( page.closeCurrent ) page.closeCurrent.eventMap(onClick, this.funcHistCloseCurrent);
+		}
+		if( page.content ) {
+			mSrcContent=page.content;
+			class('widget').comboValue(funcHist, tr("공통함수: [#]", "function.new") );
+			pageEditor=pageLoad("Common.FuncEditPage",true);
+			pageEditor[funcCode]="function.new";
+			mSrcContent.addPage(pageEditor,true);
+		}
+		funcChangeTick=System.tick() - 1000;
+		this.initForm();
+	}
+ 
+	initForm() {
+		if( funcGroup ) {
+			root=instance('funcInfo.model').rootNode();
+			sub=root.child(0);
+			not( sub ) sub=root.addNode({ type:root, title: 공통함수 정보});
+			not( sub.childCount() ) {
+				db.fetchAll(conf('sql.funcGroup'), sub );
+			}
+			this.funcGroupMaxStr(sub);
+			funcGroup.removeAll().addItem(sub, 'func_grp', '=함수그룹=');
+			funcGroup.value('function');
+		}
+		if( funcHist ) {
+			funcHist.removeAll();
+		}
+	}
+
+	initPage(node) {
+		print("@@ previewFunction initPage : pageCd:$pageCd, node:$node @@");
+		switch( pageCd ) {
+		case classImpl: this.classFuncChange(node);
+		case userFunc: this.funcChange(null, node[funcName]);
+		}
+	}
+
+/* ================= commFuncCombo 이벤트 함수 시작 =  생성일[2016-06-16] ================= */
+/* [이벤트맵] funcGroup.onFocus */
+	private funcGroupFocus() {
+		page.delay( callback() {
+			funcGroup.selectText(true);
+		}, true);
+	}
+/* [이벤트맵] funcName.onFocus */
+	private funcNameFocus() {
+		page.delay( callback() {
+			funcName.selectText(true);
+		},true);
+	}
+
+/* [이벤트맵] funcGroup.onChange */
+	private funcGroupChange() {
+		val=funcGroup.value();
+		root=funcGroup.rootNode(), sub=null;
+		not( val ) {
+			val=funcGroup.text();
+			if( val ) {
+				sub=root.addNode().val(type:'funcGroup', func_grp: val, status:'new' );
+				this.funcGroupMaxStr(root);
+			}
+		}
+		this.funcGroupVal=val;
+		not( val ) {
+			node=_node(root,'emptyNode').removeAll();
+			funcName.removeAll().addItem(node, 'func_nm', '=함수명=');
+			return;
+		}
+		not( sub ) {
+			sub=root.findOne('func_grp', val);
+		}
+		not( sub.childCount() ) {
+			db.fetchAll(conf('sql.funcGroupChild'), sub );
+		}
+		this.funcNameMaxStr(sub);
+		funcName.removeAll().addItem(sub, 'func_nm', '=함수명=');
+		funcName.focus();
+		funcName.selectText();
+	}
+/* [이벤트맵] funcGroup.onDraw */
+	private funcGroupDraw(draw, index, state) {
+		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(funcGroup, draw, index, state);
+		not( node ) return;
+		rc=draw.rect();
+		rcIcon=rc.width(24).center(16,16);
+		rc.incrX(24);
+		if( node.status.eq('new') ) {
+			draw.font(8,'blod','#f090a0').text(rc.width(16), '*', 'center');
+			rc.incrX(16);
+		}
+		funcCnt="(${node[cnt]})";
+		draw.icon(rcIcon, "vicon.table_gear" );
+		draw.font(10).text(rc, node[func_grp]); 
+		draw.font(8).text(rc.move('end',30), funcCnt );
+	}
+/* [이벤트맵] funcName.onChange */
+	private funcNameChange() {
+		val=funcName.value(), root=funcName.rootNode();
+		not( val ) {
+			val=funcName.text();
+			if( val ) {
+				sub=root.addNode().val(type: 'funcSrc', func_nm: val, status:'new');
+				this.funcNameMaxStr(root);
+			}
+		}
+		this.funcNameVal=val;
+ 		not( val ) return;
+		not( sub ) {
+			sub=root.findOne('func_nm',val);
+		}
+		this.funcChange(this.funcGroupVal, val, sub);
+	}
+/* [이벤트맵] funcName.onDraw */
+	private funcNameDraw(draw, index, state) {
+		if( state.eq(1) ) return;
+		node= class('draw').comboDraw(funcName, draw, index, state);
+		not( node ) return;
+		rc=draw.rect();
+		rcIcon=rc.width(24).center(16,16);
+		rc.incrX(24);
+		if( node.status.eq('new') ) {
+			draw.font(8,'blod','#f090a0').text(rc.width(16), '*', 'center');
+			rc.incrX(16);
+		}
+		switch( node[func_type] ) {
+		case 'A':	icon="ficon.script-code";
+		case 'C':	icon="ficon.script-globe";
+		case 'S':	icon="ficon.script-block";
+		case 'T':	icon="ficon.script-attribute-t";
+		case 'Z':	icon="ficon.script--exclamation";
+		default:	icon="ficon.script-code";
+		}
+		draw.icon( rcIcon, icon);
+		draw.font(10).text( rc,  node.func_nm);
+		param=when( node[func_param], "(${node[func_param]})");
+		if( param ) {
+			w=draw.textWidth(param)+10;
+			draw.font(8).text( rc.move('end',w), param, 'right');
+		}
+	}
+/* [이벤트맵] funcHist.onChange */
+	private funcHistChange() {
+		funcHist.value().split(':').inject(kind, code); 
+		if( kind.eq('공통함수') ) {
+			code.split('.').inject(group, name);
+			this.funcChange(group, name); 
+		} else if( kind.eq('클래스함수') ) {
+			while( page, mSrcContent.widget() ) {
+				not( page[classFuncCode].eq(code) ) continue;
+				mSrcContent.current(page);
+				break;
+			}
+		}
+	}
+	funcHistCloseAll() {
+		// arr=funcHist.@adds;
+		while( page, mSrcContent.widget() ) {
+			mSrcContent.removePage(page, true);
+		}
+		funcHist.removeAll();
+	}
+	funcHistCloseCurrent() {
+		val=funcHist.value();
+		val.split(':').inject(kind, code); 
+		while( page, mSrcContent.widget() ) {
+			if( page.funcCode && page.funcCode.eq(code) ) {
+				mSrcContent.removePage(page);
+				break;
+			} else if( page.classFuncCode && page.classFuncCode.eq(code) ) {
+				mSrcContent.removePage(page, true);
+				break;
+			}
+		}
+		idx=funcHist.index();
+		funcHist.remove(idx);
+	}
+ /* ================= commFuncCombo 이벤트 함수 종료 ================= */
+	funcGroupMaxStr(node) {
+		maxStr='';
+		while( cur, node ) {
+			text="${cur[func_grp]}\t\t(${cur[cnt]})";
+			if( maxStr.size()<text.size() ) maxStr=text;
+		}
+		funcGroup.addText(maxStr, true);	
+	}
+	funcNameMaxStr(node) {
+		maxStr='';
+		while( cur, node ) {
+			text="${cur[func_nm]}\t\t($cur[func_param])";
+			if( maxStr.size()<text.size() ) maxStr=text;
+		}
+		funcName.addText(maxStr, true);	
+	}
+
+	funcChange(group, name, node) {
+		dist=System.tick() - funcChangeTick;
+		if( dist<500 ) {
+			print("funcChange distance=$dist");
+			return;
+		}
+		@funcChangeTick=System.tick();
+		funcGroup.findLayout().showAll();
+		if( group ) {
+			val=funcGroup.value();
+			not( val.eq(group) ) funcGroup.value(group);
+		} else {
+			this.setCommFunc(name);
+			return;
+		}
+		funcCode="${group}.${name}";
+		/* 함수 히스토리에 추가한다 */
+		if( funcHist && node ) {
+			class('widget').comboValue(funcHist, tr("공통함수: [#]",funcCode) );
+		}
+		print(funcCode, mSrcContent);
+		not( mSrcContent ) { 
+			return page.funcChange(group, name);	
+		}
+		/* 함수선택 및 새로운 함수 편집 페이지 추가 */
+		pageEditor=this.findPageEditor(funcCode);
+		 
+		if( pageEditor ) {
+			val=funcName.value();
+			not( val.eq(name) ) funcName.value(name);
+			mSrcContent.addPage(pageEditor,true);
+		} else {
+			pageEditor=pageLoad("Common.FuncEditPage",true);
+			pageEditor[funcCode]=funcCode;
+			if( node ) {
+				not( node[src] ) {
+					not( node[func_grp] ) node[func_grp]=group;
+					db.fetch("select funcParam as func_param, funcData as src, note, type as func_type, funcDesc as func_desc from cmsFunc where cmsCode=#{func_grp} and funcName=#{func_nm}", node);
+				}
+				pageEditor.initPage(node);
+			}
+			mSrcContent.addPage(pageEditor,true);
+		}
+	}
+	classFuncChange(node) {
+		if( funcGroup ) {
+			funcGroup.findLayout().hideAll();
+		}
+		classFuncCode=tr("[#].[#].[#]", node[class_grp], node[class_nm], node[class_func] );
+		if( funcHist && node ) {
+			class('widget').comboValue(funcHist, tr("클래스함수: [#]",classFuncCode) );
+		}
+		not( mSrcContent ) { 
+			return page.classFuncChange(node);	
+		}
+		ok=false;
+		/* 함수선택 및 새로운 함수 편집 페이지 추가 */
+		while( cur, mSrcContent.widget() ) {
+			not( cur[classFuncCode] ) continue;
+			if( cur[classFuncCode].eq(classFuncCode) ) {
+				mSrcContent.addPage(cur,true);
+				ok=true;
+			}
+		}
+		not( ok ) {
+			pageEditor=pageLoad("Common.ClassFuncEditPage",true);
+			pageEditor[classFuncCode]=classFuncCode;
+			pageEditor.initPage(node);
+			mSrcContent.addPage(pageEditor,true);
+		}
+	}
+	setStatus(msg) {
+		page.funcStatus.value(msg);
+	}
+	findPageEditor(funcCode) {
+		not( mSrcContent ) return;
+		while( cur, mSrcContent.widget() ) {
+			if( cur[funcCode].eq(funcCode) ) {
+				return cur;
+			}
+		}
+		return null;
+	}
+	setCommFunc(funcNm, alert) {
+		group=db.value("select cmsCode from cmsFunc where funcName='$funcNm' order by tm desc");
+		if( alert, not(group) ) {
+			page.alert("$funcNm 함수를 찾을수 없습니다.");
+		}
+		funcGroup.value(group);
+		this.funcNameVal=funcNm;
+		page.delay(callback() {
+			combo=this[funcName], funcNm=this[funcNameVal];
+			key=combo[@key];
+			root=combo.rootNode();
+			cur=root.findOne(key,funcNm);
+			if( cur ) {
+				combo.current(funcNm);		
+			} else {
+				@funcChangeTick=System.tick();
+				cur=root.addNode();
+				cur[status]="new";
+				cur[$key]=funcNm;
+				cur.state(NODE.add, true);
+				combo.update();
+				combo.value(funcNm);
+				print("setCommFunc ## funcName=$funcNm, $key");
+				pageEditor=this.findPageEditor("function.new");				 
+				if( pageEditor ) {
+					pageEditor.initPage(cur);
+					mSrcContent.addPage(pageEditor,true);
+				}
+			}
+		},this);
+	}
+ }

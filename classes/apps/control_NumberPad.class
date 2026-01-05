@@ -1,0 +1,92 @@
+NumberPad {
+	NumberPad(parentCtrl, controlNode ) {
+		parentCtrl.inject(db, cf, xmlNode);
+		this.addClass(common.Kiosk);
+		this.addClassFunc(common.KioskUtil);
+		this.initControl();
+ 	}
+	initControl() {
+		/* 하위 노드의 높이, 폭 세팅 (반듯이 pageRate=1 인경우에만 실행) */
+		root=controlNode;
+		not( root[Width] ) {
+			if( root[WidthArray] ) {
+				root[Width]=root[WidthArray].sum();
+			}
+		}
+		this.setRowHeight(root);
+		wa=this.getControlArray('Width');
+		not( wa ) {
+			this.setRowWidth(root);
+			return;
+		}
+		/* WidthArray 가 있다면 하위 노드의 Width 를 자동으로 세팅한다 */
+		rc=root[rect];
+		print("wa=$wa, Table RECT: $rc");
+		sx=rc.x(), sy=rc.y(), sw=rc.width();
+		while( row, root ) {
+			cx=sx, hh=row[Height];
+			row[Width]=sw;
+			if( row.childCount().eq(0) ) {
+				continue;
+			}
+			while( w, wa, col, 0 ) {
+				sub=row.child(col);
+				not( sub[Height] ) sub[Height]=hh;
+				sub[Width]=w;
+				cx+=w;
+			}
+			sy+=hh;
+		}
+ 	}
+	conf() {
+		root=controlNode;
+		rc=root[rect];
+		sx=rc.x(), sy=rc.y(), sw=rc.width();
+		while( row, root ) {
+			rcRow=this.setNodeRect(row, sx, sy, sw );
+			cx=sx;
+			while( img, row ) {
+				rcImg=this.setNodeRect(img, cx, sy );
+				cx+=rcImg.width();
+			}
+			sy+=rcRow.height();
+		}
+	}
+	draw(draw, root) {
+		not( root ) root=controlNode;
+		while( row, root ) { 
+			while( img, row ) {
+				imgCtrl=this.getControl(img);
+				if( img[rect].eq(this.mouseDownRect) ) {
+					imgNum=this.imageLoad(img,'pressed',controlNode[PressedImage]);
+					draw.drawImage(img[rect].incr(2), imgNum );
+				} else {
+					imgNum=this.imageLoad(img);
+					draw.drawImage(img[rect], imgNum );
+				}
+			}
+		}
+	}
+
+	mouseDown(pos) {
+		while( row, root ) { 
+			while( img, row ) {
+				if( img[rect].contains(pos) ) {
+					this.mouseDownRect=img[rect];
+				}
+			}
+		}
+	}
+	mouseUp(pos) {
+		while( row, root ) { 
+			while( img, row ) {
+				if( img[rect].contains(pos) && img[rect].eq(cf.mouseDownRect) ) {
+					this.clickNumber(img);
+				}
+			}
+		}
+	}
+	clickNumber(imgNode) {
+	
+	}
+}

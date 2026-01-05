@@ -1,0 +1,379 @@
+layoutTree {
+	layoutTree(page, pageCd, filterMap) {
+		this.addClass(dev.page);
+		cf.put( pageCd );
+		db=instance('pages.model');
+		dataModel=instance('pageLayoutInfo.model');
+		tree=page.tree;
+		tree.check('treeMode', true);
+		tree.check('sortEnable', true);
+		tree.model(dataModel, 'text');
+ 
+		tree.eventMap(onChildData, this.treeChildData, 'node');		
+		tree.eventMap(onDraw, this.treeDraw, 'draw, node, over');		
+		tree.eventMap(onContextMenu, this.treeContentMenu, 'pos');
+		tree.eventMap(onChange, this.treeChange, 'node');
+		tree.eventMap(onFilter, this.treeFilter, 'node');
+		tree.eventMap(onSort, this.treeSort, 'left, right');	
+		tree.eventMap(onMouseClick, this.treeMouseClick, 'pos, button');	
+		this.treeAction();
+	}
+	/* ----------------------------------------------- [ tree config ] ----------------------------------------------- */
+	getTypeName(type) { 
+		switch(type) {
+		case cate:			return "카테고리";
+		case chapter:		return "쳅터";
+		case mission:		return "페이지";
+		case step:			return "스텝";
+		}
+	}
+	treeAction() {
+		this.action('reload', '새로고침', 'vicon.arrow_rotate_clockwise', this.contextReload);
+		this.action('add', '자식노드 추가', 'ficon.folder--plus', this.contextAddNode); 
+		this.action('addNextStep', '스텝 삽입', 'ficon.blue-folder-open-document', this.contextStepInsert); 
+		this.action('addChapter', '페이지 챕터 추가', 'ficon.folder-open-table',this.contextAddChapter); 
+		this.action('delete', '삭제', 'ficon.cross', this.contextDeleteNode);
+		this.action('rename', '이름변경', 'vicon.book_edit', this.contextRename);
+		this.action('allSource', '전체 페이지소스 보기', 'vicon.asterisk_yellow', this.contextAllSource); 
+		this.action('pageInfo', '페이지 정보', 'vicon.table-heatmap', this.contextPageInfo); 
+		this.action('pageCreate', '페이지 생성', 'ficon.card--plus', this.contextPageCreate); 
+		this.action('pageCopy', '페이지 복사', 'ficon.cards-address', this.contextPageCopy); 	
+	}
+
+	/* ----------------------------------------------- [ tree event ] ----------------------------------------------- */
+	treeChildData(node) {
+		if( node[state].eq('new') ) return;
+		not( node.parent() ) {
+			node.addNode({ type:root, title: 페이지 레이아웃 정보, idx:0});
+			return;
+		}
+		db.fetchAll("select idx, text, type, mode, info, ref, note, code, sort from epsTreeList where ver='1' and pidx=#{idx} and use_yn='Y' order by sort", node);
+	}
+	treeDraw(draw, node, over) {
+		rc=class('draw').treeIcon(tree, draw, node, over);
+		rcIcon = rc.width(18).center(16,16);
+		rc.incrX(20);
+		if( node.state(NODE.add) ) {
+			draw.save().pen('#f05050');
+			draw.text(rc.width(10),'*', 'center');
+			rc.incrX(10);
+			draw.restore();
+		}
+		switch( node[type] ) {
+		case root:
+			draw.icon( rcIcon, "vicon.application_form" );
+			draw.save().font('bold');
+			draw.text( rc,  node[title]);
+			draw.restore();
+		case cate:
+			draw.icon( rcIcon, 'vicon.application_side_boxes');
+			draw.save().font('bold');
+			draw.text(rc, node[text]);
+			draw.restore();
+		case chapter:
+			draw.icon( rcIcon, 'vicon.application_view_list');
+			draw.text(rc, node[text]);
+		case mission:
+			draw.icon( rcIcon, 'vicon.page_red');
+			val =node[text];
+			if( node[ref] ) val.add(" - $node[ref]");
+			draw.text(rc, val);
+			if( node[page] ) {
+				draw.save().pen('#f05050');
+				draw.text(rc.move('end', 16),'*', 'center');
+				draw.restore();
+			}
+		case step:
+			draw.icon( rcIcon, 'vicon.layout_defalut');
+			draw.text(rc, node[text]);
+			if( node[state].eq('new') ) {
+				draw.icon(rc.move('end',24).center(16,16), 'vicon.new_default');
+			} else {
+				draw.icon(rc.move('end',24).center(16,16), 'vrs.tooltip1');
+			}
+		}	
+	}
+	treeContentMenu(pos) {
+		node=tree.at(pos);
+		cf.contextNode=node;
+		str="reload, -";
+		delete=true;
+		switch(node[type]) {
+		case root:
+			this.action('add', '카테고리 추가');
+			str.add(", add");
+			delete=false;
+		case cate:
+			str.add(", add, rename, backupCategory");
+			this.action('add', 'Chapter 추가');
+		case chapter:
+			str.add(", addChapter, add, rename");
+			this.action('add', '페이지 추가');
+		case mission:
+			node.remove(testNode);
+			idx= node.size()+1;
+			str.add(", add, rename, pageInfo, pageSave, allSource, pageCopy");
+			this.action('add', "[STEP$idx] 추가");
+			if( cur[code] ) {
+				this.action('addPage', "페이지 생성 ($cur[code])");
+			}
+		case step:
+			str.add(",add , addNextStep, rename");
+			parent=node.parent();
+			idx= parent.size()+1;
+			this.action('add', "[STEP$idx] 추가");
+			this.action('addNextStep', "$node[text] 다음에 STEP삽입");
+		default:
+			str.add(",add");
+			this.action('add', '카테고리 추가');
+			delete=false;
+		}
+		if( node.size() && cur[type].eq('cate','chapter') ) {
+			str.add(", -, exandAll");
+			if( tree.is('expand', cur) ) {
+				this.action('exandAll', '폴더 전체접기');
+			} else {
+				this.action('exandAll', '폴더 전체펼치기');
+			}
+		} 
+		if( delete ) {
+			str.add(", -, delete");
+		}
+		this.menuPopup(tree, str, pos );	
+	}
+	treeChange(node) {
+		fc=this.getParentFunction('layoutTreeChange');
+		if( fc ) fc(node, cf);
+	}
+	treeFilter(node) {
+ 		if( node[type].eq('root', 'step') ) return true;
+		if( filterMap.filterUse ) {
+			idx=node[idx];
+			not( filterMap[$idx] ) return false;
+		} 
+		not( pageModeVal ) return true;
+		
+		switch( node[type] ) {
+		case mission:
+			if( node[mode].eq(pageModeVal) ) {
+		 		return true;
+			}
+		default: return true;
+		}	
+	}
+	treeSort(left, right) {
+		if( left[type].eq('chapter') ) {
+			switch( right[type] ) {
+			case mission: return false;
+			case chapter: return left[text].lessThan(right[text], true);
+			}
+			return true;
+		}	
+	}
+	treeMouseClick(pos, button ) {
+		if( button.eq('right') ) return 'ignore';
+		node=tree.at(pos);
+		return page.treeMouseClick(node, pos,button);
+		not( node[type].eq('step') ) return;
+		not( prevNode ) prevNode=null; 
+		if( button.eq('right') || node.eq(prevNode) ) return 'ignore';
+		rc = this.nodeRect(node);
+		rcIcon = rc.move('end',32).center(24,24);
+		if( rcIcon.contains(pos) ) {
+			this.openPopup(pageLoad('dev.pageInfo'), node, tree, node, 680, 550 );
+			return 'ignore';
+		}
+	}
+	insertProjectMap(cur) {
+		tm=System.localtime();
+		cur[projectId]=cf[projectId];
+		db.exec("insert into project_layout_map(pid, idx,tm) values( #{}, #{idx}, '$tm')", cur);	
+	}
+	/* =====================[ tree context menu function ] =========================== */
+	contextPageCreate( cur) {
+		popup=pageLoad('dev.pageInfo');
+		popup.initPage(cur);
+		thie.openCenter(popup);
+	}
+
+	contextAddNode(cur) {
+		not( cur ) cur=cf.contextNode;
+		type=nvl( cur.type, 'cate' ); 
+		switch( type ) {
+		case cate:		ty="chapter";
+		case chapter:	ty="mission";
+		case mission:	ty="step";
+		case step:		ty="step"; cur=cur.parent();
+		default:				ty="cate";
+		}
+		if( ty.eq('mission') ) {
+			this.contextPageCreate(cur);
+		} else if( ty.eq('step') ) {
+			num=cur.childCount() + 1;
+			name=this.getTypeName(ty);
+			popup=this.openInput("$name 추가", "$name 명 : ", "$name 설명 : ", "[STEP$num] "); 
+			not( popup[state].eq('ok') ) {
+				return;
+			}
+			this.addTreeNode(cur, ty, popup.val1(), popup.val2(), code);
+		} else {
+ 		}	
+	}
+	contextAddChapter(cur) {
+		not( cur ) cur=cf.contextNode;
+		not( cur[type].eq('cate', 'chapter') ) {
+			return;
+		}
+		popup=this.openInput("페이지 챕터 추가", "페이지 챕터명 : ", "페이지 챕터설명 : " ); 
+		not( popup[state].eq('ok') ) {
+			return;
+		}
+		tm=System.localtime();
+		v1=popup.val1(), v2=popup.val2();
+		sub=cur.addNode(), sort=cur.childCount()+1;
+		sub.val( type:'chapter', state:'new', pidx:cur.idx, text: v1, note:v2, sort:sort );
+		db.exec("insert into epsTreeList(ver, pidx, text, type, code, note, info, sort, tm) values('1', #{pidx},#{text},#{type},#{code}, #{note}, #{info}, #{sort}, '$tm')", sub);
+		if( this.dbError() ) return;
+		sub[idx] = db.lastInsertId();
+		print("xxxxxxxxx $sub xxxxxxxxxxx");
+		tree.update();
+		tree.current(sub);	
+		this.insertProjectMap(sub);
+	}
+	contextDeleteNode(cur) {
+		not( cur ) cur=cf.contextNode;
+		not( cur ) return;
+		name=this.getTypeName(cur[type]);
+		not( this.confirm("$name $cur[text] 를 삭제하시겠습니까?") )  return;
+		
+		deleteChild=func(cur) {
+			db.exec("delete from epsTreeList where idx=#{idx}",cur);
+			if( cur[type].eq('step') ) {
+				db.exec("delete from epsTreeStep where tree_idx=#{idx}",cur);
+				return;
+			}
+			while( node, cur ) deleteChild(node);
+		};
+		deleteChild(cur);
+		cur.parent().remove(cur);
+		tree.update();	
+	}
+	contextReload(cur) {
+		not( cur ) cur=cf.contextNode;
+		not( cur ) return;
+		cur.removeAll();
+		tree.update();
+	} 
+	contextAllSource(cur) {
+		not( cur ) cur=cf.contextNode;
+		not( cur ) return;
+		this.openCenter( pageLoad('dev.pageAllSource'), this.getAllSource(cur) );
+	}
+	contextStepInsert(cur) {
+		not( cur ) cur=cf.contextNode;
+		not( cur ) return;
+		parent=cur.parent(), idx=cur.index()+1, sort=cur[sort];
+		num = idx+1;
+		popup=this.openInput("스텝 추가", "스텝 명 : ", "스텝 설명 : ", "[STEP$num] "); 
+		not( popup[state].eq('ok') ) {
+			return;
+		}
+		v1=popup.val1();
+		not( v1 ) {
+			page.alert("스텝명을 입력하지 않았습니다");
+			return;
+		}
+		psz=parent.size();
+		while( n, psz, idx ) {
+			node = parent.child(n);
+			num = n+2, sort++;
+			text = node[text].find(']').right().trim();
+			node[text]="[STEP$num] $text";
+			node[sort]=sort;
+			db.exec("update epsTreeList set text=#{text}, sort=#{sort} where idx=#{idx}", node);
+		}
+		tm=System.localtime();		
+		step = parent.insertNode(idx);
+		step.val(type:'step', state:'new', pidx: parent[idx] sort: num, text:v1, note:popup.val2() );
+		db.exec("insert into epsTreeList(ver, pidx, text, type, note, tm, sort) values('1', #{pidx}, #{text}, #{type}, #{note},$tm, #{sort})", step);
+		step[idx] = db.lastInsertId();
+		db.exec("insert into epsTreeStep(ver, tree_idx, tm) values('1', #{idx},  $tm)", step);
+		step[stepIdx] = db.lastInsertId();
+		tree.update();
+		tree.current(step);	
+	}
+
+	/* =====================[ common util function ] =========================== */
+	addTreeNode(cur, ty, v1, v2, code) {
+		tm=System.localtime();
+		sub=cur.addNode(), sort=cur.childCount()+1;
+		sub.val( type: ty, state:'new', pidx:cur.idx, text:v1, note:v2, sort:sort );
+		db.exec("insert into epsTreeList(ver, pidx, text, type, code, note, info, sort, tm) values('1', #{pidx},#{text},#{type},#{code}, #{note}, #{info}, #{sort}, $tm)", sub);
+		sub[idx] = db.lastInsertId();
+		this.insertProjectMap(sub);
+		if( ty.eq('mission') ) {
+			step = sub.addNode();
+			step.val( type:'step', state:'new', text:'[STEP1] 페이지 레이아웃', pidx:sub[idx], sort:1, mode:'step' ); 
+			db.exec("insert into epsTreeList(ver, pidx, text, type, mode, sort, tm) values('1', #{pidx}, #{text}, #{type}, #{mode}, #{sort}, $tm)", step);
+			step[idx] = db.lastInsertId();
+			step[src] = conf('template.pageStep');
+			db.exec("insert into epsTreeStep(ver, tree_idx, src, tm) values( '1', #{idx}, #{src}, $tm)", step);
+			step[stepIdx] = db.lastInsertId();
+			tree.update();
+			tree.current(step);
+		} else {		
+			tree.update();
+			tree.current(sub);
+		}	
+	}
+	pageCreate(node) {
+		root=tree.rootNode().child(0), tm=System.localtime();
+		a=root.findOne('text', cate);
+		not( a ) {
+			a=root.addNode({state:new, type:cate}), sort=root.childCount()+1, pidx=0;
+			a.val(pidx: pidx, text: cate, sort:sort );
+			db.exec("insert into epsTreeList(ver, pidx, text, type, sort, tm) values($ver, #{pidx},#{text},#{type}, #{sort}, $tm)", a);
+			a[idx] = db.lastInsertId();
+			this.insertProjectMap(a);
+		}
+		b=a.findOne('text',chapter);
+		if( b!=chapterNode ) {
+			not( b ) {
+				b=a.addNode({state:new, type:chapter}), sort=a.childCount()+1, pidx=a[idx];
+				b.val(pidx: pidx, text: chapter, sort:sort );
+				db.exec("insert into epsTreeList(ver, pidx, text, type, sort, tm) values($ver, #{pidx},#{text},#{type}, #{sort}, $tm)", b);
+				b[idx] = db.lastInsertId();
+				this.insertProjectMap(b);
+			}
+			tree.expand(a), tree.expand(b);
+		}
+		if( b ) {
+			c=b.addNode({state:new, type:mission}), sort=b.childCount()+1, pidx=b[idx];
+			c.val( mode: mode, pidx: pidx, text: name, sort:sort );
+			db.exec("insert into epsTreeList(ver, pidx, text, type, mode, sort, tm) values($ver, #{pidx},#{text},#{type}, #{mode}, #{sort}, $tm)", c);
+			c[idx] = db.lastInsertId();
+			this.insertProjectMap(c);
+		}
+		if( c ) {
+			d=c.addNode({state:new, type:step}), sort=1, pidx=c[idx];
+			d.val( pidx: pidx, text: '[STEP1] 페이지 레이아웃', code:'STEP1', sort:sort );
+			db.exec("insert into epsTreeList(ver, pidx, text, type, sort, tm) values($ver, #{pidx},#{text},#{type}, #{sort}, $tm)", d);
+			d[idx] = db.lastInsertId();
+			d[src] = ginfo('pageStep');
+			db.exec("insert into epsTreeStep(ver, tree_idx, code, src, tm) values( $ver, #{idx}, #{code}, #{src}, $tm)", d);
+			d[stepIdx] = db.lastInsertId();
+			return c;
+		}		
+	}
+
+	getAllSource(node) {
+		node[src]='';
+		while( cur, node) {
+			not( cur[src] ) db.fetch("select src  from epsTreeStep where tree_idx=#{idx}", cur);
+			node[src].add( cur[src].findPos('>>',1), "\n" );
+		}
+		return node;
+	}
+
+}
+

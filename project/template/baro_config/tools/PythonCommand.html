@@ -1,0 +1,322 @@
+<conf name="python.RUN_PATH" first>
+	C:/temp/python
+</conf>
+<conf name="path.imageMagick" first>
+	C:/APP/ImageMagick
+</conf>
+
+<eval skip>
+	// start 
+	startPythonCommand()
+	startPythonWebview()
+	// setUrl
+	url='https://www.freepik.com/search?format=search&img=1&last_filter=img&last_value=1&query=2d+sprites'
+	call( @python.runCommand, this, 'exec', 'command.setUrl')		
+	// quit all
+	call( @python.runCommand, this, "quit")
+	call( @python.webCommand, this, "quit")
+
+	// convert png
+	svg=pathJoin(path,'assets/icons/bmp.svg')
+	png=pathJoin(path,'assets/icons/bmp.png')
+	command = str('${conf.path.imageMagick}/magick.exe -background none -density 1000 -size 30x30 "$svg" "$png"')
+	addCmdWorker('magick' , command)
+	// insert png
+	this.pngData=Cf.toBinary(fileRead('test.png))
+	db.exec("insert into test (id, data, prop) values ('test',#{pngData},'222')", this)
+</eval>
+
+<script type="public">
+	startPythonCommand() {
+		py=pathJoin(conf('python.path'), 'python.exe')
+		// addCmdWorker('runCommand', "$py -m pip list", @python.runProc)
+		cmd=Baro.process('runCommand')
+		line=@python.execLine(cmd, 'runCommand.py')
+		if(cmd.cmp('@workerStatus', 'run') ) {
+			print("runCommand가 실행중입니다");
+		} else {
+			addCmdWorker('runCommand', line, @python.runProc)
+		}
+		return true;
+	}
+	startPythonWebview() {
+		cmd=Baro.process('webCommand')
+		line=@python.execLine(cmd,'webCommand.py')
+		if(cmd.cmp('@workerStatus', 'run') ) {
+			print("webCommand가 실행중입니다");
+		} else {
+			addCmdWorker('webCommand', a, @python.webProc)
+		}
+	}
+	@python.execLine(cmd, filename) {	
+		py	= pathJoin(conf('python.path'), 'python.exe')
+		sourcePath	= pathJoin(conf('python.RUN_PATH'), filename)
+		not(isFile(sourcePath)) {
+			log("error::@python.getCommand 소스파일 경로가 없습니다 (경로:$sourcePath)")
+		}
+		filePathInfo(sourcePath).inject(folder, null, name)
+		command	= logAppend("${name}-command")
+		out		= logTail("${name}-out")		
+		cmd.workerMode="${name}Worker"
+		cmd.logTail = out
+		cmd.logAppend = command
+		return str('$py "$sourcePath" --command="${command.logFileName}" --out="${out.logFileName}"')
+	}
+ 
+	@python.install(command) {
+		not(command) {
+			return;
+		}
+		if(command.eq('list')) {
+			line = command
+		} else {
+			line = "install $command"
+		}
+		py=pathJoin(conf('python.path'), 'python.exe')
+		cmd=Baro.process('pythonInstall')
+		cmd.set('@commandName',command)
+		if(cmd.cmp('@workerStatus','run')) {
+			// print("@@ python.install 명령: $command 실행취소 [pythonInstall 프로세스가 실행중입니다]")
+			cmd.addArray('@installArray').add(command)
+			return;	
+		}
+		addCmdWorker('pythonInstall', "$py -m pip $line", func(&result) {
+			this.inject(id, @workerStatus, @command, @commandName, @installArray)
+			print(">> $id $commandName") 
+			not(workerStatus.eq('finish')) {
+				print(">> $id $commandName 실행중 $result")
+				return;
+			}
+			if(commandName.eq('list')) {
+				@python.parseInstallInfo(result)
+			}
+			if( isValid(installArray) ) {
+				info = object('python.installInfo')
+				name=installArray.pop()
+				while(isValid(name)) {
+					if(findField(info,'name',name)) {
+						name=installArray.pop()
+						continue;
+					}
+					@python.install(name)
+					break;
+				}
+				return;
+			}
+		});
+	}
+	@python.parseInstallInfo(&s) {
+		info = object('python.installInfo')
+		not(s) return info;
+		start=false
+		while(s.valid()) {
+			line=s.findPos("\n") not(line.ch()) break;
+			if(start) {
+				name=line.findPos(" \t\n",4)
+				version=line.trim()
+				info.addNode().with(name, version)
+				continue;
+			}
+			if(line.start('----')) {
+				start=true;
+			}
+		}
+		return info;
+	}
+	@python.runCommand(command, confCode) {
+		log=logAppend("runCommand-command")
+		not(command.find(':') ) {
+			command.add(':')
+		}
+		if(confCode) {
+			fn=Cf.funcNode('parent')
+			source = getSource( cv(confCode), this, fn)
+			if(source) command.add(source)
+		}
+		print(">> runCommand ==> $command")
+		log.append("@#>$command")
+	}
+	@python.webCommand(command, confCode) {
+		log=logAppend("webCommand-command")
+		not(command.find(':') ) {
+			command.add(':')
+		}
+		if(confCode) {
+			fn=Cf.funcNode('parent')
+			source = getSource( cv(confCode), this, fn)
+			if(source) command.add(source)
+		}
+		log.append("@#>$command")
+	}
+	/* 설정에 저장된 아이콘 정보를 읽어서 baro.icons 노드 생성*/
+	@python.makeIconNode() {
+		node=object('baro.icons')
+		s=conf('icons.lucideSvg')
+		s.ref()
+		while(s.valid()) {
+			not(s.ch()) break;
+			k=s.move()
+			c=s.ch()
+			not(c.eq('{')) break;
+			v=s.match()
+			node.set(k,v)
+		}
+		return node;
+	}
+	/* 자바스크립트 svg path 정보를 읽어서 설저저장 (설정명:icons.lucideSvg) */
+	@python.makeSvgIcons(&s) {
+		not(s) {
+			s=fileRead('c:/temp/icons.js')
+			s.ref()
+		}
+		cnt=0
+		tick=System.tick()
+		arr=_arr()
+		data=''
+		while(s.valid()) {
+			s.findPos('"path",')
+			not(s.ch()) break;
+			arr.reuse()
+			name=null
+			while(isNull(name)) {
+				s.findPos('d:')
+				c=s.ch()
+				arr.add(s.match())
+				s.findPos(']')
+				c=s.ch()
+				if(c.eq(']')) {			
+					s.findPos('const') not(s.ch()) break;
+					name=s.move()
+					break;
+				}
+			}
+			if(name) {		
+				ss=''
+				while(d, arr) {
+					ss.add(str('<path d="$d" />'), "\n")
+				}
+				data.add("$name {\n$ss}\n")
+			}
+			cnt++;
+		}
+		conf('icons.lucideSvg', data, true)
+		d=System.tick()-tick;
+		print("makeSvgIcons==$cnt", d, data.size())
+		return data;
+	}
+</script>
+
+<script type="protect">
+	@python.runProc(result, target) {
+		print("##@python.runProc $result", target)
+	}
+
+	@python.webProc(result, target) {
+		print("##@python.webProc $result", target)
+	}
+</script>	
+
+	
+<conf name="python.command:chromeOpen">
+	from selenium import webdriver
+	from selenium.webdriver.chrome.options import Options
+	from selenium.webdriver.common.by import By
+	from selenium.webdriver.common.keys import Keys
+	from selenium.webdriver.common.action_chains import ActionChains
+	options = Options()
+	options.add_experimental_option("detach", True)
+	options.add_argument('--disable-popup-blocking')	 
+	driver = webdriver.Chrome(options=options)
+	driver.implicitly_wait(3)
+	driver.get(url='@[url]')
+
+	# class name으로 찾기
+	driver.find_element(By.CLASS_NAME,'gLFyf')
+	# tag name으로 찾기
+	driver.find_element(By.TAG_NAME,'textarea')
+	# id로 찾기
+	el = driver.find_element(By.ID,'APjFqb')
+
+	# 클릭하기
+	el.click()
+	# 값 입력하기
+	el.send_keys("tistory")
+	# 키보드 입력하기
+	el.send_keys(Keys.ENTER)
+	# iframe 이동
+	driver.switch_to.frame(' iframe id ')
+	driver.switch_to.default_content()
+	# 붙여넣기
+	ActionChains(driver).key_down(Keys.COMMAND).send_keys('v').key_up(Keys.COMMAND).perform()
+	log(f'pageSource: url => {driver.page_source}')
+</conf>
+
+<conf name="python.command:chromeDriver">
+	from selenium import webdriver
+	from selenium.webdriver.chrome.options import Options
+	from selenium.webdriver.common.by import By
+	from selenium.webdriver.common.keys import Keys
+	from selenium.webdriver.common.action_chains import ActionChains
+	global driver
+	options = Options()
+	options.add_experimental_option("detach", True)
+	options.add_argument("--window-size = x,y")
+	options.add_argument('--disable-popup-blocking') 
+	driver = webdriver.Chrome(options=options)
+	driver.implicitly_wait(3)
+	driver.get(url='@[url]')
+</conf>
+
+<conf name="python.command:setUrl">
+	driver.get('@[url]')
+	log(f'chromeDriver: {driver.page_source}')
+</conf>
+
+<data name="run-error" skip>
+	Successfully installed pip-25.3		
+	no library called "cairo-2" was found
+	no library called "cairo" was found
+	no library called "libcairo-2" was found
+	cannot load library 'libcairo.so.2': error 0x7e.  Additionally, ctypes.util.find_library() did not manage to locate a library called 'libcairo.so.2'
+	cannot load library 'libcairo.2.dylib': error 0x7e.  Additionally, ctypes.util.find_library() did not manage to locate a library called 'libcairo.2.dylib'
+	cannot load library 'libcairo-2.dll': error 0x7e.  Additionally, ctypes.util.find_library() did not manage to locate a library called 'libcairo-2.dll'		
+	ERROR: Could not find a version that satisfies the requirement libcairo-2 (from versions: none)
+	No matching distribution found for libcairo-2
+</data>
+
+<data name="icon-save" skip>
+	webroot= conf('web.rootPath')
+	path=pathJoin(webroot,'assets/icons')
+	a=getFileList(path)
+	node=_node()
+	list=node.addArray('commandList')
+	while(c,a) {
+		c.inject(name, fullPath)
+		ext=right(name,'.')
+		fnm=left(name,'.')
+		if(ext=='svg') {
+			svg=fullPath
+			png="${path}/${fnm}.png"
+		}
+		command=str('${conf.path.imageMagick}/magick.exe -background none -density 1000 -size 30x30 "$svg" "$png"')
+		list.add(command)
+	}
+	addCmdWorker('baro', node)
+	return
+
+	~~  DB에 저장
+	db=Baro.db('icons')
+	node=_node('test')
+	node.var(nameFilter, '*.png')
+	a=getFileList(path,node)
+	sql="insert into icons (id, type, data, prop, tm) values(#{id}, #{type}, #{pngData}, #{prop}, #{tm})"
+	node.prop='ext'
+	node.type='ext'
+	node.tm=System.localtime()
+	while(c,a) {
+		node.id=left(c.name,'.')
+		node.pngData=Cf.toBinary(fileRead(c.fullPath))
+		db.exec(sql, node)
+	}
+	return
+</data>
