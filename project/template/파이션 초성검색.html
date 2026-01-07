@@ -1,0 +1,477 @@
+<sample skip note="초성 중성 종성 분리">
+# -*- coding: utf-8 -*-
+import re
+import sys
+"""
+    초성 중성 종성 분리 하기
+	유니코드 한글은 0xAC00 으로부터
+	초성 19개, 중성21개, 종성28개로 이루어지고
+	이들을 조합한 11,172개의 문자를 갖는다.
+
+	한글코드의 값 = ((초성 * 21) + 중성) * 28 + 종성 + 0xAC00
+	(0xAC00은 'ㄱ'의 코드값)
+
+	따라서 다음과 같은 계산 식이 구해진다.
+	유니코드 한글 문자 코드 값이 X일 때,
+
+	초성 = ((X - 0xAC00) / 28) / 21
+	중성 = ((X - 0xAC00) / 28) % 21
+	종성 = (X - 0xAC00) % 28
+
+	이 때 초성, 중성, 종성의 값은 각 소리 글자의 코드값이 아니라
+	이들이 각각 몇 번째 문자인가를 나타내기 때문에 다음과 같이 다시 처리한다.
+
+	초성문자코드 = 초성 + 0x1100 //('ㄱ')
+	중성문자코드 = 중성 + 0x1161 // ('ㅏ')
+	종성문자코드 = 종성 + 0x11A8 - 1 // (종성이 없는 경우가 있으므로 1을 뺌)
+"""
+# 유니코드 한글 시작 : 44032, 끝 : 55199
+BASE_CODE, CHOSUNG, JUNGSUNG = 44032, 588, 28
+
+# 초성 리스트. 00 ~ 18
+CHOSUNG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+
+# 중성 리스트. 00 ~ 20
+JUNGSUNG_LIST = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ']
+
+# 종성 리스트. 00 ~ 27 + 1(1개 없음)
+JONGSUNG_LIST = [' ', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+
+def convert(test_keyword):
+    split_keyword_list = list(test_keyword)
+    #print(split_keyword_list)
+
+    result = list()
+    for keyword in split_keyword_list:
+        # 한글 여부 check 후 분리
+        if re.match('.*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*', keyword) is not None:
+            char_code = ord(keyword) - BASE_CODE
+            char1 = int(char_code / CHOSUNG)
+            result.append(CHOSUNG_LIST[char1])
+            #print('초성 : {}'.format(CHOSUNG_LIST[char1]))
+            char2 = int((char_code - (CHOSUNG * char1)) / JUNGSUNG)
+            result.append(JUNGSUNG_LIST[char2])
+            #print('중성 : {}'.format(JUNGSUNG_LIST[char2]))
+            char3 = int((char_code - (CHOSUNG * char1) - (JUNGSUNG * char2)))
+            if char3==0:
+                result.append('#')
+            else:
+                result.append(JONGSUNG_LIST[char3])
+            #print('종성 : {}'.format(JONGSUNG_LIST[char3]))
+        else:
+            result.append(keyword)
+    # result
+    print("".join(result))
+
+if __name__ == '__main__':
+    
+    if len(sys.argv) > 1:
+        inputfile = open(sys.argv[1], 'r')
+        for line in inputfile.readlines():
+            convert(line)
+    else:
+        test_keyword = input("input your text:")
+        convert(test_keyword)
+
+</sample>
+
+<sample skip>
+	path=conf('web.rootPath')
+	imagePath=conf("path.images", "$path/images", true)
+	toolsPath=conf("path.images#tools", "$imagePath/tools", true)
+
+~~ 배경 출력
+	dc=mdc('bg', 700,600)
+	dc[
+		draw() {
+			dc=this, rc=this.rect()
+			this.inject(color)
+			dc.fill()
+			rcIcon = rc.center(30,30)
+			dc.image(rcIcon, 'ext:txt')
+			dark=color.darkColor(180)
+			rcCur=rc(10,10,100,30)
+			roundRect(dc, rcCur, 8,  dark, 'gradient', color, dark)
+			textColor=color.lightColor(180)
+			dc.save()
+			dc.font("weight:bold, color:$textColor")
+			dc.text(rcCur, 'test', 'center', 'elide')
+			dc.restore()
+		
+			rcLeft=rc.width(300)
+			aa=[]
+			aa.add(rcLeft.rt(), rcLeft.rb())
+			dc.drawPath(aa, '#f00')
+			roundRect(dc, rcLeft.incr(4), 8, '#aaa', '#ddd')
+		}
+	]
+	dc.color=randomColor()
+	dc.draw()
+
+~~ 리스트 출력예
+	dc=mdc('list',300,1024)
+	dc[
+		draw() {
+			dc=this, rc=this.rect()
+			arr=vbox(rc,34) 
+			while(rcLine, arr, n) {
+				dc.text(rcLine.incrX(4), "$n line")
+				dc.rectLine(rcLine, 4, '#00f')
+			}
+		}
+	]
+	dc.draw()
+~~
+	c[
+		onDraw(dc,rc) {
+			bg=mdc('canvas')
+			dc.image( rc, bg)
+			a=this.timeline()
+			num=0
+			while(p,a,idx) {
+				p.inject(code, cur)
+				not( cur.state() ) continue;
+				frame=cur.frame()
+				print(">> $code $frame, $state")
+				num++;
+			}
+			rcOut=rcBox.incr(-8)
+			rcBox = rc.rightCenter(300,500,-10,0)
+			dc.fill(rcOut, '#fff')
+			dc.image(rcBox, mdc('list'),0,34,300,500)
+			dc.rectLine(rcOut,0,'#203050aa')
+		}
+	]
+~~ SQLite full text 검색
+	https://www.sqlite.org/fts5.html
+
+~~ 한글초성검색
+def convertToInitialLetters(text):
+    CHOSUNG_START_LETTER = 4352
+    JAMO_START_LETTER = 44032
+    JAMO_END_LETTER = 55203
+    JAMO_CYCLE = 588
+    
+    def isHangul(ch):
+        return ord(ch) >= JAMO_START_LETTER and ord(ch) <= JAMO_END_LETTER
+    
+    result = ""
+    for ch in text:
+        if isHangul(ch): #한글이 아닌 글자는 걸러냅니다.
+            result += unichr((ord(ch) - JAMO_START_LETTER)/JAMO_CYCLE + CHOSUNG_START_LETTER)
+        
+    return result
+
+~~ 모델 데이터 태그생성
+f = open("hospital sentences.tsv", "r") #파일을 읽어옵니다.
+corpus = []
+for line in f:
+    columns = line.decode('utf-8').strip('\n').split('\t') #각 문장당 8개의 열
+    element = {}
+    element['sentence'] = columns[0]
+    element['category'] = set()
+    for i in range(1, 4):
+        if columns[i]:
+            element['category'].add(columns[i])
+    element['tag'] = set()
+    element['tag_initial'] = set()
+    for i in range(4, 8):
+        if columns[i]:
+            element['tag'].add(columns[i])
+            element['tag_initial'].add(convertToInitialLetters(columns[i]))
+    corpus.append(element)
+
+f.close() #파일을 닫습니다.
+
+def findTopNRelatedSentences(inputInitialLetters, N, corpus):
+    searchResults = []
+    for item in corpus:
+        totalLengthOfOcc = 0
+        for tag in item['tag_initial']:
+            if tag in inputInitialLetters:
+                totalLengthOfOcc += len(tag)
+        searchResults.append((totalLengthOfOcc, item['sentence']))
+    return sorted(searchResults, reverse=True)[:N] #상위 N개의 검색 결과만 리턴합니다.
+</sample>
+
+
+<sample skip note="python 초성검색 서비스">
+## 초성검택함수
+# 초성
+import re
+import datetime
+import time
+
+import redis
+
+from common.db.db_client import DatabaseManager
+from data.key_generator import generate_keys
+
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+db_manager = DatabaseManager()
+
+def build_keyword_dictionary(words):
+    """
+        단어 리스트로부터 초성 키와 단어-점수 매핑 사전 생성
+
+        매개변수:
+            words (iterable[str]): 원본 키워드 문자열 리스트
+        반환값:
+            dict[str, list[dict]]:
+                key: 생성된 초성 키
+                value: [{'value': 단어, 'score': 초기점수(0)}] 리스트
+        """
+    keyword_dict = {}
+    for word in words:
+        keys = generate_keys(word)
+        for key in keys:
+            if key not in keyword_dict:
+                keyword_dict[key] = []
+            if word not in keyword_dict[key]:
+                keyword_dict[key].append({'value': word, 'score': 0})
+
+    return keyword_dict
+
+# 키워드 저장
+def store_keywords_in_redis(keyword_dict):
+    """
+        Redis Sorted Set에 키워드-점수 쌍 저장
+
+        매개변수:
+            keyword_dict (dict): build_keyword_dictionary 결과 사전
+        """
+    for key, words in keyword_dict.items():
+        # Redis Sorted Set에 저장
+        for word_info in words:
+            word = word_info['value']
+            score = word_info['score']
+            # ZADD 명령으로 Sorted Set에 단어와 점수를 추가
+            r.zadd(key, {word: score})
+
+# 키워드 삭제
+def delete_keywords_from_redis(keyword_dict):
+    """
+        Redis에서 지정된 키워드 삭제 처리
+        파이프라인을 사용해 배치로 실행하여 성능 최적화
+
+        매개변수:
+            keyword_dict (dict): build_keyword_dictionary 결과 사전
+        """
+    print('keyword_dict', '들어왔는지 확인')
+    # 1) 파이프라인 시작 (transaction=False 로 하면 MULTI/EXEC 없이도 배치 전송)
+    pipeline = r.pipeline(transaction=False)
+
+    for key, words in keyword_dict.items():
+        # 삭제할 멤버 목록만 추출
+        members = [info['value'] for info in words]
+        print(f"삭제 준비 중: {key} → {len(members)}개 members")
+        if members:
+            pipeline.zrem(key, *members)
+
+        # execute 직전 로그
+        print(f"[파이프라인] EXECUTE 직전, 총 명령 개수: {len(pipeline.command_stack)}")
+        try:
+            results = pipeline.execute()
+            # execute 직후 로그
+        except Exception as e:
+            raise
+    print(f"[파이프라인] {len(results)}개 ZREM 명령 실행 완료")
+
+
+def get_all_stored_keywords():
+    """
+        Redis에 저장된 모든 키와 값을 디버그용으로 출력
+    """
+    # 패턴 '*'으로 모든 키 조회
+    keys = r.keys('*')
+    for key in keys:
+        key_str = key  # 바이트를 문자열로 디코딩
+        members = r.zrange(key, 0, -1, withscores=True)
+        # 멤버와 점수를 디코딩
+        members_str = [(member, score) for member, score in members]
+        print(f"키: {key_str} \n값: {members_str} \n\n")
+
+def get_stored_keywords(keyword):
+    """
+    특정 키에 대해 상위 10개 키워드 조회
+
+    매개변수:
+        keyword (str): 조회할 Redis ZSET 키
+    반환값:
+        list[str]: 조회된 키워드 리스트
+    """
+    members = r.zrange(keyword, 0, 9, withscores=True)
+    # 멤버와 점수를 디코딩
+    return [(member) for member, score in members]
+
+# 지정한 특수문자를 제거하는 함수
+def clean_keyword(keyword_str):
+    """
+        키워드 문자열에서 지정한 특수문자 제거
+
+        매개변수:
+            keyword_str (str): 원본 키워드 문자열
+        반환값:
+            str: 특수문자가 제거된 문자열
+    """
+    # 제거할 특수문자 목록: 쉼표, 괄호, 별표, >, <, 대괄호, 중괄호 등 필요에 따라 목록 추가 가능
+    pattern = re.compile(r'[()*><\[\]{}!@^&$?]')
+    return pattern.sub('', keyword_str)
+
+
+def get_keywords():
+    """
+        어제 하루 동안 업데이트된 상품 정보에서 유효 키워드 추출
+
+        처리 순서:
+        1) 날짜 계산
+        2) SQL 실행하여 keywords 컬럼 조회
+        3) 쉼표로 분할, 공백·특수문자 제거
+        4) set으로 중복 제거
+
+        반환값:
+            set[str]: 추출된 고유 키워드 집합
+        """
+    print("get_keywords 시작")
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    formatted_yesterday = yesterday.strftime("%Y-%m-%d")
+    sql = f"""
+        추가할 상품 키워드 추출 쿼리
+    """
+    keywords = db_manager.execute(sql)
+
+    keywords_list = set()
+    if keywords:
+        for keyword in keywords:
+            # 각 키워드를 쉼표로 분할하고 공백 제거
+            split_keywords = [kw.strip() for kw in keyword['keywords'].split(',') if kw.strip()]
+            # 특수문자 제거 처리 후 set에 추가
+            clean_keywords = [clean_keyword(kw) for kw in split_keywords]
+            # 키워드들을 set에 추가
+            keywords_list.update(clean_keywords)
+
+    print("get_keywords 끝")
+
+    return keywords_list
+
+def generate_keywords():
+    try:
+        # 키워드를 , 구분자 단위로 한번 구분
+        # , 구분자로 구분된 각 단어에 공백을 기준으로 스플릿하여 단어단위로 키워드 추출
+        keywords = get_keywords()
+        if keywords:
+            keyword_dictionary = build_keyword_dictionary(keywords)
+            store_keywords_in_redis(keyword_dictionary)
+            # get_all_stored_keywords()
+            # 결과 출력
+            # for key, value in keyword_dictionary.items():
+            #     print(f"키: {key}, 값: {value}")
+    finally:
+        db_manager.close()
+
+def get_delete_key():
+    """
+        어제 하루 동안 업데이트된 상품 정보에서 삭제할 키워드 추출
+        처리 순서:
+        1) 날짜 계산
+        2) SQL 실행하여 삭제할 keywords 컬럼 조회
+        3) 쉼표로 분할, 공백·특수문자 제거
+        4) set으로 중복 제거
+        반환값:
+            set[str]: 삭제 대상 키워드 집합
+    """
+    print("get_delete_key 시작")
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    formatted_yesterday = yesterday.strftime("%Y-%m-%d")
+    keywords = db_manager.execute(sql)
+    keywords_list = set()
+    print(sql)
+    print(keywords, ' : keywords')
+    if keywords:
+        for keyword in keywords:
+            # 각 키워드를 쉼표로 분할하고 공백 제거
+            split_keywords = [kw.strip() for kw in keyword['keywords'].split(',') if kw.strip()]
+            # 특수문자 제거 처리 후 set에 추가
+            clean_keywords = [clean_keyword(kw) for kw in split_keywords]
+            # 키워드들을 set에 추가
+            keywords_list.update(clean_keywords)
+
+    print("get_delete_key 끝")
+
+    return keywords_list
+
+def generate_delete_keywords():
+    try:
+        # 키워드를 , 구분자 단위로 한번 구분
+        # , 구분자로 구분된 각 단어에 공백을 기준으로 스플릿하여 단어단위로 키워드 추출
+        keywords = get_delete_key()
+        if keywords:
+            keyword_dictionary = build_keyword_dictionary(keywords)
+            delete_keywords_from_redis(keyword_dictionary)
+            # get_all_stored_keywords()
+            # 결과 출력
+    finally:
+        db_manager.close()
+
+## app.py
+import time
+from flask import Flask, request, jsonify, render_template, url_for
+import redis
+
+from data.keyword_engine import generate_keywords, get_stored_keywords, generate_delete_keywords
+
+# Flask 애플리케이션 초기화
+app = Flask(__name__)
+# Redis 연결 생성 (로컬 호스트: localhost, 포트: 6379, DB: 0)
+r = redis.Redis(host='localhost', port=6379, db=0)
+
+@app.route('/autocomplete', methods=['GET'])
+def autocomplete():
+    """
+        자동완성 제안을 위한 엔드포인트입니다.
+        'q' 쿼리 파라미터를 기대하며,
+        저장된 키워드 중 매칭되는 결과를 JSON으로 반환합니다.
+        """
+    search = request.args.get('q')  # 쿼리 문자열에서 검색어(q) 가져오기
+
+    if search:
+        # Redis에서 매칭되는 키워드 조회 후 반환
+        return jsonify(matching_results=get_stored_keywords(search))
+        # 쿼리 파라미터 없을 시 빈 문자열 반환
+        return ''
+    return ''
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    """
+        메인 페이지 렌더링 및 검색 처리.
+        GET/POST 요청에서 'q' 파라미터를 받아와 결과를 index.html에 표시합니다.
+        """
+    query = request.args.get('q', '')
+    results = []
+    if query:
+        results = 'test'
+    return render_template('index.html', query=query, results=results)
+
+if __name__ == '__main__':
+    total_start = time.time()
+    start_delete = time.time()
+    # 1) 키워드 delete
+    generate_delete_keywords()
+    end_delete = time.time()
+    print(f"generate_delete_keywords 소요 시간: {end_delete - start_delete:.2f}초")
+
+    # 2) 키워드 생성
+    start_generate = time.time()
+    generate_keywords()
+    end_generate = time.time()
+    print(f"generate_keywords 소요 시간: {end_generate - start_generate:.2f}초")
+
+    # 전체 소요 시간
+    total_end = time.time()
+    print(f"레디스 적재 완료 (총 소요 시간: {total_end - total_start:.2f}초)")
+
+    # Flask 앱 실행
+    app.run(debug=True)
+</sample>

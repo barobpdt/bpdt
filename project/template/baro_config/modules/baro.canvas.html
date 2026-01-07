@@ -1,0 +1,317 @@
+<script module="canvas">
+	init() {
+		this.addArray('@mdcList')
+		this.addArray('@overlayList')
+	}
+	addMdc(mdc, checkUpdate) {
+		this.inject(@mdcList)
+		not(mdcList.find(mdc)) mdcList.add(mdc)
+		if(checkUpdate) this.update()
+	}
+	removeMdc(mdc, checkUpdate) {
+		this.inject(@mdcList)
+		mdcList.remove(mdc)
+		if(checkUpdate) this.update()
+	}
+	addMdcCheck(id, rectDraw, moduleType, baseColor) {
+		this.inject(@mdcList)		
+		rectDraw.inject(x,y,w,h)
+		rectAvail=rc(0,0,w,h)
+		offset=pt(x,y)
+		prev=findField(mdcList,'id',id)
+		if(prev) {
+			not(isMdcSizeChange(prev,w,h)) {
+				return prev;
+			}
+			prev.inject(@moduleType, @baseColor)
+			mdcList.remove(prev)
+		} 
+		not(moduleType) return;
+		dc=mdc(id, w, h)
+		not(mdcList.find(dc)) {
+			mdcList.add(dc)
+		}
+		not(baseColor) {
+			baseColor = this.baseColor
+			not(baseColor) baseColor=randomColor()
+		}
+		if(typeof(baseColor,'string')) {
+			baseColor=color(baseColor)
+		}
+		canvas=this
+		dc.with(@canvas, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
+		not(dc.var(useModule)) {
+			addModule(dc,"mdc,$moduleType")
+		}
+		dc.drawDc()
+		return dc;
+	}
+	updateRect(rect) {
+		print("@@ canvas 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
+	}
+	addOverlay(mdc) {
+		this.inject(@overlayList)
+		not( overlayList.find(mdc)) overlayList.add(mdc)
+		this.update()
+	}
+	addTimeline(timelineCode, target) {
+		tm=this.timeline(timelineCode)
+		tm.config().set('target', target)
+		return tm;
+	}
+	removeTimeline(timelineCode) {
+		find=this.getTimeline(timelineCode)		
+		if(find) {
+			find.inject(code, tm)
+			tm.stop()
+			this.timeline().remove(find)
+			return true;
+		}
+		return false;
+	}
+	getTimeline(timelineCode) { 
+		while(pair, this.timeline() ) {
+			pair.inject(code, tm)
+			if(code.eq(timelineCode)) {
+				return pair;
+			}
+		}
+		return null;
+	}
+	removeOverlay(mdc) {
+		this.inject(@overlayList)
+		overlayList.remove(mdc)
+		this.update()
+	}
+	 
+	onDraw(dc,rc) {		
+		this.inject(@mdcList, @overlayList)
+		while(mdc, mdcList) {
+			mdc.draw(dc)
+		}
+		while(mdc, overlayList) {
+			mdc.inject(@cause, @rectOverlay,@offset)
+			print(">> draw overlay start ", cause, rectOverlay, offset)
+			mdc.drawOverlay(dc)
+		}
+		while(pair, this.timeline()) {
+			pair.inject(code, tm)
+			if( tm.state()) {
+				target = tm.config().get('target')				
+				if( target.drawTimeline(dc, code, tm) ) break;
+			}
+		}
+	}
+	onMouseDown(pos) {
+		while(mdc, mdcList) {
+			mdc.mouseDownDefault(pos)
+		}
+	}
+	onMouseDown(pos) {
+		while(mdc, mdcList) {
+			mdc.mouseUpDefault(pos)
+		}
+	}
+</script>
+
+<script type="common" note="canvas 공통 함수">
+	isMdcSizeChange(mdc, w,h) {
+		mdc.var(rect).size().inject(mw,mh)
+		if(mw.eq(w) && mh.eq(h)) {			
+			return false;
+		}
+		print("mdc size change", mw,mh,w,h)
+		return true;
+	}
+	mdc(id, param) {
+		map=object("user.mdcMap") not(id) return map;
+		d=map.get(id) not(param) return d;
+		img=null
+		if(typeof(param,'string')) {
+			img=Cf.imageLoad(param)
+		} else if(typeof(param,'image')) {
+			img=param
+		} else if(typeof(param,'node')) {
+			img=param.var(image)
+		} 
+		if(img) {
+			if(d) {
+				d.destroy()
+			}
+			d=Baro.drawObject(img)
+			d.id=id
+			map.set(id, d)
+			return d;
+		}
+
+		if(typeof(param,'point')) {
+			param.inject(width, height);
+		} else if(typeof(param,'widget')) { 
+			param.rect().inject(x,y,width, height)
+		} else if(typeof(param,'rect')) { 
+			param.size().inject(width, height);
+		} else {
+			args(1,width, height)
+		}
+		not( typeof(width,'num') && typeof(height,'num')) {
+			return print("메모리 DC생성 영역오류(폭:$width 높이:$height)", param);
+		}	
+		if(d) {
+			d.rect().size().inject(w, h)
+			if( width.eq(w) && height.eq(h) ) {
+				return d;
+			}
+			d.flag(FLAG.new);
+			d.destroy(true);
+			d=Baro.drawObject(width, height);
+			print("mdc set ($width, $height)");
+		} else {
+			d=Baro.drawObject(width, height);
+		}  
+		d.id=id;
+		map.set(id, d);
+		return d;
+	}
+</script>
+
+<script type="draw" note="공통 그리기 함수">
+	roundBox(dc, rcBox, rad, penColor) {
+		dc.save()
+		dc.mode()
+		not(penColor) penColor=null
+		rad2=rad*2;
+		lt=rcBox.leftTop(rad2,rad2), rt=rcBox.rightTop(rad2,rad2);
+		lb=rcBox.leftBottom(rad2,rad2), rb=rcBox.rightBottom(rad2,rad2);
+		path=[]
+		path.add('arc',rt, 0, 90, lt.tc(), 'arc', lt, 90,90, lb.lc(), 'arc',lb,180,90, rb.bc(), 'arc',rb,270,90)
+		if(type.eq('gradient','radial','conical')) {
+			arr=args(5)
+			if(type=='gradient') {
+				c1=arr.get(0), c2=arr.get(1)
+				rc.lt().inject(sx,sy)
+				rc.lb().inject(ex,ey)
+				dc.drawPath(path, penColor, true,'gradient',sx,sy,ex,ey,0,c1,1,c2)
+			} else if(type=='radial') {
+				arr.inject(cx, cy, px, py, c1, c2)
+				dc.drawPath(path, penColor, true,'radial',cx, cy, px, py,0,c1,1,c2)
+			} else {
+				arr.inject(cx, cy, c1, c2)
+				dc.drawPath(path, penColor, true,'conical',cx, cy, 0,c1,1,c2)
+			}
+		} else {
+			bgColor=type
+			if(bgColor) {
+				dc.drawPath(path, penColor, true,bgColor)	
+			} else {
+				dc.drawPath(path, penColor, true)
+			}			
+		}
+		dc.restore()
+	}
+	
+	roundRect(dc, rc, rad, penColor, type) {
+		dc.save()
+		dc.mode()
+		if(penColor) {
+			dc.pen(penColor)
+		} else {
+			dc.pen(null)
+		}		
+		path=[]
+		path.add('round',rc, rad, rad)
+		// ex) roundRect(dc, rcBox, 20, c.darkColor(100),'gradient', c, c.darkColor(100) )
+		if(type.eq('gradient','radial','conical')) {
+			arr=args(5)
+			if(type=='gradient') {
+				c1=arr.get(0), c2=arr.get(1)
+				rc.lt().inject(sx,sy)
+				rc.lb().inject(ex,ey)
+				dc.drawPath(path, penColor, true,'gradient',sx,sy,ex,ey,0,c1,1,c2)
+			} else if(type=='radial') {
+				arr.inject(cx, cy, px, py, c1, c2)
+				dc.drawPath(path, penColor, true,'radial',cx, cy, px, py,0,c1,1,c2)
+			} else {
+				arr.inject(cx, cy, c1, c2)
+				dc.drawPath(path, penColor, true,'conical',cx, cy, 0,c1,1,c2)
+			}
+		} else {
+			bgColor=type
+			if(bgColor) {
+				dc.drawPath(path, penColor, true,bgColor)	
+			} else {
+				dc.drawPath(path, penColor, true)
+			}			
+		}
+		dc.restore()
+	} 
+</script>
+
+<script type="range" note="영역처리 함수">
+	vbox(rc, sizes, local) {
+		if(local) {
+			a=[]
+		} else {
+			a=_arr()
+		}
+		rc.inject(sx,sy,w,h)
+		while(hh, recalc(h,sizes)) {
+			a.add(rc(sx,sy,w,hh))
+			sy+=hh;
+		}
+		return a;
+	}
+	hbox(rc, sizes, local) {
+		if(local) {
+			a=[]
+		} else {
+			a=_arr()
+		}
+		rc.inject(sx,sy,w,h)
+		while(ww, recalc(w,sizes)) {
+			a.add(rc(sx,sy,ww,h))
+			sx+=ww;
+		}
+		return a;
+	}
+	toRect(rc) {
+		rc.inject(x,y,w,h);
+		return Baro.rect(x,y,w,h);
+	}
+	toRc(rc) {
+		rc.inject(x,y,w,h);
+		return Baro.rc(x,y,w,h);
+	} 
+	point(param) {
+		if(typeof(param,'rect')) {
+			return param.lt();
+		} else if(typeof(param,'point')) {
+			return param;
+		} else if(typeof(param,'num')) {
+			args(width, height);
+			return Baro.point(width, height);
+		}
+		return Baro.point(0,0);
+	} 
+	mergeRect(param) {
+		cx=0,cy=0,cr=0,cb=0;
+		if(typeof(param,'array')) arr=param
+		else arr=args()
+		while(rc, arr, idx) {
+			not(typeof(rc,'rect')) continue;
+			rc.inject(x,y,w,h);
+			r=x+w, b=y+h;
+			if(idx==0) {
+				cx=x,cy=y,cr=r,cb=b;
+			} else {
+				if(x<cx) cx=x;
+				if(y<cy) cy=y;
+				if(cr<r) cr=r;
+				if(cb<b) cb=b;
+			}
+		}
+		w=cr-cx;
+		h=cb-cy;
+		return rc(cx, cy, w, h)
+	}
+</script>
+

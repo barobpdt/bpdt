@@ -1,11 +1,14 @@
 <script note="앱공통 유틸리티 함수">
+	initConfig() {
+	
+	}
+	
 	runSrc(code) {
 		return runSource(cv(code))
 	}
 	getSrc(code) {
 		return getSource(cv(code), this, Cf.funcNode('parent'))
-	}
-	
+	}	
 	callModuleFunc(service, funcName) {
 		if(typeof(service,'node')) {
 			serviceNode=service

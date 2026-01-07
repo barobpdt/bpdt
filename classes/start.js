@@ -64,7 +64,7 @@ findParentNode(cur, field, val) {
 	return;
 }
 findField(root, field, val) {
-	not(typeof(root,'node')) return;
+	not(typeof(root,'node','array')) return;
 	asize=args().size() 
 	while(cur, root) {
 		if(asize==3) 
@@ -72,6 +72,8 @@ findField(root, field, val) {
 		else 
 			if(cur.isVar(field)) return cur;
 		if(cur.childCount()) {
+			if(typeof(root,
+			'array')) continue;
 			if(asize==3) 
 				sub=findField(cur,field,val)
 			else
@@ -222,6 +224,12 @@ checkFunc(functionName) {
 }
 checkModule(moduleName) {
 	return object('user.subfuncMap').get(moduleName);
+}
+checkTick(tick, duration) {
+	not(tick) return false;
+	not(duration) duration=250
+	d=System.tick() - tick;
+	return when(d.gt(duration), true, false)
 }
 getObjectList(name) {
 	arr=[]
@@ -798,22 +806,42 @@ fileDelete(path) {
 /*
 페이지처리 함수
 */
-include(name) {
-	if( name.find('#') ) {	
-		splitSep(name,'#').inject(service,fullname)
-		filePathInfo(fullname).inject(folder,null,fname)
-		name="$service::$fname"
-	} else {	
+include(name, checkReg) {
+	if( name.find('#') ) {
+		print(">> include name==$name")
+		splitSep(name,'#').inject(service,name)
+		if(service.ch('@')) {
+			service=service.value(1)
+			print(">> include ======== $service, $name")
+			path=conf("path.$service")
+			not(isFolder(path)) {
+				return print("@@include 오류 서비스 $service 에 등록된 폴더가 없습니다 $path")
+			}			
+			not(name.find('.')) {
+				name.add('.html')
+			}
+			fullname="$path/$name"
+			print(">> include fullname==$fullname")
+		} else {
+			fullname=name
+		}
+		if(checkReg) {
+			regServiceFile(service, fullname)
+		}
+	} else {
 		not(name.find('.')) {
 			name.add('.js')
 		}
 		path = conf('include.path') not(path) path=System.path()
 		fullname = "$path/$name"
-		filePathInfo(fullname).inject(folder,null,fname)
 	}
 	
 	not( isFile(fullname) ) {
-		return print("include 오류 ($fullname 파일이 없습니다)")
+		return print("@@include 오류 ($fullname 파일이 없습니다)")
+	}	
+	filePathInfo(fullname).inject(folder,null,fname)
+	if(service) {
+		name="$service::$fname"
 	}
 	map=object('map.include') 
 	modify=fileTime(fullname)
@@ -987,8 +1015,104 @@ applyFunc(&src, module) {
 	} else {
 		Cf.sourceApply("<func>$src</func>")
 	}
-} 
-parseSource(&s, base) {
+}
+makeParam(param) {
+	if(typeof(param,'node')) {
+		args(node,&s,target,fn)
+	} else {
+		args(&s,target,fn)
+		node=_node()
+	}
+	not(fn) {
+		fn=Cf.funcNode('parent')
+	}
+	while(s.valid()) {
+		c=s.ch() not(c) break;
+		if(c.eq(',')) {
+			s.incr()
+			continue;
+		}
+		k=s.move(), v=''
+		c=s.ch()		
+		if(c.eq(':','=')) {
+			c=s.incr().ch()
+			if(c.eq()) {
+				v=s.match()
+			} else {
+				name=s.move()
+				if(fn.isset(name)) {
+					v=fn.get(name)
+				} else if(target) {
+					v=target.get(name)
+				}
+			}
+		} else {
+			if(fn.isset(k)) {
+				v=fn.get(k)
+			} else if(target) {
+				v=target.get(k)
+			}
+		}
+		node.set(k,v)
+	}
+	return node;
+}
+makeWidgets(widgetSource, base) {
+	not(widgetSource) return print("@@ makeWidgets 함수 실행오류 위젯생성 소스가 없습니다");
+	not(base) base='test'
+	Cf.rootNode('@funcInfo').set('pageBase', base)
+	Cf.sourceApply(str('<widgets base="$base">$widgetSource</widgets>'))
+	Cf.rootNode('@funcInfo').set('pageBase', '')
+}
+getServiceNode(param) {
+	if(typeof(param,'node')) {
+		return param;
+	}
+	asize=args().size()
+	projectInfo = object("baro.serviceProjectInfo")
+	serviceNode=null
+	projectName='baro', serviceName=''
+	findName=''
+	newCheck=false
+	if(asize==1) {
+		findName=param
+	}
+	else if(asize==2) {
+		args(a,b)
+		if(typeof(b,'bool')) {
+			findName=a
+			newCheck=true
+		} else {
+			projectName=a
+			serviceName=b
+		}
+	} 
+	if(findName) {
+		while(project, projectInfo ) {
+			while(service, project) {
+				if(service.cmp('serviceName', findName)) {
+					serviceNode=service
+					break;
+				}
+			}
+			if(serviceNode) break;
+		}
+		if( newCheck && ~(serviceNode) ) {
+			project=projectInfo.addNode(projectName)
+			serviceNode=project.addNode(findName)
+			serviceNode.set('serviceName', findName)
+		}
+	} else if(projectName && serviceName) {
+		project=projectInfo.addNode(projectName)
+		serviceNode=project.addNode(serviceName)
+		not(project.projectName) project.set('projectName', projectName)
+		not(serviceNode.serviceName) serviceNode.set('serviceName', serviceName)
+	}
+	projectInfo.set('@currentProject', project)
+	projectInfo.set('@currentService', serviceNode)
+	return serviceNode;
+}
+parseSource(&s, base, serviceNode) {
 	c=s.ch()
 	not(c.eq('<')) {
 		applyFunc(s)
@@ -1045,22 +1169,45 @@ parseSource(&s, base) {
 				base=baseName
 			}
 			widgetSource.add(ss)
-		} else if( tag.eq('script') ) {			
+		} else if( tag.eq('script') ) {
 			module=propValue(prop,'module')
+			checkEval=propValue(prop,'eval',true)
+			checkTest=propValue(prop,'test',true)
+			if( checkTest ) {
+				not(module) module='test'
+			}
 			if(debug) {
-				type=module
-				not(type) type=propValue(prop,'type')
-				if(type) {
-					node=object("script.$base")
-					not(type) type='default'
-					if( ss.eq(node.get(type)) ) {
-						print("@@ source not change $base:$type")
-						continue;
+				if(checkEval) {
+					evalSource.add(ss)
+				} else {
+					type=module
+					not(type) {
+						type=propValue(prop,'type')
+						not(type) {
+							if(checkTest) type='test'
+						}
 					}
-					node.set(type,ss)
+					if(type) {
+						mapScript=object("script.$base")
+						not(type) type='default'
+						if( ss.eq(mapScript.get(type)) ) {
+							// print("@@ source not change $base:$type")
+							continue;
+						}
+						mapScript.set(type,ss)
+					}
 				}
+			} else if(checkEval) {
+				continue;
 			}
 			applyFunc(ss, module)		
+		} else if( tag.eq('service') ) {
+			project=propValue(prop, 'project')
+			name=propValue(prop, 'name')
+			not(project) project='baro'
+			not(name) name='config'
+			serviceNode=getServiceNode(project, name)
+			parseSource(ss, project, serviceNode)
 		} else if( tag.eq('eval') ) {
 			evalSource.add(ss)
 		} else if( tag.eq('conf') ) {			
@@ -1088,12 +1235,11 @@ parseSource(&s, base) {
 				} else {
 					dataCode="data.$base"
 				}			
-				node=object(dataCode)
-				node.parseJson(src)
+				map=object(dataCode)
+				map.parseJson(src)
 			} else {
-				node=object("data.$base")
-				not(name) name='default'
-				node.set(name,src)
+				map=object("data.$base") not(name) name='default'
+				map.set(name,src)
 			}
 		} else if( tag.eq('sample') ) {
 			continue;
@@ -1102,13 +1248,16 @@ parseSource(&s, base) {
 		}
 	}
 	if( widgetSource ) {
-		Cf.rootNode('@funcInfo').set('pageBase', base)
-		Cf.sourceApply(str('<widgets base="$base">$widgetSource</widgets>'))
-		Cf.rootNode('@funcInfo').set('pageBase', '')
+		map=object("data.$base")
+		prev=map.get('@pages')
+		if( prev.ne(widgetSource) ) {
+			map.set('@pages',widgetSource)
+			makeWidgets(widgetSource, base)
+		}
 	}
 	if( evalSource ) {
 		target=page("$base:main") not(target) target=_node('evalNode')
-		runSource(evalSource,target)
+		runSource("Cf.debug('clear')\r\n$evalSource",target)
 	} 
 }
 nodeVar(obj, name, value) {
@@ -1163,7 +1312,7 @@ resetModule(obj) {
 	obj.var(useModule, false)
 	obj.var(moduleList).reuse()
 }
-addModule(obj, moduleName) {
+addModule(obj, moduleName, checkDup) {
 	// print("add module args ==> ", args())
 	params=args(2)
 	modules=nodeArrayVar(obj,'@moduleList')
@@ -1183,7 +1332,7 @@ addModule(obj, moduleName) {
 			return obj;
 		} 
 		funcInfo = object('user.subfuncMap').get(moduleName) 
-		if( addModuleFunc(obj, moduleName, funcInfo) ) {
+		if( addModuleFunc(obj, moduleName, funcInfo, checkDup) ) {
 			fcInit = obj.get("init")
 			if( typeof(fcInit,'func') ) {
 				call(fcInit, obj, params)
@@ -1193,7 +1342,7 @@ addModule(obj, moduleName) {
 	};
 }
 
-addModuleFunc(obj, moduleName, &funcs, subName) {
+addModuleFunc(obj, moduleName, &funcs, checkDup) {
 	not(funcs.ch()) return;
 	cnt = 0
 	while(funcs.valid()) {
@@ -1201,6 +1350,9 @@ addModuleFunc(obj, moduleName, &funcs, subName) {
 		fc=call("${moduleName}.${fnm}") not(typeof(fc,'func')) continue;
 		if(fnm.eq('init')) {
 			cnt++
+		} else if(checkDup) {
+			fc=this.get(fnm)
+			if(typeof(fc,'func')) continue;
 		}
 		if(isEventName(fnm)) {
 			fn=Cf.funcNode(fc,obj)

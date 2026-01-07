@@ -1,0 +1,440 @@
+<script module="mdc_keyboard">
+	init() {
+		@automata=Cf.automata();
+		// backgroundImage=Cf.imageLoad("tools/keyborad_bg.png");	
+		this.font('size:14, weight:400')
+		this.makeKeyMap('engLower');
+		this.makeKeyMap('engUpper');
+		this.makeKeyMap('korLower');
+		this.makeKeyMap('korUpper');
+		this.makeKeyMap('etc');
+		this.langMode='kor';
+		this.keyMode=''
+		this.canvasHeight=276;
+		this.inputHeight=46;
+		this.inputCheck=false; 
+		this[ingString]='';
+		this[doneString]='';
+		this[leftString]='';
+		this[rightString]='';
+		this.updateRect()
+	}
+	drawDc() {
+		this.fill()
+		this.updateRect()
+		this.drawKeyboard()
+	}
+	
+	drawOverlay(dc, rect) {
+		this.inject(@cause,@rectOverlay, @offset, @row, @column,keyMode,langMode)
+		field="$row:$column"
+		rect.incr(-4)
+		// shift
+		if(field.eq('2:0','2:11')) {
+			dc.fill(rect,'#80808a').rectLine(rc, 0, '#20202a')
+		}
+		// ctrl
+		else if(field.eq('3:1')) {
+			dc.fill(rect,'#7a7070').rectLine(rc, 0, '#20202a');
+		}
+		else {
+			dc.fill(rect,'#80808a').rectLine(rect, 0, '#20202a')
+		}
+		this.drawKeyText(dc, rect, row, column)
+	}
+	updateRect() {	
+		this.inject(inputCheck, inputHeight, canvasHeight, @rectAvail)
+		ox=8, oy=8, bw=67, bh=60, gabX=6, gabY=7;
+		if( inputCheck ) {
+			vbox(rectAvail, "*,$inputHeight,$canvasHeight").inject(rcSpace, rcInput, rcKeyboard)
+			this.showInput(rcInput.incr(4))
+		} else {
+			rcInput=null
+			vbox(rectAvail, "*,$canvasHeight").inject(rcSpace, rcKeyboard)
+		}
+		this.with(rcInput, rcKeyboard)
+		rcKeyboard.inject(sx,sy)
+		sy+=oy;
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				cx=sx+ox;
+				while( c=0, c<10, c++ ) {
+					this[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				w=876-cx;
+				if( w<60 ) w=110;
+				this[rc $n $c]=rc(cx,sy,w,bh);
+				sy+=bh+gabY;
+			case 1:
+				cx=sx+24;
+				while( c=0, c<10, c++ ) {
+					this[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				w=876-cx;
+				if( w<60 ) w=110;
+				this[rc $n $c]=rc(cx,sy,w,bh);
+				sy+=bh+gabY;
+			default:
+				cx=sx+ox;
+				while( c=0, c<12, c++ ) {
+					this[rc $n $c]=rc(cx,sy,bw,bh) cx+=bw+gabX;
+				}
+				sy+=bh+gabY;
+				if( n.eq(3) ) {
+					r1=this[rc $n 4], r2=this[rc $n 7];
+					this[rcSpace]=mergeRect(r1,r2);
+				}
+			}
+		}
+	}
+	drawKeyboard(dc) {
+		not(dc) dc=this
+		this.inject(langMode, keyMode, rcKeyboard, rcInput);
+		keyMapCode=langMode;
+		if(keyMapCode.ne("etc") ) {
+			if( keyMode.eq("shift","shiftOn") ) {
+				keyMapCode.add("Upper");
+			} else {
+				keyMapCode.add("Lower");
+			}
+		}
+		this.var(@keyMap, this.get(keyMapCode))
+		
+		dc.fill('#1a1a1a');
+		// dc.image(rc, background);
+		dc.font('size:14pt, color:#fafafa');
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c]
+					dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a')
+					this.drawKeyText(dc,rc,n,c)
+				}
+			case 1:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c]
+					dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a')
+					this.drawKeyText(dc,rc,n,c)
+				}
+			case 2:
+				while( c=0, c<12, c++ ) {
+					rc=this[rc $n $c]
+					dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+					this.drawKeyText(dc,rc,n,c)
+				}
+			case 3:
+				while( c=0, c<12, c++ ) {
+					if( c.eq(4,5,6,7) ) {
+						if( c!=4 ) continue;
+						rc=this[rcSpace]						
+						dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
+					} else {
+						rc=this[rc $n $c]
+						dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+						this.drawKeyText(dc,rc,n,c)
+					}
+				}
+			default:
+			}
+		}
+	}
+	mouseDown(pt) {
+		print(">> keyboard mouse down ", pt)
+		_update=func() {
+			this.var(row, n)
+			this.var(column, c)
+			this.mouseDownRect=rc;
+			cause = 'keyboardDown'
+			rectOverlay = rc
+			this.with(@cause, @rectOverlay)
+			canvas.addOverlay(this)
+		};
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 1:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 2:
+				while( c=0, c<12, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			case 3:
+				while( c=0, c<12, c++ ) {
+					if( c.eq(4,5,6,7) ) {
+						not( c.eq(4) ) continue;
+						rc=this[rcSpace];
+					} else {
+						rc=this[rc $n $c];
+					}
+					not( rc.contains(pt) ) continue;
+					return _update();
+				}
+			default:
+			}
+		}		
+	}
+	onMouseUp(pt) {		
+		_update=func(rc) {
+			if( this.mouseDownRect ) {
+				this.mouseDownRect=null;
+				cause = 'keyboardUp'
+				rectOverlay = rc
+				this.with(@cause, @rectOverlay)
+				canvas.removeOverlay(this)
+			}
+			if( rc ) {
+				this.keyDown(n,c);
+			}
+		};
+		while( n=0, n<4, n++ ) {
+			switch(n) {
+			case 0:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 1:
+				while( c=0, c<11, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 2:
+				while( c=0, c<12, c++ ) {
+					rc=this[rc $n $c];
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			case 3:
+				while( c=0, c<12, c++ ) {
+					if( c.eq(4,5,6,7) ) {
+						not( c.eq(4) ) continue;
+						rc=this[rcSpace];
+					} else {
+						rc=this[rc $n $c];
+					}
+					not( rc.contains(pt) ) continue;
+					return _update(rc);
+				}
+			default:
+			}
+		}
+		_update();		
+	}
+	onTimer() {
+		input=this.var(focusWidget) not(input) return;
+		input.active();
+		input.focus();
+		this.var(focusWidget, null);
+	}
+	showInput(rectInput) {
+		this.inject(inputCheck, inputWidget)
+		if(inputCheck && inputWidget) {
+			inputWidget.move(rectInput)
+			inputWidget.show()
+		}
+	}
+	createInput() {
+		this.inputWidget = @widget.create('input','inputKeyboard',this.var(canvas)	)
+		this.inputCheck = true
+		return input;
+	}
+	drawKeyText(dc,rc, row,column,offset) {
+		this.inject(@keyMap)
+		if(offset) {
+			rc=rc.offset(offset)
+		}
+		key=keyMap[k $row $column];
+		switch(key) {
+		case comma:	dc.text(rc,',' ,'center');
+		case dot: dc.text(rc, '.','center');
+		case bs:
+			img=Cf.imageLoad('tools/icon_bs.png');
+			dc.image( rc, img, "center");
+		case enter:
+			img=Cf.imageLoad('tools/icon_enter.png');
+			dc.image( rc, img, "center");
+		case etc:
+			img=Cf.imageLoad('tools/icon_etc.png');
+			dc.image( rc, img, "center");
+		default:
+			dc.text(rc, key, 'center');
+		}
+	}
+	 
+	makeKeyMap(code) {
+		str=conf("keyboard.${code}").ref();
+		keys=this.addNode(code);
+		row=0;
+		while( str.valid() ) {
+			line=str.findPos("\n");
+			not(line.ch()) continue;
+			while( line.valid(), c ) {
+				keys[k $row $c]=line.findPos(",").trim();
+			}
+			row++;
+		}
+	}
+	
+	clear() {
+		automata.clear();
+		this[leftString]='';
+		this[doneString]='';
+		this[doingString]='';
+		this[ingString]='';
+	}
+	setInputText(addMode) {	
+		
+		this.inject(inputWidget)
+		str='';
+		not(addMode.eq("doingString")) {
+			str.add(this[$addMode]);		
+		}
+		str.add(this[doingString]);
+		if( addMode.eq('leftString') ) {
+			str.add(this[rightString]);
+		} 
+		if(inputWidget) {
+			inputWidget.value(str);
+			this.var(focusWidget, inputWidget);
+		}
+	}
+	keyDown(n,c) {
+		this.inject(this, keyMode, langMode );
+		kid=langMode;
+		not(kid.eq("etc") ) {
+			kid="eng";
+			if( keyMode.eq("shift","shiftOn") ) {
+				kid.add("Upper");
+			} else {
+				kid.add("Lower");
+			}
+		} 
+		keyMap=this.get(kid);	
+		addMode=when( this[leftString], 'leftString','doneString');
+		ing=this[ingString];
+		switch(n ) {
+		case 0:
+			if( c.eq(10) ) {
+				if( ing ) {
+					if( ing.size().eq(1) ) {
+						this.clear();
+					} else {
+						this[ingString]=ing.value(0,-1);
+						automata.toString(this, addMode);
+					}
+				} else {
+					if( keyMode.eq("ctrl") ) {
+						this[$addMode]='';
+						this.keyMode='';
+					} else {
+						str=this[$addMode];
+						if(str) this[$addMode]=str.substr(0,-1);
+					}
+				}
+				this.setInputText(addMode);
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 1:
+			if( c.eq(10) ) {
+				_value("\n");
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 2:
+			if( c.eq(0,11) ) {
+				if( keyMode.eq("shift","shiftOn") ) {
+					this.keyMode=when(keyMode.eq("shift"),"shiftOn");
+				} else {
+					this.keyMode="shift";
+				}
+			} else {
+				_value( keyMap[k $n $c] );
+			}
+		case 3:
+			switch( c) {
+			case [9,10]:
+				input=this.inputWidget;
+				if(input) {
+					pos=input.pos();
+					if(c.eq(9) ) {
+						if(pos>0) pos--;
+					} else {
+						len=input.value().length();
+						if(pos<len) pos++;
+					}
+					input.pos(pos);
+					this.var(focusWidget, input);
+				}
+			case 0:
+				if( langMode.eq('etc') ) {
+					this.langMode=this.prevMode;
+				} else {
+					this.prevMode=langMode;
+					this.langMode='etc';
+				}
+			case 1:
+				if(keyMode.eq("ctrl") ) {
+					this.keyMode='';
+				} else {
+					this.keyMode='ctrl';
+				}
+			case 3:	_value( "\t" );
+			case 4:	_value( " " );
+			case 8:
+				if( langMode.eq('kor') ) {
+					this.langMode='eng';
+				} else {
+					this.langMode='kor';
+				}
+			case 11:
+				this.clear();
+			default:
+				_value( keyMap[k $n $c] );
+			}
+		default:
+		}
+		this.update();
+		_value=func(val ) {
+			switch( val ) {
+			case enter: val="\n";
+			case tab: val="\t";
+			case dot: val='.';
+			case comma:	val=',';
+			}
+			if( langMode.eq('kor') ) {
+				if( val.is("alpha") ) {
+					this[ingString].add(val);
+					automata.toString(this, addMode);
+				} else {
+					automata.toString(this, addMode);
+					this[doneString].add(this[doingString]);
+					this.clear();
+					this[$addMode].add(val);
+				}
+			} else {
+				automata.toString(this, addMode);
+				this[$addMode].add(val);
+			}
+			this.setInputText(addMode);
+			if( keyMode.eq("shift", "ctrl") ) {
+				this.keyMode='';
+			}  
+		};		
+	}
+</script>

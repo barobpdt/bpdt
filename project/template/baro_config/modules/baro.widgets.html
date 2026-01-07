@@ -68,7 +68,18 @@
 </script>
 
 <script module="widget">
-	create(tag, id, props, target) {
+	create(tag, id, target, props) {		 
+		widget=@widget.getWidget(tag, id, target) if(typeof(widget,'widget')) return widget;
+		widget.tag=tag
+		widget.id=id
+		if(typeof(props,'string')) {
+			widget.parseJson(props)
+		}
+		widget.var(baseCode,"${base}:${id}")
+		Cf.createWidget(widget)
+		return widget;
+	}
+	getWidget(tag, id, target) {
 		not(id) {
 			idx=global().incrNum('@widgetCreateIndex')
 			id="${tag}_${idx}"
@@ -79,13 +90,7 @@
 			splitSep(target.var(baseCode),':').inject(base,pid)
 		}
 		not(base) base='common'
-		widget=object("${tag}.${base}:${id}")
-		if(typeof(props,'string')) {
-			widget.parseJson(props)
-		}
-		widget.var(baseCode,"${base}:${id}")
-		Cf.createWidget(widget)
-		return widget;
+		return object("${tag}.${base}:${id}")
 	}
 	eventSender(tag) {
 		fn=Cf.funcNode('parent')
@@ -98,7 +103,6 @@
 	}
 	setParent(widget, parent) {
 		if( parent != widget.parentWidget()) {
-			print("@@@@@ widget move parent change @@@@@@", widget.id, rect)
 			widget.flags("child"); 
 			widget.parentWidget(parent);
 		}

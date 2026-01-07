@@ -52,12 +52,9 @@
 
 <script module="SourceRun">
 	init() {
-        include('classes/common/page.js')
-        include('classes/common/editor.js')
 		@editPanel  = page("editPanel")
 		@logPanel   = page("logPanel")
 		@splitter   = widget("splitter")
-		print("xxxxxxxxxx page init xxxxxxxxxxx", editPanel, splitter)
 		splitter.addPage(editPanel)
 		splitter.addPage(logPanel)
 		this.positionLoad()

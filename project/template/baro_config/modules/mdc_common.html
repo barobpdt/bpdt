@@ -1,0 +1,210 @@
+<script module="mdc" note="memory draw context 모듈함수">
+	init() {
+		this.addArray('@subMdcList')
+	}
+	addSubMdc(mdc, checkUpdate) {
+		this.inject(@subMdcList)
+		not(subMdcList.find(mdc)) subMdcList.add(mdc)
+		if(checkUpdate) this.var(canvas).update()
+	}
+	removeMdc(mdc, checkUpdate) {
+		canvas.inject(@subMdcList)
+		subMdcList.remove(mdc)
+		if(checkUpdate) this.var(canvas).update()
+	}
+	addMdcCheck(id, rectDraw, moduleType, baseColor) {
+		this.inject(@subMdcList)
+		rectDraw.inject(x,y,w,h)
+		rectAvail=rc(0,0,w,h)
+		offset=pt(x,y)
+		prev=findField(subMdcList,'id',id)
+		if(prev) {
+			not(isMdcSizeChange(prev,w,h)) {
+				return prev;
+			}
+			prev.inject(@moduleType, @baseColor)
+			subMdcList.remove(prev)
+		} 
+		not(moduleType) return;
+		dc=mdc(id, w, h)
+		not( subMdcList.find(dc)) {
+			subMdcList.add(dc)
+		}
+		not(baseColor) {
+			baseColor = canvas.baseColor
+			not(baseColor) baseColor=randomColor()
+		}
+		if(typeof(baseColor,'string')) {
+			baseColor=color(baseColor)
+		}
+		parentMdc=this
+		canvas=this.var(canvas)
+		dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
+		not( dc.var(useModule)) {
+			addModule(dc,"mdc,$moduleType")
+		}
+		dc.drawDc()
+		return dc;
+	}	
+	updateRect(rectDraw) {
+		print("@@ mdc 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
+	}
+	draw(dc) {
+		this.inject(@canvas, @rectDraw, @subMdcList)
+		if( typeof(rectDraw,'rect') ) {
+			if(canvas.resizeMode) {
+				dc.fill(rectDraw, '#ddd')
+				dc.rectLine(rectDraw, 0, '#aaa', 1, 'dot')
+			} else {
+				dc.image(rectDraw, this)
+			}
+			while(mdc, subMdcList) {
+				mdc.draw(dc)
+			}
+		}
+	}
+	canvasSize() {
+		return this.var(canvas).rect().size();
+	}
+	drawOverlay(dc) {
+		this.inject(@subMdcList)
+		while(mdc, subMdcList) {
+			mdc.drawOverlay(dc)
+		}
+	}
+	drawTimeline(dc, code, timeline) {
+		dc.save()
+		frame=tm.frame()
+		value=tm.currentValue();
+		if(code.eq('fadeOut', 'fadeIn')) {			
+			curVal=value*100;
+			if(code.eq('fadeOut')) {
+				if(frame==1) this.var(canvas).removeMdc(this)
+				dc.opacity(100-curVal)
+			} else {
+				if(frame==19) this.var(canvas).addMdc(this)
+				dc.opacity(curVal)
+			}
+		} else if( code.eq('moveLeft', 'moveRight', 'moveTop', 'moveBottom') ) {
+			this.var(rectDraw).inject(x,y,w,h)
+			if(frame==1) {
+				this.var(canvas).removeMdc(this)
+				switch(code) {
+				case moveLeft: 
+					this.var(moveSize, when(this.var(fixedSize), w, x+w) );
+				case moveRight:
+					this.cavasSize().inject(cw, ch)
+					this.var(moveSize, when(this.var(fixedSize), w, cw-x));
+				case moveTop: 
+					this.var(moveSize, y+h);
+				case moveBottom: 
+					this.cavasSize().inject(cw, ch)
+					this.var(moveSize, ch-y);
+				}				
+			} else if( frame>10) {
+				dc.opacity(50)
+			}
+			cv=this.var(moveSize) * value;
+			switch(code) {
+			case moveLeft: 
+				x-=cv;
+				if(frame==19) {
+					if( this.var(minSize)) {
+						x=w-this.var(minSize)
+						this.var(canvas).addMdc(this)
+					}
+				}
+			case moveRight: 
+				x+=cv;
+				if(frame==19) {
+					if( this.var(minSize)) {
+						this.canvasSize().inject(cw, ch)
+						x=cw-this.var(minSize);
+						this.var(canvas).addMdc(this)
+					}
+				}
+			case moveTop: 
+				y-=cv;
+			case moveBottom: 
+				y+=cv;
+			}			
+			this.var(rectDraw, rc(x,y,w,h) )
+			this.draw(dc)
+		}
+		dc.restore()
+	}
+	mouseDownDefalut(pos) {				
+		this.inject(id, @canvas, @rectDraw, @offset)
+		not(rectDraw.contains(pos)) {
+			return false;
+		}				
+		pt=pos.offset(offset,false)
+		return this.mouseDown(pt)
+	} 
+	mouseUpDefault(pos) {
+		this.inject(id, @canvas, @rectDraw, @offset)
+		not(rectDraw.contains(pos)) {
+			return false;
+		}
+		pt=pos.offset(offset,false)		
+		return this.mouseUp(pt);
+	}
+	mouseMoveDefault(pos) {	
+	}
+</script>
+
+<script module="mdc_leftPanel">
+	init() {
+		addModule(this,'mdc',true)
+	}
+	drawDc() {
+		this.inject(@rect, @rectAvail, @baseColor)
+		this.fill()
+		this.save().mode()
+		dark=baseColor.darkColor(100)
+		hbox(rectAvail,'*,24,4').inject(a,b)
+		bb=b.leftCenter(0,100)
+		bg=color('#fff')		
+		pa=[]
+		pa.add(a.lt(), a.rt(), bb.lt())
+		pa.add(bb.rt().incrY(10))
+		pa.add(bb.rb().incrY(-10))
+		pa.add(bb.lb(), a.rb(), a.lb(), a.lt())
+		rectAvail.lt().inject(sx,sy)
+		rectAvail.lb().inject(ex,ey)
+		this.drawPath(pa, null, true, 'gradient',sx,sy,ex,ey,0, baseColor.lightColor(220), 1,baseColor.lightColor(180) )
+		print("drawDc pa===$pa", bg)
+		a.incrW(2)
+		bb.incrX(2,true)
+		pa.reuse().add(a.rt(), bb.lt())
+		pa.add(bb.rt().incrY(10))
+		pa.add(bb.rb().incrY(-10))
+		pa.add(bb.lb(), a.rb())		
+		this.drawPath(pa, dark, 2 )
+		this.restore()
+	}
+	mouseDown(pt) {
+		print(">> leftPanel mouseDown : $pt")
+	}
+	mouseUp(pt) {
+		print(">> leftPanel mouseUp : $pt")
+	}
+</script>
+
+<script module="mdc_box">
+	init() {
+		addModule(this,'mdc',true)
+	}
+	drawDc() {
+		this.inject(@rectAvail, @baseColor)
+		dark=baseColor.darkColor(100)
+		roundRect(this, rectAvail.incr(8), 8, dark, 'gradient', baseColor, dark)
+	}
+	mouseDown(pt) {
+		print(">> box mouseDown : $pt")
+	}
+	mouseUp(pt) {
+		print(">> box mouseUp : $pt")
+	}
+	
+</script>

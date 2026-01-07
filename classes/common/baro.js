@@ -5,148 +5,85 @@
 ==============================================================*/
 initService() {
 	include('classes/common/baro-services')
+	getServiceNode('baro', 'apps')
+	getServiceNode('baro', 'tools')
 	// conf('cf.useWatch', true, true)
 	// conf('cf.useDebug', true, true)
-	if( conf('path.apps') ) {		
-		initApps()
-	}
-	if( conf('path.modules') ) {		
-		initModules()
-	}
-	initWidget()	
+	initModules()
+	initConfig()
+	Cf.debug(true,"data/logs")
+	include("@apps#SourceRun")
 	startGlobalTimer()
 }
 initWas() {
 	was().start(80, conf('web.rootPath'))
 }
-includeService(serviceMode, fullpath, reset, evalAll) {
-	ext=right(fullpath,'.')
+includeService(serviceMode, fullPath, reset, evalAll) {
+	ext=right(fullPath,'.')
 	if(ext.eq('html')) {
 		if(typeof(serviceMode,'node')) {
 			service=serviceMode.serviceName
 		} else {
 			service=serviceMode
 		}
-		include("$service#$fullpath")
+		include("$service#$fullPath")
 	} else if(ext.eq('js')) {
-		serviceNode=@baro.getServiceNode(serviceMode, true)	
+		if(typeof(serviceMode,'node')) {
+			serviceNode=serviceMode
+		} else {
+			serviceNode=getServiceNode(serviceMode, true)	
+		}		
 		not(typeof(serviceNode,'node')) {
 			return print("@@ 설정 로드오류 [$serviceMode]에 등록된 정보가 없습니다 (경로: $path)") 
 		}
-		not(isFile(fullpath)) {
-			return print("@@ includeService 오류 파일 $fullpath 경로가 없습니다");
+		not(isFile(fullPath)) {
+			return print("@@ includeService 오류 파일 $fullPath 경로가 없습니다");
 		}
-		src=fileRead(fullpath)
+		src=fileRead(fullPath)
 		not(src) {
 			return print("@@ includeService 오류 설정소스가 없습니다");
 		}
-		// print(">> loadService 시작", serviceNode, fullpath )
+		// print(">> loadService 시작", serviceNode, fullPath )
 		root=@baro.loadService(serviceNode, src, reset, evalAll)
-		filePathInfo(fullpath).inject(folder, filename)		
+		filePathInfo(fullPath).inject(folder, filename)		
 		root.set('@currentFileName',filename)
 		return root;
 	} else {
-		print("@@ include service $fullpath 파일무시")
+		print("@@ include service $fullPath 파일무시")
 	}
 }
-@baro.getServiceNode(param) {
-	if(typeof(param,'node')) return param;
-	asize=args().size()
-	groups = object("baro.serviceGroups")
-	serviceNode=null
-	groupName='baroCommon', serviceName=''
-	findName=''
-	newCheck=false
-	if(asize==1) {
-		findName=param
-	}
-	else if(asize==2) {
-		args(a,b)
-		if(typeof(b,'bool')) {
-			findName=a
-			newCheck=true
-		} else {
-			groupName=a
-			serviceName=b
-		}
-	} 
-	if(findName) {
-		while(group, groups ) {
-			while(service, group) {
-				if(service.cmp('serviceName', findName)) {
-					serviceNode=service
-					break;
-				}
-			}
-			if(serviceNode) break;
-		}
-		if( newCheck && ~(serviceNode) ) {
-			group=groups.addNode(groupName)
-			serviceNode=group.addNode(findName)
-			serviceNode.set('serviceName', findName)
-		}
-	} else if(groupName && serviceName) {
-		group=groups.addNode(groupName)
-		serviceNode=group.addNode(serviceName)
-		not(group.groupName) group.set('groupName', groupName)
-		not(serviceNode.serviceName) serviceNode.set('serviceName', serviceName)
-	}
-	groups.set('@currentGroup', group)
-	groups.set('@currentService', serviceNode)
-	return serviceNode;
-}
-initModules(reset) {
-	useWatch=conf('cf.useWatch')
-	serviceNode=@baro.getServiceNode('baroCommon', 'modules')
-	modulePath = conf('path.modules')
-	not(isFolder(modulePath)) {
+
+initModules() {
+	serviceNode=getServiceNode('baro', 'modules')
+	path = conf('path.modules')
+	not(isFolder(path)) {
 		print("initModules : $modulePath 모듈경로 미정의")
 		return;
 	}
-	setConfigPath(serviceNode, modulePath,useWatch,reset)
+	regServiceFolder(serviceNode, path )
 }
-initApps(reset) {
-	useWatch=conf('cf.useWatch')
-	serviceNode=@baro.getServiceNode('baroCommon', 'apps')
-	appsPath = conf('path.apps') 
-	not(isFolder(appsPath)) {
-		print("initApps : $appsPath 모듈경로 미정의")
-		return;
-	}
-	setConfigPath(serviceNode, appsPath, useWatch, reset)
-}
-initTools(reset) {
-	useWatch=conf('cf.useWatch')
-	serviceNode=@baro.getServiceNode('baroCommon', 'tools')
-	path = pathJoin(conf('path.libs'), 'tools')
-	not(isFolder(path)) {
-		print("initTools : $path 툴경로 미정의")
-		return;
-	}
-	setConfigPath(serviceNode, path, useWatch, reset)
-}
-
-/*
-	서비스 경로설정
-	serviceMode : 서비스 그룹에 등록된 서비스명 존재 여부체크후 존재하면 경로모든 파일을 서비스에 등록한다
-	설정 및 모듈적용 폴더선택 
-	serviceMode: 서비스명
-	useWatch: 변경감시여부
-*/
-setConfigPath(serviceMode, path, useWatch, reset) {
-	serviceNode=@baro.getServiceNode(serviceMode)
-	not(typeof(serviceNode,'node')) {
-		return print("서비스 경로설정 오류 [$serviceMode]에 등록된 정보가 없습니다 (경로: $path)") 
-	}
+regServiceFile(serviceMode, fullPath) {
+	serviceNode=getServiceNode(serviceMode)
 	callback = func(serviceNode, fullpath) {
 		return includeService(serviceNode, fullpath)
 	};
+	addWatchFile(serviceNode, fullPath, callback)
+}
+
+regServiceFolder(serviceMode, path) {
+	serviceNode=getServiceNode(serviceMode)
+	not(typeof(serviceNode,'node')) {
+		return print("@@ 서비스 등록 오류 [$serviceMode]에 등록된 정보가 없습니다 (경로: $path)") 
+	}
+	service=serviceNode.serviceName
+	not(service) {
+		return print("@@ 서비스 등록 오류 서비스명 미정의 (노드: $serviceNode)")
+	}
+ 
 	while(cur, getFileList(path)) {
 		cur.inject(name, fullPath)
-		includeService(serviceNode, fullPath, reset)
-		if(useWatch) {
-			addWatchFile(serviceNode, fullPath, callback)
-		}
+		includeService(serviceNode, fullPath)
+		regServiceFile(serviceNode, fullPath)	
 	}
 }
 
@@ -275,7 +212,7 @@ json(node, childPrefix, useIndent) {
 
 /* 파일감시 경로를 추가한다 */
 addWatchFile(serviceMode, fullpath, callback) {
-	serviceNode=@baro.getServiceNode(serviceMode, true)	
+	serviceNode=getServiceNode(serviceMode, true)	
 	not(typeof(serviceNode,'node')) {
 		return print("@@ 파일감시 경로추가 오류 [$serviceMode]에 등록된 정보가 없습니다 (경로: $path)") 
 	}
@@ -1493,7 +1430,7 @@ cv(key) {
 		splitSep(key,':').inject(rootCode,key)
 	}
 	if(rootCode) {
-		serviceNode=@baro.getServiceNode(rootCode)
+		serviceNode=getServiceNode(rootCode)
 		not(serviceNode) return print("cv 오류 (service 루트로드를 찾을수 없습니다)");
 		return configValue(key, this, serviceNode);
 	} else {

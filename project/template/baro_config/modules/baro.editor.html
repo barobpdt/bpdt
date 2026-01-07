@@ -167,17 +167,33 @@
 			}
 			return this.editorKeyEnter(mode);
 		}
+		if( key.eq(KEY.Tab) ) {
+			if( this.editorSourceKeyMap(true)) return true;
+			return this.tabPositionsMove( mode&KEY.ctrl );
+		}
 		switch( key ) {
 		case KEY.F3:	return this.editorSearch(mode);
+		case 34:	return this.editorKeyString('"');
+		case 39:	return this.editorKeyString("'");
+		case 41:	return this.startBlockMark("(");
+		case 93:	return this.startBlockMark("[");
+		case 123:	return this.braketStart();
+		case 125:	return this.braketEnd();
 		default:
 		}
 		if( mode&KEY.ctrl ) {
 			if( key.eq(KEY.S, KEY.R, KEY.B) ) {
 				return page().runScript(key);
+			} else if(key.eq(KEY.E) ) {
+				return page().keyMapInput();
+			} else if(key.eq(KEY.Q) ) {
+				return page().keyTemplateInput();
 			} else if(key.eq(KEY.F) ) {
 				return page().searchFocus(editor);
 			} else if(key.eq(KEY.D) ) {
 				return this.editorCopyLine(mode); 
+			} else if(key.eq(KEY.K) ) { 
+				return page().keymapInfo(editor);
 			} else if(key.eq(KEY.Up)) {
 				return this.editorUpPress(editor);
 			} else if(key.eq(KEY.Down)) {
@@ -186,11 +202,79 @@
 		}
 		this.prevKey=key;
 	}
- 
+	tabPositionsMove( back ) {
+		tabArray=this.var(tapPositions);
+		not(tabArray.size()) return false;
+		pos=this.pos();
+		if( back ) {
+			idx=this[tabPositionsIndex--];
+			if( idx.lt(0) ) {
+				this[tabPositionsIndex=0];
+				idx=0;
+			}
+		} else {
+			idx=this[tabPositionsIndex++];
+		}
+		end=this.pos('end');
+		pt=tabArray.get(idx);
+		not( pt ) {
+			return _finish();
+		}
+		pt.inject(sp,ep);
+		if( sp>=end ) {
+			if( sp.eq(end) ) {
+				this.movePos(sp);
+			}
+			return _finish();
+		}
+		size=ep-sp;
+		if( size>1 ) {
+			this.select(sp,ep);
+		} else {
+			this.movePos(sp);
+		}
+		return true;
+
+		_finish=func() {
+			this.tabPositionsIndex=0;
+			tabArray.reuse();
+			return true;
+		}
+	} 
 	editorContentChange( pos, add, remove ) {
 	}
 	editorSourceKeyMap(tab) { 
 		if(this.is("select")) return false;
+		ch=this.text('prevChar');
+		code='';
+		if(tab) {
+		code=this.sp().spText('prevChar', 'prevWord');
+		len=code.length();
+		code.add("`");
+		} else if(ch.eq(" ")) {
+			text=this.sp().spText('prevChar','prevWord','prevChar');
+			ch=text.ch();
+		not(ch.eq('/')) return false;
+		code=text.trim();
+		len=text.length();
+		chk=4;
+		}
+		not(len) return false;
+		map=this.var(keyMap);
+		not(map ) return false;
+		str=map.get(code);
+		if( str) {
+			pos=this.pos();
+			this.select(pos-len, pos);
+			if(str.find("\n")) {
+				line=this.text("lineStart");
+				indent=indentText(line);
+				this.insertIndent(str, indent);
+			} else {
+				this.insert(str, true);
+			}
+			return true;
+		}
 		return false;
 	}
 	editorTagInsert(tag) { 
@@ -265,5 +349,76 @@
 		}
 		this.insert("\n$indent");
 		return true;
+	}
+	editorKeyString( c ) {
+		if( this.is('select') ) return false;
+		if( _check(c) ) return true;
+		str=this.text('prevWord');
+		ch=str.prevChar();
+		if( ch.eq('=',',','(') ) {
+			this.insert("$c^|$c", true);
+			return true;
+		}
+		_check=func(c) {
+			ch = this.text('nextChar');
+			if( ch.eq(c) ) {
+				cur=this.pos();
+				this.pos(cur+1);
+				return true;
+			}
+			return false;
+		};
+		return false;
+	} 
+	braketStart() {
+		if( this.isSyntaxString()) return false;
+		str=this.text('prevWord');
+		ch=str.prevChar();
+		if( str.start('else') || ch.eq(')') ) {
+			line=this.sp('lineStart').spText();
+			val=line.trim();
+			if( val.start('switch') ) {
+				this.insertIndent("{\ncase ^|:\ndefault:\n}");
+			} else {
+				this.insertIndent("{\n\t^|\n}");
+			}
+			return true;
+		}
+		return false;
+	}
+	braketEnd() {
+		if( this.isSyntaxString()) return false;
+		str=this.sp().spText('start');
+		str.add("}");
+		indent = this.editorStartIndent( str );
+		if( indent ) {
+			this.insert(indent);
+		}
+		return false;
+	}
+	startBlockMark(ch) { 
+		if( ch.eq('(')) {
+			start="(", end=")";
+		} else {
+			start="[", end="]";
+		}
+		str=this.sp().spText(-128);
+		str.add(end);
+		str.ref();
+		ep=str.cur(-1);
+		in=str.match(start,end,0x101);
+		if(typeof(in,'bool')) return false;
+		if(in.size() ) {
+			sp=str.cur(-1);
+			sp+= 1;
+			len=str.pos(sp,ep).length();
+			if(len>2) {
+				pos = this.pos() - len;
+				this.insert(end);
+				this.mark( pos, pos+1 );
+				return true;
+			}
+		}
+		return false;
 	}
 </script>
