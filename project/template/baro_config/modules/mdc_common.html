@@ -2,57 +2,87 @@
 	init() {
 		this.addArray('@subMdcList')
 	}
-	addSubMdc(mdc, checkUpdate) {
-		this.inject(@subMdcList)
-		not(subMdcList.find(mdc)) subMdcList.add(mdc)
-		if(checkUpdate) this.var(canvas).update()
+	updateCanvas() {
+		this.var(canvas).update()
 	}
-	removeMdc(mdc, checkUpdate) {
-		canvas.inject(@subMdcList)
-		subMdcList.remove(mdc)
-		if(checkUpdate) this.var(canvas).update()
+	addOverlay(cause, rectOverlay) {
+		this.with(@cause, @rectOverlay)
+		this.var(canvas).addOverlay(this)
 	}
-	addMdcCheck(id, rectDraw, moduleType, baseColor) {
+	removeOverlay(cause, rectOverlay) {
+		this.with(@cause, @rectOverlay)
+		this.var(canvas).removeOverlay(this)
+	}
+	addClipMdc(clipType) {
+		this.with(@clipType)
+		this.var(canvas).addClipMdc(this)
+	}
+	removeClipMdc() {
+		this.with(@clipType)
+		this.var(canvas).removeClipMdc(this)
+	}
+	addOverlay(cause, rectOverlay) {
+		this.with(@cause, @rectOverlay)
+		this.var(canvas).addOverlay(this)
+	}
+	addSubMdcList(mdc) {
 		this.inject(@subMdcList)
-		rectDraw.inject(x,y,w,h)
-		rectAvail=rc(0,0,w,h)
-		offset=pt(x,y)
-		prev=findField(subMdcList,'id',id)
-		if(prev) {
-			not(isMdcSizeChange(prev,w,h)) {
-				return prev;
+		not(subMdcList.find(mdc)) {
+			subMdcList.add(mdc)
+		}
+		return mdc;
+	}
+	addSubMdc(param, rectDraw, moduleType, baseColor) {
+		if( typeof(param,'node') && param.var(img) ) {
+			dc=param
+		} else {
+			dc=mdc(param)
+		}
+		if( typeof(rectDraw,'bool') ) {
+			not(dc && dc.var(img)) return
+			dc.drawDc()
+			this.addSubMdcList(dc)
+			if(rectDraw) {
+				this.var(canvas).update()
 			}
-			prev.inject(@moduleType, @baseColor)
-			subMdcList.remove(prev)
-		} 
-		not(moduleType) return;
-		dc=mdc(id, w, h)
-		not( subMdcList.find(dc)) {
-			subMdcList.add(dc)
+			return;
+		}		
+		if(typeof(rectDraw,'rect')) {			
+			rectDraw.inject(x,y,w,h)
+			rectAvail=rc(0,0,w,h)
+			offset=pt(x,y)		
+			dc=mdc(id, w, h)
+			dc.with(@offset, @rectDraw, @rectAvail)
 		}
-		not(baseColor) {
-			baseColor = canvas.baseColor
-			not(baseColor) baseColor=randomColor()
-		}
-		if(typeof(baseColor,'string')) {
-			baseColor=color(baseColor)
-		}
-		parentMdc=this
-		canvas=this.var(canvas)
-		dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
-		not( dc.var(useModule)) {
+		not(dc) return;
+		if( moduleType && ~(dc.var(useModule)) ) {
+			if(typeof(baseColor,'string')) {
+				baseColor=color(baseColor)
+			}
+			not(baseColor) {
+				baseColor = this.baseColor
+				not(baseColor) baseColor=randomColor()
+			}
+			parentMdc = this
+			canvas=this.var(canvas)
+			dc.with(@canvas, @parentMdc, @moduleType, @baseColor)
 			addModule(dc,"mdc,$moduleType")
 		}
 		dc.drawDc()
-		return dc;
-	}	
+		return this.addSubMdcList(dc);
+	}
+	removeMdc(mdc, checkUpdate) {
+		this.inject(@subMdcList)
+		subMdcList.remove(mdc)
+		if(checkUpdate) this.var(canvas).update()
+	}
 	updateRect(rectDraw) {
 		print("@@ mdc 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
 	}
 	draw(dc) {
-		this.inject(@canvas, @rectDraw, @subMdcList)
+		this.inject(@rectDraw, @subMdcList)
 		if( typeof(rectDraw,'rect') ) {
-			if(canvas.resizeMode) {
+			if(this.resizeMode) {
 				dc.fill(rectDraw, '#ddd')
 				dc.rectLine(rectDraw, 0, '#aaa', 1, 'dot')
 			} else {
@@ -133,8 +163,9 @@
 		}
 		dc.restore()
 	}
-	mouseDownDefalut(pos) {				
-		this.inject(id, @canvas, @rectDraw, @offset)
+	mouseDownDefault(pos) {				
+		this.inject(id, @rectDraw, @offset)
+		print("xxx mouse down default xxxx", rectDraw, pos)
 		not(rectDraw.contains(pos)) {
 			return false;
 		}				
@@ -142,7 +173,7 @@
 		return this.mouseDown(pt)
 	} 
 	mouseUpDefault(pos) {
-		this.inject(id, @canvas, @rectDraw, @offset)
+		this.inject(id, @rectDraw, @offset)
 		not(rectDraw.contains(pos)) {
 			return false;
 		}
@@ -152,7 +183,6 @@
 	mouseMoveDefault(pos) {	
 	}
 </script>
-
 <script module="mdc_leftPanel">
 	init() {
 		addModule(this,'mdc',true)
@@ -185,16 +215,15 @@
 	}
 	mouseDown(pt) {
 		print(">> leftPanel mouseDown : $pt")
+		return false;
 	}
 	mouseUp(pt) {
 		print(">> leftPanel mouseUp : $pt")
+		return false;
 	}
 </script>
 
 <script module="mdc_box">
-	init() {
-		addModule(this,'mdc',true)
-	}
 	drawDc() {
 		this.inject(@rectAvail, @baseColor)
 		dark=baseColor.darkColor(100)
@@ -202,9 +231,11 @@
 	}
 	mouseDown(pt) {
 		print(">> box mouseDown : $pt")
+		return true;
 	}
 	mouseUp(pt) {
 		print(">> box mouseUp : $pt")
+		return true;
 	}
 	
 </script>

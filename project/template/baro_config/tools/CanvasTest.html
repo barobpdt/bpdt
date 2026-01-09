@@ -1,79 +1,87 @@
-<page id="main" 
-	onInit() {
-		canvas=widget('c')
-		this.startTick = System.tick()
-	}
-	onTimer() {
-		if(checkTick(this.startTick)) {
-			this.startTick=0
-			return canvas.updateRect()
-		}
-		if(checkTeck(this.resizeTick)) {
-			this.resizeTick = 0
-			return canvas.updateRect()
-		}
-	}
-	onResize() {
-		this.resizeTick = System.tick()
-	}
->
-	<canvas id="c" module="canvas,canvasMdc">
+<page id="main" module="page_canvas">
+	<canvas id="c" module="canvas, canvas_clip">
 </page>
 
 <script eval>
-	canvas=widget('c')
-	mdc=mdc('leftPanel')
-	mdc[
-	canvasSize() {
-		return this.var(canvas).rect().size();
-	}
-	]
-	
-	print("eval>> ", mdc.canvasSize() )
+	p=this.var(page)	
+	p.size(800,600)
+	p.open()
+	/*
+	mdc=c.var(mdcList).get(0)	 
+	mdc.setValue('나광호')
+	rect = mdc.getClipRect()
+	*/	 
+	print(">> test eval " )
 </script>
+ 
 
-<script module="canvasMdc">
+<script module="canvas_clip">	 
 	updateRect() {
 		canvas=this
 		rect=canvas.rect()
-	}
-	makeDrawUnit() {
-		include('@modules#mdc_keyboard', true)
-		
-		canvas.baseColor = randomColor()
-		canvas.addMdcCheck('leftPanel', rect.leftTop(300), 'mdc_leftPanel') 
-		canvas.addMdcCheck('keyboard',rect.bottomCenter(890, 322, 0, -4),'mdc_keyboard')
-		print("==== canvasMdc makeDrawUnit end ====", canvas)
-	}
+		canvas.addMdc('clip', rect.topCenter(0,50), 'mdc_clip')
+	} 
 </script>
 
-<script module="mdc">
-	draw(dc) {
-		this.inject(@rectDraw)
-		if( typeof(rectDraw,'rect') ) {
-			dc.image(rectDraw, this)
-		}
+<script module="mdc_clip">
+	init() {
+		this[bgColor]=randomColor().lightColor(150)
+		this[clipDuration] = 1500
+		this[clipTick] = 0
+		this[@clipFlag]=true
+		updateRect()
 	}
-	mouseDown(pos) {				
-		this.inject(id, @canvas, @rectDraw, @offset)
-		not(rectDraw.contains(pos)) {
-			return false;
-		}				
-		pt=pos.offset(offset,false)
-		print(">> mouse down ", id, offset, pos, pt)
+	updateRect() {
+		this[rectBox]=this.var(rectAvail).incr(2)
+	}
+	drawClip(dc, rc) {
+		this.inject(@clipFlag)
+		if(clipFlag) {
+			dc.fill(color(200,80,80,50))
+			dc.rectLine(rc, 0, '#f00')
+			clipFlag=false
+		} else {
+			clipFlag=true
+		}
+		this.with(@clipFlag)
+	}
+	drawDc() {
+		this.inject(@rectAvail)
+		dc=this
+		dc.fill()
+		// dc.fill(rectAvail, this[bgColor])
+		not(this[rectBox]) {
+			this.updateRect()
+		}
+		dark=this[bgColor].darkColor(200)
+		roundRect(this, this[rectBox], 8, dark, '#fff')
+		value = this[inputResult]
+		dc.font('size:15,weight:bold,color:#333')
+		dc.textSize(value).inject(textWidth, textHeight)
+		dc.text(this[rectBox].incrX(10), value)
+		print("draw dc ", value, textWidth, textHeight)
+		this.with(@textWidth, @textHeight)
+	}
+	getClipRect() {
+		this.inject(@textWidth, @textHeight, @offset)
+		rect=this[rectBox].offset(offset)
+		rect.inject(x,y,w,h)
+		x+=15+textWidth;
+		return rc(x,y,3,h).incrYH(8,8)
+	}
+	setValue(text) {
+		this[inputResult]=text
+		this.drawDc()
+	}
+	mouseDown(pt) {		
+		print(">> mouse down ", pt)
 		return true;
 	} 
-	mouseUp(pos) {
-		this.inject(id, @canvas, @rectDraw, @offset)
-		not(rectDraw.contains(pos)) {
-			return false;
-		}
-		pt=pos.offset(offset,false)
-		print(">> mouse up", id, offset, pos, pt))
+	mouseUp(pt) {		
+		print(">> mouse up", pt))
 		return true;
 	}
-	mouseMove(pos) {	
-	}
+	
 </script>
 
 

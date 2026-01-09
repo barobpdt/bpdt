@@ -2,92 +2,134 @@
 	init() {
 		this.addArray('@mdcList')
 		this.addArray('@overlayList')
+		this.addArray('@clipList')
+		this.addArray('@pathList')
+		this.var(useDrawPath, false)
 	}
-	addMdc(mdc, checkUpdate) {
+	canvasSize() {
+		return this.rect().size()
+	}
+	addClipMdc(mdc) {
+		this.inject(@clipList)
+		not(clipList.find(mdc)) clipList.add(mdc)
+	}
+	removeClipMdc(mdc) {
+		this.inject(@clipList)
+		clipList.remove(mdc)
+	}
+	addMdcList(mdc) {
 		this.inject(@mdcList)
-		not(mdcList.find(mdc)) mdcList.add(mdc)
-		if(checkUpdate) this.update()
+		not(mdcList.find(mdc)) {
+			mdcList.add(mdc)
+		}
+		return mdc;
+	}
+	addMdc(id, rectDraw, moduleType, baseColor) { 
+		if( typeof(param,'node') && param.var(img) ) {
+			dc=param
+		} else {
+			dc=mdc(param)
+		}
+		if( typeof(rectDraw,'bool') ) {
+			not(dc && dc.var(img)) return
+			dc.drawDc()
+			this.addMdcList(dc)
+			if(rectDraw) {
+				this.update()
+			}
+			return;
+		}		
+		if(typeof(rectDraw,'rect')) {			
+			rectDraw.inject(x,y,w,h)
+			rectAvail=rc(0,0,w,h)
+			offset=pt(x,y)		
+			dc=mdc(id, w, h)
+			dc.with(@offset, @rectDraw, @rectAvail)
+		}
+		not(dc) return; 		
+		if( moduleType && ~(dc.var(useModule)) ) {
+			if(typeof(baseColor,'string')) {
+				baseColor=color(baseColor)
+			}
+			not(baseColor) {
+				baseColor = this.baseColor
+				not(baseColor) baseColor=randomColor()
+			}
+			canvas=this
+			dc.with(@canvas, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
+			addModule(dc,"mdc,$moduleType")
+		}
+		dc.drawDc()
+		return this.addMdcList(dc)
 	}
 	removeMdc(mdc, checkUpdate) {
 		this.inject(@mdcList)
 		mdcList.remove(mdc)
 		if(checkUpdate) this.update()
 	}
-	addMdcCheck(id, rectDraw, moduleType, baseColor) {
-		this.inject(@mdcList)		
-		rectDraw.inject(x,y,w,h)
-		rectAvail=rc(0,0,w,h)
-		offset=pt(x,y)
-		prev=findField(mdcList,'id',id)
-		if(prev) {
-			not(isMdcSizeChange(prev,w,h)) {
-				return prev;
-			}
-			prev.inject(@moduleType, @baseColor)
-			mdcList.remove(prev)
-		} 
-		not(moduleType) return;
-		dc=mdc(id, w, h)
-		not(mdcList.find(dc)) {
-			mdcList.add(dc)
-		}
-		not(baseColor) {
-			baseColor = this.baseColor
-			not(baseColor) baseColor=randomColor()
-		}
-		if(typeof(baseColor,'string')) {
-			baseColor=color(baseColor)
-		}
-		canvas=this
-		dc.with(@canvas, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
-		not(dc.var(useModule)) {
-			addModule(dc,"mdc,$moduleType")
-		}
-		dc.drawDc()
-		return dc;
-	}
-	updateRect(rect) {
-		print("@@ canvas 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
+	updateRectCheck() {
+		print("@@ upate check updateCheckTick==${this.updateCheckTick}")
+		this.updateCheckTick=System.tick()
+	} 
+	updateRect() {
+		print("@@ canvas 객체에 updateRect 함수 중복정의 하세요")
 	}
 	addOverlay(mdc) {
 		this.inject(@overlayList)
 		not( overlayList.find(mdc)) overlayList.add(mdc)
 		this.update()
 	}
-	addTimeline(timelineCode, target) {
-		tm=this.timeline(timelineCode)
-		tm.config().set('target', target)
-		return tm;
-	}
-	removeTimeline(timelineCode) {
-		find=this.getTimeline(timelineCode)		
-		if(find) {
-			find.inject(code, tm)
-			tm.stop()
-			this.timeline().remove(find)
-			return true;
-		}
-		return false;
-	}
-	getTimeline(timelineCode) { 
-		while(pair, this.timeline() ) {
-			pair.inject(code, tm)
-			if(code.eq(timelineCode)) {
-				return pair;
-			}
-		}
-		return null;
-	}
 	removeOverlay(mdc) {
 		this.inject(@overlayList)
 		overlayList.remove(mdc)
 		this.update()
 	}
-	 
-	onDraw(dc,rc) {		
-		this.inject(@mdcList, @overlayList)
+	addTimeline(timelineCode, target, checkStart) {
+		tm=this.timeline(timelineCode)
+		tm.config().set('target', target)
+		if(checkStart) {
+			tm.start(20,800)
+		}
+		return tm;
+	}
+	removeTimeline(timelineCode) { 
+		while(pair, this.timeline(), idx) {
+			pair.inject(code, tm)
+			if(code.eq(timelineCode)) {
+				tm.stop()
+				this.timeline().remove(idx)
+				return true;
+			}
+		}
+		return false;
+	}
+	onDraw(dc,rc) {
+		if( rc.eq(this.rect()) ) {
+			not( rc.eq(this.rectCanvas)) {
+				this.updateRectCheck()
+				this.rectCanvas = rc
+			}
+		} else {
+			if(this[clipMdc]) {
+				this[clipMdc].inject(@clipType, @clipFlag)
+				if(clipFlag) {
+					dc.fill(color(200,80,80,50))
+					dc.rectLine(rc, 0, '#f00')
+					clipFlag=false
+				} else {
+					clipFlag=true
+				}
+				this[clipMdc].with(@clipFlag)
+			}
+			return;
+		}
+		this.inject(@mdcList, @overlayList,@pathList)
 		while(mdc, mdcList) {
 			mdc.draw(dc)
+		}
+		if( this.var(popupDialog) ) {
+			dc.fill(color(0,0,0,50))
+			this.var(popupDialog).drawAll(dc)
 		}
 		while(mdc, overlayList) {
 			mdc.inject(@cause, @rectOverlay,@offset)
@@ -98,18 +140,44 @@
 			pair.inject(code, tm)
 			if( tm.state()) {
 				target = tm.config().get('target')				
-				if( target.drawTimeline(dc, code, tm) ) break;
+				if( target && target.drawTimeline(dc, code, tm) ) break;
+			}
+		}
+		if( this.var(useDrawPath) && isValid(pathList) ) {
+			dc.save()
+			dc.drawPath(pathList, this.baseColor)
+			dc.restore()
+		}
+	}
+	
+	onMouseDown(pos) {
+		this.inject(@mdcList, @popupDialog)
+		if(popupDialog) { 
+			not( popupDialog.mouseDownDefault(pos) ) {
+				this.var(popupDialog,null)
+				this.addTimeline('closePopup',popupDialog,true)
+				this.update()
+			}
+			return true;
+		}
+		if(isValid(mdcList)) {
+			while(n=mdcList.size()-1,0) {
+				mdc=mdcList.get(n)
+				if( mdc.mouseDownDefault(pos) ) return true;
 			}
 		}
 	}
-	onMouseDown(pos) {
-		while(mdc, mdcList) {
-			mdc.mouseDownDefault(pos)
+	onMouseUp(pos) {
+		this.inject(@mdcList, @popupDialog)
+		if(popupDialog) { 
+			popupDialog.mouseUpDefault(pos)
+			return true;
 		}
-	}
-	onMouseDown(pos) {
-		while(mdc, mdcList) {
-			mdc.mouseUpDefault(pos)
+		if(isValid(mdcList)) {
+			while(n=mdcList.size()-1,0) {
+				mdc=mdcList.get(n)
+				if( mdc.mouseUpDefault(pos) ) return true;
+			}
 		}
 	}
 </script>
@@ -160,8 +228,7 @@
 			d.rect().size().inject(w, h)
 			if( width.eq(w) && height.eq(h) ) {
 				return d;
-			}
-			d.flag(FLAG.new);
+			} 
 			d.destroy(true);
 			d=Baro.drawObject(width, height);
 			print("mdc set ($width, $height)");

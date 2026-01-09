@@ -15,6 +15,13 @@ initService() {
 	include("@apps#SourceRun")
 	startGlobalTimer()
 }
+closeApp() {
+	if(checkFunc('closePythonCommand')) {
+		closePythonCommand()
+		System.sleep(100)
+	}
+	Cf.exit()
+}
 initWas() {
 	was().start(80, conf('web.rootPath'))
 }
@@ -403,7 +410,7 @@ addCmdWorker(id, command, logCallback) {
 			}
 			this.set('@cmdResult','')
 		} else {
-			call(logCallback,this,data)
+			call(logCallback,this,data,true)
 		}
 		return;
 	}
@@ -422,31 +429,32 @@ addUserWorker(id, targetNode, callbackWorker ) {
 		return print("@@addWebDownloadWorker 대상노드 미정의");
 	}
 	worker = Baro.worker(id)
-	not(worker.var(callback)) {
-		worker.start(@baro.userWorker)
+	workerCallback = worker.get('@callback')
+	not(typeof(workerCallback,'func')) 
+	{
+		worker.start(func(node) {
+			not(typeof(node,'node')) {
+				print("user worker stay mode !!!")
+				return;
+			}
+			callback = node.callbackWorker
+			if(typeof(callback,'func')) {
+				callback(node)
+			} else {
+				print("@@ userWorekr 콜백함수 미정의 (노드:$node)")
+			}
+		});
 	}
+	
 	if(typeof(callbackWorker,'func')) {
 		targetNode.callbackWorker=callbackWorker
 	} else {
 		not(targetNode.callbackWorker) {
 			targetNode.callbackWorker=func(node) { print("##userWorker callback  node::$node") };
-			targetNode.callbackWorker=func(node) { print("##userWorker callback  node::$node") };
 		}
 	}
 	worker.push(targetNode)
 	return worker;
-}
-@baro.userWorker(node) {
-	not(typeof(node,'node')) {
-		print("user worker stay mode !!!")
-		return;
-	}
-	callback = node.callbackWorker
-	if(typeof(callback,'func')) {
-		callback(node)
-	} else {
-		print("@@ userWorekr 콜백함수 미정의 (노드:$node)")
-	}
 }
 
 /* 전역 타이머 실행 */
@@ -492,6 +500,12 @@ stopGlobalTimer(workerClose) {
 @baro.procGlobalTimer() {
 	timerInfo = object('baro.globalTimerInfo')
 	if(timerInfo.lock) {
+		if( timerInfo.lockCheckTick ) {
+			timerInfo.lockCheckTick=0
+			timerInfo.lock=false
+		} else {
+			timerInfo.lockCheckTick=System.tick()
+		}
 		return;
 	}
 	if(timerInfo.useWatchFile) {
@@ -1086,10 +1100,14 @@ removeIndentText(&s) {
 			ss.add(line.trim())
 		} else {
 			ss.add(nl)
-			if(line.start(firstIndent,true)) {
-				ss.add(line.trim('right'))
+			if(firstIndent) {
+				if(line.start(firstIndent,true)) {
+					ss.add(line.trim('right'))
+				} else {
+					ss.add(line.trim())
+				}
 			} else {
-				ss.add(line.trim())
+				ss.add(line.trim('right'))
 			}
 		}
 	}

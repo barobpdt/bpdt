@@ -1,6 +1,35 @@
+<script type="keyboadCommand">
+	@keyboard.execSource(cmd) {
+		not( cmd.cmp('@workerStatus','run') ) {
+			startPythonCommand()
+			while(n=0,30) {
+				System.sleep(100)
+				print(">>@keyboad.execSource workerStatus => $n", cmd.get('@workerStatus'));
+				if(cmd.cmp('@workerStatus','run') ) break;
+			}
+			not( cmd.cmp('@workerStatus','run') ) {
+				return print("@@ python command 프로그램이 실행중이 아닙니다");
+			}
+		}		
+		cmd.logTail.timeout()
+		cmd.logAppend.append("@#>exec:${cmd.execSource}")
+		result=''
+		while(n=0,30) {
+			System.sleep(10)
+			result = cmd.logTail.timeout()
+			if(result) {
+				print(">>@keyboad.execSource $n $result")
+				cmd.mdc.setResult(result)
+				break;
+			}
+		}
+	}
+</script>
+
 <script module="mdc_keyboard">
 	init() {
-		@automata=Cf.automata();
+		cmd=Baro.process('runCommand')	
+		cmd.mdc=this
 		// backgroundImage=Cf.imageLoad("tools/keyborad_bg.png");	
 		this.font('size:14, weight:400')
 		this.makeKeyMap('engLower');
@@ -10,25 +39,27 @@
 		this.makeKeyMap('etc');
 		this.langMode='kor';
 		this.keyMode=''
+		this.currentPos=0
 		this.canvasHeight=276;
 		this.inputHeight=46;
 		this.inputCheck=false; 
 		this[ingString]='';
+		this[ingBuffer]='';
+		this[ingArrayText]='';
 		this[doneString]='';
-		this[leftString]='';
-		this[rightString]='';
 		this.updateRect()
 	}
-	drawDc() {
+	drawDc() {		
 		this.fill()
-		this.updateRect()
+		not(this.var(rectKeyboard)) {
+			this.updateRect()
+		}
 		this.drawKeyboard()
-	}
-	
-	drawOverlay(dc, rect) {
+	}	
+	drawOverlay(dc) {
 		this.inject(@cause,@rectOverlay, @offset, @row, @column,keyMode,langMode)
 		field="$row:$column"
-		rect.incr(-4)
+		rect = rectOverlay.offset(offset).incr(-4)		
 		// shift
 		if(field.eq('2:0','2:11')) {
 			dc.fill(rect,'#80808a').rectLine(rc, 0, '#20202a')
@@ -46,14 +77,14 @@
 		this.inject(inputCheck, inputHeight, canvasHeight, @rectAvail)
 		ox=8, oy=8, bw=67, bh=60, gabX=6, gabY=7;
 		if( inputCheck ) {
-			vbox(rectAvail, "*,$inputHeight,$canvasHeight").inject(rcSpace, rcInput, rcKeyboard)
-			this.showInput(rcInput.incr(4))
+			vbox(rectAvail, "*,$inputHeight,$canvasHeight").inject(rcSpace, rectInput, rectKeyboard)
+			this.showInput()
 		} else {
-			rcInput=null
-			vbox(rectAvail, "*,$canvasHeight").inject(rcSpace, rcKeyboard)
+			rectInput=null
+			vbox(rectAvail, "*,$canvasHeight").inject(rcSpace, rectKeyboard)
 		}
-		this.with(rcInput, rcKeyboard)
-		rcKeyboard.inject(sx,sy)
+		this.with(@rectInput, @rectKeyboard)
+		rectKeyboard.inject(sx,sy)
 		sy+=oy;
 		while( n=0, n<4, n++ ) {
 			switch(n) {
@@ -90,16 +121,16 @@
 	}
 	drawKeyboard(dc) {
 		not(dc) dc=this
-		this.inject(langMode, keyMode, rcKeyboard, rcInput);
-		keyMapCode=langMode;
-		if(keyMapCode.ne("etc") ) {
+		this.inject(langMode, keyMode);
+		keyCode=langMode;
+		if(keyCode.ne("etc") ) {
 			if( keyMode.eq("shift","shiftOn") ) {
-				keyMapCode.add("Upper");
+				keyCode.add("Upper");
 			} else {
-				keyMapCode.add("Lower");
+				keyCode.add("Lower");
 			}
 		}
-		this.var(@keyMap, this.get(keyMapCode))
+		this.var(@keyMap, this.get(keyCode))
 		
 		dc.fill('#1a1a1a');
 		// dc.image(rc, background);
@@ -121,7 +152,17 @@
 			case 2:
 				while( c=0, c<12, c++ ) {
 					rc=this[rc $n $c]
-					dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+					if( c.eq(0,11) ) {
+						if( keyMode.eq("shiftOn") ) {
+							dc.fill(rc,'#c06a7b').rectLine(rc, 0, '#d09ab0', 2);
+						} else if( keyMode.eq("shift") ) {
+							dc.fill(rc,'#9a9090').rectLine(rc, 0, '#20202a');
+						} else {
+							dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+						}
+					} else {
+						dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a')
+					}
 					this.drawKeyText(dc,rc,n,c)
 				}
 			case 3:
@@ -132,7 +173,20 @@
 						dc.fill(rc,'#333333').rectLine(rc, 0, '#20202a');
 					} else {
 						rc=this[rc $n $c]
-						dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a');
+						def=true
+						if( c.eq(1) ) {
+							 if( keyMode.eq("ctrl") ) {
+								dc.fill(rc,'#9a9090').rectLine(rc, 0, '#20202a')
+								def=false;
+							}
+						} else if( c.eq(8) ) {
+							if( langMode.eq('kor') ) {
+								dc.fill(rc,'#707a7a').rectLine(rc, 0, '#40404a')
+								def=false;
+							}
+						} else {
+							dc.fill(rc,'#4d4d4d').rectLine(rc, 0, '#20202a')
+						}
 						this.drawKeyText(dc,rc,n,c)
 					}
 				}
@@ -143,13 +197,15 @@
 	mouseDown(pt) {
 		print(">> keyboard mouse down ", pt)
 		_update=func() {
-			this.var(row, n)
-			this.var(column, c)
 			this.mouseDownRect=rc;
 			cause = 'keyboardDown'
-			rectOverlay = rc
-			this.with(@cause, @rectOverlay)
-			canvas.addOverlay(this)
+			rectOverlay = rc 
+			this.var(row,n)
+			this.var(column,c)
+			this.var(canvas).addOverlay(
+				this.with(@cause, @rectOverlay)
+			)
+			return true;
 		};
 		while( n=0, n<4, n++ ) {
 			switch(n) {
@@ -184,20 +240,21 @@
 				}
 			default:
 			}
-		}		
+		}
+		return true;
 	}
-	onMouseUp(pt) {		
+	mouseUp(pt) {		
 		_update=func(rc) {
 			if( this.mouseDownRect ) {
 				this.mouseDownRect=null;
 				cause = 'keyboardUp'
-				rectOverlay = rc
-				this.with(@cause, @rectOverlay)
-				canvas.removeOverlay(this)
+				rectOverlay = rc 
+				this.var(canvas).removeOverlay(this.with(@cause, @rectOverlay) )
 			}
 			if( rc ) {
 				this.keyDown(n,c);
 			}
+			return true;
 		};
 		while( n=0, n<4, n++ ) {
 			switch(n) {
@@ -233,23 +290,19 @@
 			default:
 			}
 		}
-		_update();		
+		return _update();		
 	}
-	onTimer() {
-		input=this.var(focusWidget) not(input) return;
-		input.active();
-		input.focus();
-		this.var(focusWidget, null);
-	}
-	showInput(rectInput) {
-		this.inject(inputCheck, inputWidget)
+	
+	showInput() {
+		this.inject(inputCheck, inputWidget, @rectInput, @offset)
 		if(inputCheck && inputWidget) {
-			inputWidget.move(rectInput)
+			rect=rectInput.offset(offset).incr(4)
+			inputWidget.move(rect)
 			inputWidget.show()
 		}
 	}
 	createInput() {
-		this.inputWidget = @widget.create('input','inputKeyboard',this.var(canvas)	)
+		this.inputWidget = @widget.create('input','inputKeyboard',this.var(canvas),true)
 		this.inputCheck = true
 		return input;
 	}
@@ -290,63 +343,63 @@
 		}
 	}
 	
-	clear() {
-		automata.clear();
-		this[leftString]='';
-		this[doneString]='';
-		this[doingString]='';
+	clearIng() {
 		this[ingString]='';
+		this[ingBuffer]='';
+		this[ingArrayText]='';
 	}
-	setInputText(addMode) {	
-		
-		this.inject(inputWidget)
-		str='';
-		not(addMode.eq("doingString")) {
-			str.add(this[$addMode]);		
+	deleteIngBuffer(&s) {		
+		not(s.ch()) {
+			return this.clearIng()
 		}
-		str.add(this[doingString]);
-		if( addMode.eq('leftString') ) {
-			str.add(this[rightString]);
-		} 
-		if(inputWidget) {
-			inputWidget.value(str);
-			this.var(focusWidget, inputWidget);
+		ing=''
+		while(s.valid(),n) {
+			left=s.findPos(',') not(s.ch()) break;
+			if(n) ing.add(',')
+			ing.add(left)
+		}
+		cmd=Baro.process('runCommand')
+		exec_param="[$ing]"
+		print(">> exec_param=$exec_param")
+		@python.execSource(cmd, getSource(conf('keyboard.en2koWord')), @keyboard.execSource)
+	}
+	
+	setText(checkClear) {	
+		this.inject(ingString)
+		this[doneString].add(ingString)
+		if(checkClear) {
+			this.clearIng()
 		}
 	}
 	keyDown(n,c) {
 		this.inject(this, keyMode, langMode );
-		kid=langMode;
-		not(kid.eq("etc") ) {
-			kid="eng";
+		keyCode=langMode;
+		if(keyCode.ne("etc") ) {
+			keyCode="eng";
 			if( keyMode.eq("shift","shiftOn") ) {
-				kid.add("Upper");
+				keyCode.add("Upper");
 			} else {
-				kid.add("Lower");
+				keyCode.add("Lower");
 			}
 		} 
-		keyMap=this.get(kid);	
-		addMode=when( this[leftString], 'leftString','doneString');
-		ing=this[ingString];
+		keyMap=this.get(keyCode);
 		switch(n ) {
 		case 0:
 			if( c.eq(10) ) {
-				if( ing ) {
-					if( ing.size().eq(1) ) {
-						this.clear();
-					} else {
-						this[ingString]=ing.value(0,-1);
-						automata.toString(this, addMode);
+				this.inject(ingArrayText, doneString)
+				 // 지우기
+				 if(ingArrayText) {
+					not( this.deleteIngBuffer(ingArrayText) ) {
+						this.setText()
 					}
-				} else {
-					if( keyMode.eq("ctrl") ) {
-						this[$addMode]='';
-						this.keyMode='';
-					} else {
-						str=this[$addMode];
-						if(str) this[$addMode]=str.substr(0,-1);
-					}
-				}
-				this.setInputText(addMode);
+					return
+				 } 
+				 if(doneString) {
+					this[doneString] = doneString.substr(0,-1);
+				 } else {
+					this.clearIng()
+				 }
+				 setText();
 			} else {
 				_value( keyMap[k $n $c] );
 			}
@@ -363,24 +416,21 @@
 				} else {
 					this.keyMode="shift";
 				}
+				this.drawDc()
 			} else {
 				_value( keyMap[k $n $c] );
 			}
 		case 3:
 			switch( c) {
-			case [9,10]:
-				input=this.inputWidget;
-				if(input) {
-					pos=input.pos();
-					if(c.eq(9) ) {
-						if(pos>0) pos--;
-					} else {
-						len=input.value().length();
-						if(pos<len) pos++;
-					}
-					input.pos(pos);
-					this.var(focusWidget, input);
-				}
+			case [9,10]: 
+				this.inject(doneString, ingString)
+				str=strJoin(doneString, ingString)
+				if(c.eq(9) ) {
+					if(this[currentPos>0]) this[currentPos--]
+				} else {
+					last=str.length() - 1
+					if(this[currentPos<last]) this[currentPos++]
+				} 
 			case 0:
 				if( langMode.eq('etc') ) {
 					this.langMode=this.prevMode;
@@ -388,12 +438,14 @@
 					this.prevMode=langMode;
 					this.langMode='etc';
 				}
+				this.drawDc()
 			case 1:
 				if(keyMode.eq("ctrl") ) {
 					this.keyMode='';
 				} else {
 					this.keyMode='ctrl';
 				}
+				this.drawDc()
 			case 3:	_value( "\t" );
 			case 4:	_value( " " );
 			case 8:
@@ -402,14 +454,15 @@
 				} else {
 					this.langMode='kor';
 				}
+				this.drawDc()
 			case 11:
-				this.clear();
+				this.setText(true)
 			default:
 				_value( keyMap[k $n $c] );
 			}
 		default:
 		}
-		this.update();
+		this.var(canvas).update();
 		_value=func(val ) {
 			switch( val ) {
 			case enter: val="\n";
@@ -419,22 +472,33 @@
 			}
 			if( langMode.eq('kor') ) {
 				if( val.is("alpha") ) {
-					this[ingString].add(val);
-					automata.toString(this, addMode);
-				} else {
-					automata.toString(this, addMode);
-					this[doneString].add(this[doingString]);
-					this.clear();
-					this[$addMode].add(val);
+					this[ingBuffer].add(val)
+					cmd=Baro.process('runCommand')
+					exec_param=this[ingBuffer]
+					print(">> exec_param=$exec_param")
+					@python.execSource(cmd, getSource(conf('keyboard.en2ko')), @keyboard.execSource)
+				} else {					
+					this.setText(true)
 				}
-			} else {
-				automata.toString(this, addMode);
-				this[$addMode].add(val);
-			}
-			this.setInputText(addMode);
+			} else {				 
+				this.setText(true)
+			}			
 			if( keyMode.eq("shift", "ctrl") ) {
 				this.keyMode='';
+				this.drawDc()
 			}  
 		};		
 	}
+	setResult(&s) {
+		print("set result === $s")
+	}
 </script>
+<conf name="keyboard.en2ko">
+	result = en2ko('@[exec_param]')
+	log(f"kor:{result}")
+</conf>
+
+<conf name="keyboard.en2koWord">
+	result = en2koWord(@[exec_param])
+	log(f"ingBuffer:{result}")
+</conf>

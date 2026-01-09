@@ -67,9 +67,33 @@
 	}
 </script>
 
+<script module="page_canvas">
+	init() {
+		@canvas=widget('canvas')
+		this.size(800,600)
+		this.resizeTick = System.tick()
+		this.timer(200)
+		print('>> init page-canvas ', canvas)
+	}
+	onTimer() {		 
+		if(checkTick(this.resizeTick)) {
+			print("timer resize")
+			this.resizeTick = 0
+			return canvas.updateRect()
+		}
+	}
+	onResize() {
+		this.resizeTick = System.tick()
+	}
+</script>
+
 <script module="widget">
 	create(tag, id, target, props) {		 
-		widget=@widget.getWidget(tag, id, target) if(typeof(widget,'widget')) return widget;
+		widget=@widget.getWidget(tag, id, target)
+		if( typeof(widget,'widget')) {
+			print("$tag $id 위젯이 이미 생성되었습니다")
+			return widget;
+		}
 		widget.tag=tag
 		widget.id=id
 		if(typeof(props,'string')) {
@@ -77,6 +101,9 @@
 		}
 		widget.var(baseCode,"${base}:${id}")
 		Cf.createWidget(widget)
+		if(typeof(props,'bool') && props ) {
+			@widget.setParent(widget, target)
+		}
 		return widget;
 	}
 	getWidget(tag, id, target) {
