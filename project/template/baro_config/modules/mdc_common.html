@@ -29,46 +29,48 @@
 		this.inject(@subMdcList)
 		not(subMdcList.find(mdc)) {
 			subMdcList.add(mdc)
+			mdc.drawDc()
 		}
 		return mdc;
 	}
 	addSubMdc(param, rectDraw, moduleType, baseColor) {
-		if( typeof(param,'node') && param.var(img) ) {
-			dc=param
-		} else {
-			dc=mdc(param)
-		}
+		dc=mdc(param)
 		if( typeof(rectDraw,'bool') ) {
-			not(dc && dc.var(img)) return
-			dc.drawDc()
-			this.addSubMdcList(dc)
-			if(rectDraw) {
-				this.var(canvas).update()
+			if(dc.var(img)) {
+				this.addMdcList(dc, rectDraw)
+			} else {
+				print("@@ canvas addMdc $param 메모리그리기 객체가 생성되지 않았습니다")
 			}
 			return;
-		}		
+		}
+		parentMdc=this
+		canvas=this.var(canvas)
 		if(typeof(rectDraw,'rect')) {			
 			rectDraw.inject(x,y,w,h)
 			rectAvail=rc(0,0,w,h)
-			offset=pt(x,y)		
-			dc=mdc(id, w, h)
-			dc.with(@offset, @rectDraw, @rectAvail)
+			offset=pt(x,y)
+			mdc(dc, w, h)
+			dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail)
 		}
-		not(dc) return;
-		if( moduleType && ~(dc.var(useModule)) ) {
+		if(baseColor) {
 			if(typeof(baseColor,'string')) {
 				baseColor=color(baseColor)
 			}
-			not(baseColor) {
-				baseColor = this.baseColor
+		} else {
+			not( dc.var(baseColor) ) {
+				baseColor=this.baseColor
 				not(baseColor) baseColor=randomColor()
 			}
-			parentMdc = this
-			canvas=this.var(canvas)
-			dc.with(@canvas, @parentMdc, @moduleType, @baseColor)
-			addModule(dc,"mdc,$moduleType")
 		}
-		dc.drawDc()
+		if(typeof(baseColor,'color')) {
+			this.var(baseColor, baseColor)
+		}
+		not( dc.var(useModule) ) {
+			if(moduleType) {
+				addModule(dc,"mdc,$moduleType")
+				dc.var(moduleType, moduleType)
+			}
+		} 
 		return this.addSubMdcList(dc);
 	}
 	removeMdc(mdc, checkUpdate) {

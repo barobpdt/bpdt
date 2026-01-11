@@ -1,9 +1,28 @@
 <conf name="python.RUN_PATH" first>
-	C:/temp/python
+	C:/bpdt/project/template/python_source
 </conf>
 <conf name="path.imageMagick" first>
 	C:/APP/ImageMagick
 </conf>
+
+<script eval >
+	// conf('cf.testName', 'googledriver')
+	
+	url='https://kr.freepik.com/free-photos-vectors/sprites'
+	url='https://craftpix.net/product/24-tiny-character-game-sprites/'
+	src = getSource(conf('python.command:setUrl'))
+	c=Baro.process('googledriver')
+	
+	@python.execSource(c,src,@test.execSourceProc)
+	print("evel >> start $src")
+	
+	
+</script>
+
+<script eval skip>
+	startPythonCommand()
+	// startPythonWebview()
+</script>
 
 <script type="execSource">
 	@python.execSource(cmd, execSource,callback, duration) {
@@ -33,12 +52,11 @@
 			return print("@python.execSourceProc ${cmd.id} command 실행소스가 없습니다")
 		}
 		cmd.logTail.timeout()
-		print("xxxxxxxxx cmd.execDuration xxxxxxxxxx", cmd.execDuration)
 		if(cmd.execDuration) {
 			System.sleep(cmd.execDuration)
 		}
 		cmd.logAppend.append("@#>exec:${cmd.execSource}")
-		while(n=0,16) {
+		while(n=0,100) {
 			System.sleep(10)
 			result = cmd.logTail.timeout()
 			if(result) {
@@ -47,6 +65,7 @@
 			}
 		}
 		cmd.execSource=''
+		print("$n @python.execSourceProc end ###############")
 	}
 	closePythonCommand() {
 		cmd=Baro.process('runCommand')
@@ -60,29 +79,6 @@
 		cmd.stop()
 		*/
 	}
-</script>
-
-<script eval>
-	startPythonCommand('runCommand', conf('python.en2ko'))
-	// startPythonWebview()
-</script>
-
-<script eval skip>
-	// setUrl
-	url='https://www.freepik.com/search?format=search&img=1&last_filter=img&last_value=1&query=2d+sprites'
-	call( @python.runCommand, this, 'exec', 'command.setUrl')		
-	// quit all
-	call( @python.runCommand, this, "quit")
-	call( @python.webCommand, this, "quit")
-
-	// convert png
-	svg=pathJoin(path,'assets/icons/bmp.svg')
-	png=pathJoin(path,'assets/icons/bmp.png')
-	command = str('${conf.path.imageMagick}/magick.exe -background none -density 1000 -size 30x30 "$svg" "$png"')
-	addCmdWorker('magick' , command)
-	// insert png
-	this.pngData=Cf.toBinary(fileRead('test.png))
-	db.exec("insert into test (id, data, prop) values ('test',#{pngData},'222')", this)
 </script>
 
 <script type="public">
@@ -183,87 +179,32 @@
 		}
 		return info;
 	}
-	@python.runCommand(command, confCode) {
-		log=logAppend("runCommand-command")
-		not(command.find(':') ) {
-			command.add(':')
-		}
-		if(confCode) {
-			fn=Cf.funcNode('parent')
-			source = getSource( cv(confCode), this, fn)
-			if(source) command.add(source)
-		}
-		print(">> runCommand ==> $command")
-		log.append("@#>$command")
-	}
-	@python.webCommand(command, confCode) {
-		log=logAppend("webCommand-command")
-		not(command.find(':') ) {
-			command.add(':')
-		}
-		if(confCode) {
-			fn=Cf.funcNode('parent')
-			source = getSource( cv(confCode), this, fn)
-			if(source) command.add(source)
-		}
-		log.append("@#>$command")
-	}
-	/* 설정에 저장된 아이콘 정보를 읽어서 baro.icons 노드 생성*/
-	@python.makeIconNode() {
-		node=object('baro.icons')
-		s=conf('icons.lucideSvg')
-		s.ref()
-		while(s.valid()) {
-			not(s.ch()) break;
-			k=s.move()
-			c=s.ch()
-			not(c.eq('{')) break;
-			v=s.match()
-			node.set(k,v)
-		}
-		return node;
-	}
-	/* 자바스크립트 svg path 정보를 읽어서 설저저장 (설정명:icons.lucideSvg) */
-	@python.makeSvgIcons(&s) {
-		not(s) {
-			s=fileRead('c:/temp/icons.js')
-			s.ref()
-		}
-		cnt=0
-		tick=System.tick()
-		arr=_arr()
-		data=''
-		while(s.valid()) {
-			s.findPos('"path",')
-			not(s.ch()) break;
-			arr.reuse()
-			name=null
-			while(isNull(name)) {
-				s.findPos('d:')
-				c=s.ch()
-				arr.add(s.match())
-				s.findPos(']')
-				c=s.ch()
-				if(c.eq(']')) {			
-					s.findPos('const') not(s.ch()) break;
-					name=s.move()
-					break;
-				}
+	@python.runCommand(command) {
+		cmd=Baro.process('runCommand')
+		cmd.inject(logAppend, logTail)
+		if( logAppend && logTail ) {
+			logTail.timeout()
+			not(command.find(':')) {
+				command.add(':')
 			}
-			if(name) {		
-				ss=''
-				while(d, arr) {
-					ss.add(str('<path d="$d" />'), "\n")
-				}
-				data.add("$name {\n$ss}\n")
-			}
-			cnt++;
+			logAppend.append("@#>$command")
+		} else {
+			return print("@@ 파이션 실행 오류 $cmd 로그파일 미정의")
 		}
-		conf('icons.lucideSvg', data, true)
-		d=System.tick()-tick;
-		print("makeSvgIcons==$cnt", d, data.size())
-		return data;
 	}
+	@python.webCommand(command) {
+		md=Baro.process('webCommand')
+		cmd.inject(logAppend, logTail)
+		if( logAppend && logTail ) {
+			logTail.timeout()
+			not(command.find(':')) {
+				command.add(':')
+			}
+			logAppend.append("@#>$command")
+		} else {
+			return print("@@ 파이션 웹뷰커멘드 오류 $cmd 로그파일 미정의")
+		}
+	} 
 	
 </script>
 
@@ -406,40 +347,6 @@ def make_jungseong_list(char_list):
 		return "ㅢ"
 	return char_list[0]
 </conf>
-	
-<conf name="python.command:chromeOpen">
-	from selenium import webdriver
-	from selenium.webdriver.chrome.options import Options
-	from selenium.webdriver.common.by import By
-	from selenium.webdriver.common.keys import Keys
-	from selenium.webdriver.common.action_chains import ActionChains
-	options = Options()
-	options.add_experimental_option("detach", True)
-	options.add_argument('--disable-popup-blocking')	 
-	driver = webdriver.Chrome(options=options)
-	driver.implicitly_wait(3)
-	driver.get(url='@[url]')
-
-	# class name으로 찾기
-	driver.find_element(By.CLASS_NAME,'gLFyf')
-	# tag name으로 찾기
-	driver.find_element(By.TAG_NAME,'textarea')
-	# id로 찾기
-	el = driver.find_element(By.ID,'APjFqb')
-
-	# 클릭하기
-	el.click()
-	# 값 입력하기
-	el.send_keys("tistory")
-	# 키보드 입력하기
-	el.send_keys(Keys.ENTER)
-	# iframe 이동
-	driver.switch_to.frame(' iframe id ')
-	driver.switch_to.default_content()
-	# 붙여넣기
-	ActionChains(driver).key_down(Keys.COMMAND).send_keys('v').key_up(Keys.COMMAND).perform()
-	log(f'pageSource: url => {driver.page_source}')
-</conf>
 
 <conf name="python.command:chromeDriver">
 	from selenium import webdriver
@@ -473,6 +380,7 @@ def make_jungseong_list(char_list):
 	ERROR: Could not find a version that satisfies the requirement libcairo-2 (from versions: none)
 	No matching distribution found for libcairo-2
 </data>
+
 <data name="icon-save" skip>
 	webroot= conf('web.rootPath')
 	path=pathJoin(webroot,'assets/icons')
@@ -509,3 +417,112 @@ def make_jungseong_list(char_list):
 	}
 	return
 </data>
+
+<script type="test" note="파이션 아이콘 처리">
+	/* 설정에 저장된 아이콘 정보를 읽어서 baro.icons 노드 생성*/
+	@python.makeIconNode() {
+		node=object('baro.icons')
+		s=conf('icons.lucideSvg')
+		s.ref()
+		while(s.valid()) {
+			not(s.ch()) break;
+			k=s.move()
+			c=s.ch()
+			not(c.eq('{')) break;
+			v=s.match()
+			node.set(k,v)
+		}
+		return node;
+	}
+	/* 자바스크립트 svg path 정보를 읽어서 설저저장 (설정명:icons.lucideSvg) */
+	@python.makeSvgIcons(&s) {
+		not(s) {
+			s=fileRead('c:/temp/icons.js')
+			s.ref()
+		}
+		cnt=0
+		tick=System.tick()
+		arr=_arr()
+		data=''
+		while(s.valid()) {
+			s.findPos('"path",')
+			not(s.ch()) break;
+			arr.reuse()
+			name=null
+			while(isNull(name)) {
+				s.findPos('d:')
+				c=s.ch()
+				arr.add(s.match())
+				s.findPos(']')
+				c=s.ch()
+				if(c.eq(']')) {			
+					s.findPos('const') not(s.ch()) break;
+					name=s.move()
+					break;
+				}
+			}
+			if(name) {		
+				ss=''
+				while(d, arr) {
+					ss.add(str('<path d="$d" />'), "\n")
+				}
+				data.add("$name {\n$ss}\n")
+			}
+			cnt++;
+		}
+		conf('icons.lucideSvg', data, true)
+		d=System.tick()-tick;
+		print("makeSvgIcons==$cnt", d, data.size())
+		return data;
+	}
+</script>
+
+
+<script eval skip>
+	// setUrl
+	url='https://www.freepik.com/search?format=search&img=1&last_filter=img&last_value=1&query=2d+sprites'
+	call( @python.runCommand, this, 'exec', 'command.setUrl')		
+	// quit all
+	call( @python.runCommand, this, "quit")
+	call( @python.webCommand, this, "quit")
+
+	// convert png
+	svg=pathJoin(path,'assets/icons/bmp.svg')
+	png=pathJoin(path,'assets/icons/bmp.png')
+	command = str('${conf.path.imageMagick}/magick.exe -background none -density 1000 -size 30x30 "$svg" "$png"')
+	addCmdWorker('magick' , command)
+	// insert png
+	this.pngData=Cf.toBinary(fileRead('test.png))
+	db.exec("insert into test (id, data, prop) values ('test',#{pngData},'222')", this)
+</script>
+
+<script test name="googledriver" note="구글크롬 드라이버 처리">
+	startGoogleDriver() {
+		url='https://www.google.com/'
+		startSource = getSource(conf('python.command:chromeDriver'))
+		startPythonCommand('googledriver', startSource)
+	}
+	@user.googleDriverUrl(url) {
+		src = getSource(conf('python.command:setUrl'))
+		cmd=Baro.process('googledriver')		
+		@python.execSource(cmd,src,@user.googleDriverProc)
+	}
+	@user.googleDriverProc(cmd) {
+		// @python.runProc 에서 콜백실행
+		not( cmd.cmp('@workerStatus','run') ) {
+			return print("@python.execSourceProc ${cmd.id} command 프로그램이 실행중이 아닙니다");
+		}
+		cmd.logTail.timeout()
+		cmd.logAppend.append("@#>exec:${cmd.execSource}")
+		while(n=0,200) {
+			System.sleep(500)
+			result = cmd.logTail.timeout()
+			if(result) {
+				print(">> python execSource 결과 == $result")
+				break;
+			}
+		}
+		cmd.execSource=''
+		print("$n @python.execSourceProc end ###############")
+	}
+</script>

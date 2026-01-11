@@ -1195,14 +1195,15 @@ parseSource(&s, base, serviceNode) {
 	};
 	not(base) base='test'
 	debug=conf('cf.useDebug') 
+	testName=conf('cf.testName')
 	if(serviceNode) {
 		baseNode=serviceNode.addNode(base)
 	} else {
 		baseNode=object("service.$base")
 	}
-
 	widgetSource=''
 	evalSource=''
+	testSource=''
 	while(s.valid() ) {
 		c=s.ch() 
 		not(c.eq('<')) {
@@ -1217,7 +1218,8 @@ parseSource(&s, base, serviceNode) {
 		s.pos(sp)
 		ss=s.match("<$tag","</$tag>")
 		if(typeof(ss,'bool')) {
-			return print("parseSource 함수오류 ($tab 태그 매칭오류)")
+			line=getLine(s)
+			return print("parseSource 함수오류 ($tag 태그 매칭오류)", line)
 		}
 		prop=ss.findPos('>')
 		if( propValue(prop,'skip',true) ) {
@@ -1233,28 +1235,30 @@ parseSource(&s, base, serviceNode) {
 			module=propValue(prop,'module')
 			checkEval=propValue(prop,'eval',true)
 			checkTest=propValue(prop,'test',true)
-			 
 			if(debug) {
 				mapNode=baseNode.addNode('script')
 				if(checkEval) {
 					evalSource.add(ss)
-				} else {
+				} 
+				else if(checkTest) {
+					name=propValue(prop,'name')
+					if(name.eq(testName)) {
+						testSource.add(ss)
+					}
+					continue;
+				}
+				else {
 					type=module
 					not(type) {
 						type=propValue(prop,'type')
-						not(type) {
-							if(checkTest) type='test'
-						}
-					}
-					if(type) {
 						not(type) type='default'
-						if( ss.eq(mapNode.get(type)) ) {
-							// print("@@ source not change $base:$type")
-							continue;
-						}
-						mapNode.set(type,ss)
-						if(module) mapNode.set("$type#module",module)
 					}
+					if( ss.eq(mapNode.get(type)) ) {
+						// print("@@ source not change $base:$type")
+						continue;
+					}
+					mapNode.set(type,ss)
+					if(module) mapNode.set("$type#module",module)
 				}
 			} else if(checkEval) {
 				continue;
@@ -1322,6 +1326,9 @@ parseSource(&s, base, serviceNode) {
 			mapNode.set('@widgets',widgetSource)
 			makeWidgets(widgetSource, base, baseNode)			
 		}
+	}
+	if( testSource) {
+		applyFunc(testSource)
 	}
 	if( evalSource ) {
 		mapNode=baseNode.addNode('script')

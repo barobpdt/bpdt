@@ -267,7 +267,7 @@ addApiWorker(id, targetNode, logCallback ) {
 		web.logCallback=logCallback
 	} else {
 		not(web.logCallback) {
-			web.logCallback=func(info,result) { print("##apiWorker callback ${this.url}  result::$result") };
+			web.logCallback=func(result,info) { print("##apiWorker callback ${this.url}  result::$result") };
 		}
 	}
 	not(web.workerMode) {

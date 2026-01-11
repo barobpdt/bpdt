@@ -3,24 +3,32 @@
 </page>
 
 <script eval>
-	p=this.var(page)	
+	p=this.var(page)
+	c=p.get('c')
+	/*
 	p.size(800,600)
 	p.open()
-	/*
-	mdc=c.var(mdcList).get(0)	 
-	mdc.setValue('나광호')
-	rect = mdc.getClipRect()
-	*/	 
-	print(">> test eval " )
+
+	a=
+	b=c.var(clipList)
+	aa=a.get(0)
+	*/
+	c.var(clipList) 
+	mdc=mdc('clip')
+	mdc.setValue('나광호 안')
+	mdc.addClipMdc('cursor')
+	rc= mdc.getClipRect()
+	// p.resizeTick = System.tick()
+	print(">> test eval ", mdc.var(clipRect) )
 </script>
- 
+
 
 <script module="canvas_clip">	 
-	updateRect() {
-		canvas=this
-		rect=canvas.rect()
-		canvas.addMdc('clip', rect.topCenter(0,50), 'mdc_clip')
-	} 
+	updateMdc() { 
+		rect=this.rect()
+		this.addMdc('clip', rect.topCenter(0,50), 'mdc_clip')
+	}
+	
 </script>
 
 <script module="mdc_clip">
@@ -29,10 +37,12 @@
 		this[clipDuration] = 1500
 		this[clipTick] = 0
 		this[@clipFlag]=true
+		this.addClipMdc('cursor')
 		updateRect()
 	}
 	updateRect() {
-		this[rectBox]=this.var(rectAvail).incr(2)
+		this.inject(@rectAvail)
+		return this.var(@rectBox, rectAvail.incr(2))
 	}
 	drawClip(dc, rc) {
 		this.inject(@clipFlag)
@@ -46,39 +56,39 @@
 		this.with(@clipFlag)
 	}
 	drawDc() {
-		this.inject(@rectAvail)
+		this.inject(@rectAvail, @rectBox, bgColor, inputResult)
 		dc=this
 		dc.fill()
-		// dc.fill(rectAvail, this[bgColor])
-		not(this[rectBox]) {
-			this.updateRect()
+		not(rectAvail.eq(rectBox)) {
+			rectBox = this.updateRect()
 		}
-		dark=this[bgColor].darkColor(200)
-		roundRect(this, this[rectBox], 8, dark, '#fff')
-		value = this[inputResult]
+		dark=bgColor.darkColor(200)
+		roundRect(this, rectBox, 8, dark, '#fff')
 		dc.font('size:15,weight:bold,color:#333')
-		dc.textSize(value).inject(textWidth, textHeight)
-		dc.text(this[rectBox].incrX(10), value)
-		print("draw dc ", value, textWidth, textHeight)
+		dc.textSize(inputResult).inject(textWidth, textHeight)
+		dc.text(rectBox.incrX(10), inputResult)
+		print("draw dc ", inputResult, textWidth, textHeight)
 		this.with(@textWidth, @textHeight)
 	}
 	getClipRect() {
-		this.inject(@textWidth, @textHeight, @offset)
-		rect=this[rectBox].offset(offset)
+		this.inject(@textWidth, @textHeight, @offset, @rectBox)
+		not(textWidth) textWidth=0
+		rect=rectBox.offset(offset)
 		rect.inject(x,y,w,h)
 		x+=15+textWidth;
-		return rc(x,y,3,h).incrYH(8,8)
+		return this.var(clipRect, rc(x,y,3,h).incrYH(8,8))
 	}
 	setValue(text) {
 		this[inputResult]=text
 		this.drawDc()
+		this.updateCanvas()
 	}
 	mouseDown(pt) {		
 		print(">> mouse down ", pt)
 		return true;
 	} 
 	mouseUp(pt) {		
-		print(">> mouse up", pt))
+		print(">> mouse up", pt)
 		return true;
 	}
 	

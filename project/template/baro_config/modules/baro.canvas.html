@@ -4,6 +4,7 @@
 		this.addArray('@overlayList')
 		this.addArray('@clipList')
 		this.addArray('@pathList')
+		this.timer(500)
 		this.var(useDrawPath, false)
 	}
 	canvasSize() {
@@ -17,49 +18,54 @@
 		this.inject(@clipList)
 		clipList.remove(mdc)
 	}
-	addMdcList(mdc) {
+	addMdcList(mdc, redraw) {
 		this.inject(@mdcList)
 		not(mdcList.find(mdc)) {
 			mdcList.add(mdc)
+			mdc.drawDc()
+		}
+		if(redraw) {
+			this.update()
 		}
 		return mdc;
 	}
-	addMdc(id, rectDraw, moduleType, baseColor) { 
-		if( typeof(param,'node') && param.var(img) ) {
-			dc=param
-		} else {
-			dc=mdc(param)
-		}
+	addMdc(param, rectDraw, moduleType, baseColor) {
+		dc=mdc(param)
 		if( typeof(rectDraw,'bool') ) {
-			not(dc && dc.var(img)) return
-			dc.drawDc()
-			this.addMdcList(dc)
-			if(rectDraw) {
-				this.update()
+			if(dc.var(img)) {
+				this.addMdcList(dc, rectDraw)
+			} else {
+				print("@@ canvas addMdc $param 메모리그리기 객체가 생성되지 않았습니다")
 			}
 			return;
-		}		
+		}
+		canvas=this
 		if(typeof(rectDraw,'rect')) {			
 			rectDraw.inject(x,y,w,h)
 			rectAvail=rc(0,0,w,h)
-			offset=pt(x,y)		
-			dc=mdc(id, w, h)
-			dc.with(@offset, @rectDraw, @rectAvail)
+			offset=pt(x,y)
+			mdc(dc, w, h)
+			dc.with(@canvas, @offset, @rectDraw, @rectAvail)
 		}
-		not(dc) return; 		
-		if( moduleType && ~(dc.var(useModule)) ) {
+		if(baseColor) {
 			if(typeof(baseColor,'string')) {
 				baseColor=color(baseColor)
 			}
-			not(baseColor) {
-				baseColor = this.baseColor
+		} else {
+			not( dc.var(baseColor) ) {
+				baseColor=this.baseColor
 				not(baseColor) baseColor=randomColor()
 			}
-			canvas=this
-			dc.with(@canvas, @offset, @rectDraw, @rectAvail, @moduleType, @baseColor)
-			addModule(dc,"mdc,$moduleType")
 		}
-		dc.drawDc()
+		if(typeof(baseColor,'color')) {
+			this.var(baseColor, baseColor)
+		}
+		not( dc.var(useModule) ) {
+			if(moduleType) {
+				addModule(dc,"mdc,$moduleType")
+				dc.var(moduleType, moduleType)
+			}
+		} 
 		return this.addMdcList(dc)
 	}
 	removeMdc(mdc, checkUpdate) {
@@ -68,11 +74,16 @@
 		if(checkUpdate) this.update()
 	}
 	updateRectCheck() {
-		print("@@ upate check updateCheckTick==${this.updateCheckTick}")
+		// print("@@ upate check updateCheckTick==${this.updateCheckTick}")
 		this.updateCheckTick=System.tick()
-	} 
+	}
+	updateMdc() {
+		print("@@ canvas 객체에 updateMdc 함수 중복정의 하세요")
+	}
 	updateRect() {
-		print("@@ canvas 객체에 updateRect 함수 중복정의 하세요")
+		this.var(mdcList).reuse()
+		this.updateMdc()
+		this.update()
 	}
 	addOverlay(mdc) {
 		this.inject(@overlayList)
@@ -103,6 +114,15 @@
 		}
 		return false;
 	}
+	onTimer() {
+		while(mdc, this.var(clipList)) {
+			rect=mdc.getClipRect()
+			if(typeof(rect,'rect')) {
+				this[clipMdc]=mdc
+				this.update(rect)
+			}
+		}
+	}
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
 			not( rc.eq(this.rectCanvas)) {
@@ -110,16 +130,8 @@
 				this.rectCanvas = rc
 			}
 		} else {
-			if(this[clipMdc]) {
-				this[clipMdc].inject(@clipType, @clipFlag)
-				if(clipFlag) {
-					dc.fill(color(200,80,80,50))
-					dc.rectLine(rc, 0, '#f00')
-					clipFlag=false
-				} else {
-					clipFlag=true
-				}
-				this[clipMdc].with(@clipFlag)
+			if( this[clipMdc] ) {
+				this[clipMdc].drawClip(dc,rc)
 			}
 			return;
 		}
@@ -191,9 +203,18 @@
 		print("mdc size change", mw,mh,w,h)
 		return true;
 	}
-	mdc(id, param) {
-		map=object("user.mdcMap") not(id) return map;
-		d=map.get(id) not(param) return d;
+	mdc(check) {
+		if(typeof(check,'node')) {
+			args(d, param)
+		} else if(typeof(check,'string')) {
+			args(id, param)
+			d=Cf.getObject('mdc',id) 
+			not(d) {
+				d=Cf.getObject('mdc',id, true)
+				d.id=id
+			}
+		}
+		not(param) return d;
 		img=null
 		if(typeof(param,'string')) {
 			img=Cf.imageLoad(param)
@@ -203,12 +224,11 @@
 			img=param.var(image)
 		} 
 		if(img) {
-			if(d) {
+			if( d.var(img)) {
 				d.destroy()
+				d.var(rect, null)
 			}
-			d=Baro.drawObject(img)
-			d.id=id
-			map.set(id, d)
+			Baro.drawObject(d,img)
 			return d;
 		}
 
@@ -223,20 +243,16 @@
 		}
 		not( typeof(width,'num') && typeof(height,'num')) {
 			return print("메모리 DC생성 영역오류(폭:$width 높이:$height)", param);
-		}	
-		if(d) {
-			d.rect().size().inject(w, h)
+		}
+		if(d.var(rect)) {
+			d.var(rect).size().inject(w, h)
 			if( width.eq(w) && height.eq(h) ) {
 				return d;
 			} 
-			d.destroy(true);
-			d=Baro.drawObject(width, height);
-			print("mdc set ($width, $height)");
-		} else {
-			d=Baro.drawObject(width, height);
-		}  
-		d.id=id;
-		map.set(id, d);
+			d.destroy()
+			d.var(rect, null)
+		} 
+		Baro.drawObject(d, width, height);
 		return d;
 	}
 </script>
