@@ -532,7 +532,9 @@ confSearch(&s) {
 	}
 	return ss;
 }
-global(code) { return Cf.rootNode() }
+global() { 
+	return Cf.rootNode() 
+}
 object(code, newCheck) {
 	not( code.find('.') ) return Cf.rootNode(code,true)
 	code.split('.').inject(a,b);
@@ -629,6 +631,12 @@ valueOf(s, convert) {
 	} else {
 		return s;
 	}
+}
+thisAppend(varName, value) {
+	s=this.get(varName) not(s) s=''
+	s.add(value)
+	this.set(varName,s)
+	return s;
 }
 getVarName(&s) {
 	not(typeof(s,'string')) return;
@@ -763,6 +771,17 @@ isFolder(fullPath, makeCheck) {
 	}
 	return folder;
 }
+getFileObject() {
+	while(n=0,16) {
+		file=Baro.file("file_$n")
+		if(file.var(@c)) {
+			continue;
+		}
+		break;
+	}
+	return file;
+	
+}
 pathJoin() {
 	ss=''
 	while(a,args(), n) {
@@ -855,11 +874,9 @@ fileDelete(path) {
 include(name, checkReg) {
 	serviceNode=null
 	if( name.find('#') ) {
-		print(">> include name==$name")
 		splitSep(name,'#').inject(service,name)
 		if(service.ch('@')) {
 			service=service.value(1)
-			print(">> include ======== $service, $name")
 			path=conf("path.$service")
 			not(isFolder(path)) {
 				return print("@@include 오류 서비스 $service 에 등록된 폴더가 없습니다 $path")
@@ -867,14 +884,11 @@ include(name, checkReg) {
 			not(name.find('.')) {
 				name.add('.html')
 			}
-			fullname="$path/$name"
-			print(">> include fullname==$fullname")
+			fullname="$path/$name"			
 		} else {
 			fullname=name
 		}
-		if(checkReg) {
-			regServiceFile(service, fullname)
-		}
+		
 		serviceNode=getServiceNode(service)
 	} else {
 		not(name.find('.')) {
@@ -889,8 +903,12 @@ include(name, checkReg) {
 	}	
 	filePathInfo(fullname).inject(folder,null,fname)
 	if(service) {
+		if(checkReg) {
+			regServiceFile(service, fullname)
+		}
 		name="$service::$fname"
 	}
+	print("@@ include fullname: $fullname")
 	map=object('map.include') 
 	modify=fileTime(fullname)
 	if( map.get(name)==modify) {

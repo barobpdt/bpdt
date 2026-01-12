@@ -40,7 +40,7 @@ def en2ko(str):
 	return en2koWord(ko_word)
 	
 def en2koWord(ko_word):
-	log(f'en2koWord:{ko_word}')
+	# log(f'en2koWord:{ko_word}')
 	# seperate by one letter
 	words = []
 	start = 0
@@ -53,11 +53,7 @@ def en2koWord(ko_word):
 				words.append(ko_word[start:lenKo])
 			elif (ko_word[i] in choseong_list and ko_word[i+1] in jungseong_list) or (ko_word[i] not in choseong_list and ko_word[i] not in jungseong_list):
 				words.append(ko_word[start:i])
-				start = i
-			
-	if start > 0:
-		start = start-1
-	log(f'start:{start}, ing:{words[start]}, ingLen:{len(words[start])}')
+				start = i 
 	
 	# convert dubble letter
 	for word in words:
@@ -72,8 +68,11 @@ def en2koWord(ko_word):
 				word[2] = make_jongseong_list(word[2:4])
 				if (b != word[2]):
 					word.pop(3)
-	
-	#combine each letter
+
+	lastIndex = len(words) - 1
+	log(f'lastIndex:{lastIndex}, ing:{words[lastIndex]}, ingLen:{len(words[lastIndex])}')
+
+	# combine each letter
 	output_list = []
 	for char in words:
 		jongseong_index = 0

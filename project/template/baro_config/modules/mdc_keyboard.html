@@ -1,37 +1,7 @@
-<script type="keyboadCommand">
-	@keyboard.execSource(cmd) {
-		not( cmd.cmp('@workerStatus','run') ) {
-			startPythonCommand()
-			while(n=0,30) {
-				System.sleep(100)
-				print(">>@keyboad.execSource workerStatus => $n", cmd.get('@workerStatus'));
-				if(cmd.cmp('@workerStatus','run') ) break;
-			}
-			not( cmd.cmp('@workerStatus','run') ) {
-				return print("@@ python command 프로그램이 실행중이 아닙니다");
-			}
-		}		
-		cmd.logTail.timeout()
-		cmd.logAppend.append("@#>exec:${cmd.execSource}")
-		result=''
-		while(n=0,30) {
-			System.sleep(10)
-			result = cmd.logTail.timeout()
-			if(result) {
-				print(">>@keyboad.execSource $n $result")
-				cmd.mdc.setResult(result)
-				break;
-			}
-		}
-	}
-</script>
-
 <script module="mdc_keyboard">
 	init() {
-		cmd=Baro.process('runCommand')	
-		cmd.mdc=this
+		@cmd=Baro.process('runCommand')	
 		// backgroundImage=Cf.imageLoad("tools/keyborad_bg.png");	
-		this.font('size:14, weight:400')
 		this.makeKeyMap('engLower');
 		this.makeKeyMap('engUpper');
 		this.makeKeyMap('korLower');
@@ -40,24 +10,31 @@
 		this.langMode='kor';
 		this.keyMode=''
 		this.currentPos=0
+		this.canvasWidth=890;
 		this.canvasHeight=276;
 		this.inputHeight=46;
 		this.inputCheck=false; 
-		this[ingString]='';
-		this[ingBuffer]='';
-		this[ingArrayText]='';
-		this[doneString]='';
-		this.updateRect()
+		this.addArray('@ingArray')
+		this.var(@ingString, '')
+		this.var(@ingBuffer, '')
+		this.var(@doneString,'')
+		this.var(@inputResultMdc, null)
+		this.var(@fontStyle, 'size:14pt, color:#fafafa')
+		this.var(@fontOverStyle, 'size:15pt, color:#fafafa, weight:bolde')
 	}
-	drawDc() {		
-		this.fill()
-		not(this.var(rectKeyboard)) {
-			this.updateRect()
-		}
-		this.drawKeyboard()
+	getAvailSize() {
+		this.inject(canvasWidth, canvasHeight, inputHeight)
+		return pt(canvasWidth, canvasHeight+inputHeight)
+	}
+	setInputMdc(input) {
+		this.var(@inputResultMdc, input)
 	}	
 	drawOverlay(dc) {
-		this.inject(@cause,@rectOverlay, @offset, @row, @column,keyMode,langMode)
+		this.inject(
+			@cause, @rectOverlay, 
+			@offset, @row, @column,
+			@fontOverStyle, keyMode,langMode
+		)
 		field="$row:$column"
 		rect = rectOverlay.offset(offset).incr(-4)		
 		// shift
@@ -71,10 +48,15 @@
 		else {
 			dc.fill(rect,'#80808a').rectLine(rect, 0, '#20202a')
 		}
+		dc.save().font(fontOverStyle)
 		this.drawKeyText(dc, rect, row, column)
+		dc.restore()
 	}
 	updateRect() {	
-		this.inject(inputCheck, inputHeight, canvasHeight, @rectAvail)
+		this.inject(
+			@rectAvail,
+			inputCheck, inputHeight, canvasHeight 
+		)
 		ox=8, oy=8, bw=67, bh=60, gabX=6, gabY=7;
 		if( inputCheck ) {
 			vbox(rectAvail, "*,$inputHeight,$canvasHeight").inject(rcSpace, rectInput, rectKeyboard)
@@ -119,22 +101,24 @@
 			}
 		}
 	}
-	drawKeyboard(dc) {
-		not(dc) dc=this
-		this.inject(langMode, keyMode);
-		keyCode=langMode;
+	drawDc() {
+		this.inject(
+			@rectKeyboard, @fontStyle,
+			langMode, keyMode
+		)
+		keyCode=langMode
 		if(keyCode.ne("etc") ) {
 			if( keyMode.eq("shift","shiftOn") ) {
-				keyCode.add("Upper");
+				keyCode.add("Upper")
 			} else {
-				keyCode.add("Lower");
+				keyCode.add("Lower")
 			}
 		}
 		this.var(@keyMap, this.get(keyCode))
-		
+		dc=this	
 		dc.fill('#1a1a1a');
 		// dc.image(rc, background);
-		dc.font('size:14pt, color:#fafafa');
+		dc.save().font(fontStyle);
 		while( n=0, n<4, n++ ) {
 			switch(n) {
 			case 0:
@@ -193,18 +177,15 @@
 			default:
 			}
 		}
+		dc.restore()
 	}
 	mouseDown(pt) {
 		print(">> keyboard mouse down ", pt)
 		_update=func() {
 			this.mouseDownRect=rc;
-			cause = 'keyboardDown'
-			rectOverlay = rc 
 			this.var(row,n)
 			this.var(column,c)
-			this.var(canvas).addOverlay(
-				this.with(@cause, @rectOverlay)
-			)
+			this.addOverlay('mouseDown', rc )
 			return true;
 		};
 		while( n=0, n<4, n++ ) {
@@ -247,13 +228,11 @@
 		_update=func(rc) {
 			if( this.mouseDownRect ) {
 				this.mouseDownRect=null;
-				cause = 'keyboardUp'
-				rectOverlay = rc 
-				this.var(canvas).removeOverlay(this.with(@cause, @rectOverlay) )
 			}
 			if( rc ) {
 				this.keyDown(n,c);
 			}
+			this.removeOverlay('mouseUp', rc)
 			return true;
 		};
 		while( n=0, n<4, n++ ) {
@@ -344,9 +323,9 @@
 	}
 	
 	clearIng() {
-		this[ingString]='';
-		this[ingBuffer]='';
-		this[ingArrayText]='';
+		this.var(@ingString, '')
+		this.var(@ingBuffer, '')
+		this.var(@ingArray).reuse()
 	}
 	deleteIngBuffer(&s) {		
 		not(s.ch()) {
@@ -357,19 +336,24 @@
 			left=s.findPos(',') not(s.ch()) break;
 			if(n) ing.add(',')
 			ing.add(left)
-		}
-		cmd=Baro.process('runCommand')
-		exec_param="[$ing]"
-		print(">> exec_param=$exec_param")
-		@python.execSource(cmd, getSource(conf('keyboard.en2koWord')), @keyboard.execSource)
+		}		
+		exec_param="[$ing]" 
+		@keyboard.exec(cmd, getSource(conf('keyboard.en2koWord')) )
 	}
 	
-	setText(checkClear) {	
-		this.inject(ingString)
-		this[doneString].add(ingString)
+	setText(checkClear, value) {	
+		this.inject(@inputResultMdc,@ingString)
 		if(checkClear) {
 			this.clearIng()
 		}
+		if(value) {
+			if(ingString) thisAppend('@doneString', ingString)
+			thisAppend('@doneString', value)
+		}
+		if(inputResultMdc) {
+			inputResultMdc.setKeyboardValue(this)
+		}
+		this.updateCanvas()
 	}
 	keyDown(n,c) {
 		this.inject(this, keyMode, langMode );
@@ -386,16 +370,16 @@
 		switch(n ) {
 		case 0:
 			if( c.eq(10) ) {
-				this.inject(ingArrayText, doneString)
+				this.inject(@doneString, @imgArray)
 				 // 지우기
-				 if(ingArrayText) {
-					not( this.deleteIngBuffer(ingArrayText) ) {
+				 if( imgArray.size() ) {
+					not( this.deleteIngBuffer() ) {
 						this.setText()
 					}
 					return
 				 } 
 				 if(doneString) {
-					this[doneString] = doneString.substr(0,-1);
+					this.var(@doneString,  doneString.substr(0,-1));
 				 } else {
 					this.clearIng()
 				 }
@@ -456,6 +440,7 @@
 				}
 				this.drawDc()
 			case 11:
+				this.var(@doneString, '')
 				this.setText(true)
 			default:
 				_value( keyMap[k $n $c] );
@@ -472,16 +457,14 @@
 			}
 			if( langMode.eq('kor') ) {
 				if( val.is("alpha") ) {
-					this[ingBuffer].add(val)
-					cmd=Baro.process('runCommand')
-					exec_param=this[ingBuffer]
+					exec_param=thisAppend('@ingBuffer', val)
 					print(">> exec_param=$exec_param")
-					@python.execSource(cmd, getSource(conf('keyboard.en2ko')), @keyboard.execSource)
-				} else {					
-					this.setText(true)
+					@keyboard.exec(cmd, getSource(conf('keyboard.en2ko')) )
+				} else {
+					this.setText(true, val)
 				}
 			} else {				 
-				this.setText(true)
+				this.setText(true, val)
 			}			
 			if( keyMode.eq("shift", "ctrl") ) {
 				this.keyMode='';
@@ -490,9 +473,105 @@
 		};		
 	}
 	setResult(&s) {
-		print("set result === $s")
+		s.findPos('@#> ing:') 
+		not(s.ch()) {
+			return print("@@setResult keyboard 결과처리 오류")
+		}
+		arr = setIngArray(s.match())
+		s.findPos('@#> kor:')
+		not(s.ch()) {
+			return print("@@setResult keyboard 결과처리 오류", arr)
+		}
+		str = s.findPos("\n").trim()
+		asize=arr.size(), slen=str.length()
+		print(">> $arr, $str", asize, slen)
+		if(asize && slen) {
+			a=arr.get(asize-1), b=str.substr(slen-1)
+			this.inject(@ingBuffer)
+			print(">> ", a, b, ingBuffer)
+			if( asize.gt(1) &&  a.eq(b)) {				
+				arr.remove(0,asize-1)				
+				thisAppend('@doneString', str.substr(0,-1))
+				this.var(@ingString, b)
+				this.var(@ingBuffer, ingBuffer.ch(-1))
+			} else if(slen.gt(1)) {
+				thisAppend('@doneString', str.substr(0,1))
+				this.var(@ingString, str.substr(1))
+				keyCount=0
+				while(c,arr) {
+					// 'ㄳ','ㄵ','ㄶ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅄ'
+					if(c.eq('ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅢ')) 
+					{
+						keyCount+=2;
+					} else {
+						keyCount++;
+					}
+				}
+				sp=ingBuffer.size() - keyCount;
+				print(">> ", keyCount, sp)
+				this.var(@ingBuffer, ingBuffer.value(sp))
+			} else {
+				this.var(@ingString, str)
+			}
+			this.inject(@ingString, @doneString, @ingBuffer)
+			print(">> ", ingString, doneString, ingBuffer )
+		} else {
+			print(">> 결과가 유효하지 않습니다 ", arr, str)
+		}
+		
+		this.inject(@inputResultMdc)
+		if(inputResultMdc) {
+			inputResultMdc.setKeyboardValue(this)
+		}
+		
+		setIngArray = func(&s) {
+			arr=this.addArray('@imgArray').reuse()
+			while(s.valid()) {
+				s.findPos("'") not(s.ch()) break;
+				arr.add(s.findPos("'").trim())
+			}
+			return arr;
+		};
 	}
 </script>
+
+<script type="keyboadCommand">
+	@keyboard.exec(cmd, execSource) {
+		cmd.execSource=execSource
+		not(cmd.var(@currentMdc)) {
+			cmd.var(@currentMdc, this)
+		}
+		print("keyboard exec >> $execSource")
+		addUserWorker('keyboardCommand', cmd, @keyboard.execSource)
+	}
+	@keyboard.execSource(cmd) {
+		not( cmd.cmp('@workerStatus','run') ) {
+			startPythonCommand()
+			while(n=0,30) {
+				System.sleep(100)
+				print(">>@keyboad.execSource workerStatus => $n", cmd.get('@workerStatus'));
+				if(cmd.cmp('@workerStatus','run') ) break;
+			}
+			not( cmd.cmp('@workerStatus','run') ) {
+				return print("@@ python command 프로그램이 실행중이 아닙니다");
+			}
+		}		
+		cmd.logTail.timeout()
+		cmd.logAppend.append("@#>exec:${cmd.execSource}")
+		result=''
+		while(n=0,30) {
+			System.sleep(10)
+			result = cmd.logTail.timeout()
+			if(result) {
+				cmd.inject(@currentMdc)
+				print(">>@keyboad.execSource $n $result", currentMdc.id)
+				currentMdc.setResult(result)
+				break;
+			}
+		}
+	}
+</script>
+
 <conf name="keyboard.en2ko">
 	result = en2ko('@[exec_param]')
 	log(f"kor:{result}")
@@ -502,3 +581,4 @@
 	result = en2koWord(@[exec_param])
 	log(f"ingBuffer:{result}")
 </conf>
+

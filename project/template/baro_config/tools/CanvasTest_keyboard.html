@@ -1,0 +1,29 @@
+<page margin=0 id="main" module="page_canvas">
+	<canvas id="c" module="canvas, canas_test_keyboard">
+</page>
+
+<script eval>
+	page=this.var(page)	
+	page.size(1024,800)
+	page.open()
+	global().set('p',page)
+	print("eval>> ", page)
+</script>
+
+  
+<script module="canas_test_keyboard">
+	updateMdc() {
+		print("canvas update rect start ===========")
+		rect = this.rect()
+		vbox(rect, '50,*').inject(rcInput, rcBody)
+		keyboard = this.getMdc('keyboard','mdc_keyboard')
+		input = this.getMdc('input', 'mdc_inputResult')
+		keyboard.getAvailSize().inject(keyboardWidth, keyboardHeight)		
+		keyboard.setInputMdc(input)
+		print("canas_test_keyboard updateMdc", input.id, keyboard.id, keyboardWidth, keyboardHeight )
+		this.addMdc(input, rcInput.center(500,45) )
+		this.addMdc(keyboard,rect.bottomCenter(keyboardWidth, keyboardHeight, 0, -4))
+		print("canvas update rect end ===========")
+	}
+</script>
+

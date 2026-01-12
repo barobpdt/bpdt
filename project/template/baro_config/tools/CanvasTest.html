@@ -4,122 +4,22 @@
 
 <script eval>
 	p=this.var(page)
-	c=p.get('c')
-	/*
 	p.size(800,600)
 	p.open()
-
-	a=
-	b=c.var(clipList)
-	aa=a.get(0)
+	/*
 	*/
-	c.var(clipList) 
-	mdc=mdc('clip')
-	mdc.setValue('나광호 안')
-	mdc.addClipMdc('cursor')
-	rc= mdc.getClipRect()
+	c=p.get('c')
+	mdc=c.var(@mdcList).get(0)
+	mdc.setValue('aaaa')
 	// p.resizeTick = System.tick()
-	print(">> test eval ", mdc.var(clipRect) )
+	print(">> test eval ",c)
 </script>
 
 
 <script module="canvas_clip">	 
 	updateMdc() { 
 		rect=this.rect()
-		this.addMdc('clip', rect.topCenter(0,50), 'mdc_clip')
+		this.addMdc('clip', rect.topCenter(0,50), 'mdc_inputResult')
 	}
 	
 </script>
-
-<script module="mdc_clip">
-	init() {
-		this[bgColor]=randomColor().lightColor(150)
-		this[clipDuration] = 1500
-		this[clipTick] = 0
-		this[@clipFlag]=true
-		this.addClipMdc('cursor')
-		updateRect()
-	}
-	updateRect() {
-		this.inject(@rectAvail)
-		return this.var(@rectBox, rectAvail.incr(2))
-	}
-	drawClip(dc, rc) {
-		this.inject(@clipFlag)
-		if(clipFlag) {
-			dc.fill(color(200,80,80,50))
-			dc.rectLine(rc, 0, '#f00')
-			clipFlag=false
-		} else {
-			clipFlag=true
-		}
-		this.with(@clipFlag)
-	}
-	drawDc() {
-		this.inject(@rectAvail, @rectBox, bgColor, inputResult)
-		dc=this
-		dc.fill()
-		not(rectAvail.eq(rectBox)) {
-			rectBox = this.updateRect()
-		}
-		dark=bgColor.darkColor(200)
-		roundRect(this, rectBox, 8, dark, '#fff')
-		dc.font('size:15,weight:bold,color:#333')
-		dc.textSize(inputResult).inject(textWidth, textHeight)
-		dc.text(rectBox.incrX(10), inputResult)
-		print("draw dc ", inputResult, textWidth, textHeight)
-		this.with(@textWidth, @textHeight)
-	}
-	getClipRect() {
-		this.inject(@textWidth, @textHeight, @offset, @rectBox)
-		not(textWidth) textWidth=0
-		rect=rectBox.offset(offset)
-		rect.inject(x,y,w,h)
-		x+=15+textWidth;
-		return this.var(clipRect, rc(x,y,3,h).incrYH(8,8))
-	}
-	setValue(text) {
-		this[inputResult]=text
-		this.drawDc()
-		this.updateCanvas()
-	}
-	mouseDown(pt) {		
-		print(">> mouse down ", pt)
-		return true;
-	} 
-	mouseUp(pt) {		
-		print(">> mouse up", pt)
-		return true;
-	}
-	
-</script>
-
-
-
-<script test> 
-	draw(dc, rc) {
-		this.inject(color)
-		dc.fill(color.lightColor(220))
-		rcImage=rc.center(300,300)
-		dc.image(rcImage.incr(-2), 'coca-logo.png', 'full', 'blur', 50)
-		dc.image(rcImage, 'coca-logo.png')
-
-		rcIcon = rc.center(30,30)
-		dc.image(rcIcon, 'ext:txt')
-		dark=color.darkColor(180)
-		rcCur=rc(10,10,100,30)
-		roundRect(dc, rcCur, 8,  dark, 'gradient', color, dark)
-		textColor=color.lightColor(180)
-		dc.save()
-		dc.font("weight:bold, color:$textColor")
-		dc.text(rcCur, 'test', 'center', 'elide')
-		dc.restore()
-		if(this.var(mdcList) ) {
-			while(mdc, this.var(mdcList)) {
-				mdc.draw(dc)
-			}
-		}
-	}
-</script>
-
- 

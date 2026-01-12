@@ -1,65 +1,104 @@
 <script module="mdc_inputResult">
 	init() {
-		this[bgColor]=randomColor().lightColor(150)
-		this[clipDuration] = 1500
-		this[clipTick] = 0
-		this[@clipFlag]=true
+		this.var(@bgColor, randomColor().lightColor(150) )
+		this.var(@clipFlag, true)
+		this.var(@rectClip, null)
+		this.var(@fontStyle, 'size:15,weight:bold,color:#333')		
+		this.var(@inputValue, '')
+		this.var(@cursorColor, null)
+		this.var(@targetMdc, null)
+		print("@@ input result init =============",this)
 		this.addClipMdc('cursor')
-		updateRect()
 	}
 	setFontStyle(style) {
+		not(style) return;
 		return this.var(fontStyle, style)
 	}
 	updateRect() {
-		this.inject(@rectAvail)
-		return this.var(@rectBox, rectAvail.incr(2))
+		return this.var(@rectBox, this.var(@rectAvail).incr(2) )
 	}
 	drawClip(dc, rc) {
-		this.inject(@clipFlag)
+		this.inject(@clipFlag, @keyboardMdc)
+		if(keyboardMdc ) {
+			keyboardMdc.inject(@ingString, @baseColor)
+			if( ingString ) {
+				dc.save()
+				if(clipFlag) {
+					dc.fill(rc, baseColor)
+					dc.font('size:16,weight:bold,color:#fff').text(rc,ingString)
+					clipFlag=false
+				} else {
+					dc.fill(rc, '#fff')
+					dc.font('size:16,weight:bold,color:#99a').text(rc,ingString)
+					clipFlag=true
+				}
+				this.var(@clipFlag)
+				dc.restore()
+				return;
+			}
+		}
 		if(clipFlag) {
-			dc.fill(color(200,80,80,50))
+			dc.fill(rc, color(200,80,80,50))
 			dc.rectLine(rc, 0, '#f00')
 			clipFlag=false
 		} else {
 			clipFlag=true
 		}
-		this.with(@clipFlag)
+		this.var(@clipFlag)
 	}
 	drawDc() {
-		this.inject(@rectAvail, @rectBox, @fontStyle, bgColor, inputResult)
+		this.inject(@rectAvail, @rectBox, @fontStyle, @bgColor, @inputValue, @keyboardMdc)		
 		dc=this
-		dc.fill()
-		not(rectAvail.eq(rectBox)) {
-			rectBox = this.updateRect()
-		}
-		not(fontStyle) fontStyle='size:15,weight:bold,color:#333'
+		dc.fill()		
 		dark=bgColor.darkColor(200)
-		roundRect(this, rectBox, 8, dark, '#fff')
-		dc.font(fontStyle)
-		dc.textSize(inputResult).inject(textWidth, textHeight)
-		dc.text(rectBox.incrX(10), inputResult)
-		print("draw dc ", inputResult, textWidth, textHeight)
+		roundRect(dc, rectBox, 8, dark, '#fff')
+		dc.save().font(fontStyle)
+		if(keyboardMdc) {			
+			keyboardMdc.inject(@doneString, @ingString)			
+			dc.textSize(doneString).inject(textWidth, textHeight)
+			dc.text(rectBox.incrX(10), doneString)
+			if(ingString) {
+				sx=textWidth + 10;
+				dc.textSize(ingString).inject(ingWidth)
+				dc.font('color:#99a').text(rectBox.incrX(sx), ingString)
+				this.var(@ingWidth)
+			}
+			print('>> draw dc ', this.var(@ingWidth), fontStyle, ingWidth,  textWidth, textHeight, doneString, ingString)
+		} else {
+			dc.text(rectBox.incrX(10), inputValue)		
+			dc.textSize(inputValue).inject(textWidth, textHeight)
+		}
 		this.with(@textWidth, @textHeight)
+		this.restore()
 	}
 	getClipRect() {
-		this.inject(@textWidth, @textHeight, @offset, @rectBox)
+		this.inject(@textWidth, @textHeight, @offset, @rectBox, @keyboardMdc)
+		rectBox.offset(offset).inject(x,y,w,h)
 		not(textWidth) textWidth=0
-		rect=rectBox.offset(offset)
-		rect.inject(x,y,w,h)
-		x+=15+textWidth;
-		return this.var(clipRect, rc(x,y,3,h).incrYH(8,8))
+		x+=10+textWidth;
+		if(keyboardMdc ) {
+			keyboardMdc.inject(@doneString, @ingString, @ingWidth)
+			if(ingString) {
+				ingWidth=30;
+				return this.var(@rectClip, rc(x,y,ingWidth,h).incrYH(8,8))
+			}
+		}
+		return this.var(@rectClip, rc(x,y,3,h).incrYH(8,8))
 	}
 	setValue(text) {
-		this[inputResult]=text
+		this.var(@inputValue, text)
+		this.drawDc()
+		this.updateCanvas()
+	}
+	setKeyboardValue(keyboard) {
+		this.var(@keyboardMdc, keyboard)
 		this.drawDc()
 		this.updateCanvas()
 	}
 	mouseDown(pt) {		
-		print(">> mouse down ", pt)
 		return true;
 	} 
 	mouseUp(pt) {		
-		print(">> mouse up", pt)
 		return true;
 	}
 	

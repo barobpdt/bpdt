@@ -6,22 +6,7 @@
 </conf>
 
 <script eval >
-	// conf('cf.testName', 'googledriver')
-	
-	url='https://kr.freepik.com/free-photos-vectors/sprites'
-	url='https://craftpix.net/product/24-tiny-character-game-sprites/'
-	src = getSource(conf('python.command:setUrl'))
-	c=Baro.process('googledriver')
-	
-	@python.execSource(c,src,@test.execSourceProc)
-	print("evel >> start $src")
-	
-	
-</script>
-
-<script eval skip>
 	startPythonCommand()
-	// startPythonWebview()
 </script>
 
 <script type="execSource">

@@ -20,6 +20,7 @@ closeApp() {
 		closePythonCommand()
 		System.sleep(100)
 	}
+	Cf.debug(false)
 	Cf.exit()
 }
 initWas() {
@@ -202,7 +203,7 @@ json(node, childPrefix, useIndent) {
 	obj = object("baro.json")
 	not(obj.var(useModule)) {
 		include('classes/common/json.js')
-		addModule(obj,'@json',childPrefix)
+		addModule(obj,'json',childPrefix)
 	}
 	not(node) {
 		return obj;
@@ -459,30 +460,31 @@ addUserWorker(id, targetNode, callbackWorker ) {
 
 /* 전역 타이머 실행 */
 startGlobalTimer() {
-	if( global().get('@timerDelay') ) {
-		return print('global timer가 실행중입니다 #{0}', global().get('@timerDelay'))
+	if( global().var(@timerDelay) ) {
+		return print('global timer가 실행중입니다', global().var(@timerDelay) )
 	}
-	timerInfo = object('baro.globalTimerInfo')
 	event(global(),'onTimeout', @baro.procGlobalTimer)
 	// 500ms 마다 타이머 실행
 	System.globalTimer(500)
+	timerInfo = object('baro.globalTimerInfo')
+	timerInfo.var(@startTick, System.tick())
 	print("global timer 시작", timerInfo)
 	return timerInfo;
 }
 /* 전역 타이머 중지 */
 stopGlobalTimer(workerClose) {
 	timerInfo = object('baro.globalTimerInfo')
-	global().set('@timerDelay',0)
+	global().var(@timerDelay,0)
 	System.globalTimer(false)
 	print("global timer 중지됨")
 	if(workerClose) {
-		watcher=global().get('@watcherFiles')
+		watcher=global().var(@watcherFiles)
 		if( isObject(watcher) ) {
 			while( cur, watcher) {
 				cur.set('@callback', null)
 			}
 		}
-		while(worker, timerInfo.get('@workerList')) {
+		while(worker, timerInfo.var(@workerList) ) {
 			if( tagCheck(worker,'process')) {
 				worker.set('@workerStatus','stop')
 				worker.get('@workerJobList').reuse()

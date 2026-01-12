@@ -29,8 +29,24 @@
 		}
 		return mdc;
 	}
+	getMdc(param, moduleType) {		
+		this.inject(@baseCode, id)
+		dc=mdc("$baseCode#$id.$param")
+		if( moduleType ) {
+			not(dc.var(@useModule)) {
+				dc.var(@canvas, this)
+				dc.var(@moduleType)
+				addModule(dc,"mdc,$moduleType")
+			}
+		}
+		return dc;
+	}
 	addMdc(param, rectDraw, moduleType, baseColor) {
-		dc=mdc(param)
+		if(typeof(param,'node')) {
+			dc=param;
+		} else {
+			dc=this.getMdc(param, moduleType)
+		}
 		if( typeof(rectDraw,'bool') ) {
 			if(dc.var(img)) {
 				this.addMdcList(dc, rectDraw)
@@ -39,13 +55,13 @@
 			}
 			return;
 		}
-		canvas=this
-		if(typeof(rectDraw,'rect')) {			
+		dc.var(@canvas, this)
+		if(typeof(rectDraw,'rect')) {
 			rectDraw.inject(x,y,w,h)
 			rectAvail=rc(0,0,w,h)
 			offset=pt(x,y)
 			mdc(dc, w, h)
-			dc.with(@canvas, @offset, @rectDraw, @rectAvail)
+			dc.with(@offset, @rectDraw, @rectAvail)
 		}
 		if(baseColor) {
 			if(typeof(baseColor,'string')) {
@@ -57,15 +73,23 @@
 				not(baseColor) baseColor=randomColor()
 			}
 		}
-		if(typeof(baseColor,'color')) {
-			this.var(baseColor, baseColor)
+		if( typeof(baseColor,'color')) {
+			dc.var(@baseColor)
 		}
-		not( dc.var(useModule) ) {
+		not( dc.var(@useModule) ) {
 			if(moduleType) {
 				addModule(dc,"mdc,$moduleType")
-				dc.var(moduleType, moduleType)
+				dc.var(@moduleType)
 			}
 		} 
+		dc.inject(@rectAvail, @rectAvailPrev)
+		if(typeof(rectAvail,'rect')) {
+			not(rectAvail.eq(rectAvailPrev)) {
+				dc.updateRect()
+				this.var(@rectAvailPrev, rectAvail)
+			}
+			dc.drawDc()
+		}
 		return this.addMdcList(dc)
 	}
 	removeMdc(mdc, checkUpdate) {
@@ -73,15 +97,16 @@
 		mdcList.remove(mdc)
 		if(checkUpdate) this.update()
 	}
-	updateRectCheck() {
+	updateRectCheck(rc) {
 		// print("@@ upate check updateCheckTick==${this.updateCheckTick}")
 		this.updateCheckTick=System.tick()
+		this.var(@rectCanvas, rc)
 	}
 	updateMdc() {
 		print("@@ canvas 객체에 updateMdc 함수 중복정의 하세요")
 	}
 	updateRect() {
-		this.var(mdcList).reuse()
+		this.var(@mdcList).reuse()
 		this.updateMdc()
 		this.update()
 	}
@@ -115,37 +140,50 @@
 		return false;
 	}
 	onTimer() {
-		while(mdc, this.var(clipList)) {
+		while(mdc, this.var(@clipList)) {
 			rect=mdc.getClipRect()
-			if(typeof(rect,'rect')) {
-				this[clipMdc]=mdc
+			not(typeof(rect,'rect')) {
+				continue;
+			}
+			mdc.inject(@clipTick, @clipDuration)
+			if(checkTick(clipTick, clipDuration)) {
 				this.update(rect)
+				break;
+			} else {
+				not(clipTick) clipTick=System.tick()
+				continue;
 			}
 		}
 	}
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
-			not( rc.eq(this.rectCanvas)) {
-				this.updateRectCheck()
-				this.rectCanvas = rc
+			this.inject(@rectCanvas)
+			not( rc.eq(rectCanvas) ) {
+				this.updateRectCheck(rc)
 			}
 		} else {
-			if( this[clipMdc] ) {
-				this[clipMdc].drawClip(dc,rc)
+			while(mdc, this.var(@clipList)) {
+				mdc.inject(@rectClip) 
+				not(rectClip) {
+					continue;
+				}
+				if(rectClip.eq(rectClip)) {
+					mdc.drawClip(dc,rc)
+					break;
+				}
 			}
 			return;
 		}
-		this.inject(@mdcList, @overlayList,@pathList)
+		this.inject(@mdcList, @overlayList, @pathList)
 		while(mdc, mdcList) {
 			mdc.draw(dc)
 		}
-		if( this.var(popupDialog) ) {
+		if( this.var(@popupDialog) ) {
 			dc.fill(color(0,0,0,50))
-			this.var(popupDialog).drawAll(dc)
+			this.var(@popupDialog).draw(dc)
 		}
 		while(mdc, overlayList) {
 			mdc.inject(@cause, @rectOverlay,@offset)
-			print(">> draw overlay start ", cause, rectOverlay, offset)
 			mdc.drawOverlay(dc)
 		}
 		while(pair, this.timeline()) {
@@ -181,11 +219,11 @@
 	}
 	onMouseUp(pos) {
 		this.inject(@mdcList, @popupDialog)
-		if(popupDialog) { 
+		if( popupDialog) { 
 			popupDialog.mouseUpDefault(pos)
 			return true;
 		}
-		if(isValid(mdcList)) {
+		if( isValid(mdcList)) {
 			while(n=mdcList.size()-1,0) {
 				mdc=mdcList.get(n)
 				if( mdc.mouseUpDefault(pos) ) return true;

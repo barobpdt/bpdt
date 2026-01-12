@@ -13,8 +13,10 @@
 		this.with(@cause, @rectOverlay)
 		this.var(canvas).removeOverlay(this)
 	}
-	addClipMdc(clipType) {
-		this.with(@clipType)
+	addClipMdc(clipType, clipDuration) {
+		clipTick=System.tick()
+		not(clipDuration) clipDuration=500
+		this.with(@clipType, @clipTick, @clipDuration)
 		this.var(canvas).addClipMdc(this)
 	}
 	removeClipMdc() {
@@ -33,8 +35,24 @@
 		}
 		return mdc;
 	}
+	getMdc(param, moduleType) {		
+		this.inject(@canvas, id)
+		canvas.inject(@baseCode)
+		dc=mdc("$baseCode#$id.$param")
+		if( moduleType ) {
+			not(dc.var(@useModule)) {
+				addModule(dc,"mdc,$moduleType")
+				dc.var(@moduleType)
+			}
+		}
+		return dc;
+	}
 	addSubMdc(param, rectDraw, moduleType, baseColor) {
-		dc=mdc(param)
+		if(typeof(param,'node')) {
+			dc=param;
+		} else {
+			dc=this.getMdc(param, moduleType)
+		}
 		if( typeof(rectDraw,'bool') ) {
 			if(dc.var(img)) {
 				this.addMdcList(dc, rectDraw)
@@ -50,7 +68,7 @@
 			rectAvail=rc(0,0,w,h)
 			offset=pt(x,y)
 			mdc(dc, w, h)
-			dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail)
+			dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail )
 		}
 		if(baseColor) {
 			if(typeof(baseColor,'string')) {
@@ -63,14 +81,16 @@
 			}
 		}
 		if(typeof(baseColor,'color')) {
-			this.var(baseColor, baseColor)
-		}
-		not( dc.var(useModule) ) {
-			if(moduleType) {
-				addModule(dc,"mdc,$moduleType")
-				dc.var(moduleType, moduleType)
+			dc.var(@baseColor)
+		}		
+		dc.inject(@rectAvail, @rectPanel)
+		if(typeof(rectAvail,'rect')) {
+			not(rectAvail.eq(rectPanel)) {
+				dc.updateRect()
+				this.var(@rectPanel, rectAvail)
 			}
-		} 
+			dc.drawDc()
+		}
 		return this.addSubMdcList(dc);
 	}
 	removeMdc(mdc, checkUpdate) {
@@ -167,7 +187,6 @@
 	}
 	mouseDownDefault(pos) {				
 		this.inject(id, @rectDraw, @offset)
-		print("xxx mouse down default xxxx", rectDraw, pos)
 		not(rectDraw.contains(pos)) {
 			return false;
 		}				
@@ -187,7 +206,7 @@
 </script>
 <script module="mdc_leftPanel">
 	init() {
-		addModule(this,'mdc',true)
+		
 	}
 	drawDc() {
 		this.inject(@rect, @rectAvail, @baseColor)
