@@ -52,20 +52,32 @@
 					this.with(@status:'ready', @retryTick:0)
 				}
 			}
-			
 			return;
 		}
 		if( status.eq('login')) {
+			this.with(@status: 'login_send')
 			this.inject(@userId, @token, @messageNode)
 			messageNode.removeAll(true).with(userId)
 			this.sendReq('login', token, json(messageNode), '')
 			return;
 		}
-		if(socket.isRead(500)) {
-			this.dispatchRecv(socket.readData())
+		if( socket.isRead(500)) {
+			this.dispatchRecv(socket.read())
+		}
+	}
+	sendReq(type, params, props, data) {
+		not(props) {
+			tm=System.localtime()
+			props="{tm:$tm}"
+		}
+		size=data.size()
+		not( socket.sendData("##>$type:$size:$params$props\r\n\r\n$data") ) {
+			this.closeServer()
+			this.with(@status:'error')
 		}
 	}
 	dispatchRecv(&data) {
+		print("@@ client dispatchRecv data==$data")
 		left=data.findPos('##>') 
 		if(left.size() > 32 ) {
 			return print("@@message_client dispatchRecv 시작오류 left=$left")
@@ -79,17 +91,20 @@
 		params=line.trim()
 		props=data.match()
 		data.findPos("\r\n\r\n")		
-		this.dispatchMessage(client, type, params, props, data, size.toInt() )
+		this.dispatchMessage(type, params, props, data, size.toInt() )
 	}
-	sendReq(type, params, props, data) {
-		not(props) {
-			tm=System.localtime()
-			props="{tm:$tm}"
-		}
-		size=data.size()
-		not( socket.sendData("##>$type:$size:$params$props\r\n\r\n$data") ) {
-			this.closeServer()
-			this.with(@status:'error')
+	dispatchMessage(type, params, props, data, size) {
+		cf=socket.config()
+		cf.inject(@proxy)
+		messageNode=cf.addNode('@messageNode').removeAll(true)
+		switch(type) {
+		case res_login: 
+			messageNode.parseJson(props).inject(uesrId, workType)
+			if(userId) {
+			}
+		default:
+			print("@@ client dispatchMessage $type 미정의")
 		}
 	}
+
 </script>

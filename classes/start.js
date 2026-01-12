@@ -598,6 +598,16 @@ printAll(prefix) {
 	ss.add("\n}\n")
 	log(ss)
 }
+strEncode() {
+	s=''
+	while(v,args()) {
+		s.add(v)
+	}
+	return s.encode();
+}
+strDecode(s) {
+	return s.decode()
+}
 strJoin() {
 	ss=''
 	a=args()
