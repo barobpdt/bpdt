@@ -209,7 +209,7 @@
 		
 	}
 	drawDc() {
-		this.inject(@rect, @rectAvail, @baseColor)
+		this.inject(@rectAvail, @baseColor)
 		this.fill()
 		this.save().mode()
 		dark=baseColor.darkColor(100)
@@ -235,27 +235,28 @@
 		this.restore()
 	}
 	mouseDown(pt) {
-		print(">> leftPanel mouseDown : $pt")
-		return false;
+		return true;
 	}
 	mouseUp(pt) {
-		print(">> leftPanel mouseUp : $pt")
-		return false;
+		return true;
 	}
 </script>
 
 <script module="mdc_box">
 	drawDc() {
-		this.inject(@rectAvail, @baseColor)
+		this.inject(@rectAvail, @baseColor, @title)
 		dark=baseColor.darkColor(100)
-		roundRect(this, rectAvail.incr(8), 8, dark, 'gradient', baseColor, dark)
+		rcBox=rectAvail.incr(8)
+		roundRect(this, rcBox, 8, dark, 'gradient', baseColor, dark)
+		if(title) {
+			color=baseColor.lightColor(180)
+			this.font('size:20,weight:bold,color:$color').text(rcBox, title)
+		}
 	}
 	mouseDown(pt) {
-		print(">> box mouseDown : $pt")
 		return true;
 	}
 	mouseUp(pt) {
-		print(">> box mouseUp : $pt")
 		return true;
 	}
 	

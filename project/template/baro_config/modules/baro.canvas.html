@@ -101,6 +101,7 @@
 		// print("@@ upate check updateCheckTick==${this.updateCheckTick}")
 		this.updateCheckTick=System.tick()
 		this.var(@rectCanvas, rc)
+		this.updateRect()
 	}
 	updateMdc() {
 		print("@@ canvas 객체에 updateMdc 함수 중복정의 하세요")
@@ -139,6 +140,36 @@
 		}
 		return false;
 	}
+	drawBackground(dc) { return false }
+	mouseDown(pos) {
+		this.inject(@buttons) not(buttons) return false;
+		while(cur, buttons) {
+			cur.inject(code, rect, disable) not(rect) continue;
+			if(disable) continue;
+			if(rect.contains(pos)) {
+				this.var(@currentMouseNode, cur)
+				this.update()
+				return true;
+			}
+		}
+		return false;
+	}
+	mouseUp(pos) {
+		this.inject(@buttons, @currentMouseNode)
+		not(currentMouseNode) return false;
+		currentMouseNode.inject(code, rect)
+		checkContain=false
+		if(rect.contains(pos)) {
+			this.clickButton(currentMouseNode)
+			checkContain=true
+		}		
+		this.var(@currentMouseNode, null)
+		this.update()
+		return checkContain;
+	}
+	clickButton(currentNode) {
+		print("@@ click button =>" currentNode)
+	}
 	onTimer() {
 		while(mdc, this.var(@clipList)) {
 			rect=mdc.getClipRect()
@@ -174,6 +205,10 @@
 			}
 			return;
 		}
+		check=this.drawBackground(dc)
+		if( typeof(check,'bool') && check ) {
+			return;
+		}
 		this.inject(@mdcList, @overlayList, @pathList)
 		while(mdc, mdcList) {
 			mdc.draw(dc)
@@ -201,6 +236,7 @@
 	}
 	
 	onMouseDown(pos) {
+		if(this.mouseDown(pos) ) return true;
 		this.inject(@mdcList, @popupDialog)
 		if(popupDialog) { 
 			not( popupDialog.mouseDownDefault(pos) ) {
@@ -218,6 +254,7 @@
 		}
 	}
 	onMouseUp(pos) {
+		if(this.mouseUp(pos) ) return true;
 		this.inject(@mdcList, @popupDialog)
 		if( popupDialog) { 
 			popupDialog.mouseUpDefault(pos)

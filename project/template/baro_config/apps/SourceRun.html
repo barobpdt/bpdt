@@ -72,7 +72,7 @@
 		this.positionSave();
 	}
 	onTimer() {
-		str=logReader('sourceRun').timeout();
+		str=logTail('SourceRun').timeout();
 		if(str) logPanel.appendLog(str)
 	}
 	editorFocus() {

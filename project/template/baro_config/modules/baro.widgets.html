@@ -88,7 +88,7 @@
 </script>
 
 <script module="widget">
-	create(tag, id, target, props) {		 
+	create(tag, id, target, module,child) {		 
 		widget=@widget.getWidget(tag, id, target)
 		if( typeof(widget,'widget')) {
 			print("$tag $id 위젯이 이미 생성되었습니다")
@@ -96,13 +96,15 @@
 		}
 		widget.tag=tag
 		widget.id=id
-		if(typeof(props,'string')) {
-			widget.parseJson(props)
+		if(typeof(module,'string')) {
+			addModule(widget,module)
 		}
 		widget.var(baseCode,"${base}:${id}")
 		Cf.createWidget(widget)
-		if(typeof(props,'bool') && props ) {
-			@widget.setParent(widget, target)
+		if(child ) {
+			widget.flags("child")
+			widget.parentWidget(target)
+			widget.show()
 		}
 		return widget;
 	}

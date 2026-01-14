@@ -1,0 +1,222 @@
+<script module="message_client" note="메시지클라이언트 모듈">
+	init(userId) {
+		not(userId) userId='guest'
+		@worker=Baro.worker(userId)
+		@socket=Baro.socket(userId)
+		@soeket_timeout = 1000
+		@max_buffer_size = 8192
+		worker.start(this, this.clientProc, true, 100)
+		this.addNode('@messageNode')
+		this.with(@userId, @status:'first')
+	}
+	setConnectInfo(host,port) {
+		if(socket.isConnect()) {
+			return print("@@message_client 소켓이 이미 연결중입니다")
+		}
+		this.with(@status:'ready', @host, @port)
+	}
+	isConnect() {
+		return socket.isConnect()
+	}
+	closeSocket() {
+		print(">> close socket start==========",socket)
+		not(socket.isConnect()) {
+			return print("@@message_client 소켓이 연결중이 아닙니다")
+		}
+		this.var(@status, 'close')
+		socket.close()
+	}
+	clientProc() {
+		this.inject(@status)
+		if( status.eq('ready','error') ) {	
+			this.inject(@host, @port)
+			if( host && port) {
+				this.with(@status: 'connecting')
+				print("======== connect ========", host, port, soeket_timeout)
+				if(socket.connect(host,port,soeket_timeout)) {
+					this.with(@status: 'login')
+				} else {
+					this.with(@status:'connect_error', @retryTick: System.tick())
+				}
+			} else {
+				this.with(@status: 'connect_notset')
+			}
+			return;
+		} 
+		not( socket.isConnect() ) {
+			if(status.eq('first','close','connect_notset')) {
+				return;
+			}
+			this.inject(@retryTick)
+			if( retryTick ) {
+				dist=System.tick() - retryTick
+				if(dist.gt(5000)) {
+					this.with(@status:'ready', @retryTick:0)
+				}
+			}
+			return;
+		}
+		if( status.eq('login')) {
+			this.with(@status: 'login_check')
+			return this.reqLogin();
+		}
+		if( socket.isRead(500)) {
+			data=socket.recvData()			
+			if( typeof(data,'bool')) {
+				return this.closeSocket()
+			}
+			this.dispatchRecv(data)
+		}
+	}
+	sendReq(type, params, props, data) {
+		not(props) {
+			tm=System.localtime()
+			props="{tm:$tm}"
+		}
+		size=data.size()
+		result=socket.sendData("##>$type:$size:$params$props\r\n\r\n$data")
+		print(">> client send req 결과: $result")
+		not(result) {
+			this.closeSocket()
+			this.with(@status:'error')
+		}
+	}
+	dispatchRecv(&data) {
+		left=data.findPos('##>') 
+		if( left.size() > 32 ) {
+			print("@@message_client dispatchRecv 시작오류 ", left.size())
+			return;
+		}
+		not(lineCheck(data,'{')) {
+			return print("@@message_client dispatchRecv 프로토콜오류 line=$line")  
+		}
+		line=data.findPos("{",1,1)		
+		type=line.findPos(':').trim()
+		size=line.findPos(':').trim()
+		params=line.trim()
+		props=data.match()
+		data.findPos("\r\n\r\n")		
+		this.dispatchMessage(type, params, props, data, size.toInt() )
+	}
+	dispatchMessage(type, params, props, data, size) {
+		print(">> dispatch client ", type, params, props, size)
+		messageNode = this.getMessageNode(props)
+		if( this.checkMessage(type, messageNode) ) {
+			return;
+		}
+		switch(type) {
+		case res_login:			
+			messageNode.inject(userId, workType,token)
+			socket.with(@userId, @workType,@token)
+		case res_upload:
+			
+		case res_download:
+			this.downloadStart(data, messageNode, params)
+		default:
+			print("@@ client dispatchMessage $type 미정의")
+		}
+	}
+	getMessageNode(props) {
+		node = this.var(@messageNode).removeAll(true)
+		if(props) node.parseJson(props)
+		return node;
+	}
+	checkMessage(type, messageNode) {
+		messageNode.inject(resultType, message)		
+		switch(type) {
+		case res_upload:
+			messageNode.inject(localFilename)
+			print("$localFilename 파일 업로드에 성공했습니다")
+			return true;
+		default:
+			if( resultType=='error') {
+				print("@@ client checkMessage $type : $message", messageNode)
+				return true;
+			}
+		}
+		return false;
+	}
+	reqLogin() {
+		this.inject(@userId, @token)
+		messageNode=this.getMessageNode("userId:$userId")
+		this.sendReq('login', token, json(messageNode), '')
+		this.with(@status: 'login_send')
+	}
+	reqUploadFile(localFilename, remoteFilename) {
+		not(isFile(localFilename)) {
+			return print("@@ message_client upload 파일 미존재 (경로:$localFilename)");
+		}
+		file=getFileObject()
+		not( file.open(localFilename,'read') ) {
+			return print("@@ message_client upload 파일오픈 오류 (경로:$localFilename)");
+		}
+		totalSize = file.size()
+		sendSize = 0
+		modifyDatetime=fileTime(localFilename)
+		messageNode=this.getMessageNode().with(
+			localFilename, remoteFilename,
+			totalSize,
+			modifyDatetime
+		)
+		props=json(messageNode)
+		params=System.localtime()
+		while(totalSize.gt(sendSize), idx) {
+			remain = totalSize - sendSize
+			if(remain.gt(max_buffer_size)) remain=max_buffer_size
+			data=file.read(remain)
+			if(idx==0) {			
+				result=socket.sendData("##>uploadFile:$totalSize:$params$props\r\n\r\n$data")
+			} else {
+				result=socket.sendData(data)
+			}
+			not(result) {
+				print("@@ message_client upload 파일 전송오류 ", totalSize, sendSize)
+				socket.flush()
+				break;
+			}
+			sendSize+=data.size();
+		}
+		file.close()
+	}
+	downloadStart(data, messageNode, params) {
+		messageNode.inject(localFilename)
+		this.inject(@userId)
+		tempPath = conf('path.temp')
+		tempFilename = pathJoin(tempPath, strJoin(userId,'-',System.tick()) )
+		file=getFileObject()
+		print("xxxx client download start xxxxx", tempFilename, localFilename, messageNode, max_buffer_size)
+		if(file.open(tempFilename,'append')) {
+			file.append(data)
+			appendSize = data.size()
+			errorCheck=false
+			while( size.gt(appendSize) ) {
+				remain=size - appendSize;
+				if( remain.gt(max_buffer_size)) remain=max_buffer_size
+				recv = client.recvData(remain)				
+				if(typeof(recv,'bool')) {
+					errorCheck=true
+					print("@@ client download recv error : ", recv, size, appendSize, remain)
+					break;
+				}
+				recvSize=recv.size()
+				file.append(recv)
+				appendSize+=recvSize;
+				if( remain.gt(recvSize) ) {
+					print("@@ client download recv 불일치 : ", remain, recvSize )
+				}
+			}
+			if(errorCheck) {
+				print("download중 오류가 발생했습니다", messageNode)
+			} else {
+				if( isFile(localFilename)) {
+					localFilename = getDownloadName(localFilename)
+				}
+				file.move(tempFilename, localFilename)
+			}
+			file.close()
+		} else {	
+			this.setResultType(messageNode, "error", "$remoteFilename 파일열기 오류")
+		}
+	}
+
+</script>

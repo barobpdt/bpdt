@@ -139,22 +139,8 @@ findId( root, id) {
 	return;
 }
 recalc(total, info) {
-	return _arr().recalc(total, info)
-}
-dividPos(param) {
-	if(typeof(param,'array')) {
-		a=param
-	} else {
-		args(total,info)
-		a=recalc(total,info)	
-	}
-	b=_arr(), sx=0
-	b.add(sx)
-	while(n, range(0,a.size()-1) ) {
-		sx+=a.get(n)
-		b.add(sx)
-	}
-	return b;
+	arr=_arr()
+	return arr.recalc(total, info)
 }
 range(sp,ep) {
 	a=_arr()
@@ -559,8 +545,15 @@ getLine(&s) {
 	not(s) return '[line blank]';
 	not(typeof(s,'string')) return "$s";
 	s.ch()
-	line = s.findPos("\n").trim()
-	return line;
+	return s.findPos("\n").trim();
+}
+getLineCount(&s) {
+	cnt=0;
+	while(s.valid()) {
+		line=s.findPos("\n").trim()
+		if(line) cnt++;
+	}
+	return cnt;
 }
 lastLine(&s) {
 	if( s.find("\n")) {
@@ -619,6 +612,33 @@ strJoin() {
 		}
 	}
 	return ss;
+}
+getDownloadName(filename) {
+	not(isFile(filename)) return filename; 
+	while(n=0, 256) {		
+		filePathInfo(filename).inject(path,fnm,name)
+		ext=right(fnm,'.')
+		nm = name
+		nm.ref()
+		checkNum=false;
+		if(nm.find('-')) {
+			a=nm.findLast('-')
+			b=a.right().trim()
+			if(typeof(b,'num')) {
+				checkNum=true;
+				name=strJoin(a,'-',b+1)
+			}
+		}
+		not(checkNum) {
+			name.add('-1')
+		}
+		if(ext) {
+			name.add(".$ext")
+		}
+		filename=pathJoin(path,name)
+		not(isFile(filename)) return filename;
+	}
+	return filename;
 }
 typeVal(&s) {
 	return when(typeof(s,'string'), s.typeValue(), s);
@@ -808,7 +828,6 @@ pathJoin() {
 		} else {
 			ss.add(a)
 		}
-		print("a>>$a")
 	}
 	return ss;
 }
@@ -878,6 +897,33 @@ fileDelete(path) {
 	}
 	return result;
 }
+fileMove(srcFile, destFile, overwrite, mode) {
+	not(srcFile && destFile) {
+		return print("fileMove 파일 이동 오류 파일명 미정의", srcFile, destFile);
+	}
+	not(isFile(srcFile)) {
+		return print("fileMove 파일 이동 오류 $srcFile 파일 미존재");
+	}
+	if(isFile(destFile)) {
+		if(overwrite) {
+			not( fileDelete(destFile) ) {
+				return print("fileMove 파일 이동 오류 $destFile 파일 삭제 오류");
+			}
+		} else {
+			return print("fileMove 파일 이동 오류 $destFile 파일이 존재합니다");
+		}
+	}
+	if(mode.eq('command')) {
+		if( conf('cf.os').eq('windows') ) {
+			a=srcFile.replace("/","\\"), b=destFile.replace("/","\\")
+			runCommand(str('move /Y "$a" "$b"'))
+		}
+		result = true
+	} else {
+		result = Baro.file().move(srcFile, destFile)
+	}
+	return result;
+}
 /*
 페이지처리 함수
 */
@@ -898,8 +944,10 @@ include(name, checkReg) {
 		} else {
 			fullname=name
 		}
-		
 		serviceNode=getServiceNode(service)
+		not(serviceNode) {
+			serviceNode=getServiceNode('baro',service)
+		}
 	} else {
 		not(name.find('.')) {
 			name.add('.js')
@@ -1261,6 +1309,7 @@ parseSource(&s, base, serviceNode) {
 			widgetSource.add(ss)
 		} else if( tag.eq('script') ) {
 			module=propValue(prop,'module')
+			note=propValue(prop,'note')
 			checkEval=propValue(prop,'eval',true)
 			checkTest=propValue(prop,'test',true)
 			if(debug) {
@@ -1287,6 +1336,7 @@ parseSource(&s, base, serviceNode) {
 					}
 					mapNode.set(type,ss)
 					if(module) mapNode.set("$type#module",module)
+					if(note) mapNode.set("$type#note", note)
 				}
 			} else if(checkEval) {
 				continue;

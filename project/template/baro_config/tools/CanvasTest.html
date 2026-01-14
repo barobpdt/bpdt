@@ -1,25 +1,143 @@
-<page id="main" module="page_canvas">
-	<canvas id="c" module="canvas, canvas_clip">
+<page id="p1" module="page_test">
+	<div id="stack">
 </page>
 
 <script eval>
-	p=this.var(page)
+	p=page('CanvasTest:p1')
+	/*	
 	p.size(800,600)
 	p.open()
-	/*
-	*/
-	c=p.get('c')
-	mdc=c.var(@mdcList).get(0)
-	mdc.setValue('aaaa')
-	// p.resizeTick = System.tick()
-	print(">> test eval ",c)
+	main=p.main
+	*/	
+	sub=findId(p.stack,'sub')
+	sub.inject(@buttons, @rcPrev, @rcClose)
+	buttons.var(@update,true)
+	
+	print("CanvasTest_splitter eval>> page=>", buttons, rcPrev, rcClose )
 </script>
 
+<script module="page_test">
+	init() {
+		@stack = widget('stack')
+		@main = @widget.create('canvas','main',this,'canvas,canvas_stack_main', true)
+		stack.addPage(main, true)
+	}
+</script>
 
-<script module="canvas_clip">	 
-	updateMdc() { 
-		rect=this.rect()
-		this.addMdc('clip', rect.topCenter(0,50), 'mdc_inputResult')
+<script module="canvas_stack_main">
+	clickButton(node) {
+		node.inject(code,name)
+		page=page()
+		print(">> click button ", this, page, code, name)
+		switch(code) {
+		case add:
+			not(page) page=page('CanvasTest:p1')
+			sub = @widget.create('canvas','sub',this,'canvas,canvas_stack_sub',true)
+			print("sub===>", sub)
+			page.stack.addPage(sub, true)
+		case prev:
+			print("prev button click")
+		case help:		
+			print("help button click")
+		default:
+		}
+	}
+	updateMdc() {
+		this.inject(@rectCanvas, @editor, @buttons)
+		not(buttons) {
+			buttons = this.addNode('@buttons') 
+			buttons.addNode().with(code:'add', name:'캔바스추가')
+			buttons.addNode().with(code:'prev', name:'이전', disable:true)
+			buttons.addNode().with(code:'space')
+			buttons.addNode().with(code:'help',  name:'도움말')
+		}
+		buttons.var(@update, true)		
+		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
+		not(editor) {
+			editor=@widget.create('editor','editor',this,'',true)
+			this.with(@editor)
+		}
+		editor.move(rcBody.incr(4))
+		this.with(@rcTop, @rcBody, @rcBottom)
+	}
+	drawBackground(dc) {
+		this.inject(@rcTop, @rcBody, @rcBottom, @buttons, @currentMouseNode)
+		@baro.colorMap('main').inject(colorTop, colorBody, colorBottom, colorButton)
+		dc.fill(rcTop, colorBody)
+		dc.rectLine(rcTop, 4, darkColor(colorBody))
+		dc.fill(rcBody, colorBody)
+		dc.fill(rcBottom, colorBody)
+		colorFont=darkColor(colorBottom,200)
+		dc.save().font("size:10,color:$colorFont")
+		dc.text(rcTop.incrX(10), 'STACK 페이지 테스트')
+		dc.font('size:8')
+		if( buttons.var(@update)) {
+			@baro.buttonsUpdateRect(dc, buttons, rcBottom)
+		}
+		while(cur, buttons) {
+			cur.inject(code, rect, name, disable) 
+			not(rect) continue;
+			rcBtn=rect
+			colorLine = darkColor(colorButton)
+			if(cur==currentMouseNode) {
+				rcBtn=rect.incr(-2)
+				color=darkColor(colorButton)
+			} else if(disable) {
+				color='#ddd'
+				colorLine='#aaa'
+			} else {				
+				color=colorButton
+			}
+			dc.fill(rcBtn, color)
+			dc.text(rcBtn, name, 'center')
+			dc.rectLine(rcBtn, 0, colorLine)
+		}
+		dc.restore()
+		// 이후 dc 그리기 무시 true 리턴
+		return true;
+	}
+	
+	
+</script>
+
+<script module="canvas_stack_sub">
+	updateMdc() {
+		this.inject(@rectCanvas, @buttons)
+		not(buttons) {
+			buttons = this.addNode('@buttons') 
+			buttons.addNode().with(code:'prev')
+			buttons.addNode().with(code:'close')
+		}
+		buttons.var(@update, true)
+		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
+		this.addMdc('box',rcBody.incr(2),'mdc_box').var(@title,'sub box')
+		
+		hbox(rcTop,'60,*,40').inject(rcPrev,space,rcClose)
+		rcPrev.center(40,24)
+		rcClose.center(24,24)		
+		this.with(@rcPrev, @rcClose)
+	}
+	drawBackground(dc) {
+		this.inject(@buttons, @currentMouseDown)
+		if( buttons.var(@update)) {
+			this.inject(@rcPrev, @rcClose)
+			@baro.buttonsSetRect(buttons, rcPrev, rcClose)
+		}
+		while(cur, buttons) {
+			cur.inject(code, rect)
+			dc.fill(rect,'#f00')
+		}
+		return;
+	}
+	clickButton(node) {
+		page=page()
+		node.inject(code,rect)
+		switch(code) {
+		case prev:
+			page.stack.addPage(page.main, true)
+		case close:
+			page.stack.addPage(page.main, true)
+		}
 	}
 	
 </script>
