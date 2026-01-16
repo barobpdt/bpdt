@@ -8,6 +8,7 @@ initService() {
 	getServiceNode('baro', 'tools')	
 	initModules()
 	initConfig()
+	initWidgetConfig()
 	Cf.debug(true,"data/logs")
 	include("@apps#SourceRun")
 	startGlobalTimer()
@@ -76,6 +77,106 @@ regServiceFolder(serviceMode, path) {
 	}
 }
 
+</script>
+
+<script type="fav" note="자주사용하는 함수">
+	selectColor() {
+		return Cf.getColor()
+	}
+	selectFolder(title, path) {
+		return Cf.selectFolder(title,path,true)		
+	}
+	selectFile(title, path, filter) {
+		not(filter) filter='*.*'
+		return Cf.selectFile(title,path,filter)
+	}
+	runApp(program) {
+		not(program) program='notepad'
+		System.execApp(program)
+	}
+	fileUUID(path) {
+		return System.inode(path)
+	}
+	today(addTime) {
+		return System.date(when(addTime,'yyyy-MM-dd hh:mm:ss','yyyy-MM-dd'));
+	}
+	beep() {
+		System.beep()
+	}
+	copyText(text) {
+		System.copyText(text)
+	}
+	copyClipboard(type) {
+		System.copyClipboard(type)
+	}
+	getClipbard(type) {
+		return System.clipboard(type)
+	}
+	getCursorPosition() {
+		return SYstem.cursorPos()
+	}
+	watcherClipboard(param) {
+		if(typeof(param,'bool')) {
+			System.watcherClipboard(param)
+		} else {
+			args(target, callback)
+			if(typeof(callback,'func')) {
+				System.watcherClipboard(true, target, callback)
+			}
+		}
+	}
+	
+	getWidgetNode(tag, id, target, newCheck) {
+		not(id) {
+			idx=global().incrNum('@widgetCreateIndex')
+			id="${tag}_${idx}"
+		}		
+		not(target) target=Cf.funcNode().get('@this')
+		base=''
+		if(typeof(target,'node')) {
+			splitSep(target.var(baseCode),':').inject(base,pid)
+		}
+		not(base) base='common'
+		print("xxxx getWidgetNode xxxxx", base, newCheck, tag)
+		if(newCheck) {
+			if(Cf.getObject(tag, "$base:$id")) {
+				print("@@ getWidgetNode 아이디 중복 새로운 아이디 생성합니다")
+				while(n=1, 64) {
+					newId="$id_$n"
+					if( Cf.getObject(tag, "$base:$newId") ) continue;
+					id=newId
+					break;
+				}
+				print("@@ getWidgetNode 새로운 아이디 $newId")
+			}
+		}
+		return object("${tag}.${base}:${id}")
+	}
+	createWidget(tag, id, target, module, useChild) {
+		not(tag) return print("@@ createWidget $tag 미정의")
+		widget = getWidgetNode(tag,id,target,true)
+		widget.tag=tag
+		widget.id=id
+		if(tag.eq('page','canvas')) {
+			widget.var(@skipFuncUpdate, true)
+			addModule(widget,tag,true)
+		}			
+		if(typeof(module,'string')) {
+			addModule(widget,module)
+		}		
+		Cf.createWidget(widget)
+		if( typeof(target,'widget') ) {
+			if( useChild ) {
+				widget.flags("child")
+				widget.parentWidget(target)
+				widget.show()
+			}
+			splitSep(target.var(@baseCode),':').inject(base, targetId)
+		}
+		not(base) base='common'
+		widget.var(baseCode,"${base}:${id}")
+		return widget;
+	}
 </script>
 
 <script type="common" note="공통유틸리티 함수">
@@ -320,180 +421,6 @@ randomIcon() {
 	Baro.db('icons').fetch("select type, id from icons where type='vicon' limit $num,1"  ).inject( type, id);
 	return "$type.$id";
 }
-// 노드 초기화 (값만 null로 설정)
-nodeReset(node) {
-	not(typeof(node,'node')) return;
-	while(k,node.keys(true)) {
-		v=node.get(k)
-		if(typeof(v,'node')) {
-			nodeReuse(v)
-		} else if(typeof(v,'array')) {
-			v.reuse()
-		} else {
-			node.set(k,null)
-		}
-	}
-	return node;
-}
-// array 값을 json 형태 문자열로 생성(함수/태그 등 확장기능포함) 
-parseJsonArray(node,&s,arr,fn,map) {
-	fnCur=Cf.funcNode()
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq(',')) {
-			s.incr()
-			continue;
-		}
-		if(c.eq('{','[')) {
-			src=s.match(1)
-			if(c.eq('{')) {
-				cur=node.addNode()
-				parseJsonNode(cur,src,fn,map)
-				cur.set('@parentArray', arr)
-				arr.add(cur)
-				
-			} else {
-				arrSub=node.addArray()
-				parseJsonArray(node,src,arrSub,fn,map)
-				arr.add(arrSub)
-			}
-			continue;
-		}
-		val=''
-		if(c.eq()) {
-			if(c.eq("'")) {
-				val=s.match()
-			} else {
-				val=fmt(s.match(),fn,map)
-			}
-		} else if(@baro.isFunc(s)) {
-			fnm=s.findPos('(',0,1).trim()
-			fparam=s.match()
-			val=getVarValue("$fnm($fparam)")
-		} else {			
-			ep=varEndPos(s)
-			if(sp<ep) {
-				v=s.trim(sp,ep,true)
-				if(typeof(v,'num')) {
-					val=v
-				}
-				else if(fnCur.get('@endPosType')) {
-					val=getVarValue(v)
-				} 
-				else {
-					if(fn.isset(v)) {
-						val=fn.get(v)
-					} else if(map.isVar(v)) {
-						val=map.get(v)
-					} else {
-						val=cv(v)
-					}
-				}
-			} else {
-				break;
-			}
-		}
-		arr.add(val)
-	}
-	return arr;
-}
-// node 값을 json 형태 문자열로 생성 (함수/태그 등 확장기능포함) 
-parseJsonNode(node,&s,fn,map) {
-	fnCur=Cf.funcNode()
-	not(node) node=_node()
-	not(fn) fn=Cf.funcNode('parent')
-	not(map) {
-		map=fnCur.get('@this')
-		not(map) map=node
-	}
-	while(s.valid()) {
-		c=s.ch() not(c) break;
-		if(c.eq(',')) {
-			s.incr()
-			continue;
-		}
-		bref=false
-		if(c.eq()) {
-			k=s.match()
-			c=s.ch()
-		} else {
-			sp=s.cur()
-			if(c.eq('@')) {
-				bref=true
-				s.incr()
-			}
-			c=s.next().ch()
-			k=s.trim(sp,s.cur(),true)
-		}
-		if( bref && c.eq('{')) {
-			ss=s.match(1)
-			sub=parseJsonNode(_node(),ss,fn,map)
-			node.set(k.trim(1), json(sub,'data'))
-			continue;
-		}
-		not(c.eq(':')) {
-			if(fn.isset(k)) {
-				val=fn.get(k)
-			} else if(map.isVar(k)) {
-				val=map.get(k)
-			}
-			node.set(k,val)
-			break;
-		}
-		c=s.incr().ch()
-		if(c.eq('{','[')) {
-			src=s.match(1)
-			if(c.eq('{')) {
-				cur=node.addNode(k)
-				cur.removeAll(true)
-				parseJsonNode(cur,src,fn,map)
-			} else {
-				arr=node.addArray(k)
-				arr.reuse()
-				parseJsonArray(node,src,arr,fn,map)
-			}
-			continue;
-		}
-		sp=s.cur()
-		if(c.eq()) {
-			if(c.eq("'")) {
-				val=s.match()
-			} else {
-				val=str(s.match(),fn,map)
-			}
-		} else if(@baro.isFunc(s)) {
-			fnm=s.findPos('(',0,1).trim()
-			fparam=s.match()
-			val=getVarValue("$fnm($fparam)")
-		} else {
-			ep=varEndPos(s) 
-			if(sp<ep) {
-				v=s.trim(sp,ep,true)
-				if(typeof(v,'num')) {
-					val=v
-				}
-				else if(fnCur.get('@endType')) {
-					val=getVarValue(v)
-				} 
-				else {
-					if(fn.isset(v)) {
-						val=fn.get(v)
-					} else if(map.isVar(v)) {
-						val=map.get(v)
-					} else {
-						val=cv(v)
-					}
-				}
-				s.pos(ep)
-			} else {
-				break;
-			}
-		}
-		node.set(k,val)
-	}
-	print(">> parseJsonNode json:{$node}")
-	return node; 
-}
 
 </script>
 
@@ -557,18 +484,18 @@ runCommand( &cmd, callback ) {
 	return param;
 }
 /* 웹요청처리를 위한 호출 정보생성 */
-webRequestInfo(url, method, data, header) {
+webRequestInfo(web, url, method, data, headerInfo) {
 	not(method) method='GET'
-	ss=str('url:"$url", method:"$method"')
-	if(data||header) {
-		node=_node()
-		if(data) {
-			data=parseJson(node,data,true)
-			ss.add("@data $data")
+	web.with(url,method,data)
+	if( headerInfo ) {
+		headerNode=web.addNode('@header', true)	
+		if(typeof(headerInfo,'node')) {
+			while(key,headerInfo.keys()) {
+				headerNode.set(key, headerInfo.get(key))
+			}
 		}
-		if(header) {
-			header=parseJson(node,header,true)
-			ss.add("@header:$header")
+		else if(typeof(headerInfo,'string')) {
+			headerNode.parseJson(headerInfo)
 		}
 	}
 	return ss;
@@ -1097,7 +1024,7 @@ runGlobalJob(node) {
 		if( defaultHeader && ~(header)) {
 			header=defaultHeader
 		}
-		parseJsonNode(web,webRequestInfo(url, method, data, header))
+		webRequestInfo(web, url, method, data, header)
 		web.set('@webStartTick', System.tick())
 		web.set('@jobStatus', 'ready')
 		web.targetNode=targetNode

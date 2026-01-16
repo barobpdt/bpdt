@@ -1,7 +1,6 @@
-<script note="공통 위젯함수">
-	initWidget() {
-		sty=object('font.bold')
-		sty.weight='bold'
+<script type="common" note="공통 위젯함수">
+	initWidgetConfig() {
+		print("공통 위젯 설정초기화 시작")
 	}
 </script>
 
@@ -64,77 +63,6 @@
 		page.move(rcOpen)
 		page.open();
 		page.active();
-	}
-</script>
-
-<script module="page_canvas">
-	init() {
-		@canvas=widget('canvas')
-		this.size(800,600)
-		this.resizeTick = System.tick()
-		this.timer(200)
-		print('>> init page-canvas ', canvas)
-	}
-	onTimer() {		 
-		if(checkTick(this.resizeTick)) {
-			print("timer resize")
-			this.resizeTick = 0
-			return canvas.updateRect()
-		}
-	}
-	onResize() {
-		this.resizeTick = System.tick()
-	}
-</script>
-
-<script module="widget">
-	create(tag, id, target, module,child) {		 
-		widget=@widget.getWidget(tag, id, target)
-		if( typeof(widget,'widget')) {
-			print("$tag $id 위젯이 이미 생성되었습니다")
-			return widget;
-		}
-		widget.tag=tag
-		widget.id=id
-		if(typeof(module,'string')) {
-			addModule(widget,module)
-		}
-		widget.var(baseCode,"${base}:${id}")
-		Cf.createWidget(widget)
-		if(child ) {
-			widget.flags("child")
-			widget.parentWidget(target)
-			widget.show()
-		}
-		return widget;
-	}
-	getWidget(tag, id, target) {
-		not(id) {
-			idx=global().incrNum('@widgetCreateIndex')
-			id="${tag}_${idx}"
-		}
-		not(target) target=Cf.funcNode().get('@this')
-		base=''
-		if(typeof(target,'node')) {
-			splitSep(target.var(baseCode),':').inject(base,pid)
-		}
-		not(base) base='common'
-		return object("${tag}.${base}:${id}")
-	}
-	eventSender(tag) {
-		fn=Cf.funcNode('parent')
-		sender=fn.get('@sender')
-		not(typeof(sender,'node')) sender=fn.get('@this')
-		if(tag) 
-			return when(tagCheck(sender,tag), sender);
-		else
-			return sender;
-	}
-	setParent(widget, parent) {
-		if( parent != widget.parentWidget()) {
-			widget.flags("child"); 
-			widget.parentWidget(parent);
-		}
 	}
 </script>
 

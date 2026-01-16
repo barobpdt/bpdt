@@ -281,7 +281,7 @@
 		}
 	}
 	createInput() {
-		this.inputWidget = @widget.create('input','inputKeyboard',this.var(canvas),true)
+		this.inputWidget = createWidget('input','inputKeyboard',this.var(canvas),true)
 		this.inputCheck = true
 		return input;
 	}
@@ -353,7 +353,7 @@
 		if(inputResultMdc) {
 			inputResultMdc.setKeyboardValue(this)
 		}
-		this.updateCanvas()
+		this.canvasUpdate()
 	}
 	keyDown(n,c) {
 		this.inject(this, keyMode, langMode );

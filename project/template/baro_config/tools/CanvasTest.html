@@ -1,39 +1,25 @@
-<page id="p1" module="page_test">
+<page id="p2" onInit() {
+	stack = widget('stack')
+	main = createWidget('canvas','main',this,'canvas_stack_main',true)
+	stack.addPage(main)
+}>
 	<div id="stack">
 </page>
 
 <script eval>
-	p=page('CanvasTest:p1')
-	/*	
+	p=page('CanvasTest:p2')
 	p.size(800,600)
 	p.open()
-	main=p.main
-	*/	
-	sub=findId(p.stack,'sub')
-	sub.inject(@buttons, @rcPrev, @rcClose)
-	buttons.var(@update,true)
-	
-	print("CanvasTest_splitter eval>> page=>", buttons, rcPrev, rcClose )
-</script>
-
-<script module="page_test">
-	init() {
-		@stack = widget('stack')
-		@main = @widget.create('canvas','main',this,'canvas,canvas_stack_main', true)
-		stack.addPage(main, true)
-	}
+	print("eval page>>", p)
 </script>
 
 <script module="canvas_stack_main">
 	clickButton(node) {
 		node.inject(code,name)
 		page=page()
-		print(">> click button ", this, page, code, name)
 		switch(code) {
 		case add:
-			not(page) page=page('CanvasTest:p1')
-			sub = @widget.create('canvas','sub',this,'canvas,canvas_stack_sub',true)
-			print("sub===>", sub)
+			sub = createWidget('canvas','sub',this,'canvas,canvas_stack_sub',true)
 			page.stack.addPage(sub, true)
 		case prev:
 			print("prev button click")
@@ -42,26 +28,23 @@
 		default:
 		}
 	}
-	updateMdc() {
-		this.inject(@rectCanvas, @editor, @buttons)
-		not(buttons) {
-			buttons = this.addNode('@buttons') 
-			buttons.addNode().with(code:'add', name:'캔바스추가')
-			buttons.addNode().with(code:'prev', name:'이전', disable:true)
-			buttons.addNode().with(code:'space')
-			buttons.addNode().with(code:'help',  name:'도움말')
-		}
-		buttons.var(@update, true)		
+	updateCanvas() {
+		this.inject(@rectCanvas, @editor, @form)		
 		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		not(editor) {
-			editor=@widget.create('editor','editor',this,'',true)
+			editor=createWidget('editor','editor',this,'',true)
 			this.with(@editor)
 		}
 		editor.move(rcBody.incr(4))
 		this.with(@rcTop, @rcBody, @rcBottom)
+
+		// form 업데이트
+		print("@@ main update canvas", form)
+		not(form) form=initForm('form.test_main')
+		this.updateForm(form, rcBottom)
 	}
 	drawBackground(dc) {
-		this.inject(@rcTop, @rcBody, @rcBottom, @buttons, @currentMouseNode)
+		this.inject(@rcTop, @rcBody, @rcBottom, @form, @currentMouseNode)
 		@baro.colorMap('main').inject(colorTop, colorBody, colorBottom, colorButton)
 		dc.fill(rcTop, colorBody)
 		dc.rectLine(rcTop, 4, darkColor(colorBody))
@@ -70,29 +53,8 @@
 		colorFont=darkColor(colorBottom,200)
 		dc.save().font("size:10,color:$colorFont")
 		dc.text(rcTop.incrX(10), 'STACK 페이지 테스트')
-		dc.font('size:8')
-		if( buttons.var(@update)) {
-			@baro.buttonsUpdateRect(dc, buttons, rcBottom)
-		}
-		while(cur, buttons) {
-			cur.inject(code, rect, name, disable) 
-			not(rect) continue;
-			rcBtn=rect
-			colorLine = darkColor(colorButton)
-			if(cur==currentMouseNode) {
-				rcBtn=rect.incr(-2)
-				color=darkColor(colorButton)
-			} else if(disable) {
-				color='#ddd'
-				colorLine='#aaa'
-			} else {				
-				color=colorButton
-			}
-			dc.fill(rcBtn, color)
-			dc.text(rcBtn, name, 'center')
-			dc.rectLine(rcBtn, 0, colorLine)
-		}
 		dc.restore()
+		
 		// 이후 dc 그리기 무시 true 리턴
 		return true;
 	}
@@ -101,32 +63,22 @@
 </script>
 
 <script module="canvas_stack_sub">
-	updateMdc() {
-		this.inject(@rectCanvas, @buttons)
-		not(buttons) {
-			buttons = this.addNode('@buttons') 
-			buttons.addNode().with(code:'prev')
-			buttons.addNode().with(code:'close')
-		}
-		buttons.var(@update, true)
+	updateCanvas() {
+		this.inject(@rectCanvas, @form)
 		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		this.addMdc('box',rcBody.incr(2),'mdc_box').var(@title,'sub box')
 		
 		hbox(rcTop,'60,*,40').inject(rcPrev,space,rcClose)
 		rcPrev.center(40,24)
-		rcClose.center(24,24)		
-		this.with(@rcPrev, @rcClose)
+		rcClose.center(24,24)
+		// form 업데이트 
+		not(form) form = initForm('form.test_sub')
+		this.updateForm(form, this.with(merge=>@rcPrev, @rcClose) )
+
 	}
 	drawBackground(dc) {
-		this.inject(@buttons, @currentMouseDown)
-		if( buttons.var(@update)) {
-			this.inject(@rcPrev, @rcClose)
-			@baro.buttonsSetRect(buttons, rcPrev, rcClose)
-		}
-		while(cur, buttons) {
-			cur.inject(code, rect)
-			dc.fill(rect,'#f00')
-		}
+		this.inject(@form)
+		this.drawForm(dc, form)
 		return;
 	}
 	clickButton(node) {
@@ -141,3 +93,31 @@
 	}
 	
 </script>
+
+<conf name="form.test_main">
+	formItems: [
+		{tag:btn, code:add, text:캔바스추가, tooltip:스택에 새로운 캔바스를 추가}
+		{tag:space}
+		{tag:btn, code:help, text:도움말}		
+	]
+	actionList: [
+		{id:menu.dbTableMng, text:DB테이블관리, icon:'vicon:application_lightning', type:"page", sub:"splitter"}
+		{id:menu.mmLangMng, text:금형다국어관리, icon:'vicon:html_go', type:"page", sub:"form"}
+		{id:menu.mmSourcePage, text:금형소스조회, icon:'vicon:script_code_red', type:"page", sub:"div"}
+		{id:menu.close, text:프로그램 종료, icon:'icons:close'}
+	]
+	menus: [
+		{actionId:menu.dbTableMng }
+		{actionId:menu.mmLangMng }
+		{actionId:menu.mmSourcePage }
+		{type:separator }
+		{actionId:menu.close }
+	]
+</conf>
+
+<conf name="form.test_sub">
+	formItems: [
+		{tag:btn, code:prev, text:이전}
+		{tag:btn, code:help, text:도움말}
+	]
+</conf>

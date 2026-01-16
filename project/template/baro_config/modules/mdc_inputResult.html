@@ -88,12 +88,12 @@
 	setValue(text) {
 		this.var(@inputValue, text)
 		this.drawDc()
-		this.updateCanvas()
+		this.canvasUpdate()
 	}
 	setKeyboardValue(keyboard) {
 		this.var(@keyboardMdc, keyboard)
 		this.drawDc()
-		this.updateCanvas()
+		this.canvasUpdate()
 	}
 	mouseDown(pt) {		
 		return true;

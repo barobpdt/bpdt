@@ -1,8 +1,16 @@
 <script module="mdc" note="memory draw context 모듈함수">
 	init() {
-		this.addArray('@subMdcList')
+		print("mdc 초기화")
 	}
-	updateCanvas() {
+	draw(dc) {
+		this.inject(@rectDraw) 
+		not(typeof(rectDraw,'rect')) return log("rectDraw 캔바스상 영역 미정의", this.id);
+		dc.image(rectDraw, this)
+	}
+	canvasSize() {
+		return this.var(canvas).rect().size();
+	}
+	canvasUpdate() {
 		this.var(canvas).update()
 	}
 	addOverlay(cause, rectOverlay) {
@@ -23,107 +31,9 @@
 		this.with(@clipType)
 		this.var(canvas).removeClipMdc(this)
 	}
-	addOverlay(cause, rectOverlay) {
-		this.with(@cause, @rectOverlay)
-		this.var(canvas).addOverlay(this)
-	}
-	addSubMdcList(mdc) {
-		this.inject(@subMdcList)
-		not(subMdcList.find(mdc)) {
-			subMdcList.add(mdc)
-			mdc.drawDc()
-		}
-		return mdc;
-	}
-	getMdc(param, moduleType) {		
-		this.inject(@canvas, id)
-		canvas.inject(@baseCode)
-		dc=mdc("$baseCode#$id.$param")
-		if( moduleType ) {
-			not(dc.var(@useModule)) {
-				addModule(dc,"mdc,$moduleType")
-				dc.var(@moduleType)
-			}
-		}
-		return dc;
-	}
-	addSubMdc(param, rectDraw, moduleType, baseColor) {
-		if(typeof(param,'node')) {
-			dc=param;
-		} else {
-			dc=this.getMdc(param, moduleType)
-		}
-		if( typeof(rectDraw,'bool') ) {
-			if(dc.var(img)) {
-				this.addMdcList(dc, rectDraw)
-			} else {
-				print("@@ canvas addMdc $param 메모리그리기 객체가 생성되지 않았습니다")
-			}
-			return;
-		}
-		parentMdc=this
-		canvas=this.var(canvas)
-		if(typeof(rectDraw,'rect')) {			
-			rectDraw.inject(x,y,w,h)
-			rectAvail=rc(0,0,w,h)
-			offset=pt(x,y)
-			mdc(dc, w, h)
-			dc.with(@canvas, @parentMdc, @offset, @rectDraw, @rectAvail )
-		}
-		if(baseColor) {
-			if(typeof(baseColor,'string')) {
-				baseColor=color(baseColor)
-			}
-		} else {
-			not( dc.var(baseColor) ) {
-				baseColor=this.baseColor
-				not(baseColor) baseColor=randomColor()
-			}
-		}
-		if(typeof(baseColor,'color')) {
-			dc.var(@baseColor)
-		}		
-		dc.inject(@rectAvail, @rectPanel)
-		if(typeof(rectAvail,'rect')) {
-			not(rectAvail.eq(rectPanel)) {
-				dc.updateRect()
-				this.var(@rectPanel, rectAvail)
-			}
-			dc.drawDc()
-		}
-		return this.addSubMdcList(dc);
-	}
-	removeMdc(mdc, checkUpdate) {
-		this.inject(@subMdcList)
-		subMdcList.remove(mdc)
-		if(checkUpdate) this.var(canvas).update()
-	}
 	updateRect(rectDraw) {
 		print("@@ mdc 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
-	}
-	draw(dc) {
-		this.inject(@rectDraw, @subMdcList)
-		if( typeof(rectDraw,'rect') ) {
-			if(this.resizeMode) {
-				dc.fill(rectDraw, '#ddd')
-				dc.rectLine(rectDraw, 0, '#aaa', 1, 'dot')
-			} else {
-				dc.image(rectDraw, this)
-			}
-			while(mdc, subMdcList) {
-				mdc.draw(dc)
-			}
-		}
-	}
-	canvasSize() {
-		return this.var(canvas).rect().size();
-	}
-	drawOverlay(dc) {
-		this.inject(@subMdcList)
-		while(mdc, subMdcList) {
-			mdc.drawOverlay(dc)
-		}
-	}
+	}	
 	drawTimeline(dc, code, timeline) {
 		dc.save()
 		frame=tm.frame()
@@ -138,7 +48,7 @@
 				dc.opacity(curVal)
 			}
 		} else if( code.eq('moveLeft', 'moveRight', 'moveTop', 'moveBottom') ) {
-			this.var(rectDraw).inject(x,y,w,h)
+			this.var(@rectDraw).inject(x,y,w,h)
 			if(frame==1) {
 				this.var(canvas).removeMdc(this)
 				switch(code) {
@@ -180,7 +90,7 @@
 			case moveBottom: 
 				y+=cv;
 			}			
-			this.var(rectDraw, rc(x,y,w,h) )
+			this.var(@rectDraw, rc(x,y,w,h) )
 			this.draw(dc)
 		}
 		dc.restore()

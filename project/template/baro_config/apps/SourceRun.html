@@ -190,7 +190,7 @@ runScript(key) {
 	}
 	err=Cf.error();
 	if(err) {
-		logWriter("sourceRun").appendLog("실행오류:\n${err}");
+		logAppend("SourceRun").append("실행오류:\n${err}");
 	}
 }
 keyTemplateInput() {
