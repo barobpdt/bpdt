@@ -1,3 +1,75 @@
+_node_user_func(source) {
+	fn=Cf.funcNode('parent')
+	if(isFunc(source)) {
+		type=source.findPos('(',0,1)
+		param=source.match().trim()
+		if(source.ch('/')) source.incr()
+	} else if(lineCheck(source,'/')) {
+		type=source.findPos('/').trim()
+		param=''
+	} else {
+		return _node_user_parse(source, type, param, fn);
+	}
+	switch(type) {
+	case filter: 
+		return _node_filter(source, param, fn);
+	case map: 
+		return _node_map(source, param, fn);
+	case inject: 
+		return _node_inject(source, param, fn);
+	case with: 
+		return _node_with(source, param, fn);
+	default:
+		return _node_user_default(source, type, param, fn);
+	}
+}
+_node_filter(&s, fn) {
+	if(isFunc(s)) {
+		
+	}
+}
+
+_node_inject(&s, param, fn) {
+	not(fn) fn=Cf.funcNode('parent')
+	arr=[]
+	
+	while(s.valid(), idx) {
+		c=s.ch() not(c) break;
+		if(c.eq(',',';')) {
+			s.incr()
+			continue;
+		}
+		name=s.move(), varName=name;
+		if(s.start('->',true)) {
+			varName=s.move()
+		}
+		if(varName.ch('@')) varName=varName.value(1)
+		if(typeof(this,'node')) {
+			if(this.isVar(name)) {
+				val=this.get(name)
+			} else {
+				print("node_inject $name 요소가 객체에 미설정", this);
+				val=null
+			}
+		} else {
+			if(isValid(this,idx)) {
+				val=this.get(idx)
+			} else {
+				val=null
+				print("node_inject 배열범위를 벗어났습니다 (인덱스:$idx 변수명:$name)");
+			}
+		}
+		switch(mode) {
+		case arrray:
+			arr.add(val)
+		case set:
+			fn.set(varName, val)
+		case merge:
+			not(fn.isset(varName)) fn.set(varName,val)
+		}
+	}
+}
+
 _arr(code) {
 	not( code ) {
 		return Cf.array();
@@ -66,13 +138,16 @@ _sv() {
 	}
 	return cur;
 }
-baseConfig(service,base) {
-	not(service) service='apps'
+baseConfig(service,base) { 
+	if(service) {
+		serviceNode=getServiceNode(service)
+	} else {
+		serviceNode=object("baro.serviceProjectInfo").var(@currentService)
+	}
 	not(base) {
 		splitSep(this.var(@baseCode),':').inject(base,id)
 		not(base) return print("@@ baseConfig base코드 미정의", this);
 	}
-	serviceNode=getServiceNode(service)
 	not(serviceNode) return print("@@ baseConfig serviceNode 미정의", service, base);
 	node=serviceNode.get(base)
 	not(node) {
@@ -300,10 +375,15 @@ isNull(s) {
 	return when(s,false,true) 
 }
 
-isValid(s) {
+isValid(s,idx) {
 	not(s) return false;
 	if(typeof(s,'array') ) {
-		not(s.size()) return false;
+		asize=s.size()
+		if(typeof(idx,'num')) {
+			if(idx.lt(0) || idx.ge(asize)) return false;
+		} else {
+			not(asize) return false;
+		}
 	}
 	return true;
 }
@@ -1009,10 +1089,10 @@ pageLoad(&src, base, pageId) {
 	Cf.rootNode('@funcInfo').set('pageBase', '')
 	return page("$base:$pageId");
 }
-page(name, moduleCode) {
-	target=this
+page(name, moduleCode) {	
 	asize=args().size()
 	if(asize.eq(0)) {
+		target=this
 		not(target) {
 			return print("page 함수 호출오류 (this 미정의)")
 		}
@@ -1022,6 +1102,7 @@ page(name, moduleCode) {
 	if( name.find(':') ) {
 		baseCode=name
 	} else {
+		target=this
 		not(typeof(target,'widget')) {
 			return print("page 대상이 위젯이 아닙니다 (이름:$name)")
 		}
@@ -1428,6 +1509,7 @@ parseSource(&s, base, serviceNode) {
 		mapNode=baseNode.addNode('script')
 		prev=mapNode.get('@eval')
 		if( prev.ne(evalSource) ) {
+			baseNode.var(@baseCode, "$base:eval")
 			func=call('runEval')
 			call(func, baseNode, "Cf.debug('clear')\r\n$evalSource")
 			mapNode.set('@eval', evalSource)

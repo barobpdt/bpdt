@@ -1,6 +1,7 @@
 <script module="canvas">
 	init() {
-		baseConfig().inject(@font)
+		cf=baseConfig()
+		cf.inject(@font)
 		not(font) {
 			baseConfig().with(@font:'size:9').inject(font)
 		}
@@ -280,10 +281,11 @@
 			formInfo = conf(formInfo)
 		} 
 		form.parseJson(formInfo)
-		formItems=form.get('form')
+		formItems=form.get('formItems')
 		if(typeof(formItem,'array')) {
 			if(typeof(formItem[0],'array')) {
-				not(form.heights) form.sizeInfo=formItems.size()
+				form.with(set=>@sizeInfo:@heights
+				not(sizeInfo) form.var(@sizeInfo, formItems.size())
 			}		
 		} else {
 			form.var(@error, '폼아이템 정보 미정의')
@@ -309,7 +311,7 @@
 			print("@@캔바스 updateForm 오류: $error")
 			return;
 		}
-		formItems=form.get('form')
+		formItems=form.get('formItems')
 		if( form.sizeInfo ) {
 			vbox(rectCanvas, form.sizeInfo, form.addArray('@rectRows',true))
 			while(rows, formItems, rowIndex) {
@@ -401,6 +403,7 @@
 				if(hide) widget.hide()
 				continue;
 			}
+			print("draw form ", cur)
 			if(useMouseEvent) {
 				switch(tag) {
 				case btn: this.drawBtn(dc,rect,cur)

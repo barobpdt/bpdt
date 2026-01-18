@@ -1,6 +1,6 @@
 <page id="p2" onInit() {
 	stack = widget('stack')
-	main = createWidget('canvas','main',this,'canvas_stack_main',true)
+	main = createWidget('canvas','main',this,'canvas_mdc,canvas_stack_main',true)
 	stack.addPage(main)
 }>
 	<div id="stack">
@@ -8,9 +8,15 @@
 
 <script eval>
 	p=page('CanvasTest:p2')
+	bs=baseConfig()
+	bs.with(merge=>@font:'size:13')
+	s=object("baro.serviceProjectInfo").var(@currentService)
+	/*
 	p.size(800,600)
 	p.open()
-	print("eval page>>", p)
+	*/
+	main = p.main 
+	print("eval page>>", bs, font)
 </script>
 
 <script module="canvas_stack_main">
@@ -19,7 +25,7 @@
 		page=page()
 		switch(code) {
 		case add:
-			sub = createWidget('canvas','sub',this,'canvas,canvas_stack_sub',true)
+			sub = createWidget('canvas','sub',this,'canvas_mdc,canvas_stack_sub',true)
 			page.stack.addPage(sub, true)
 		case prev:
 			print("prev button click")
@@ -45,7 +51,7 @@
 	}
 	drawBackground(dc) {
 		this.inject(@rcTop, @rcBody, @rcBottom, @form, @currentMouseNode)
-		@baro.colorMap('main').inject(colorTop, colorBody, colorBottom, colorButton)
+		
 		dc.fill(rcTop, colorBody)
 		dc.rectLine(rcTop, 4, darkColor(colorBody))
 		dc.fill(rcBody, colorBody)
