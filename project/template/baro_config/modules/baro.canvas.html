@@ -1,10 +1,11 @@
 <script module="canvas">
 	init() {
-		cf=baseConfig()
-		cf.inject(@font)
-		not(font) {
-			baseConfig().with(@font:'size:9').inject(font)
-		}
+		config=baseConfig()
+		config[
+			@font & 'size:9',
+			@baseColor & color('#121131').lightColor(100)
+			>> @font
+		]
 		this.font(font)
 	}	
 	canvasSize() {
@@ -270,6 +271,7 @@
 </script>
 
 <script module="canvas_form" note="canvas 폼처리함수 함수">
+
 	initForm(formInfo) {		
 		form=this.addNode('@form',true)
 		lineCount=getLineCount(formInfo)
@@ -282,13 +284,12 @@
 		} 
 		form.parseJson(formInfo)
 		formItems=form.get('formItems')
-		if(typeof(formItem,'array')) {
-			if(typeof(formItem[0],'array')) {
-				form.with(set=>@sizeInfo:@heights
-				not(sizeInfo) form.var(@sizeInfo, formItems.size())
+		if(typeof(formItems,'array')) {
+			if(typeof(formItems[0],'array')) {
+				not(form.heights) form.sizeInfo=formItems.size()
 			}		
 		} else {
-			form.var(@error, '폼아이템 정보 미정의')
+			form.var(@error, '폼아이템 정보 미정의', formInfo)
 		}
 		canvas = this
 		while(cur,form) {
@@ -403,7 +404,6 @@
 				if(hide) widget.hide()
 				continue;
 			}
-			print("draw form ", cur)
 			if(useMouseEvent) {
 				switch(tag) {
 				case btn: this.drawBtn(dc,rect,cur)

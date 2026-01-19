@@ -1,75 +1,3 @@
-_node_user_func(source) {
-	fn=Cf.funcNode('parent')
-	if(isFunc(source)) {
-		type=source.findPos('(',0,1)
-		param=source.match().trim()
-		if(source.ch('/')) source.incr()
-	} else if(lineCheck(source,'/')) {
-		type=source.findPos('/').trim()
-		param=''
-	} else {
-		return _node_user_parse(source, type, param, fn);
-	}
-	switch(type) {
-	case filter: 
-		return _node_filter(source, param, fn);
-	case map: 
-		return _node_map(source, param, fn);
-	case inject: 
-		return _node_inject(source, param, fn);
-	case with: 
-		return _node_with(source, param, fn);
-	default:
-		return _node_user_default(source, type, param, fn);
-	}
-}
-_node_filter(&s, fn) {
-	if(isFunc(s)) {
-		
-	}
-}
-
-_node_inject(&s, param, fn) {
-	not(fn) fn=Cf.funcNode('parent')
-	arr=[]
-	
-	while(s.valid(), idx) {
-		c=s.ch() not(c) break;
-		if(c.eq(',',';')) {
-			s.incr()
-			continue;
-		}
-		name=s.move(), varName=name;
-		if(s.start('->',true)) {
-			varName=s.move()
-		}
-		if(varName.ch('@')) varName=varName.value(1)
-		if(typeof(this,'node')) {
-			if(this.isVar(name)) {
-				val=this.get(name)
-			} else {
-				print("node_inject $name 요소가 객체에 미설정", this);
-				val=null
-			}
-		} else {
-			if(isValid(this,idx)) {
-				val=this.get(idx)
-			} else {
-				val=null
-				print("node_inject 배열범위를 벗어났습니다 (인덱스:$idx 변수명:$name)");
-			}
-		}
-		switch(mode) {
-		case arrray:
-			arr.add(val)
-		case set:
-			fn.set(varName, val)
-		case merge:
-			not(fn.isset(varName)) fn.set(varName,val)
-		}
-	}
-}
-
 _arr(code) {
 	not( code ) {
 		return Cf.array();
@@ -326,9 +254,9 @@ checkFunc(functionName) {
 checkModule(param) {
 	if(typeof(param,'node')) {
 		args(obj, moduleName)
-		if(isValid(obj.var(@moduleList)) {
-			if( obj.var(@moduleList).find(moduleName) ) return true;
-		}
+		
+		obj.inject(@moduleList)
+		if( isValid(moduleList) && moduleList.find(moduleName) ) return true;
 		return false;
 	} else {
 		args(moduleName)

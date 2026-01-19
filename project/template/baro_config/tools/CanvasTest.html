@@ -8,15 +8,13 @@
 
 <script eval>
 	p=page('CanvasTest:p2')
-	bs=baseConfig()
-	bs.with(merge=>@font:'size:13')
-	s=object("baro.serviceProjectInfo").var(@currentService)
-	/*
 	p.size(800,600)
 	p.open()
-	*/
+	/*
 	main = p.main 
-	print("eval page>>", bs, font)
+	*/
+	bc=baseConfig()
+	print("eval page>>", bc)
 </script>
 
 <script module="canvas_stack_main">
@@ -105,7 +103,17 @@
 		{tag:btn, code:add, text:캔바스추가, tooltip:스택에 새로운 캔바스를 추가}
 		{tag:space}
 		{tag:btn, code:help, text:도움말}		
+	]	
+</conf>
+
+<conf name="form.test_sub">
+	formItems: [
+		{tag:btn, code:prev, text:이전}
+		{tag:btn, code:help, text:도움말}
 	]
+</conf>
+
+<conf name="menu.test">
 	actionList: [
 		{id:menu.dbTableMng, text:DB테이블관리, icon:'vicon:application_lightning', type:"page", sub:"splitter"}
 		{id:menu.mmLangMng, text:금형다국어관리, icon:'vicon:html_go', type:"page", sub:"form"}
@@ -118,12 +126,5 @@
 		{actionId:menu.mmSourcePage }
 		{type:separator }
 		{actionId:menu.close }
-	]
-</conf>
-
-<conf name="form.test_sub">
-	formItems: [
-		{tag:btn, code:prev, text:이전}
-		{tag:btn, code:help, text:도움말}
 	]
 </conf>
