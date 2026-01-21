@@ -1,20 +1,25 @@
+/*
+a[!aaa] = test() 형태 기능 추가
+a[aaa ddd ccc:num]=0
+*/
+
 <script module="canvas">
 	init() {
 		config=baseConfig()
 		config[
 			@font & 'size:9',
-			@baseColor & color('#121131').lightColor(100)
-			>> @font
-		]
+			@baseColor & color('#121131').lightColor(100) => @font, @baseColor
+		]		
 		this.font(font)
+		this[@font, @baseColor]
 	}	
 	canvasSize() {
 		return this.rect().size()
 	}
 	updateCheck(rc) {
-		print("@@ upate check updateCheckTick==${this.updateCheckTick}")
-		this.updateCheckTick=System.tick()
+		print("@@ upate check updateCheckTick==${this.updateCheckTick}") 
 		this.var(@rectCanvas, rc)
+		this.updateCheckTick=System.tick()
 		this.updateCanvas()
 	}
 	updateCanvas() {
@@ -22,7 +27,7 @@
 	}	
 	
 	mouseMove(pos) {
-		this.inject(@form) not(form) return false;
+		this[=>@form] not(form) return false;
 		return this.mouseMoveForm(pos, form)
 	}
 	clickButton(currentNode) {
@@ -38,19 +43,16 @@
 	}
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
-			this.inject(@rectCanvas)
-			not( rc.eq(rectCanvas) ) {
-				this.updateCheck(rc)
-			}
+			this[@rectCanvas->rcPrev] not( rc.eq(rcPrev) ) this.updateCheck(rc)
 		} else {
-			if(this.var(@useMdc)) {
+			if(this[@useMdc]) {
 				this.drawMdcClip(dc,rc)
 			} else {
 				this.drawClip(dc,rc)
 			}
 			return;
 		}		
-		this.inject(@form, @useMdc, @useDrawPath, @pathList)
+		this[=>@form, @useMdc, @useDrawPath, @pathList]
 		if( typeof(this.drawBackground,'func') ) {
 			this.drawBackground(dc,rc)
 		}
@@ -69,30 +71,31 @@
 	}
 	
 	onMouseDown(pos) {
-		if(this.var(@form) && this.mouseDownForm(pos) ) return true;
-		if(this.var(@useMdc) && this.mouseDownMdc(pos) ) return true;
+		if(this[@form] && this.mouseDownForm(pos) ) return true;
+		if(this[@useMdc] && this.mouseDownMdc(pos) ) return true;
 		
 	}
 	onMouseUp(pos) {
-		if(this.var(@form) && this.mouseUpForm(pos) ) return true;	
-		if(this.var(@useMdc) && this.mouseUpMdc(pos) ) return true;
+		if(this[@form] && this.mouseUpForm(pos) ) return true;	
+		if(this[@useMdc] && this.mouseUpMdc(pos) ) return true;
 	}
 	
 </script>
 
 <script module="canvas_mdc">
 	init() {
-		this.addArray('@mdcList')
-		this.addArray('@overlayList')
-		this.addArray('@clipList')
-		this.addArray('@pathList')
+		this[
+			@mdcList:array,
+			@overlayList:array,
+			@clipList:array,
+			@pathList:array,
+			@useMdc=true,
+			@useDrawPath=false
+		]
 		this.timer(500)
-		this.var(@useMdc, true)
-		this.var(@useDrawPath, false)		
 	}
 	drawMdc(dc) {
-		this.inject(@mdcList, @overlayList)
-		while(mdc, mdcList) {
+		while(mdc, this[@mdcList]) {
 			mdc.draw(dc)
 		}
 		while(pair, this.timeline()) {
@@ -102,58 +105,46 @@
 				if( target && target.drawTimeline(dc, code, tm) ) break;
 			}
 		}
-		while(mdc, overlayList) {
-			mdc.inject(@cause, @rectOverlay, @offset)
+		while(mdc, this[@overlayList]) {
+			// @cause, @rectOverlay, @offset
 			mdc.drawOverlay(dc)
 		}
 	} 
 	drawMdcClip(dc,rc) {
-		while(mdc, this.var(@clipList)) {
-			mdc.inject(@rectClip) 
-			not(rectClip) {
-				continue;
-			}
-			if(rectClip.eq(rectClip)) {
-				mdc.drawClip(dc,rc)
-				break;
+		while(mdc, this[@clipList]) {
+			mdc[@rectClip->rcClip] not(rcClip) continue;
+			if(rc.eq(rcClip)) {
+				return mdc.drawClip(dc,rc)
 			}
 		}
 	}
 	mouseDownMdc(pos) {
-		this.inject(@mdcList) not(isValid(mdcList)) return;
+		this[=>@mdcList] if(notValid(mdcList)) return;
 		while(n=mdcList.size()-1,0) {
-			mdc=mdcList.get(n)
-			if( mdc.mouseDownDefault(pos) ) return true;
+			if( mdcList[n].mouseDownDefault(pos) ) return true;
 		}
 	}
 	mouseUpMdc(pos) {
-		this.inject(@mdcList) not(isValid(mdcList)) return;
-		while(n=mdcList.size()-1,0) {
-			mdc=mdcList.get(n)
-			if( mdc.mouseUpDefault(pos) ) return true;
+		this[=>@mdcList] if(notValid(mdcList)) return;
+		while(n=mdcList.size()-1,0) { 
+			if( mdcList[n].mouseUpDefault(pos) ) return true;
 		}
 	}
 	
 	timerClipCheck() {
-		while(mdc, this.var(@clipList)) {
-			rect=mdc.getClipRect()
-			not(typeof(rect,'rect')) {
-				continue;
-			}
-			mdc.inject(@clipTick, @clipDuration)
+		while(mdc, this[@clipList]) {
+			rect=mdc.getClipRect() not(typeof(rect,'rect')) continue;
+			mdc[=>@clipTick, @clipDuration]
 			if( checkTick(clipTick, clipDuration)) {
 				this.update(rect)
 				break;
-			} else {
-				not(clipTick) clipTick=System.tick()
-				continue;
-			}
+			} 
 		}
 	}
 	addTimeline(timelineCode, target, checkStart) {
 		tm=this.timeline(timelineCode)
 		tm.config().set('target', target)
-		if( checkStart) {
+		if( checkStart ) {
 			tm.start(20,800)
 		}
 		return tm;
@@ -170,17 +161,16 @@
 		return false;
 	}	
 	addClipMdc(mdc) {
-		this.inject(@clipList)
-		not(clipList.find(mdc)) clipList.add(mdc)
+		not(this[@clipList->list].find(mdc)) {
+			list.add(mdc)
+		}
 	}
 	removeClipMdc(mdc) {
-		this.inject(@clipList)
-		clipList.remove(mdc)
+		this[@clipList].remove(mdc)
 	}
 	addMdcList(mdc, redraw) {
-		this.inject(@mdcList)
-		not(mdcList.find(mdc)) {
-			mdcList.add(mdc)
+		not(this[@mdcList->list].find(mdc)) {
+			list.add(mdc)
 			mdc.drawDc()
 		}
 		if(redraw) {
@@ -188,14 +178,13 @@
 		}
 		return mdc;
 	}
-	getMdc(param, moduleType) {		
-		this.inject(@baseCode, id)
-		dc=mdc("$baseCode#$id.$param")
+	getMdc(mdcId, moduleType) {		
+		this[=>@baseCode, id]
+		dc=mdc("$baseCode#$id.$mdcId")
 		if( moduleType ) {
-			not(dc.var(@useModule)) {
-				dc.var(@canvas, this)
-				dc.var(@moduleType)
+			not(dc[@useModule]) {
 				addModule(dc,"mdc,$moduleType")
+				dc[@canvas]=this
 			}
 		}
 		return dc;
@@ -207,20 +196,20 @@
 			dc=this.getMdc(param, moduleType)
 		}
 		if( typeof(rectDraw,'bool') ) {
-			if(dc.var(img)) {
+			if(dc[@img]) {
 				this.addMdcList(dc, rectDraw)
 			} else {
 				print("@@ canvas addMdc $param 메모리그리기 객체가 생성되지 않았습니다")
 			}
 			return;
 		}
-		dc.var(@canvas, this)
+		dc[@canvas]=this
 		if(typeof(rectDraw,'rect')) {
 			rectDraw.inject(x,y,w,h)
 			rectAvail=rc(0,0,w,h)
 			offset=pt(x,y)
 			mdc(dc, w, h)
-			dc.with(@offset, @rectDraw, @rectAvail)
+			dc[@rectDraw,@rectAvail,@offset]
 		}
 		if(baseColor) {
 			if(typeof(baseColor,'string')) {
@@ -232,38 +221,34 @@
 				not(baseColor) baseColor=randomColor()
 			}
 		}
-		if( typeof(baseColor,'color')) {
-			dc.var(@baseColor)
-		}
-		not( dc.var(@useModule) ) {
+		not( dc[@useModule] ) {
 			if(moduleType) {
-				addModule(dc,"mdc,$moduleType")
-				dc.var(@moduleType)
+				addModule(dc,"mdc,$moduleType") 
 			}
 		} 
-		dc.inject(@rectAvail, @rectAvailPrev)
-		if(typeof(rectAvail,'rect')) {
-			not(rectAvail.eq(rectAvailPrev)) {
+		dc[@baseColor,@moduleType]
+		if(dc[@rectAvail:rect->avail, @rectAvailPrev->prev]) {
+			not(avail.eq(prev)) {
 				dc.updateMdc()
-				this.var(@rectAvailPrev, rectAvail)
+				dc[@rectAvailPrev]=avail
 			}
 			dc.drawDc()
 		}
 		return this.addMdcList(dc)
 	}
 	removeMdc(mdc, checkUpdate) {
-		this.inject(@mdcList)
-		mdcList.remove(mdc)
+		this[@mdcList->list]
+		list.remove(mdc)
 		if(checkUpdate) this.update()
 	}	
 	addOverlay(mdc) {
-		this.inject(@overlayList)
-		not( overlayList.find(mdc)) overlayList.add(mdc)
+		this[@overlayList->list]
+		not( list.find(mdc)) list.add(mdc)
 		this.update()
 	}
 	removeOverlay(mdc) {
-		this.inject(@overlayList)
-		overlayList.remove(mdc)
+		this[@overlayList->list]
+		list.remove(mdc)
 		this.update()
 	}
 	
@@ -273,31 +258,31 @@
 <script module="canvas_form" note="canvas 폼처리함수 함수">
 
 	initForm(formInfo) {		
-		form=this.addNode('@form',true)
+		this[@form:node()->form]
 		lineCount=getLineCount(formInfo)
 		not(lineCount) {
-			form.var(@error, '폼정보 미정의')
+			form[@error='폼정보 미정의']
 			return form;
 		}
 		if(lineCount.eq(1) && formInfo.find('.') ) {
 			formInfo = conf(formInfo)
 		} 
 		form.parseJson(formInfo)
-		formItems=form.get('formItems')
+		form[=>formItems, heights]
 		if(typeof(formItems,'array')) {
 			if(typeof(formItems[0],'array')) {
-				not(form.heights) form.sizeInfo=formItems.size()
+				not(heights) form[heights=formItems.size()]
 			}		
 		} else {
 			form.var(@error, '폼아이템 정보 미정의', formInfo)
 		}
 		canvas = this
 		while(cur,form) {
-			cur.inject(tag, code) 
+			cur[=>tag, code]
 			if(tag.eq('btn','space','label','check','radio')) {
-				this.var(@useDraw, true)
+				this[@useDraw=true]
 				if(tag.eq('btn','check','radio')) {
-					this.var(@useMouseEvent, true)
+					this[@useMouseEvent=true]
 				}
 			} else if(tag) {
 				this.var(@widget, createWidget(tag,code,canvas,'',true) )
@@ -306,99 +291,55 @@
 		return form;
 	}
 	
-	updateForm(dc,form,rect) {
-		form.inject(@error)
-		if(error) {
+	updateForm(form,rect) {
+		if(form[=>@error]) {
 			print("@@캔바스 updateForm 오류: $error")
 			return;
 		}
-		formItems=form.get('formItems')
-		if( form.sizeInfo ) {
-			vbox(rectCanvas, form.sizeInfo, form.addArray('@rectRows',true))
+		// ex) form={formRows:'40,*,30', formItmes:[...]}
+		form[@formRects:array->rowRectArray]
+		form[=>formItems, formRows]
+		if( formItems.size() > 1 ) { 
+			// 폼이 여러줄인경우 rowRectArray 행영역배열 생성(vbox)
+			not(formRows) formRows=formItem.size()
+			vbox(rect, formRows, rowRectArray.reuse())
 			while(rows, formItems, rowIndex) {
 				fieldCount = rows.size()
 				while(cur, rows) {
 					not(typeof(cur,'node')) continue;
-					cur.var(@rowIndex, @fieldCount)
+					cur[@rowIndex, @fieldCount]
 				}
 			}
-		}
-		form.inject(@rectRows)
-		if( rectRows ) {
-			while(rows, formItems, row) {
-				updateFormRect(rows, rectRows[$row])
-			}
-		} else {
-			updateFormRect(formItems, param)
-		}
-		updateFormRect = function(rows, param) {
-			if(typeof(param,'array')) {
-				while(rect, param, idx) {
-					not(typeof(rect,'rect')) continue;
-					cur=rows.child(idx)
-					if(cur) cur.rect=rect
-				}
-				return;
-			} 
-			rectForm=param
-			arr=[]
-			while(cur, rows) {
-				cur.inject(@widget, @useDraw, tag, width )
-				if(width) {
-					arr.add(width)
-				} else if(@widget) {
-					if(tag.eq('canvas','grid','editor','splitter','div','space')) {
-						arr.add('*')
-					} else if(tag.eq('date','time')) {
-						arr.add(125)
-					} else if(tag.eq('combo','input')) {					
-						arr.add(150)
-					}
-				} else {
-					if(@useDraw) {
-						cur.inject(icon, font, text, padding, image)
-						tw=0
-						if(text) {						
-							if(font) {
-								dc.save().font(font)
-								dc.textWidth(text).inject(tw,th)
-								dc.restore()
-							} else {
-								dc.textWidth(text).inject(tw,th)
-							}
-							if(icon) {
-								tw+=40
-							}							
-						} 
-						if(tag.eq('check')) {
-							cur.var(@checkIcon, 'icons:check1')
-							tw+=40
-						}	
-						else if(image) {
-							getImageSize(image).inject(iw,ih)
-							tw=iw
-						}
-						if(tw) {
-							if(padding) tw+=padding*2
-							arr.add(tw)
-						} else {
-							arr.add(100)
-						}
-					} else {
-						arr.add(20)
+			if( isValid(rowRectArray) ) {
+				while(rows, formItems, row) {
+					rect=rowRectArray[row]
+					form[!info $row]=this.getFormRowInfo(rows)
+					colRectArr=hbox(rect, form[info $row])
+					while(cur, rows, col) {
+						cur[rect]=colRectArr[col]
 					}
 				}
 			}
-			info=arr.join()
-			while(rect, hbox(rect,info), idx) {
-				rows.get(idx).with(@rect)
+		}
+		else if(isValid(rowRectArray)) {
+			// 영역배열로 자유로운 위치에 폼아이템 배치
+			while(cur, formItems, row) {
+				cur[rect]=rowRectArray[row]
 			}
-		};
+		} 
+		else if(rect) {
+			// 폼이 한줄인 경우
+			form[!info 0]=this.getFormRowInfo(formItems)
+			colRectArr=hbox(rect, form[info $row])
+			while(cur, formItems, col) {
+				cur[rect]=colRectArr[col]
+			}
+		}
 	}
 	drawForm(dc,form) {
 		this.inject(@currentDownNode, @currentOverNode)
 		while(cur, form) {
-			cur.inject(@widget, @rect, @useDraw, @useMouseEvent, tag) not(rect) continue;
+			cur[=>@widget, @rect, @useDraw, @useMouseEvent, tag] not(rect) continue;
 			if( widget) {
 				widget.move(rect)
 				if(hide) widget.hide()
@@ -451,6 +392,51 @@
 		this.var(@currentDownNode, null)
 		this.update()
 		return checkContain;
+	}
+	getFormRowInfo(rows) { 
+		arr=[]
+		while(cur, rows) {
+			cur[=>@widget, @useDraw, tag, width]
+			if(width) {
+				arr.add(width)
+			} else if(@widget) {
+				if(tag.eq('canvas','grid','editor','splitter','div','space')) {
+					arr.add('*')
+				} else if(tag.eq('date','time')) {
+					arr.add(125)
+				} else if(tag.eq('combo','input')) {					
+					arr.add(150)
+				}
+			} else if(@useDraw) {
+				cur[=>icon, font, text, padding, image]
+				tw=0
+				if(text) {
+					not(font) font=this[@baseFont]
+					getTextSize(text,font).inject(tw,th)
+					tw+=20
+					if(icon) {
+						tw+=45
+					}			
+				} 
+				if(tag.eq('check')) {
+					cur.var(@checkIcon, 'icons:check1')
+					tw+=40
+				}	
+				else if(image) {
+					getImageSize(image).inject(iw,ih)
+					tw=iw
+				}
+				if(tw) {
+					if(padding) tw+=padding*2
+					arr.add(tw)
+				} else {
+					arr.add(100)
+				}					
+			} else {
+				arr.add(20)
+			}
+		}
+		return arr.join()
 	}
 </script>
 
