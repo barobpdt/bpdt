@@ -1,3 +1,28 @@
+_node_user_func(source) {
+	fn=Cf.funcNode('parent')
+	funcIndex = _nodeUserfuncIndex_++;
+	type=source.findPos('/').trim()	
+	switch(type) {
+	case info:
+		return _arrayvar_make_info(source, fn)
+	case filter: 
+		print("filter 함수구현중");
+	case map: 
+		print("map 함수구현중");
+	default:
+	}
+}
+_arrayvar_make_info(s,fn) {
+	ss=''
+	arr=[]
+	while(s.valid(),n) {
+		vnm=s.findPos(',').trim()
+		v=this.get(vnm)
+		arr.add("$vnm=$v")
+	}
+	return arr.join(', ')
+}
+
 _arr(code) {
 	not( code ) {
 		return Cf.array();

@@ -33,14 +33,14 @@
 		}
 	}
 	updateCanvas() {
-		this.inject(@rectCanvas, @editor, @form)		
+		this[=>@rectCanvas, @editor, @form]
 		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		not(editor) {
 			editor=createWidget('editor','editor',this,'',true)
 			this.with(@editor)
 		}
 		editor.move(rcBody.incr(4))
-		this.with(@rcTop, @rcBody, @rcBottom)
+		this[@rcTop, @rcBody, @rcBottom]
 
 		// form 업데이트
 		print("@@ main update canvas", form)
@@ -48,7 +48,7 @@
 		this.updateForm(form, rcBottom)
 	}
 	drawBackground(dc) {
-		this.inject(@rcTop, @rcBody, @rcBottom, @form, @currentMouseNode)
+		this[=>@rcTop, @rcBody, @rcBottom, @form, @currentMouseNode]
 		
 		dc.fill(rcTop, colorBody)
 		dc.rectLine(rcTop, 4, darkColor(colorBody))
@@ -68,7 +68,7 @@
 
 <script module="canvas_stack_sub">
 	updateCanvas() {
-		this.inject(@rectCanvas, @form)
+		this[=>@rectCanvas, @form]
 		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		this.addMdc('box',rcBody.incr(2),'mdc_box').var(@title,'sub box')
 		
@@ -77,7 +77,8 @@
 		rcClose.center(24,24)
 		// form 업데이트 
 		not(form) form = initForm('form.test_sub')
-		this.updateForm(form, this.with(merge=>@rcPrev, @rcClose) )
+		form[@formRects:array(true)].add(@rcPrev, 0, @rcClose)
+		this.updateForm(form)
 
 	}
 	drawBackground(dc) {

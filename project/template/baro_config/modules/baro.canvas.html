@@ -1,14 +1,9 @@
-/*
-a[!aaa] = test() 형태 기능 추가
-a[aaa ddd ccc:num]=0
-*/
-
 <script module="canvas">
 	init() {
 		config=baseConfig()
 		config[
-			@font & 'size:9',
-			@baseColor & color('#121131').lightColor(100) => @font, @baseColor
+			!@font ? 'size:9',
+			!@baseColor ? color('#121131').lightColor(100) => @font, @baseColor
 		]		
 		this.font(font)
 		this[@font, @baseColor]
@@ -85,10 +80,10 @@ a[aaa ddd ccc:num]=0
 <script module="canvas_mdc">
 	init() {
 		this[
-			@mdcList:array,
-			@overlayList:array,
-			@clipList:array,
-			@pathList:array,
+			@mdcList:array(),
+			@overlayList:array(),
+			@clipList:array(),
+			@pathList:array(),
 			@useMdc=true,
 			@useDrawPath=false
 		]
@@ -278,31 +273,27 @@ a[aaa ddd ccc:num]=0
 		}
 		canvas = this
 		while(cur,form) {
-			cur[=>tag, code]
-			if(tag.eq('btn','space','label','check','radio')) {
-				this[@useDraw=true]
+			if(cur[tag].eq('btn','space','label','check','radio')) {
+				cur[@useDraw]=true
 				if(tag.eq('btn','check','radio')) {
-					this[@useMouseEvent=true]
+					cur[@useMouseEvent]=true
 				}
 			} else if(tag) {
-				this.var(@widget, createWidget(tag,code,canvas,'',true) )
+				this[@widget]=createWidget(tag,code,canvas,'',true) 
 			}
 		}
 		return form;
 	}
 	
 	updateForm(form,rect) {
-		if(form[=>@error]) {
-			print("@@캔바스 updateForm 오류: $error")
-			return;
-		}
+		// form[@error->return "@@캔바스 updateForm 오류: $@error"]
 		// ex) form={formRows:'40,*,30', formItmes:[...]}
-		form[@formRects:array->rowRectArray]
+		// form[formItem:empty->return ""]
 		form[=>formItems, formRows]
-		if( formItems.size() > 1 ) { 
-			// 폼이 여러줄인경우 rowRectArray 행영역배열 생성(vbox)
-			not(formRows) formRows=formItem.size()
-			vbox(rect, formRows, rowRectArray.reuse())
+		if( typeof(form.formItems.0,'array') ) { 
+			// 폼이 여러줄인경우 rowRects 행영역배열 생성(vbox)
+			form[!formRows]=formItems.size()
+			vbox(rect, form[formRows], form[@formRects:array(true)->rowRects] )
 			while(rows, formItems, rowIndex) {
 				fieldCount = rows.size()
 				while(cur, rows) {
@@ -310,9 +301,9 @@ a[aaa ddd ccc:num]=0
 					cur[@rowIndex, @fieldCount]
 				}
 			}
-			if( isValid(rowRectArray) ) {
+			if( isValid(rowRects) ) {
 				while(rows, formItems, row) {
-					rect=rowRectArray[row]
+					rect=rowRects[row]
 					form[!info $row]=this.getFormRowInfo(rows)
 					colRectArr=hbox(rect, form[info $row])
 					while(cur, rows, col) {
@@ -330,14 +321,14 @@ a[aaa ddd ccc:num]=0
 		else if(rect) {
 			// 폼이 한줄인 경우
 			form[!info 0]=this.getFormRowInfo(formItems)
-			colRectArr=hbox(rect, form[info $row])
+			colRectArr=hbox(rect, form[info 0])
 			while(cur, formItems, col) {
 				cur[rect]=colRectArr[col]
 			}
 		}
 	}
 	drawForm(dc,form) {
-		this.inject(@currentDownNode, @currentOverNode)
+		this[=>@currentDownNode, @currentOverNode]
 		while(cur, form) {
 			cur[=>@widget, @rect, @useDraw, @useMouseEvent, tag] not(rect) continue;
 			if( widget) {

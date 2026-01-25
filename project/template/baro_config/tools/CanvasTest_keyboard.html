@@ -1,7 +1,8 @@
 <page margin=0 id="main" onInit() {
 	print("keyboard test page")
+	widget('c')
 }>
-	<canvas id="c" module="canvas,canvas_mdc" updateCanvas() {
+	<canvas id="c" module="canvas_mdc" updateCanvas() {
 		print("=========== canvas keyboard rect start ===========")
 		rect = this.rect()
 		vbox(rect, '50,*').inject(rcInput, rcBody)
@@ -17,10 +18,9 @@
 </page>
 
 <script eval>
-	page=this.var(page)	
+	page=page('CanvasTest_keyboard:main')
 	page.size(1024,800)
 	page.open()
-	global().set('p',page)
 	print("eval>> ", page)
 </script>
 
