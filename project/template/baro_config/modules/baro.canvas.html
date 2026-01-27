@@ -44,7 +44,9 @@
 	}
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
-			not( rc.eq(this.@rectCanvas) ) this.updateCheck(rc)
+			not( rc.eq(this.@rectCanvas) ) {
+				this.updateCheck(rc)
+			}
 		} else {
 			if(this.@useMdc ) {
 				this.drawMdcClip(dc,rc)
@@ -84,14 +86,12 @@
 
 <script module="canvas_mdc">
 	init() {
-		this[
-			@mdcList:array(),
-			@overlayList:array(),
-			@clipList:array(),
-			@pathList:array(),
-			@useMdc=true,
-			@useDrawPath=false
-		]
+		this.addArray('@mdcList')
+		this.addArray('@overlayList')
+		this.addArray('@clipList')
+		this.addArray('@pathList')
+		this.@useMdc=true
+		this.@useDrawPath=false
 		this.timer(500)
 	}
 	drawMdc(dc) {
