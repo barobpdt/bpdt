@@ -1,5 +1,6 @@
 <script module="mdc" note="memory draw context 모듈함수">
 	init() {
+		this.@startTick=System.tick()
 		print("mdc 초기화")
 	}
 	draw(dc) {
@@ -31,9 +32,12 @@
 		this.with(@clipType)
 		this.var(canvas).removeClipMdc(this)
 	}
-	updateRect(rectDraw) {
-		print("@@ mdc 객체에서 updateRect 함수 중복정의 하세요 (그리기영역:$reactDraw)")
-	}	
+	updateMdc(rectDraw) {
+		dist=System.tick()-this.@startTick
+		if(dist<5000) {
+			print("@@ mdc 객체에서 updateMdc 함수 중복정의 하세요 (그리기영역:$reactDraw)")
+		}
+	}
 	drawTimeline(dc, code, timeline) {
 		dc.save()
 		frame=tm.frame()

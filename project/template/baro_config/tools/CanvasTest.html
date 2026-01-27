@@ -44,7 +44,7 @@
 
 		// form 업데이트
 		print("@@ main update canvas", form)
-		not(form) form=initForm('form.test_main')
+		not(form) form=initForm(conf('form.test_main'))
 		this.updateForm(form, rcBottom)
 	}
 	drawBackground(dc) {
@@ -74,10 +74,10 @@
 		
 		hbox(rcTop,'60,*,40').inject(rcPrev,space,rcClose)
 		rcPrev.center(40,24)
-		rcClose.center(24,24)
+		rcClose.center(40,24)
 		// form 업데이트 
-		not(form) form = initForm('form.test_sub')
-		form[@formRects:array(true)].add(@rcPrev, 0, @rcClose)
+		not(form) form = initForm(conf('form.test_sub'))
+		form[@formRects:array(true)].add(rcPrev, rcClose)
 		this.updateForm(form)
 
 	}

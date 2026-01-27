@@ -1,35 +1,41 @@
 <script module="canvas">
 	init() {
-		config=baseConfig()
-		config[
-			!@font ? 'size:9',
-			!@baseColor ? color('#121131').lightColor(100) => @font, @baseColor
-		]		
+		baseConfig().inject(font, baseColor)		
+		not(font) font='size:9'
+		not(baseColor) baseColor=color('#121131').lightColor(100)
 		this.font(font)
-		this[@font, @baseColor]
+		this.@font=font
+		this.@baseColor=baseColor
+		this.@startTick=System.tick()
 	}	
 	canvasSize() {
 		return this.rect().size()
 	}
 	updateCheck(rc) {
 		print("@@ upate check updateCheckTick==${this.updateCheckTick}") 
-		this.var(@rectCanvas, rc)
+		this.@rectCanvas=rc
 		this.updateCheckTick=System.tick()
 		this.updateCanvas()
 	}
 	updateCanvas() {
-		print("@@ canvas 객체에 updateCanvas 함수 중복정의 하세요")
+		dist=System.tick()-this.@startTick
+		if(dist<5000) {
+			print("@@ canvas 객체에 updateCanvas 함수 중복정의 하세요")
+		}
 	}	
 	
 	mouseMove(pos) {
-		this[=>@form] not(form) return false;
-		return this.mouseMoveForm(pos, form)
+		not(this.@form) return false;
+		return this.mouseMoveForm(pos, this.@form)
 	}
 	clickButton(currentNode) {
-		print("@@ click button =>" currentNode)
+		dist=System.tick()-this.@startTick
+		if(dist<5000) {
+			print("@@ click button =>" currentNode)
+		}
 	}
 	onTimer() {
-		if(this.var(@useMdc)) {
+		if(this.@useMdc) {
 			this.timerClipCheck()
 		}
 	}
@@ -38,41 +44,40 @@
 	}
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
-			this[@rectCanvas->rcPrev] not( rc.eq(rcPrev) ) this.updateCheck(rc)
+			not( rc.eq(this.@rectCanvas) ) this.updateCheck(rc)
 		} else {
-			if(this[@useMdc]) {
+			if(this.@useMdc ) {
 				this.drawMdcClip(dc,rc)
 			} else {
 				this.drawClip(dc,rc)
 			}
 			return;
-		}		
-		this[=>@form, @useMdc, @useDrawPath, @pathList]
+		}
 		if( typeof(this.drawBackground,'func') ) {
 			this.drawBackground(dc,rc)
 		}
-		if( form ) {
-			this.drawForm(dc,form)				
+		if( this.@form ) {
+			this.drawForm(dc,this.@form)
 		}
-		if( useMdc) {
+		if( this.@useMdc) {
 			this.drawMdc(dc)
 		}		
 		
-		if( useDrawPath && isValid(pathList) ) {
+		if( this.@useDrawPath && isValid(this.@pathList) ) {
 			dc.save()
-			dc.drawPath(pathList, this.baseColor)
+			dc.drawPath(this.@pathList, this.@baseColor)
 			dc.restore()
 		}
 	}
 	
 	onMouseDown(pos) {
-		if(this[@form] && this.mouseDownForm(pos) ) return true;
-		if(this[@useMdc] && this.mouseDownMdc(pos) ) return true;
+		if(this.@form && this.mouseDownForm(pos) ) return true;
+		if(this.@useMdc && this.mouseDownMdc(pos) ) return true;
 		
 	}
 	onMouseUp(pos) {
-		if(this[@form] && this.mouseUpForm(pos) ) return true;	
-		if(this[@useMdc] && this.mouseUpMdc(pos) ) return true;
+		if(this.@form && this.mouseUpForm(pos) ) return true;	
+		if(this.@useMdc && this.mouseUpMdc(pos) ) return true;
 	}
 	
 </script>
@@ -90,7 +95,7 @@
 		this.timer(500)
 	}
 	drawMdc(dc) {
-		while(mdc, this[@mdcList]) {
+		while(mdc, this.@mdcList ) {
 			mdc.draw(dc)
 		}
 		while(pair, this.timeline()) {
@@ -100,37 +105,37 @@
 				if( target && target.drawTimeline(dc, code, tm) ) break;
 			}
 		}
-		while(mdc, this[@overlayList]) {
+		while(mdc, this.@overlayList ) {
 			// @cause, @rectOverlay, @offset
 			mdc.drawOverlay(dc)
 		}
 	} 
 	drawMdcClip(dc,rc) {
-		while(mdc, this[@clipList]) {
-			mdc[@rectClip->rcClip] not(rcClip) continue;
-			if(rc.eq(rcClip)) {
+		while(mdc, this.@clipList ) {
+			if(rc.eq(mdc.@rectClip)) {
 				return mdc.drawClip(dc,rc)
 			}
 		}
 	}
 	mouseDownMdc(pos) {
-		this[=>@mdcList] if(notValid(mdcList)) return;
-		while(n=mdcList.size()-1,0) {
-			if( mdcList[n].mouseDownDefault(pos) ) return true;
+		if(notValid(this.@mdcList)) return;
+		while(n=this.@mdcList.size()-1,0) {
+			cur=this.@mdcList.$n
+			if( cur.mouseDownDefault(pos) ) return true;
 		}
 	}
 	mouseUpMdc(pos) {
-		this[=>@mdcList] if(notValid(mdcList)) return;
-		while(n=mdcList.size()-1,0) { 
-			if( mdcList[n].mouseUpDefault(pos) ) return true;
+		if(notValid(this.@mdcList)) return;
+		while(n=this.@mdcList.size()-1,0) { 
+			cur=this.@mdcList.$n
+			if( cur.mouseUpDefault(pos) ) return true;
 		}
 	}
 	
 	timerClipCheck() {
-		while(mdc, this[@clipList]) {
+		while(mdc, this.@clipList ) {
 			rect=mdc.getClipRect() not(typeof(rect,'rect')) continue;
-			mdc[=>@clipTick, @clipDuration]
-			if( checkTick(clipTick, clipDuration)) {
+			if( checkTick(mdc.@clipTick, mdc.@clipDuration)) {
 				this.update(rect)
 				break;
 			} 
@@ -156,16 +161,16 @@
 		return false;
 	}	
 	addClipMdc(mdc) {
-		not(this[@clipList->list].find(mdc)) {
-			list.add(mdc)
+		not(this.@clipList.find(mdc)) {
+			this.@clipList.add(mdc)
 		}
 	}
 	removeClipMdc(mdc) {
-		this[@clipList].remove(mdc)
+		this.@clipList.remove(mdc)
 	}
 	addMdcList(mdc, redraw) {
-		not(this[@mdcList->list].find(mdc)) {
-			list.add(mdc)
+		not(this.@clipList.find(mdc)) {
+			this.@clipList.add(mdc)
 			mdc.drawDc()
 		}
 		if(redraw) {
@@ -177,9 +182,9 @@
 		this[=>@baseCode, id]
 		dc=mdc("$baseCode#$id.$mdcId")
 		if( moduleType ) {
-			not(dc[@useModule]) {
+			not(dc.@useModule) {
 				addModule(dc,"mdc,$moduleType")
-				dc[@canvas]=this
+				dc.@canvas=this
 			}
 		}
 		return dc;
@@ -190,60 +195,58 @@
 		} else {
 			dc=this.getMdc(param, moduleType)
 		}
-		if( typeof(rectDraw,'bool') ) {
-			if(dc[@img]) {
+		if( rectDraw ) {
+			if(dc.@img ) {
 				this.addMdcList(dc, rectDraw)
 			} else {
 				print("@@ canvas addMdc $param 메모리그리기 객체가 생성되지 않았습니다")
 			}
 			return;
 		}
-		dc[@canvas]=this
+		dc.@canvas=this
 		if(typeof(rectDraw,'rect')) {
-			rectDraw.inject(x,y,w,h)
-			rectAvail=rc(0,0,w,h)
-			offset=pt(x,y)
+			dc.@rectDraw.inject(x,y,w,h)
+			dc.@rectAvail=rc(0,0,w,h)
+			dc.@offset=pt(x,y)
 			mdc(dc, w, h)
-			dc[@rectDraw,@rectAvail,@offset]
 		}
-		if(baseColor) {
-			if(typeof(baseColor,'string')) {
-				baseColor=color(baseColor)
-			}
-		} else {
-			not( dc.var(baseColor) ) {
-				baseColor=this.baseColor
-				not(baseColor) baseColor=randomColor()
-			}
+		
+		if( baseColor && typeof(baseColor,'string') ) {
+			baseColor=color(baseColor)
+		}		
+		if(typeof(baseColor,'color')) {
+			dc.@baseColor=baseColor
 		}
-		not( dc[@useModule] ) {
+		not( dc.@baseColor) ) {
+			baseColor=this.@baseColor
+			not(baseColor) baseColor=randomColor()
+			dc.@baseColor = baseColor
+		}
+		not( dc.@useModule ) {
 			if(moduleType) {
 				addModule(dc,"mdc,$moduleType") 
+				dc.@moduleType = moduleType
 			}
-		} 
-		dc[@baseColor,@moduleType]
-		if(dc[@rectAvail:rect->avail, @rectAvailPrev->prev]) {
-			not(avail.eq(prev)) {
+		}
+		if( dc.@rectAvail ) {
+			not(dc.@rectAvail.eq(dc.@rectAvailPrev)) {
+				dc.@rectAvailPrev = dc.rectAvail
 				dc.updateMdc()
-				dc[@rectAvailPrev]=avail
 			}
 			dc.drawDc()
 		}
 		return this.addMdcList(dc)
 	}
 	removeMdc(mdc, checkUpdate) {
-		this[@mdcList->list]
-		list.remove(mdc)
+		this.@mdcList.remove(mdc)
 		if(checkUpdate) this.update()
 	}	
 	addOverlay(mdc) {
-		this[@overlayList->list]
-		not( list.find(mdc)) list.add(mdc)
+		not( this.@overlayList.find(mdc)) this.@overlayList.add(mdc)
 		this.update()
 	}
 	removeOverlay(mdc) {
-		this[@overlayList->list]
-		list.remove(mdc)
+		this.@overlayList.remove(mdc)
 		this.update()
 	}
 	
@@ -253,104 +256,100 @@
 <script module="canvas_form" note="canvas 폼처리함수 함수">
 
 	initForm(formInfo) {		
-		this[@form:node()->form]
-		lineCount=getLineCount(formInfo)
-		not(lineCount) {
-			form[@error='폼정보 미정의']
-			return form;
-		}
-		if(lineCount.eq(1) && formInfo.find('.') ) {
-			formInfo = conf(formInfo)
-		} 
-		form.parseJson(formInfo)
-		form[=>formItems, heights]
-		if(typeof(formItems,'array')) {
-			if(typeof(formItems[0],'array')) {
-				not(heights) form[heights=formItems.size()]
-			}		
-		} else {
-			form.var(@error, '폼아이템 정보 미정의', formInfo)
-		}
+		// ex) form={formRows:'40,*,30', formItmes:[...]}
+		this[@form:node()->form].parseJson(formInfo)
+		not( typeof(form.formItems,'array') ) return print("폼아이템 정보가 없습니다 (폼:$form)")
+		
+		if(typeof(form.formItems.0,'array')) {
+			form[!formRows]=form.formItems.size()
+		}		
 		canvas = this
 		while(cur,form) {
-			if(cur[tag].eq('btn','space','label','check','radio')) {
-				cur[@useDraw]=true
+			cur[=>tag,code]
+			if(tag.eq('btn','space','label','check','radio')) {
+				cur.@useDraw=true
 				if(tag.eq('btn','check','radio')) {
-					cur[@useMouseEvent]=true
+					cur.@useMouseEvent=true
 				}
 			} else if(tag) {
-				this[@widget]=createWidget(tag,code,canvas,'',true) 
+				cur.@widget = createWidget(tag,code,canvas,'',true) 
 			}
 		}
 		return form;
 	}
 	
 	updateForm(form,rect) {
-		// form[@error->return "@@캔바스 updateForm 오류: $@error"]
-		// ex) form={formRows:'40,*,30', formItmes:[...]}
-		// form[formItem:empty->return ""]
-		form[=>formItems, formRows]
+		not(form.formItems) return;
 		if( typeof(form.formItems.0,'array') ) { 
-			// 폼이 여러줄인경우 rowRects 행영역배열 생성(vbox)
-			form[!formRows]=formItems.size()
-			vbox(rect, form[formRows], form[@formRects:array(true)->rowRects] )
-			while(rows, formItems, rowIndex) {
-				fieldCount = rows.size()
+			// 폼이 여러줄인경우 formRowRects 행영역배열 생성(vbox)
+			vbox(rect, form[formRows], form[@formRowRects:array(true)] )
+			while(rows, items, rowIndex) {
+				form[fieldCount $rowIndex]=rows.size()
 				while(cur, rows) {
-					not(typeof(cur,'node')) continue;
-					cur[@rowIndex, @fieldCount]
+					not(typeof(cur,'node')) continue;					
 				}
 			}
-			if( isValid(rowRects) ) {
-				while(rows, formItems, row) {
-					rect=rowRects[row]
-					form[!info $row]=this.getFormRowInfo(rows)
-					colRectArr=hbox(rect, form[info $row])
-					while(cur, rows, col) {
-						cur[rect]=colRectArr[col]
+			if( isValid(form.@formRowRects) ) {
+				while(rows, form.formItems, row) {
+					rect=form.@formRowRects.$row
+					form[!rowInfo $row]=this.getFormRowInfo(rows)
+					colRectArr=hbox(rect, form[rowInfo $row])
+					while(cur, rows, col) {						
+						stRect(cur,colRectArr[col])
 					}
 				}
 			}
 		}
-		else if(isValid(rowRectArray)) {
+		else if(isValid(form.@formRects)) {
 			// 영역배열로 자유로운 위치에 폼아이템 배치
-			while(cur, formItems, row) {
-				cur[rect]=rowRectArray[row]
+			while(cur, form.formItems, idx) {
+				cur[rect]=form.@formRects.$idx
 			}
 		} 
 		else if(rect) {
 			// 폼이 한줄인 경우
-			form[!info 0]=this.getFormRowInfo(formItems)
-			colRectArr=hbox(rect, form[info 0])
-			while(cur, formItems, col) {
-				cur[rect]=colRectArr[col]
+			form[!rowInfo 0]=this.getFormRowInfo(form.formItems)
+			colRectArr=hbox(rect, form[rowInfo 0])
+			while(cur, form.formItems, col) {
+				setRect(cur,colRectArr[col])
 			}
 		}
+		
+		setRect = function(cur, rect) {			
+			if(notValid(cur.padding)) cur.padding=4
+			rect.incr(cur.padding)
+			rect.incrYH(2,2)
+			cur[rect]=rect			
+		};
 	}
 	drawForm(dc,form) {
-		this[=>@currentDownNode, @currentOverNode]
 		while(cur, form) {
-			cur[=>@widget, @rect, @useDraw, @useMouseEvent, tag] not(rect) continue;
-			if( widget) {
-				widget.move(rect)
-				if(hide) widget.hide()
+			cur[=>tag, rect]
+			if( cur.@widget) {
+				cur.@widget.move(rect)
+				if(cur.@hide) cur.@widget.hide()
 				continue;
 			}
-			if(useMouseEvent) {
-				switch(tag) {
+			if(cur.@useMouseEvent) {
+				switch(cur.@tag) {
 				case btn: this.drawBtn(dc,rect,cur)
 				case check: this.drawCheckbox(dc,rect,cur)
 				case radio: this.drawRadiobox(dc,rect,cur)
 				}
 			}
-			else if(useDraw) {
+			else if(cur.@useDraw) {
 				this.drawLabelText(dc,rect,cur)
 			}			
 		}
 	}
 	drawBtn(dc,rc,cur) {
-		cur.inject( code, text, disable, hide )
-		print("draw btn >> ", cur)
+		cur[=> rect, text, disable, hide ]
+		if(hide) return;
+		color=this.@baseColor
+		rect.incr(4)
+		rect.incrYH(2,2)
+		dc.rectLine(rect,0,color.darkColor(100))
+		dc.text(rect,text,'center')
 	}
 	drawCheckbox(dc,rc,cur) {
 		cur.inject( code, text, disable, hide )
@@ -363,46 +362,49 @@
 	}
 
 	mouseDownForm(pos) {
-		while(cur, form) {
-			cur.inject(@useMouseEvent, rect)
-			not(useMouseEvent) continue;
-			not(rect.contains(pos)) continue;
-			this.var(currentDownNode,cur)
+		while(cur, this.@form) {
+			cur[=>disable, hide]
+			if(disable || hide) continue;
+			not(cur.@useMouseEvent) continue;
+			not(cur.rect.contains(pos)) continue;
+			this.@currentDownNode=cur
 			this.update()
 			return true;
 		}
 		return false;
 	}
 	mouseUpForm(pos) {
-		this.inject(@currentDownNode) not(currentDownNode) return false;		
+		cur=this.@currentDownNode not(cur) return false;
 		checkContain=false
-		if( rect.contains(pos)) {
-			this.clickButton(currentDownNode)
+		if( cur.rect.contains(pos)) {
+			this.clickButton(this.@currentDownNode)
 			checkContain=true
 		}		
-		this.var(@currentDownNode, null)
+		this.@currentDownNode=null
 		this.update()
 		return checkContain;
 	}
 	getFormRowInfo(rows) { 
 		arr=[]
 		while(cur, rows) {
-			cur[=>@widget, @useDraw, tag, width]
+			cur[=>tag, width]
 			if(width) {
 				arr.add(width)
-			} else if(@widget) {
-				if(tag.eq('canvas','grid','editor','splitter','div','space')) {
+			} else if(tag.eq('space')) {			
+				arr.add('*')
+			} else if(cur.@widget) {
+				if(tag.eq('canvas','grid','editor','splitter','div')) {
 					arr.add('*')
 				} else if(tag.eq('date','time')) {
 					arr.add(125)
 				} else if(tag.eq('combo','input')) {					
 					arr.add(150)
 				}
-			} else if(@useDraw) {
+			} else if(cur.@useDraw) {
 				cur[=>icon, font, text, padding, image]
 				tw=0
 				if(text) {
-					not(font) font=this[@baseFont]
+					not(font) font=this.@font
 					getTextSize(text,font).inject(tw,th)
 					tw+=20
 					if(icon) {
@@ -410,7 +412,7 @@
 					}			
 				} 
 				if(tag.eq('check')) {
-					cur.var(@checkIcon, 'icons:check1')
+					cur.@checkIcon = 'icons:check1'
 					tw+=40
 				}	
 				else if(image) {
@@ -422,7 +424,7 @@
 					arr.add(tw)
 				} else {
 					arr.add(100)
-				}					
+				}
 			} else {
 				arr.add(20)
 			}
@@ -440,7 +442,7 @@
 		return this.initForm(formInfo)
 	}
 	isMdcSizeChange(mdc, w,h) {
-		mdc.var(rect).size().inject(mw,mh)
+		mdc.@rect.size().inject(mw,mh)
 		if(mw.eq(w) && mh.eq(h)) {			
 			return false;
 		}

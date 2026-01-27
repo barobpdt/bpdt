@@ -15,12 +15,12 @@
 		this.inputHeight=46;
 		this.inputCheck=false; 
 		this.addArray('@ingArray')
-		this.var(@ingString, '')
-		this.var(@ingBuffer, '')
-		this.var(@doneString,'')
-		this.var(@inputResultMdc, null)
-		this.var(@fontStyle, 'size:14pt, color:#fafafa')
-		this.var(@fontOverStyle, 'size:15pt, color:#fafafa, weight:bolde')
+		this.@ingString = ''
+		this.@ingBuffer = ''
+		this.@doneString =''
+		this.@inputResultMdc = null
+		this.@fontStyle = 'size:14pt, color:#fafafa'
+		this.@fontOverStyle = 'size:15pt, color:#fafafa, weight:bolde'
 	}
 	getAvailSize() {
 		this.inject(canvasWidth, canvasHeight, inputHeight)
@@ -52,7 +52,7 @@
 		this.drawKeyText(dc, rect, row, column)
 		dc.restore()
 	}
-	updateRect() {	
+	updateMdc() {	
 		this.inject(
 			@rectAvail,
 			inputCheck, inputHeight, canvasHeight 
