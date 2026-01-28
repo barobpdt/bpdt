@@ -18,13 +18,20 @@
 </script>
 
 <script module="canvas_stack_main">
+	init() {
+		this.@colorBody=this.@baseColor.lightColor(120)
+	}
 	clickButton(node) {
 		node.inject(code,name)
 		page=page()
 		switch(code) {
 		case add:
-			sub = createWidget('canvas','sub',this,'canvas_mdc,canvas_stack_sub',true)
-			page.stack.addPage(sub, true)
+			sub=getWidgetNode('canvas','sub',this)
+			not(sub) {
+				sub=createWidget('canvas','sub',this,'canvas_mdc,canvas_stack_sub',true)
+			}
+			stack=page.get('stack')
+			stack.addPage(sub, true)
 		case prev:
 			print("prev button click")
 		case help:		
@@ -33,32 +40,34 @@
 		}
 	}
 	updateCanvas() {
-		this[=>@rectCanvas, @editor, @form]
-		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
-		not(editor) {
-			editor=createWidget('editor','editor',this,'',true)
-			this.with(@editor)
-		}
-		editor.move(rcBody.incr(4))
+		vbox(this.@rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		this[@rcTop, @rcBody, @rcBottom]
 
+		editor= this.@editor
+		not( editor) {
+			editor=createWidget('editor','editor',this,'',true)
+			this.@editor=editor
+		}
+		editor.move(rcBody.incr(4))
 		// form 업데이트
-		print("@@ main update canvas", form)
-		not(form) form=initForm(conf('form.test_main'))
+		form = this.@form`
+		print("@@ main update canvas", form)	
+		not(form) {
+			form=initForm(conf('form.test_main'))
+			this.@form=form
+		}
 		this.updateForm(form, rcBottom)
 	}
 	drawBackground(dc) {
-		this[=>@rcTop, @rcBody, @rcBottom, @form, @currentMouseNode]
-		
+		this[=>@rcTop, @rcBody, @rcBottom, @colorBody]
 		dc.fill(rcTop, colorBody)
 		dc.rectLine(rcTop, 4, darkColor(colorBody))
 		dc.fill(rcBody, colorBody)
 		dc.fill(rcBottom, colorBody)
-		colorFont=darkColor(colorBottom,200)
+		colorFont=darkColor(colorBody,200)
 		dc.save().font("size:10,color:$colorFont")
 		dc.text(rcTop.incrX(10), 'STACK 페이지 테스트')
 		dc.restore()
-		
 		// 이후 dc 그리기 무시 true 리턴
 		return true;
 	}
@@ -68,15 +77,19 @@
 
 <script module="canvas_stack_sub">
 	updateCanvas() {
-		this[=>@rectCanvas, @form]
-		vbox(rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
+		vbox(this.@rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
+		this[@rcTop, @rcBody, @rcBottom]
 		this.addMdc('box',rcBody.incr(2),'mdc_box').var(@title,'sub box')
 		
 		hbox(rcTop,'60,*,40').inject(rcPrev,space,rcClose)
 		rcPrev.center(40,24)
 		rcClose.center(40,24)
 		// form 업데이트 
-		not(form) form = initForm(conf('form.test_sub'))
+		form=this.@form
+		not(form) {
+			form = initForm(conf('form.test_sub'))
+			this.@form=form
+		}
 		form[@formRects:array(true)].add(rcPrev, rcClose)
 		this.updateForm(form)
 

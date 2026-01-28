@@ -399,7 +399,7 @@ getVarValue(&s,fn,node) {
 		return conf(s.trim())
 	} 
 	not(fn) fn=Cf.funcNode('parent')
-	not(isVar(s)) {
+	not(node.isVar(s)) {
 		return eval(s, fn)
 	} 
 	k=s.move()
@@ -1140,10 +1140,7 @@ widget(name, moduleCode) {
 	if( target.var(@baseCode) ) {
 		splitSep(target.var(@baseCode),':').inject(base, targetName)
 	}
-	widget = target.member("$name")
-	not(typeof(widget,'widget')) {
-		widget = target.findWidget(name)
-	}
+	widget = target.findWidget(name)
 	not(typeof(widget,'widget')) {
 		return print("widget 위젯 찾기오류 (이름:$name)");
 	}
@@ -1155,6 +1152,9 @@ widget(name, moduleCode) {
 	}
 	not(moduleCode) {
 		moduleCode=widget.module
+	}
+	if( widget.tag=='canvas' ) {
+		addModule(widget,'canvas')
 	}
 	if( moduleCode ) {
 		addModule(widget, moduleCode)
