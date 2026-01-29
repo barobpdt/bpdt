@@ -3,8 +3,8 @@ _node_user_func(source) {
 	funcIndex = _nodeUserfuncIndex_++;
 	type=source.findPos('/').trim()	
 	switch(type) {
-	case info:
-		return _arrayvar_make_info(source, fn)
+	case print:
+		return _arrayvar_print_info(source, fn)
 	case filter: 
 		print("filter 함수구현중");
 	case map: 
@@ -12,7 +12,7 @@ _node_user_func(source) {
 	default:
 	}
 }
-_arrayvar_make_info(s,fn) {
+_arrayvar_print_info(s,fn) {
 	ss=''
 	arr=[]
 	while(s.valid(),n) {
@@ -20,7 +20,8 @@ _arrayvar_make_info(s,fn) {
 		v=this.get(vnm)
 		arr.add("$vnm=$v")
 	}
-	return arr.join(', ')
+	str=arr.join(', ')
+	print(">> PRINT INFO : $str")
 }
 
 _arr(code) {
@@ -63,7 +64,7 @@ _node(code) {
 	} else {
 		node=Cf.rootNode("_node.$code", true)
 	}
-	not(node.@tag ) node.@tag = code
+	not(node.var(@tag)) node.var(@tag, code)
 	return node;
 }
 _sv() {
@@ -95,11 +96,10 @@ baseConfig(service,base) {
 	if(service) {
 		serviceNode=getServiceNode(service)
 	} else {
-		projectInfo=object("baro.serviceProjectInfo")
-		serviceNode=projectInfo.@currentService
+		serviceNode=object("baro.serviceProjectInfo").var(@currentService)
 	}
 	not(base) {
-		splitSep(this.@baseCode,':').inject(base,id)
+		splitSep(this.var(@baseCode),':').inject(base,id)
 		not(base) return print("@@ baseConfig base코드 미정의", this);
 	}
 	not(serviceNode) return print("@@ baseConfig serviceNode 미정의", service, base);
@@ -295,16 +295,17 @@ checkTick(tick, duration) {
 	d=System.tick() - tick;
 	return when(d.gt(duration), true, false)
 }
-getObjectInfo(name) {
-	info={}
+getObjectList(name) {
+	arr=[]
 	fnm="${name}."
 	root=Cf.getObject()
 	while(k, root.keys()) {
 		if(k.start(fnm)) {
-			info.set(k, root.get(k) )
+			arr.add( root.get(k) )
+			print("k==$k")
 		}
 	}
-	return info;
+	return arr;
 }
 isObject(obj) {
 	if(typeof(obj,'node','array')) {
@@ -327,33 +328,6 @@ isNull(s) {
 	if(typeof(s,'bool','number')) return false;	
 	return when(s,false,true) 
 }
-webObject(id) { 
-	not(id) {		
-		while(n=0,16) {
-			web=Baro.web("web_$n")
-			if(web.is('run')) {
-				continue;
-			}
-			break;
-		}
-		return file;
-	}
-	return Baro.web(id) 
-}
-fileObject(id) {
-	not(id) {		
-		while(n=0,16) {
-			file=Baro.file("file_$n")
-			if(file.@c) {
-				continue;
-			}
-			break;
-		}
-		return file;
-	}
-	return Baro.file(id)
-}
-
 
 isValid(s,idx) {
 	not(s) return false;
@@ -887,6 +861,17 @@ isFolder(fullPath, makeCheck) {
 	}
 	return folder;
 }
+getFileObject() {
+	while(n=0,16) {
+		file=Baro.file("file_$n")
+		if(file.var(@c)) {
+			continue;
+		}
+		break;
+	}
+	return file;
+	
+}
 pathJoin() {
 	ss=''
 	while(a,args(), n) {
@@ -1086,7 +1071,7 @@ page(name, moduleCode) {
 		not(typeof(target,'widget')) {
 			return print("page 대상이 위젯이 아닙니다 (이름:$name)")
 		}
-		splitSep(target.@baseCode, ':').inject(base, targetName) 
+		splitSep(target.var(@baseCode), ':').inject(base, targetName) 
 		not(base) {
 			return print("page 함수 호출오류 (페이지 base 코드오류)");
 		}
@@ -1097,7 +1082,7 @@ page(name, moduleCode) {
 		print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
 		return;
 	}
-	if( page.@useInit ) {
+	if( page.var(@useInit) ) {
 		return page;
 	}
 	addModule(page, 'page')
@@ -1110,7 +1095,7 @@ page(name, moduleCode) {
 	if(typeof(page.initPage,'func')) {
 		page.initPage()
 	}
-	page.@useInit = true
+	page.var(@useInit, true)
 	return page;
 }
 dialog(name, moduleCode) {
@@ -1122,7 +1107,7 @@ dialog(name, moduleCode) {
 		not(typeof(target,'widget')) {
 			return print("dialog 대상이 위젯이 아닙니다 (이름:$name)")
 		}
-		splitSep(target.@baseCode, ':').inject(base, targetName) 
+		splitSep(target.var(@baseCode), ':').inject(base, targetName) 
 		not(base) {
 			return print("dialog 함수 호출오류 (페이지 base 코드오류)");
 		}
@@ -1132,7 +1117,7 @@ dialog(name, moduleCode) {
 	not(dialog) {
 		return print("dialog 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
 	}
-	if( dialog.@useInit ) {
+	if( dialog.var(@useInit) ) {
 		return dialog;
 	}
 	not(moduleCode) {
@@ -1144,7 +1129,7 @@ dialog(name, moduleCode) {
 	if(typeof(dialog.initDialog,'func')) {
 		dialog.initDialog()
 	}
-	dialog.@useInit = true
+	dialog.var(@useInit, true)
 	return dialog;
 }
 widget(name, moduleCode) {
@@ -1164,14 +1149,14 @@ widget(name, moduleCode) {
 		return print("widget 참조 대상이 위젯이 아닙니다 (이름:$name)")
 	}
 	base=''
-	if( target.@baseCode ) {
-		splitSep(target.@baseCode,':').inject(base, targetName)
+	if( target.var(@baseCode) ) {
+		splitSep(target.var(@baseCode),':').inject(base, targetName)
 	}
 	widget = target.findWidget(name)
 	not(typeof(widget,'widget')) {
 		return print("widget 위젯 찾기오류 (이름:$name)");
 	}
-	if( widget.@useInit ) {
+	if( widget.var(@useInit) ) {
 		return widget
 	}
 	if(base ) {
@@ -1190,7 +1175,7 @@ widget(name, moduleCode) {
 	if(typeof(widget.initWidget,'func')) {
 		widget.initWidget()
 	}
-	widget.@useInit = true
+	widget.var(@useInit, true)
 	return widget;	
 }
 
@@ -1268,7 +1253,7 @@ makeWidgets(widgetSource, base, serviceNode) {
 	page=null
 	if(typeof(serviceNode,'node')) {
 		page=page("$base:main")
-		serviceNode.@page=page
+		serviceNode.var(@page,page)
 	}
 	return page;
 }
@@ -1490,7 +1475,7 @@ parseSource(&s, base, serviceNode) {
 		mapNode=baseNode.addNode('script')
 		prev=mapNode.get('@eval')
 		if( prev.ne(evalSource) ) {
-			baseNode.@baseCode = "$base:eval"
+			baseNode.var(@baseCode, "$base:eval")
 			func=call('runEval')
 			call(func, baseNode, "Cf.debug('clear')\r\n$evalSource")
 			mapNode.set('@eval', evalSource)
@@ -1522,15 +1507,39 @@ nodeVar(obj, name, value) {
 		return obj.get(vnm)
 	}
 }
- 
+nodeArrayVar(obj, name, reset) {
+	not(typeof(name,'string')) {
+		print("@@ nodeArrayVar 이름오류", args())
+		return _arr();
+	}
+	not(typeof(obj,'node') ) {
+		print("@@ nodeArrayVar 매개변수오류", args())
+		return _arr();
+	}
+	vnm=when(name.ch('@'),name,"@$name")
+	a=obj.get(vnm)
+	not(typeof(a,'array')) {
+		a = obj.newArray()
+		obj.set(vnm, a)
+	}
+	if(reset) {
+		a.reuse()
+	}
+	return a;
+}
+addArrayVar(obj, name, val) {
+	a=nodeArrayVar(obj,name)
+	if(a.find(val)) return false;
+	a.add(val)
+	return true;
+}
 resetModule(obj) {
-	obj.@useModule = false
-	obj.@moduleList.reuse()
+	obj.var(@useModule, false)
+	obj.var(@moduleList).reuse()
 }
 addModule(obj, moduleName) {
 	// print("add module args ==> ", args())
-	
-	moduleList=obj.@moduleList
+	obj.inject(@moduleList, @skipFuncUpdate)
 	not(moduleList) moduleList=obj.addArray('@moduleList')
 	params=args(2)
 	if(moduleName.find(',')) {
@@ -1540,10 +1549,10 @@ addModule(obj, moduleName) {
 	} else {
 		loadModule(moduleName)
 	}
-	if( obj.@skipFuncUpdate ) {
-		obj.@skipFuncUpdate = false
+	if( skipFuncUpdate ) {
+		obj.var(@skipFuncUpdate, false)
 	}
-	obj.@useModule=true
+	obj.var(@useModule, true)
 	return obj;
 	
 	loadModule = func(moduleName) {
@@ -1551,7 +1560,7 @@ addModule(obj, moduleName) {
 			return obj;
 		} 
 		funcInfo = object('user.subfuncMap').get(moduleName) 
-		if( addModuleFunc(obj, moduleName, funcInfo, obj.@skipFuncUpdate) ) {
+		if( addModuleFunc(obj, moduleName, funcInfo, skipFuncUpdate) ) {
 			fcInit = obj.get("init")
 			if( typeof(fcInit,'func') ) {
 				call(fcInit, obj, params)
@@ -1579,7 +1588,7 @@ addModuleFunc(obj, moduleName, &funcs, skipFuncUpdate) {
 		} else {
 			obj.set(fnm, fc)
 		}
-		// print("모듈함수 ${skipFuncUpdate} ${moduleName}.${fnm} 등록")
+		print("모듈함수 ${skipFuncUpdate} ${moduleName}.${fnm} 등록")
 	}
 	return cnt;
 }

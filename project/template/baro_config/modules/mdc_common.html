@@ -1,36 +1,40 @@
 <script module="mdc" note="memory draw context 모듈함수">
 	init() {
+		print("mdc 초기화 시작")
 		this.@startTick=System.tick()
-		print("mdc 초기화")
 	}
 	draw(dc) {
-		this.inject(@rectDraw) 
-		not(typeof(rectDraw,'rect')) return log("rectDraw 캔바스상 영역 미정의", this.id);
-		dc.image(rectDraw, this)
+		not(typeof(this.@rectDraw,'rect')) {
+			return log("rectDraw 캔바스상 영역 미정의", this.id);
+		}
+		dc.image(this.@rectDraw, this)
 	}
 	canvasSize() {
-		return this.var(canvas).rect().size();
+		return this.@canvas.rect().size();
 	}
 	canvasUpdate() {
-		this.var(canvas).update()
+		this.@canvas.update()
 	}
 	addOverlay(cause, rectOverlay) {
-		this.with(@cause, @rectOverlay)
-		this.var(canvas).addOverlay(this)
+		this.@cause=cause
+		this.@rectOverlay=rectOverlay
+		this.@canvas.addOverlay(this)
 	}
 	removeOverlay(cause, rectOverlay) {
-		this.with(@cause, @rectOverlay)
-		this.var(canvas).removeOverlay(this)
+		this.@cause=cause
+		this.@rectOverlay=rectOverlay
+		this.@canvas.removeOverlay(this)
 	}
 	addClipMdc(clipType, clipDuration) {
-		clipTick=System.tick()
 		not(clipDuration) clipDuration=500
-		this.with(@clipType, @clipTick, @clipDuration)
-		this.var(canvas).addClipMdc(this)
+		this.@clipTick=System.tick()
+		this.@clipType=clipType
+		this.@clipDuration=clipDuration
+		this.@canvas.addClipMdc(this)
 	}
 	removeClipMdc() {
-		this.with(@clipType)
-		this.var(canvas).removeClipMdc(this)
+		this.@clipType=''
+		this.@canvas.removeClipMdc(this)
 	}
 	updateMdc(rectDraw) {
 		dist=System.tick()-this.@startTick
@@ -45,48 +49,48 @@
 		if(code.eq('fadeOut', 'fadeIn')) {			
 			curVal=value*100;
 			if(code.eq('fadeOut')) {
-				if(frame==1) this.var(canvas).removeMdc(this)
+				if(frame==1) this.@canvas.removeMdc(this)
 				dc.opacity(100-curVal)
 			} else {
-				if(frame==19) this.var(canvas).addMdc(this)
+				if(frame==19) this.@canvas.addMdc(this)
 				dc.opacity(curVal)
 			}
 		} else if( code.eq('moveLeft', 'moveRight', 'moveTop', 'moveBottom') ) {
-			this.var(@rectDraw).inject(x,y,w,h)
+			this.@rectDraw.inject(x,y,w,h)
 			if(frame==1) {
-				this.var(canvas).removeMdc(this)
+				this.@canvas.removeMdc(this)
 				switch(code) {
 				case moveLeft: 
-					this.var(moveSize, when(this.var(fixedSize), w, x+w) );
+					this.@moveSize = when(this.@fixedSize, w, x+w)
 				case moveRight:
 					this.cavasSize().inject(cw, ch)
-					this.var(moveSize, when(this.var(fixedSize), w, cw-x));
+					this.@moveSize = when(this.@fixedSize, w, cw-x)
 				case moveTop: 
-					this.var(moveSize, y+h);
+					this.@moveSize = y+h
 				case moveBottom: 
 					this.cavasSize().inject(cw, ch)
-					this.var(moveSize, ch-y);
+					this.@moveSize = ch-y
 				}				
 			} else if( frame>10) {
 				dc.opacity(50)
 			}
-			cv=this.var(moveSize) * value;
+			cv=this.@moveSize * value;
 			switch(code) {
 			case moveLeft: 
 				x-=cv;
 				if(frame==19) {
-					if( this.var(minSize)) {
-						x=w-this.var(minSize)
-						this.var(canvas).addMdc(this)
+					if( this.@minSize ) {
+						x=w-this.@minSize
+						this.@canvas.addMdc(this)
 					}
 				}
 			case moveRight: 
 				x+=cv;
 				if(frame==19) {
-					if( this.var(minSize)) {
+					if( this.@minSize ) {
 						this.canvasSize().inject(cw, ch)
-						x=cw-this.var(minSize);
-						this.var(canvas).addMdc(this)
+						x=cw-this.@minSize
+						this.@canvas.addMdc(this)
 					}
 				}
 			case moveTop: 
@@ -94,13 +98,13 @@
 			case moveBottom: 
 				y+=cv;
 			}			
-			this.var(@rectDraw, rc(x,y,w,h) )
+			this.@rectDraw = rc(x,y,w,h)
 			this.draw(dc)
 		}
 		dc.restore()
 	}
 	mouseDownDefault(pos) {				
-		this.inject(id, @rectDraw, @offset)
+		this[=>id, @rectDraw, @offset]
 		not(rectDraw.contains(pos)) {
 			return false;
 		}				
@@ -108,7 +112,7 @@
 		return this.mouseDown(pt)
 	} 
 	mouseUpDefault(pos) {
-		this.inject(id, @rectDraw, @offset)
+		this[=>id, @rectDraw, @offset]
 		not(rectDraw.contains(pos)) {
 			return false;
 		}

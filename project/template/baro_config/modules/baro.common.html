@@ -53,11 +53,10 @@ initModules() {
 	regServiceFolder(serviceNode, path )
 }
 regServiceFile(serviceMode, fullPath) {
-	serviceNode=getServiceNode(serviceMode)
-	callback = func(serviceNode, fullpath) {
+	serviceNode=getServiceNode(serviceMode) 
+	addWatchFile(serviceNode, fullPath, function(serviceNode, fullpath) {
 		return includeService(serviceNode, fullpath)
-	};
-	addWatchFile(serviceNode, fullPath, callback)
+	})
 }
 
 regServiceFolder(serviceMode, path) {
@@ -134,7 +133,7 @@ regServiceFolder(serviceMode, path) {
 		not(target) target=Cf.funcNode().get('@this')
 		base=''
 		if(typeof(target,'node')) {
-			splitSep(target.var(baseCode),':').inject(base,pid)
+			splitSep(target.@baseCode,':').inject(base,pid)
 		}
 		not(base) base='common'
 		print("xxxx getWidgetNode xxxxx", base, newCheck, tag)
@@ -158,7 +157,7 @@ regServiceFolder(serviceMode, path) {
 		widget.tag=tag
 		widget.id=id
 		if(tag.eq('page','canvas')) {
-			widget.var(@skipFuncUpdate, true)
+			widget.@skipFuncUpdate=true
 			addModule(widget,tag,true)
 		}			
 		if(typeof(module,'string')) {
@@ -171,10 +170,10 @@ regServiceFolder(serviceMode, path) {
 				widget.parentWidget(target)
 				widget.show()
 			}
-			splitSep(target.var(@baseCode),':').inject(base, targetId)
+			splitSep(target.@baseCode,':').inject(base, targetId)
 		}
 		not(base) base='common'
-		widget.var(baseCode,"${base}:${id}")
+		widget.@baseCode ="${base}:${id}"
 		return widget;
 	}
 </script>
@@ -194,10 +193,9 @@ getFolderList(path, node, depthNumber, pathLength) {
 	not(pathLength) {
 		root=findParentNode(node,'@rootPath')
 		if(root) {
-			rootPath = root.get('@rootPath')
-			pathLength= rootPath.size()
+			pathLength= root.@rootPath.size()
 		} else {
-			node.set('@rootPath', path)
+			node.@rootPath = path
 			pathLength= path.size()
 		}
 	}
@@ -236,7 +234,7 @@ getFileList(path, node, arr, depth ) {
 		not(relativePath) return print("@@ getFileList 경로가 없거나 부모노드 경로가 없습니다")
 		root=findParentNode(node,'@rootPath')
 		not(root) return print("@@ getFileList 최상위 노드 경로가 없습니다")
-		path=pathJoin(root.get('@rootPath'), relativePath)
+		path=pathJoin(root.@rootPath, relativePath)
 		print("path == $path ")
 	}
 	not(depth) {
@@ -244,15 +242,15 @@ getFileList(path, node, arr, depth ) {
 		node.inject(@fileSort, @fileFilter, @nameFilter)
 		if(fileSort) {
 			// name, time, size, type, case
-			fileObject.var(sort, fileSort)
+			fileObject.@sort = fileSort
 		}
 		if(fileFilter) {
 			// folder, files, hidden
-			fileObject.var(filter, fileFilter)
+			fileObject.@filter = fileFilter
 		}
 		if(nameFilter) {
 			// *.svg
-			fileObject.var(nameFilter, nameFilter)
+			fileObject.@nameFilter = nameFilter
 		}
 		depth=0
 	}
@@ -277,10 +275,8 @@ getFileList(path, node, arr, depth ) {
 // 객체의 태그명 체크
 tagCheck(obj, type) {
 	not(typeof(obj,'node')) return false;
-	if(obj.cmp('tag',type)) return true;
-	tag=obj.get('@tag')
-	chk = tag && tag.start(type)
-	return chk;
+	if(obj.cmp('tag',type)) return true;	
+	return false;
 }
 // aaa-bbb-ccc => aaaBbbCcc 로변환
 typeName(&s) {
@@ -427,7 +423,7 @@ randomIcon() {
 <script type="data" note="데이터관리">
 json(node, childPrefix, useIndent) {
 	obj = object("baro.json")
-	not(obj.var(useModule)) {
+	not(obj.@useModule ) {
 		addModule(obj,'json',childPrefix)
 	}
 	not(node) {
@@ -472,11 +468,11 @@ runCommand( &cmd, callback ) {
 		addCmdJob('common', line, callback)
 	} else {
 		param=object('data.runCommand')
-		arr=param.addArray('commandList')
+		commandList=param.addArray('@commandList')
 		while(cmd.valid()) {
 			line=cmd.findPos("\n").trim()
 			if(line) {
-				arr.add(line)
+				commandList.add(line)
 			}
 		}
 		addCmdJob('common', param, callback)
@@ -507,8 +503,8 @@ addApiJob(id, targetNode, logCallback ) {
 		return print("@@addApiJob 대상노드 미정의");
 	}	
 	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.useJob = true
-	timerInfo.lock=true
+	timerInfo.@useJob=true
+	timerInfo.@lock=true
 	web=webObject(id)
 	if(typeof(logCallback,'func')) {
 		web.logCallback=logCallback
@@ -517,16 +513,19 @@ addApiJob(id, targetNode, logCallback ) {
 			web.logCallback=func(result,info) { print("##API 작업콜백 ${this.url}  result::$result") };
 		}
 	}
-	not(web.jobMode) {
-		web.jobMode = 'API'
-		web.logTail = logTail("api_$id")
-		web.logAppend = logAppend("api_$id")
+	not(web.@jobMode) {
+		web.@jobMode = 'API'
+		web.@logTail = logTail("api_$id")
+		web.@logAppend = logAppend("api_$id")
+		web.addArray('@webJobList')
 		event(web,'@callback',@baro.webJobProc)
 	}	
 	// requestInfo: url, method, data, headerJson
-	nodeArrayVar(web,'@jobList').add(targetNode)
-	addArrayVar(timerInfo,'@jobList',web)
-	timerInfo.lock=false
+	web.@webJobList.add(targetNode)
+	not(timerInfo.@jobList.find(web)) {
+		timerInfo.@jobList.add(web)
+	}
+	timerInfo.@lock=false
 	return web;
 }
 
@@ -536,10 +535,10 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 		return print("@@addWebDownloadJob 대상노드 미정의");
 	}
 	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.useJob = true
-	timerInfo.lock=true
-	wid="download_$id"
-	web=webObject(wid)
+	timerInfo.@useJob = true
+	timerInfo.@lock=true
+	webId="download_$id"
+	web=webObject(webId)
 	if(typeof(logCallback,'func')) {
 		web.logCallback=logCallback
 	} else {
@@ -547,56 +546,64 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 			web.logCallback=func(result,info) { print("##웹다운로드 콜백 URL: ${this.url}  RESULT: :$result") };
 		}
 	}
-	not(web.jobMode) {
-		web.jobMode = 'DOWNLOAD'
-		web.logTail = logTail(wid)
-		web.logAppend = logAppend(wid)
+	not(web.@jobMode) {
+		web.@jobMode = 'DOWNLOAD'
+		web.@logTail = logTail(webId)
+		web.@logAppend = logAppend(webId)
+		web.addArray('@webJobList')
 		event(web,'@callback',@baro.webJobProc)
 	}
 	// requestInfo: url, method, data, headerJson
-	nodeArrayVar(web,'@JobJobList').add(targetNode)
-	addArrayVar(timerInfo,'@JobList',web)
-	timerInfo.lock=false
+	web.@webJobList.add(targetNode)
+	not(timerInfo.@jobList.find(web)) {
+		timerInfo.@jobList.add(web)
+	}
+	timerInfo.@lock=false
 	return web;
 }
 
 /* cmd 결과처리 작업등록 */
 addCmdJob(id, command, logCallback) {	
-	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.useJob=true
-	timerInfo.lock=true
-	cmd=Baro.process(id)
 	if(notValid(command)) {
-		return cmd;
+		return;
 	}
-	if(typeof(logCallback,'func')) {
+	timerInfo = object('baro.globalTimerInfo')
+	timerInfo.@useJob=true
+	timerInfo.@lock=true
+	cmd=Baro.process(id)
+	if( typeof(logCallback,'func')) {
 		cmd.logCallback=logCallback
 	} else {
 		not(cmd.logCallback) {
 			cmd.logCallback = func(result, info) { print("##cmd 작업콜백 RESULT: :$result") };
 		}
 	}
-	not(cmd.jobMode) {
-		cmd.jobMode='CMD'
-		cmd.logTail = logTail("cmd_$id")
-		cmd.logAppend = logAppend("cmd_$id")
-	}	
+	not(cmd.@jobMode) {
+		cmd.@jobMode='CMD'
+		cmd.@logTail = logTail("cmd_$id")
+		cmd.@logAppend = logAppend("cmd_$id")
+		cmd.addArray('@cmdJobList')
+	}
 	if(typeof(command,'node')) {
 		node=command
-		if( isValid(node.commandList) ) {
-			nodeArrayVar(cmd,'@jobList').add(node)
+		if( isValid(node.@commandList) ) {
+			not(cmd.@cmdJobList.find(node)) {
+				cmd.@cmdJobList.add(node)
+			}
 		} else {
 			node.error='error::addCmdJob commandList 내용이 없습니다')
 		}
 	} else {
 		if(command) {
-			nodeArrayVar(cmd,'@jobList').add(command)
+			cmd.@cmdJobList.add(command)
 		} else {
 			log('error::addCmdJob command 내용이 없습니다')
 		}
 	}
-	addArrayVar(timerInfo,'@jobList',cmd)
-	timerInfo.lock=false
+	not(timerInfo.@jobList.find(cmd)) {
+		timerInfo.@jobList.add(cmd)
+	}	
+	timerInfo.@lock=false
 	return cmd;
 }
 
@@ -604,42 +611,49 @@ addCmdJob(id, command, logCallback) {
 	if(type=='progress') {
 		n=this.incrNum('@progressCnt')
 		m=n%10;
-		if(m==1) this.logAppend.append("##progress ${n}th ${this.url} ${bytes}")
+		if(m==1) {
+			this.@logAppend.append(f[#@>progress: id="" ${this.url} ${bytes}])
+		}
 		return;
 	}
 	if(type=='error') {
-		this.set('@error',data)
+		this.@error = data
 	}
 	if(type=='finish') {
-		this.inject(url, targetNode, @error)
-		msg=str('@#>finish: web ${error?[error="$error" ]}url="$url" target="$targetNode"')
-		this.logAppend.append("\r\n$msg\r\n")
-		this.logCallback(this.logTail.timeout(), targetNode)
-		this.set('@progressCnt', 0)
-		this.set('@jobStatus','finish')
+		this.inject(url, @targetNode, @error)
+		result=when(error, "error[$error]", "ok")
+		this.@logAppend.append(
+			f[#@>finish:result="$result" url="$url" target={$targetNode}]
+		)
+		this.@progressCnt = 0
+		this.@jobStatus = 'finish'
+		this.logCallback(this.@logTail.timeout(), targetNode)
 	}
 }
+
 @baro.cmdJobProc(type,&data) {
 	if(type=='read') {
 		this.appendText('@cmdResult', data)
-		this.inject(id,logAppend,logCallback,@command,@jobInfo)
-		logAppend.write(data)
+		this.@logAppend.write(data)
+		logCallback=this.logCallback
 		c=data.ch(-1)
-		if( jobInfo && typeof(jobInfo.logCallback,'func')) {
-			logCallback=jobInfo.logCallback
-		} 
 		if(c=='>') {
 			// cmd 명령 종료
-			this.set('@jobStatus','finish')
-			msg=str('@#>finish: cmd id="$id" command="$command"')
-			logAppend.append("\r\n$msg\r\n")
+			this.@jobStatus='finish'
+			this.@logAppend.append(
+				f[@#>finish: id="${this.id}" command="${this.@command}"]
+			)
 			logData=this.ref('@cmdResult')
-			if( jobInfo) {				
+			jobInfo=this.@jobInfo
+			if( jobInfo ) {
+				if(jobInfo.logCallback) {
+					logCallback=jobInfo.logCallback
+				}
 				call(logCallback, this, logData, jobInfo)
 			} else {
-				call(logCallback, this, logData, true)
+				call(this.logCallback, this, logData, true)
 			}
-			this.set('@cmdResult','')
+			this.@cmdResult = ''
 		} else {
 			// cmd 명령 진행중
 			call(logCallback,this,data, false)
@@ -647,10 +661,10 @@ addCmdJob(id, command, logCallback) {
 		return;
 	}
 	if(type=='error') {
-		this.inject(id,@command)
-		msg=str('##error>> cmd error="$data" id="$id" command="$command"')
-		this.logAppend.apeend("\r\n$msg\r\n")
-		return this.var(error, data)
+		this.@logAppend.apeend(
+			f[#@>error: error="$data" id="${this.id}" command="${this.@command}"]
+		)
+		return this.@error = data
 	}
 }
 
@@ -659,29 +673,15 @@ addUserWorker(id, targetNode, callbackWorker ) {
 	not(typeof(targetNode,'node')) {
 		return print("@@addWebDownloadWorker 대상노드 미정의");
 	}
-	worker = Baro.worker(id)
-	workerCallback = worker.get('@callback')
-	not(typeof(workerCallback,'func')) 
-	{
-		worker.start(func(node) {
-			not(typeof(node,'node')) {
-				print("user worker stay mode !!!")
-				return;
-			}
-			callback = node.callbackWorker
-			if(typeof(callback,'func')) {
-				callback(node)
-			} else {
-				print("@@ userWorekr 콜백함수 미정의 (노드:$node)")
-			}
-		});
+	worker=Baro.worker(id)
+	not(worker.@callback) {
+		worker.start(function(target) { if(target) target.@callbackWorker() });
 	}
-	
 	if(typeof(callbackWorker,'func')) {
-		targetNode.callbackWorker=callbackWorker
+		targetNode.@callbackWorker=callbackWorker
 	} else {
-		not(targetNode.callbackWorker) {
-			targetNode.callbackWorker=func(node) { print("##userWorker callback  node::$node") };
+		not(targetNode.@callbackWorker) {
+			targetNode.@callbackWorker=func(node) { print("##userWorker callback  node::$node") };
 		}
 	}
 	worker.push(targetNode)
@@ -702,11 +702,11 @@ addWatchFile(serviceMode, fullpath, callback) {
 		}
 	}
 	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.useWatchFile = true	
+	timerInfo.@useWatchFile = true	
 	filePathInfo(fullpath).inject(folder, filename, name)
 	modifyTime=fileTime(fullpath)
-	cur=timerInfo.addNode('@watchFileInfo').addNode(fullpath)
-	cur.with(serviceNode,fullpath,filename,name,modifyTime, callback)
+	cur=timerInfo.@watchFileInfo.addNode(fullpath)
+	cur.with(serviceNode,fullpath,filename,name,modifyTime,callback)
 	return cur;
 }
 // 소스 문자열중 @[code] 형태 문자열 치환
@@ -876,29 +876,31 @@ startGlobalTimer() {
 	// 500ms 마다 타이머 실행
 	System.globalTimer(500)
 	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.var(@startTick, System.tick())
+	timerInfo.@startTick = System.tick()
+	timerInfo.addNode('@watchFileInfo')
+	timerInfo.addArray('@jobList')
 	print("global timer 시작", timerInfo)
 	return timerInfo;
 }
 /* 전역 타이머 중지 */
 stopGlobalTimer(closeCheck) {
-	timerInfo = object('baro.globalTimerInfo')
-	global().var(@timerDelay,0)
+	global=global()
+	timerInfo=object('baro.globalTimerInfo')
+	global.@timerDelay = 0
 	System.globalTimer(false)
 	print("global timer 중지됨")
 	if( closeCheck ) {
-		watcher=global().var(@watcherFiles)
-		if( isObject(watcher) ) {
-			while( cur, watcher) {
-				cur.set('@callback', null)
+		if( isObject(global.@watcherFiles) ) {
+			while(cur, global.@watcherFiles) {
+				cur.@callback = null
 			}
 		}
-		while(job, timerInfo.var(@jobList) ) {
+		while(job, timerInfo.@jobList ) {
 			if( tagCheck(job,'process')) {
-				job.set('@jobStatus','stop')
-				job.get('@jobList').reuse()
-				job.logTail.closeLog(true)
-				job.logAppend.closeLog(true)
+				job.@jobStatus='stop'
+				job.@jobList.reuse()
+				job.@logTail.closeLog(true)
+				job.@logAppend.closeLog(true)
 				job.close()
 			}
 			else if( tagCheck(job,'web')) {
@@ -910,18 +912,18 @@ stopGlobalTimer(closeCheck) {
 /* 전역 타이머처리 콜백함수 */	
 @baro.procGlobalTimer() {
 	timerInfo = object('baro.globalTimerInfo')
-	if(timerInfo.lock) {
-		if( timerInfo.lockCheckTick ) {
-			timerInfo.lockCheckTick=0
-			timerInfo.lock=false
+	if(timerInfo.@lock) {
+		if( timerInfo.@lockCheckTick ) {
+			timerInfo.@lockCheckTick=0
+			timerInfo.@lock=false
 		} else {
-			timerInfo.lockCheckTick=System.tick()
+			timerInfo.@lockCheckTick=System.tick()
 		}
 		return;
 	}
 	// 파일변경체크 사용
-	if( timerInfo.useWatchFile) {
-		while(cur, timerInfo.var(@watchFileInfo) ) {
+	if( timerInfo.@useWatchFile) {
+		while(cur, timerInfo.@watchFileInfo ) {
 			cur.inject(serviceNode,fullpath, modifyTime, callback)
 			// 현재파일 시간과 등록된 시간이 다르다면 파일 변경처리
 			if(fileTime(fullpath) != modifyTime) {
@@ -933,8 +935,8 @@ stopGlobalTimer(closeCheck) {
 		}
 	}
 	// 작업관리 사용
-	if( timerInfo.useJob) {
-		while(cur, timerInfo.var(@jobList) ) {
+	if( timerInfo.@useJob) {
+		while(cur, timerInfo.@jobList ) {
 			runGlobalJob(cur)
 		}
 	}
@@ -947,46 +949,57 @@ runGlobalJob(node) {
 	not(typeof(node,'node')) {
 		return log("error::runGlobalJOB 작업 대상노드가 없습니다");
 	}
-	node.inject(@jobStatus, @jobList, jobMode)
 	// 상태가 없다면 대기상태로 설정
-	not(jobStatus) jobStatus='stay'
+	not(node.@jobStatus) node.@jobStatus='stay'
 
 	// 1. cmd 실행의경우
 	if( tagCheck(node,'process')) {
 		cmd=node
 		not( cmd.run()) {
-			cmd.set('@jobStatus', 'stay')
+			cmd.@jobStatus= 'stay'
 			cmd.run('cmd', @baro.cmdJobProc)
 			return;
 		}
-		if( jobStatus.eq('ready','finish')) {
-			if( isValid(jobList) ) {
-				finishCheck = true
-				info=jobList.get(0)
-				if(typeof(info,'node')) {
-					cmd.set('@jobInfo', info)
-					if( info.commandList ) {
-						command=info.commandList.pop()
-						if( info.commandList.size() ) {
-							finishCheck = false
-						}
-					} else {
-						print("작업노드에 commandList 정보가 없습니다", info)
-					}
-				} else {
-					command=info					
+		if( cmd.@jobStatus.eq('run') ) {
+			if( cmd.@prevTick ) {
+				dist = System.tick() - cmd.@prevTick
+			} else {
+				dist = System.tick() - cmd.@cmdStartTick				
+			}
+			if( dist>2500 ) {
+				print(">> ${cmd.@command} 실행중 ...")
+				cmd.@prevTick = System.tick()
+			}
+			return;
+		}
+		if( cmd.@jobStatus.eq('ready','finish')) {
+			if( notValid(cmd.@cmdJobList) ) {
+				return;
+			}
+			finishCheck = true
+			info=cmd.@cmdJobList.get(0)
+			if(typeof(info,'node')) {
+				if( notValid(info.@commandList) ) {
+					return print("cmd 작업노드에 commandList 정보가 없습니다", info)
 				}
-				if( finishCheck) {
-					jobList.pop()
-					cmd.set('@jobInfo', null)
+				command=info.@commandList.pop()
+				if( info.@commandList.size() ) {
+					finishCheck = false
 				}
-				if(command) {
-					cmd.set('@jobStatus', 'run')
-					cmd.set('@cmdStartTick', System.tick())
-					cmd.set('@command', command)
-					cmd.write(command)
-					print(">> cmd job next : $command")
-				}
+				cmd.@jobInfo = info
+			} else {
+				command=info
+				cmd.@jobInfo = null
+			}
+			if( finishCheck) {
+				cmd.@cmdJobList.pop()
+			}
+			if( command) {
+				cmd.@jobStatus = 'run'
+				cmd.@cmdStartTick = System.tick()
+				cmd.@command = command
+				cmd.write(command)
+				print(">> cmd job : $command")
 			}
 		}
 		return;
@@ -994,43 +1007,25 @@ runGlobalJob(node) {
 	// 2. 웹요청 경우
 	if(tagCheck(node,'web')) {
 		web=node
-		if( web.is('start')) {
-			web.set('@jobStatus', 'run')
-		} else {
-			targetNode=jobList.get(0) not(targetNode ) return;
-			if( targetNode.childCount()) {
-				num=0, header=targetNode.get('header')
-				while(cur, targetNode) {
-					if(cur.requestStartTick) continue;
-					callDownload(cur,header)
-					num++;
-				}
-				not(num) jobList.pop()
-			} else {
-				callDownload(targetNode)
-				jobList.pop()
+		if( web.is('run')) {
+			web.@jobStatus = 'run'
+			return;
+		} 
+		targetNode=web.@webJobList.pop()
+		if(targetNode) {
+			targetNode[=>url, method, data, header, downloadFilename]
+			targetNode.@requestStartTick=System.tick()
+			not( downloadFilename) {
+				downloadFilename=@baro.jobFilename(web)
 			}
+			web.data=''				
+			webRequestInfo(web, url, method, data, header)
+			web.@webStartTick = System.tick()
+			web.@jobStatus = 'ready'
+			web.@targetNode=targetNode
+			web.download(url, downloadFilename)
 		}
-	}
-
-	// 다운로드처리 내부함수
-	callDownload = func(targetNode, defaultHeader) {
-		targetNode.inject( url, method, data, header, downloadFilename)
-		targetNode.requestStartTick=System.tick()
-		not( downloadFilename) {
-			downloadFilename=@baro.jobFilename(web)
-		}
-		web.data=''
-		if( defaultHeader && ~(header)) {
-			header=defaultHeader
-		}
-		webRequestInfo(web, url, method, data, header)
-		web.set('@webStartTick', System.tick())
-		web.set('@jobStatus', 'ready')
-		web.targetNode=targetNode
-		web.download(url, downloadFilename)
-	};
-	
+	}	
 }
 </script>
 
@@ -1040,7 +1035,7 @@ initWas() {
 }
 was(port,path,devMode) {
 	obj = object("baro.was")
-	if(obj.var(useModule)) return obj;
+	if( obj.@useModule ) return obj;
 	include('classes/common/was.js')
 	addModule(obj,'@was',devMode)
 	if(port && path ) {
@@ -1143,52 +1138,6 @@ was(port,path,devMode) {
 	});
 }
 
-// 버튼영역 설정(name 폭만큰 자동으로 버튼폭생성)
-@baro.buttonsUpdateRect(dc, buttons, rectButtons, margin, maxSize) {
-	margin=20
-	arr=[]
-	while(cur,buttons) {
-		cur.inject(code,name)
-		if(name) {
-			dc.textSize(name).inject(tw,th)
-			width = tw+margin
-			if(maxSize) {
-				if(width>maxSize) {
-					width=maxSize
-				}
-			}
-			arr.add(width)
-		} else {
-			arr.add('*')
-		}
-	} 
-	info=arr.join(',')
-	rectArray=hbox(rectButtons.incrYH(4,4),info)
-	while(cur,buttons,idx) {
-		not(cur.name) continue;
-		cur.rect = rectArray.get(idx).incr(4)
-	}
-	buttons.var(@update, false)
-	return buttons;
-}
-
-// 버튼영역 설정 (영역배열사용)
-@baro.buttonsSetRect(buttons, param) {
-	if(typeof(param,'array')) {
-		arr=param
-	} else {
-		arr=args(1)
-	}
-	idx=0
-	while( rect,arr ) {
-		not(typeof(rect,'rect')) return false;
-		cur=buttons.child(idx++)
-		cur.rect=rect
-	}
-	buttons.var(@update, false)
-	return buttons;
-}
-
 </script>
 
 <script type="base_type" note="공통타입 정보">
@@ -1248,8 +1197,8 @@ size(param) {
 	} else if(typeof(param,'widget')) {
 		result=param.rect().size();
 	} else if(typeof(param,'node')) {
-		if(param.var(rect)) {
-			result=param.var(rect).size();
+		if(param.@rect ) {
+			result=param.@rect.size();
 		} else {
 			return param.childCount();
 		}

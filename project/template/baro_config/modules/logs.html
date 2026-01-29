@@ -150,7 +150,7 @@
 		fileLogAppend.flush();
 	}
 	append(data) {
-		this.write("$data\r\n")
+		this.write("\r\n$data\r\n")
 	}
 	appendLog(data) {
 		fileLogAppend.append(data);
