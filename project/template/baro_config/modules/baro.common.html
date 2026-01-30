@@ -3,6 +3,11 @@ initService() {
 	// conf('cf.useWatch', true, true)
 	// conf('cf.useDebug', true, true)
 	// include('classes/common/baro-services')
+	timerInfo = global('@timerInfo')
+	timerInfo.@startTick = System.tick()
+	timerInfo.addNode('@watchFileInfo')
+	timerInfo.addArray('@jobList')
+	
 	getServiceNode('baro', 'apps')
 	getServiceNode('baro', 'modules')
 	getServiceNode('baro', 'tools')	
@@ -11,7 +16,7 @@ initService() {
 	initWidgetConfig()
 	Cf.debug(true,"data/logs")
 	include("@apps#SourceRun")
-	startGlobalTimer()
+	startGlobalTimer(timerInfo)
 	
 	page = page("SourceRun:main")
 	page.open()
@@ -502,7 +507,7 @@ addApiJob(id, targetNode, logCallback ) {
 	not(typeof(targetNode,'node')) {
 		return print("@@addApiJob 대상노드 미정의");
 	}	
-	timerInfo = object('baro.globalTimerInfo')
+	timerInfo = global('@timerInfo')
 	timerInfo.@useJob=true
 	timerInfo.@lock=true
 	web=webObject(id)
@@ -534,7 +539,7 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 	not(typeof(targetNode,'node')) {
 		return print("@@addWebDownloadJob 대상노드 미정의");
 	}
-	timerInfo = object('baro.globalTimerInfo')
+	timerInfo = global('@timerInfo')
 	timerInfo.@useJob = true
 	timerInfo.@lock=true
 	webId="download_$id"
@@ -567,7 +572,7 @@ addCmdJob(id, command, logCallback) {
 	if(notValid(command)) {
 		return;
 	}
-	timerInfo = object('baro.globalTimerInfo')
+	timerInfo = global('@timerInfo')
 	timerInfo.@useJob=true
 	timerInfo.@lock=true
 	cmd=Baro.process(id)
@@ -701,7 +706,7 @@ addWatchFile(serviceMode, fullpath, callback) {
 			print("@watch 파일변경 $fullpath (서비스:${serviceNode.serviceName})") 
 		}
 	}
-	timerInfo = object('baro.globalTimerInfo')
+	timerInfo = global('@timerInfo')
 	timerInfo.@useWatchFile = true	
 	filePathInfo(fullpath).inject(folder, filename, name)
 	modifyTime=fileTime(fullpath)
@@ -868,28 +873,25 @@ parseScriptFunction(node, &src) {
 
 <script type="global_timer" note="전역타이머 관리">
 /* 전역 타이머 실행 */
-startGlobalTimer() {
-	if( global().var(@timerDelay) ) {
-		return print('global timer가 실행중입니다', global().var(@timerDelay) )
+startGlobalTimer(timerInfo) {
+	global=global()
+	not(timerInfo) timerInfo=global.addNode('@timerInfo')
+	if( global.@timerDelay ) {
+		return print('global timer가 실행중입니다', global.@timerDelay )
 	}
-	event(global(),'onTimeout', @baro.procGlobalTimer)
+	event(global,'onTimeout',@baro.procGlobalTimer)
 	// 500ms 마다 타이머 실행
 	System.globalTimer(500)
-	timerInfo = object('baro.globalTimerInfo')
-	timerInfo.@startTick = System.tick()
-	timerInfo.addNode('@watchFileInfo')
-	timerInfo.addArray('@jobList')
 	print("global timer 시작", timerInfo)
-	return timerInfo;
 }
 /* 전역 타이머 중지 */
 stopGlobalTimer(closeCheck) {
 	global=global()
-	timerInfo=object('baro.globalTimerInfo')
 	global.@timerDelay = 0
 	System.globalTimer(false)
 	print("global timer 중지됨")
 	if( closeCheck ) {
+		timerInfo=global('@timerInfo')
 		if( isObject(global.@watcherFiles) ) {
 			while(cur, global.@watcherFiles) {
 				cur.@callback = null
@@ -911,7 +913,7 @@ stopGlobalTimer(closeCheck) {
 }
 /* 전역 타이머처리 콜백함수 */	
 @baro.procGlobalTimer() {
-	timerInfo = object('baro.globalTimerInfo')
+	timerInfo = this.@timerInfo
 	if(timerInfo.@lock) {
 		if( timerInfo.@lockCheckTick ) {
 			timerInfo.@lockCheckTick=0

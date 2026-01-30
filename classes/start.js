@@ -593,19 +593,9 @@ confSearch(&s) {
 	}
 	return ss;
 }
-global() { 
-	switch(args().size()) {
-	case 0:
-		return Cf.rootNode();
-	case 1:
-		args(code)
-		return Cf.rootNode(code);
-	case 2:
-		args(code,value)
-		Cf.rootNode().set(code, value)
-		return value;
-	default:
-	}
+global(code) {
+	not(code) return Cf.rootNode();
+	return Cf.rootNode().addNode(code);
 }
 object(code, newCheck) {
 	not( code.find('.') ) return Cf.rootNode(code,true)
