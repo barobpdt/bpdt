@@ -20,6 +20,7 @@
 		this.@inputResultMdc = null
 		this.@fontStyle = 'size:14pt, color:#fafafa'
 		this.@fontOverStyle = 'size:15pt, color:#fafafa, weight:bolde'
+		@keyboard.pythonStart()
 	}
 	getAvailSize() {
 		this[=>canvasWidth, canvasHeight, inputHeight]
@@ -321,26 +322,19 @@
 		this.@ingArray.reuse()
 	}
 	deleteIngBuffer(&s) {		
-		not(s.ch()) {
-			return this.clearIng()
-		}
-		ing=''
-		while(s.valid(),n) {
-			left=s.findPos(',') not(s.ch()) break;
-			if(n) ing.add(',')
-			ing.add(left)
-		} 
-		command = getSource(conf('keyboard.en2koWord'),"[$ing]")
+		a=arrRemoveLast(this.@ingArray) not(a) return false;
+		command = @keyboard.source('keyboard.en2koWord',arrJoin(a))
 		@keyboard.exec(command)
+		return true;
 	}
 	
 	setText(checkClear, value) {
-		if(checkClear) {
-			this.clearIng()
-		}
 		if( value) {
 			if( this.@ingString) this.@doneString.add(this.@ingString)
 			this.@doneString.add(value)
+		}		
+		if(checkClear) {
+			this.clearIng()
 		}
 		if( this.@inputResultMdc) {
 			this.@inputResultMdc.setKeyboardValue(this)
@@ -362,18 +356,15 @@
 		case 0:
 			if( c.eq(10) ) {
 				 // 지우기
-				 if( this.@imgArray.size() ) {
-					not( this.deleteIngBuffer() ) {
-						this.setText()
-					}
-					return
+				 if( this.deleteIngBuffer() ) {
+					return;
 				 } 
 				 if( this.@doneString) {
 					this.@doneString = this.@doneString.substr(0,-1)
 				 } else {
 					this.clearIng()
 				 }
-				 setText();
+				 this.setText();
 			} else {
 				_value( keyMap[k $n $c] );
 			}
@@ -421,7 +412,7 @@
 				}
 				this.drawDc()
 			case 3:	_value( "\t" );
-			case 4:	_value( " " );
+			case 4:	_value( 'space' );
 			case 8:
 				if( this.@langMode.eq('kor') ) {
 					this.@langMode='eng';
@@ -439,27 +430,33 @@
 		}
 		this.@canvas.update();
 		_value=func(val ) {
+			print("xxxxx val == $val xxxxx", this.@keyMode, this.@langMode)
 			switch( val ) {
+			case space: val=' '
 			case enter: val="\n";
 			case tab: val="\t";
 			case dot: val='.';
 			case comma:	val=',';
 			}
 			if( this.@langMode.eq('kor') ) {
+				print("_value 1")
 				if( val.is("alpha") ) {
 					this.@ingBuffer.add(val) 
-					command=getSource(conf('keyboard.en2ko'), this.@ingBuffer)
+					command=@keyboard.source('keyboard.en2ko', this.@ingBuffer)
+					print(">> command == $command")
 					@keyboard.exec(command)
 				} else {
+				print("_value 2", this.setText)
 					this.setText(true, val)
 				}
-			} else {				 
+			} else {
+				print("_value 3")
 				this.setText(true, val)
 			}			
 			if( this.@keyMode.eq("shift", "ctrl") ) {
 				this.@keyMode='';
 				this.drawDc()
-			}  
+			}
 		};		
 	}
 	setResult(&s) {
@@ -477,11 +474,12 @@
 		print(">> $arr, $str", asize, slen)
 		if(asize && slen) {
 			a=arr.get(asize-1), b=str.substr(slen-1)
-			if( asize.gt(1) &&  a.eq(b)) {				
-				arr.remove(0,asize-1)				
+			if( asize.gt(1) && a.eq(b)) {				
+				arr.remove(0,asize-1)
+				prev=this.@ingBuffer.ch(-1)
 				this.@doneString.add(str.substr(0,-1))
 				this.@ingString = b
-				this.@ingBuffer = this.@ingBuffer.ch(-1)
+				this.@ingBuffer = prev
 			} else if(slen.gt(1)) {
 				this.@doneString.add(str.substr(0,1))
 				this.@ingString = str.substr(1)
@@ -496,12 +494,11 @@
 					}
 				}
 				sp=this.@ingBuffer.size() - keyCount;
-				print(">> ", keyCount, sp)
-				this.@ingBuffer = this.@ingBuffer.value(sp)
+				prev=this.@ingBuffer.value(sp)
+				this.@ingBuffer = prev
 			} else {
 				this.@ingString = str
 			}
-			this[/print/@ingString, @doneString, @ingBuffer]
 		} else {
 			print(">> 결과가 유효하지 않습니다 ", arr, str)
 		}
@@ -523,6 +520,28 @@
 </script>
 
 <script type="keyboadCommand">
+	@keyboard.source(confId) {
+		s=conf(confId) not(s) return;
+		s.ref()
+		ss=''
+		fn=Cf.funcNode('parent')
+		arr=args(1)
+		while(s.valid()) {
+			left = s.findPos('@[',0,1)
+			ss.add(left)
+			not(s.ch()) break;
+			s.incr()
+			key=s.match(1).trim()
+			print("key==$key")
+			if(typeof(key,'bool')) break;
+			if(typeof(key,'num')) {
+				ss.add(arr.get(key))
+			} else {
+				ss.add(fn.get(key))
+			}
+		}
+		return ss;
+	}
 	@keyboard.pythonStart() {
 		py=pathJoin(conf('python.path'), 'python.exe')
 		sourcePath	= pathJoin(conf('python.RUN_PATH'), 'runCommand.py')
@@ -538,42 +557,47 @@
 			cmd.@workerStatus='stay'
 			cmd.@logAppend = logObj
 			cmd.@logTail = outObj
-		}		
-		line=f[$py "$sourcePath" --command="${logObj.logFileName}" --out="${outObj.logFileName}"]
+			cmd.addArray('@cmdJobList')
+		}
+		not(cmd.@currentMdc) {
+			cmd.@currentMdc = this
+		}
+		not(cmd.@callbackWorker) {
+			cmd.@callbackWorker = @keyboard.execCallback
+		}
+		logFileName=logObj.get('logFileName')
+		outFileName=outObj.get('logFileName')
+		line=f["$py" "$sourcePath" --command="$logFileName" --out="$outFileName"]
+		print("python start : $cmdId $line")
 		addCmdJob(cmdId, line)
 	}
 	@keyboard.exec(execSource) {
 		cmd=Baro.process('pythonKeyboardCommand')
 		cmd.execSource=execSource
-		not(cmd.@currentMdc) {
-			cmd.@currentMdc = this
-		}
-		print("keyboard exec >> $execSource")
-		addUserWorker('keyboardCommand', cmd, @keyboard.execCallback)
+		addUserWorker('keyboardCommand', cmd )
 	}
 	@keyboard.execCallback() {
 		cmd=this
-		not( cmd.@workerStatus!='run' ) {
+		if( cmd.@jobStatus!='run' ) {			
 			@keyboard.pythonStart()
 			while(n=0,30) {
 				System.sleep(100)
 				print(">>@keyboad.execSource workerStatus => $n", cmd.get('@workerStatus'));
-				if( cmd.@workerStatus=='run' ) break;
+				if( cmd.@jobStatus=='run' ) break;
 			}
-			not( cmd.@workerStatus!='run' ) {
+			if( cmd.@jobStatus!='run' ) {
 				return print("@@ python command 프로그램이 실행중이 아닙니다");
 			}
-		}		
+		}
 		cmd.@logTail.timeout()
 		cmd.@logAppend.append("@#>exec:${cmd.execSource}")
 		result=''
 		while(n=0,30) {
 			System.sleep(10)
-			result = cmd.logTail.timeout()
+			result = cmd.@logTail.timeout()
 			if(result) {
-				cmd.inject(@currentMdc)
-				print(">>@keyboad.execSource $n $result", currentMdc.id)
-				currentMdc.setResult(result)
+				print(">>@keyboad.execSource $n $result")
+				cmd.@currentMdc.setResult(result)
 				break;
 			}
 		}

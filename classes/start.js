@@ -194,7 +194,7 @@ range(sp,ep) {
 checkTick(tick, dist) {
 	not(tick) tick=0
 	d=System.tick() - tick;
-	return d.lt(dist);
+	return d.gt(dist);
 }
 setArray(arr, idx, node) {
 	not(typeof(idx,"num")) return arr;
@@ -689,6 +689,19 @@ strJoin() {
 	}
 	return ss;
 }
+arrJoin(a) {
+	ss='['
+	while(c,a) ss.add(Cf.jsValue(c))
+	ss.add(']')
+	return ss;
+}
+arrRemoveLast(a) {
+	not(typeof(a,'array')) return false;
+	not(a.size()) return false;
+	last=a.size()-1
+	a.remove(last)
+	return a;
+}
 getDownloadName(filename) {
 	not(isFile(filename)) return filename; 
 	while(n=0, 256) {		
@@ -1073,8 +1086,8 @@ page(name, moduleCode) {
 		baseCode=name
 	} else {
 		target=this
-		not(typeof(target,'widget')) {
-			return print("page 대상이 위젯이 아닙니다 (이름:$name)")
+		not(target.@baseCode) {
+			return print("page 타겟 baseCode 미존재 (이름:$name, 타겟:$target)")
 		}
 		splitSep(target.@baseCode, ':').inject(base, targetName) 
 		not(base) {
@@ -1084,13 +1097,13 @@ page(name, moduleCode) {
 	}
 	page = Cf.getObject('page', baseCode) 
 	not(page) {
-		print("page 함수 호출오류 ($baseCode 페이지를 찾을수 없습니다)")
+		print("page 함수오류 ($baseCode 페이지를 찾을수 없습니다)")
 		return;
 	}
 	if( page.@useInit ) {
 		return page;
-	}
-	addModule(page, 'page')
+	}	
+	addModule(page, 'page')	
 	not(moduleCode) {
 		moduleCode=page.module
 	}
@@ -1258,7 +1271,7 @@ makeWidgets(widgetSource, base, serviceNode) {
 	page=null
 	if(typeof(serviceNode,'node')) {
 		page=page("$base:main")
-		serviceNode.@page=page
+		if(page) serviceNode.@page=page
 	}
 	return page;
 }

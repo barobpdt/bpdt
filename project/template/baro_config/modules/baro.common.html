@@ -156,11 +156,13 @@ regServiceFolder(serviceMode, path) {
 		}
 		return object("${tag}.${base}:${id}")
 	}
-	createWidget(tag, id, target, module, useChild) {
+	createWidget(tag, id, target, module, useChild, newCheck) {
 		not(tag) return print("@@ createWidget $tag 미정의")
-		widget = getWidgetNode(tag,id,target,true)
+		widget = getWidgetNode(tag,id,target,newCheck)
+		if(typeof(widget,'widget')) return widget;
 		widget.tag=tag
 		widget.id=id
+		Cf.createWidget(widget)
 		if(tag.eq('page','canvas')) {
 			widget.@skipFuncUpdate=true
 			addModule(widget,tag,true)
@@ -168,7 +170,6 @@ regServiceFolder(serviceMode, path) {
 		if(typeof(module,'string')) {
 			addModule(widget,module)
 		}		
-		Cf.createWidget(widget)
 		if( typeof(target,'widget') ) {
 			if( useChild ) {
 				widget.flags("child")
@@ -278,9 +279,9 @@ getFileList(path, node, arr, depth ) {
 }
 
 // 객체의 태그명 체크
-tagCheck(obj, type) {
+checkTag(obj, type) {
 	not(typeof(obj,'node')) return false;
-	if(obj.cmp('tag',type)) return true;	
+	if(obj.tag.eq(type)) return true;	
 	return false;
 }
 // aaa-bbb-ccc => aaaBbbCcc 로변환
@@ -464,26 +465,22 @@ webResult(url, method, data, headerJson) {
 
 
 <script type="worker" note="작업관리">
-runCommand( &cmd, callback ) {
-	count = getLineCount(cmd) 
+runCommand( &str, callback ) {
+	count = getLineCount(str) 
 	param=null
 	if(count==0) return print("@@ runCommand 명령라인이 없습니다");
 	if(count==1) { 
-		line=cmd.trim()
+		line=str.trim()
 		addCmdJob('common', line, callback)
 	} else {
-		param=object('data.runCommand')
-		commandList=param.addArray('@commandList')
-		while(cmd.valid()) {
-			line=cmd.findPos("\n").trim()
-			if(line) {
-				commandList.add(line)
-			}
+		while(str.valid()) {
+			line=str.findPos("\n").trim() not(line) continue;
+			addCmdJob('common', line, callback)
 		}
-		addCmdJob('common', param, callback)
 	}
 	return param;
 }
+
 /* 웹요청처리를 위한 호출 정보생성 */
 webRequestInfo(web, url, method, data, headerInfo) {
 	not(method) method='GET'
@@ -568,6 +565,46 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 }
 
 /* cmd 결과처리 작업등록 */
+isCmdJob(id) {
+	cmd=Baro.process(id)
+	timerInfo = global('@timerInfo')
+	return timerInfo.@jobList.find(cmd);
+}
+
+callCmdJob(id, command) {
+	cmd=Baro.process(id)
+	not(isCmdJob(id)) {
+		print(">> $id cmd 작업노드가 등록되지 않았습니다")
+		return;
+	}
+	if(cmd.@jobStatus.eq('ready','finish')) {
+		cmd.@cmdJobList.add(command)
+		return true;
+	}
+	
+	if(cmd.@jobStatus.eq('run')) {
+		print(">> $id cmd 작업이 실행중입니다")
+	} else {
+		print(">> $id cmd 작업이 대기중이거나 중지되었습니다 (상태:${cmd.@jobStatus})")
+	}
+	return false;
+}
+
+removeCmdJob(id) {
+	cmd=Baro.process(id)
+	timerInfo = global('@timerInfo')
+	not(timerInfo.@jobList.find(cmd)) {
+		print(">> removeCmdJob $id 작업노드가 없습니다")
+		return false;
+	}
+	timerInfo.@jobList.remove(cmd)
+	if(cmd.run()) {
+		cmd.@cmdJobList.reuse()
+		cmd.close()
+	}
+	cmd.@jobStatus='close'
+	return true;
+}
 addCmdJob(id, command, logCallback) {	
 	if(notValid(command)) {
 		return;
@@ -575,7 +612,13 @@ addCmdJob(id, command, logCallback) {
 	timerInfo = global('@timerInfo')
 	timerInfo.@useJob=true
 	timerInfo.@lock=true
-	cmd=Baro.process(id)
+	if(checkTag(id,'process')) {
+		cmd=id
+		id=cmd.id
+	} else {
+		not(typeof(id,'string')) return print("@@ addCmdJob cmd 프로세스 ID 오류", id);
+		cmd=Baro.process(id)
+	}
 	if( typeof(logCallback,'func')) {
 		cmd.logCallback=logCallback
 	} else {
@@ -585,24 +628,23 @@ addCmdJob(id, command, logCallback) {
 	}
 	not(cmd.@jobMode) {
 		cmd.@jobMode='CMD'
+		cmd.@jobStatus='start'
 		cmd.@logTail = logTail("cmd_$id")
 		cmd.@logAppend = logAppend("cmd_$id")
 		cmd.addArray('@cmdJobList')
 	}
-	if(typeof(command,'node')) {
-		node=command
-		if( isValid(node.@commandList) ) {
-			not(cmd.@cmdJobList.find(node)) {
-				cmd.@cmdJobList.add(node)
+	if( isValid(command)) {	
+		if(typeof(command,'node')) {
+			if(cmd.@cmdJobList.find(command)) {
+				print(">> 커멘드 중복된 작업 정보입니다 (노드:$command)")
+			} else {
+				if( typeof(logCallback,'func')) {
+					not(command.logCallback) command.logCallback=logCallback
+				}
+				cmd.@cmdJobList.add(command)
 			}
 		} else {
-			node.error='error::addCmdJob commandList 내용이 없습니다')
-		}
-	} else {
-		if(command) {
-			cmd.@cmdJobList.add(command)
-		} else {
-			log('error::addCmdJob command 내용이 없습니다')
+			cmd.@cmdJobList.add(command)			
 		}
 	}
 	not(timerInfo.@jobList.find(cmd)) {
@@ -651,7 +693,7 @@ addCmdJob(id, command, logCallback) {
 			logData=this.ref('@cmdResult')
 			jobInfo=this.@jobInfo
 			if( jobInfo ) {
-				if(jobInfo.logCallback) {
+				if( jobInfo.logCallback) {
 					logCallback=jobInfo.logCallback
 				}
 				call(logCallback, this, logData, jobInfo)
@@ -669,7 +711,8 @@ addCmdJob(id, command, logCallback) {
 		this.@logAppend.apeend(
 			f[#@>error: error="$data" id="${this.id}" command="${this.@command}"]
 		)
-		return this.@error = data
+		this.@jobStatus='error'
+		this.@error = data
 	}
 }
 
@@ -716,6 +759,7 @@ addWatchFile(serviceMode, fullpath, callback) {
 }
 // 소스 문자열중 @[code] 형태 문자열 치환
 getSource(&s,node,fn) {
+	arr=args(1)
 	not(typeof(node,'node')) {
 		node=this
 		not(node) node=_node()
@@ -733,10 +777,14 @@ getSource(&s,node,fn) {
 		not(c.eq('[')) break;
 		key=s.match(1).trim()
 		if(typeof(key,'bool')) break;
-		if(isVar(key)) {
-			ss.add(getValue(key,node,fn))
+		if(typeof(key,'num')) {
+			ss.add(arr.get(key))
 		} else {
-			ss.add(eval(key, fn))
+			if(isVar(key)) {
+				ss.add(getValue(key,node,fn))
+			} else {
+				ss.add(eval(key, fn))
+			}
 		}
 	}
 	return ss;
@@ -898,14 +946,14 @@ stopGlobalTimer(closeCheck) {
 			}
 		}
 		while(job, timerInfo.@jobList ) {
-			if( tagCheck(job,'process')) {
+			if( checkTag(job,'process')) {
 				job.@jobStatus='stop'
 				job.@jobList.reuse()
 				job.@logTail.closeLog(true)
 				job.@logAppend.closeLog(true)
 				job.close()
 			}
-			else if( tagCheck(job,'web')) {
+			else if( checkTag(job,'web')) {
 				job.stop()
 			}
 		}
@@ -955,10 +1003,10 @@ runGlobalJob(node) {
 	not(node.@jobStatus) node.@jobStatus='stay'
 
 	// 1. cmd 실행의경우
-	if( tagCheck(node,'process')) {
+	if( checkTag(node,'process')) {
 		cmd=node
 		not( cmd.run()) {
-			cmd.@jobStatus= 'stay'
+			cmd.@jobStatus= 'ready'
 			cmd.run('cmd', @baro.cmdJobProc)
 			return;
 		}
@@ -966,10 +1014,10 @@ runGlobalJob(node) {
 			if( cmd.@prevTick ) {
 				dist = System.tick() - cmd.@prevTick
 			} else {
-				dist = System.tick() - cmd.@cmdStartTick				
+				dist = System.tick() - cmd.@cmdStartTick
 			}
-			if( dist>2500 ) {
-				print(">> ${cmd.@command} 실행중 ...")
+			if( dist>60000 ) {
+				// print(">> ${cmd.@command} 실행중 ...")
 				cmd.@prevTick = System.tick()
 			}
 			return;
@@ -978,23 +1026,13 @@ runGlobalJob(node) {
 			if( notValid(cmd.@cmdJobList) ) {
 				return;
 			}
-			finishCheck = true
-			info=cmd.@cmdJobList.get(0)
-			if(typeof(info,'node')) {
-				if( notValid(info.@commandList) ) {
-					return print("cmd 작업노드에 commandList 정보가 없습니다", info)
-				}
-				command=info.@commandList.pop()
-				if( info.@commandList.size() ) {
-					finishCheck = false
-				}
+			info=cmd.@cmdJobList.pop()
+			if(typeof(info,'node')) {				
+				command=info.@command
 				cmd.@jobInfo = info
 			} else {
 				command=info
 				cmd.@jobInfo = null
-			}
-			if( finishCheck) {
-				cmd.@cmdJobList.pop()
 			}
 			if( command) {
 				cmd.@jobStatus = 'run'
@@ -1007,7 +1045,7 @@ runGlobalJob(node) {
 		return;
 	} 
 	// 2. 웹요청 경우
-	if(tagCheck(node,'web')) {
+	if(checkTag(node,'web')) {
 		web=node
 		if( web.is('run')) {
 			web.@jobStatus = 'run'

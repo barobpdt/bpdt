@@ -1,21 +1,26 @@
 <script module="canvas">
 	init() {
-		baseConfig().inject(font, baseColor)		
+		baseConfig().inject(font, baseColor)
 		not(font) font='size:9'
 		not(baseColor) baseColor=color('#121131').lightColor(100)
 		this.font(font)
 		this.@font=font
 		this.@baseColor=baseColor
 		this.@startTick=System.tick()
+		this.timer(500)
 	}	
 	canvasSize() {
 		return this.rect().size()
 	}
 	updateCheck(rc) {
-		print("@@ upate check updateCheckTick==${this.updateCheckTick}") 
+		print("@@ update check updateCheckTick==${this.@updateCheckTick}") 
 		this.@rectCanvas=rc
-		this.updateCheckTick=System.tick()
-		this.updateCanvas()
+		dist=System.tick()-this.@startTick
+		if(dist<1000) {
+			this.updateCanvas()
+		} else {
+			this.@updateCheckTick=System.tick()
+		}
 	}
 	updateCanvas() {
 		dist=System.tick()-this.@startTick
@@ -35,6 +40,14 @@
 		}
 	}
 	onTimer() {
+		if(this.@updateCheckTick) {
+			dist=System.tick() - this.@updateCheckTick
+			if(dist>500 ) {
+				this.@updateCheckTick=0
+				this.updateCanvas()
+				this.update()
+			}
+		}
 		if(this.@useMdc) {
 			this.timerClipCheck()
 		}
@@ -91,8 +104,7 @@
 		this.addArray('@clipList')
 		this.addArray('@pathList')
 		this.@useMdc=true
-		this.@useDrawPath=false
-		this.timer(500)
+		this.@useDrawPath=false		
 	}
 	drawMdc(dc) {
 		while(mdc, this.@mdcList ) {
@@ -112,7 +124,8 @@
 	} 
 	drawMdcClip(dc,rc) {
 		while(mdc, this.@clipList ) {
-			if(rc.eq(mdc.@rectClip)) {
+			if(mdc==this.@currentClipMdc) {
+				// rc.eq(mdc.@rectClip)
 				return mdc.drawClip(dc,rc)
 			}
 		}
@@ -136,6 +149,8 @@
 		while(mdc, this.@clipList ) {
 			rect=mdc.getClipRect() not(typeof(rect,'rect')) continue;
 			if( checkTick(mdc.@clipTick, mdc.@clipDuration)) {
+				mdc.@clipTick=System.tick()
+				this.@currentClipMdc=mdc
 				this.update(rect)
 				break;
 			} 
@@ -181,10 +196,10 @@
 	}
 	getMdc(mdcId, moduleType) {
 		dc=mdc("${this.@baseCode}.${mdcId}")
+		dc.@canvas=this
 		if( moduleType ) {
 			not(dc.@useModule) {
-				addModule(dc,"mdc,$moduleType")
-				dc.@canvas=this
+				addModule(dc,"mdc,$moduleType")				
 			}
 		}
 		return dc;

@@ -2,6 +2,8 @@
 	init() {
 		this.@bgColor = randomColor().lightColor(150) 
 		this.@clipFlag = true
+		this.@clipTick = System.tick()
+		this.@clipDuration = 1000
 		this.@rectClip = null
 		this.@fontStyle = 'size:15,weight:bold,color:#333'
 		this.@inputValue = ''
@@ -21,10 +23,11 @@
 	drawClip(dc, rc) {
 		if( this.@keyboardMdc ) {
 			ingString = this.@keyboardMdc.@ingString
+			color = this.@baseColor
 			if( ingString ) {
 				dc.save()
 				if(this.@clipFlag) {
-					dc.fill(rc, baseColor)
+					dc.fill(rc, color)
 					dc.font('size:16,weight:bold,color:#fff').text(rc,ingString)
 					this.@clipFlag=false
 				} else {
@@ -52,7 +55,8 @@
 		roundRect(dc, rect, 8, dark, '#fff')
 		dc.save().font(this.@fontStyle)
 		if( this.@keyboardMdc) {			
-			this.@keyboardMdc.inject(@doneString, @ingString)			
+			this.@keyboardMdc[=>@doneString, @ingString]
+			print("xxxxxx input draw dc xxxxxxx", doneString, ingString)
 			dc.textSize(doneString).inject(textWidth, textHeight)
 			dc.text(rect.incrX(10), doneString)
 			if(ingString) {

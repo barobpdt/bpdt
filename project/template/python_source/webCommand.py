@@ -116,7 +116,7 @@ class WebWidget(QWidget):
 		if checkCommand:
 			dist=time.time()-self.tm
 			pos=data.find("@#>")
-			self.logAppend(f"line:{data} dist={dist}")
+			# self.logAppend(f"line:{data} dist={dist}")
 			params=None
 			val = ''
 			ftype = ''
