@@ -565,27 +565,21 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 }
 
 /* cmd 결과처리 작업등록 */
-isCmdJob(id) {
-	cmd=Baro.process(id)
-	timerInfo = global('@timerInfo')
-	return timerInfo.@jobList.find(cmd);
-}
-
-callCmdJob(id, command) {
-	cmd=Baro.process(id)
-	not(isCmdJob(id)) {
-		print(">> $id cmd 작업노드가 등록되지 않았습니다")
-		return;
-	}
-	if(cmd.@jobStatus.eq('ready','finish')) {
+callCmdJob(id, command, check) {
+	cmd=getCmdJob(id)
+	if( check ) {
+		if(cmd.@jobStatus.eq('ready','finish')) {
+			cmd.@cmdJobList.add(command)
+			return true;
+		}
+		if(cmd.@jobStatus.eq('run')) {
+			print(">> $id cmd 작업이 실행중입니다")
+		} else {
+			print(">> $id cmd 작업이 대기중이거나 중지되었습니다 (상태:${cmd.@jobStatus})")
+		}
+	} else {
 		cmd.@cmdJobList.add(command)
 		return true;
-	}
-	
-	if(cmd.@jobStatus.eq('run')) {
-		print(">> $id cmd 작업이 실행중입니다")
-	} else {
-		print(">> $id cmd 작업이 대기중이거나 중지되었습니다 (상태:${cmd.@jobStatus})")
 	}
 	return false;
 }
@@ -606,9 +600,6 @@ removeCmdJob(id) {
 	return true;
 }
 addCmdJob(id, command, logCallback) {	
-	if(notValid(command)) {
-		return;
-	}
 	timerInfo = global('@timerInfo')
 	timerInfo.@useJob=true
 	timerInfo.@lock=true
@@ -619,13 +610,6 @@ addCmdJob(id, command, logCallback) {
 		not(typeof(id,'string')) return print("@@ addCmdJob cmd 프로세스 ID 오류", id);
 		cmd=Baro.process(id)
 	}
-	if( typeof(logCallback,'func')) {
-		cmd.logCallback=logCallback
-	} else {
-		not(cmd.logCallback) {
-			cmd.logCallback = func(result, info) { print("##cmd 작업콜백 RESULT: :$result") };
-		}
-	}
 	not(cmd.@jobMode) {
 		cmd.@jobMode='CMD'
 		cmd.@jobStatus='start'
@@ -633,7 +617,14 @@ addCmdJob(id, command, logCallback) {
 		cmd.@logAppend = logAppend("cmd_$id")
 		cmd.addArray('@cmdJobList')
 	}
-	if( isValid(command)) {	
+	if( typeof(logCallback,'func')) {
+		cmd.logCallback=logCallback
+	} else {
+		not(cmd.logCallback) {
+			cmd.logCallback = func(result, info) { print("##cmd 작업콜백 RESULT: :$result") };
+		}
+	}
+	if( isValid(command) ) {	
 		if(typeof(command,'node')) {
 			if(cmd.@cmdJobList.find(command)) {
 				print(">> 커멘드 중복된 작업 정보입니다 (노드:$command)")

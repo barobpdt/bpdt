@@ -1,6 +1,40 @@
 <script note="앱공통 유틸리티 함수">
-	initConfig() {
-	
-	} 
-	
+</script>
+<script note="파이션 유틸리티 함수">
+	pythonInstallStart(moduleName, startCheck) {
+		not(args().size()) {
+			// 매개변수 없이 호출하면 등록된 모듈정보 실행 (예) pythonInstallStart()
+			startCheck=true
+		}
+		cmd=getCmdJob('moduleInstall')
+		not(cmd.@logCallback) {
+			cmd.addArray('@installModuleList')
+			cmd.@logCallback=@python.installCallback
+		}
+		py=pathJoin(conf('python.path'), 'python.exe')
+		not(isFile(py)) {
+			return print("파이션 설치 경로 미설정 (경로:$py)");
+		}
+		
+		if(moduleName ) {
+			cmd.@installModuleList.add(moduleName)
+		}
+		if( startCheck) {
+			moduleName=cmd.@installModuleList.pop()
+			not(moduleName) {
+				return print("설치 모듈정보가 없습니다 (pythonInstallAdd 함수로 파이션 설치 모듈을 등록하세요)");
+			}
+			cmd.@currentModuleName = moduleName
+			cmd.@cmdJobList.add("$py -m pip $moduleName")
+		}
+	}
+	@python.installCallback(result, param) {
+		cmd=this
+		if(cmd.@currentModuleName=='list') {
+		
+		} else {
+			print('파이션 설치정보 : ', result);
+			pythonInstallStart()
+		}
+	}
 </script>
