@@ -3,20 +3,17 @@ initService() {
 	// conf('cf.useWatch', true, true)
 	// conf('cf.useDebug', true, true)
 	// include('classes/common/baro-services')
-	timerInfo = global('@timerInfo')
-	timerInfo.@startTick = System.tick()
-	timerInfo.addNode('@watchFileInfo')
-	timerInfo.addArray('@jobList')
-	
+	startGlobalTimer()
 	getServiceNode('baro', 'apps')
 	getServiceNode('baro', 'modules')
 	getServiceNode('baro', 'tools')	
 	initModules()
 	initConfig()
 	initWidgetConfig()
+	initWas()
+	initWebsocket()
 	Cf.debug(true,"data/logs")
 	include("@apps#SourceRun")
-	startGlobalTimer(timerInfo)
 	
 	page = page("SourceRun:main")
 	page.open()
@@ -566,7 +563,10 @@ addWebDownloadJob(id, targetNode, logCallback ) {
 
 /* cmd 결과처리 작업등록 */
 callCmdJob(id, command, check) {
-	cmd=getCmdJob(id)
+	cmd=Baro.process(id)
+	not(cmd.@cmdJobList) {
+		addCmdJob(cmd)
+	}
 	if( check ) {
 		if(cmd.@jobStatus.eq('ready','finish')) {
 			cmd.@cmdJobList.add(command)
@@ -912,11 +912,16 @@ parseScriptFunction(node, &src) {
 
 <script type="global_timer" note="전역타이머 관리">
 /* 전역 타이머 실행 */
-startGlobalTimer(timerInfo) {
+startGlobalTimer() {
+	timerInfo = global('@timerInfo')
+	not(timerInfo.@startTick) {
+		timerInfo.@startTick = System.tick()
+		timerInfo.addNode('@watchFileInfo')
+		timerInfo.addArray('@jobList')
+	}
 	global=global()
-	not(timerInfo) timerInfo=global.addNode('@timerInfo')
 	if( global.@timerDelay ) {
-		return print('global timer가 실행중입니다', global.@timerDelay )
+		return print('global timer가 실행중입니다' )
 	}
 	event(global,'onTimeout',@baro.procGlobalTimer)
 	// 500ms 마다 타이머 실행
@@ -1061,18 +1066,16 @@ runGlobalJob(node) {
 </script>
 
 <script type="server" note="서버관리">
-initWas() {
-	was().start(80, conf('web.rootPath'))
+initWebsocket() {
+	obj = object("baro.websocketServer")
+	addModule(obj,'websocket', 8092)
 }
-was(port,path,devMode) {
+initWas(port,path,devMode) {
 	obj = object("baro.was")
-	if( obj.@useModule ) return obj;
-	include('classes/common/was.js')
-	addModule(obj,'@was',devMode)
-	if(port && path ) {
-		obj.start(port,path)
-	}
-	return obj;
+	addModule(obj,'was',devMode)
+	not(port) port=80
+	not(path) path=conf('web.rootPath')
+	obj.start(port,path)
 }
 </script>
 

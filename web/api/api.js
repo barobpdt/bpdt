@@ -1,7 +1,7 @@
 <api>
 	version(req, param) {
-		return '1.0.0'
-	}
+		return '1.0.1'
+	}	
 	drives(req, param, &uri) {
 		while(path, System.driveList() ) {
 			name = path.ch()

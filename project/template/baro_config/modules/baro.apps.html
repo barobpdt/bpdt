@@ -1,23 +1,43 @@
 <script note="앱공통 유틸리티 함수">
 </script>
 <script note="파이션 유틸리티 함수">
+	pythonVersion(callback) {
+		py=pathJoin(conf('python.path'), 'python.exe')
+		not(isFile(py)) {
+			return print("파이션 설치 경로 미설정 (경로:$py)");
+		}
+		not(callback) callback=function(s) { print("python version:$s") }
+		runCommand("$py --version", callback)
+	}
 	pythonInstallStart(moduleName, startCheck) {
-		not(args().size()) {
+		if(args().size()==0) {
 			// 매개변수 없이 호출하면 등록된 모듈정보 실행 (예) pythonInstallStart()
 			startCheck=true
 		}
-		cmd=getCmdJob('moduleInstall')
-		not(cmd.@logCallback) {
+		cmd=Baro.process('moduleInstall')
+		not(cmd.@cmdJobList) {
+			addCmdJob(cmd)
 			cmd.addArray('@installModuleList')
-			cmd.@logCallback=@python.installCallback
+			cmd.logCallback=@python.installCallback
 		}
 		py=pathJoin(conf('python.path'), 'python.exe')
 		not(isFile(py)) {
 			return print("파이션 설치 경로 미설정 (경로:$py)");
 		}
 		
-		if(moduleName ) {
+		if( moduleName ) {
+			info = object('python.installInfo')
+			cur=findField(info,'name',moduleName)
+			if(cur) {
+				print("$moduleName 파이션 모듈이 이미 설치되었습니다", cur)
+				return;
+			}
+			if(cmd.@installModuleList.find(moduleName)) {
+				print("파이션 설치 $moduleName 이미 추가되었습니다(경로:$py)")
+				return;
+			}
 			cmd.@installModuleList.add(moduleName)
+			print("파이션 설치 모듈정보 ", cmd.@installModuleList)
 		}
 		if( startCheck) {
 			moduleName=cmd.@installModuleList.pop()
@@ -25,16 +45,40 @@
 				return print("설치 모듈정보가 없습니다 (pythonInstallAdd 함수로 파이션 설치 모듈을 등록하세요)");
 			}
 			cmd.@currentModuleName = moduleName
-			cmd.@cmdJobList.add("$py -m pip $moduleName")
+			if(moduleName.eq('list')) {
+				cmd.@cmdJobList.add("$py -m pip $moduleName")
+			} else {
+				cmd.@cmdJobList.add("$py -m pip install $moduleName")
+			}
 		}
 	}
 	@python.installCallback(result, param) {
 		cmd=this
 		if(cmd.@currentModuleName=='list') {
-		
+			@python.setInstallList(result)
 		} else {
 			print('파이션 설치정보 : ', result);
-			pythonInstallStart()
+			if(isValid(cmd.@installModuleList)) {
+				pythonInstallStart()
+			}
 		}
+	}
+	@python.setInstallList(&s) {
+		info = object('python.installInfo')
+		not(s) return info;
+		start=false
+		while(s.valid()) {
+			line=s.findPos("\n") not(line.ch()) break;
+			if(start) {
+				name=line.findPos(" \t\n",4)
+				version=line.trim()
+				info.addNode().with(name, version)
+				continue;
+			}
+			if(line.start('----')) {
+				start=true;
+			}
+		}
+		return info;
 	}
 </script>

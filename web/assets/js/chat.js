@@ -1,3 +1,46 @@
+// 웹소켓 설정
+let ws=null
+function dispatchRecvMessage(type, errorCode, data) {
+	switch(type) {
+	case 'res_login':
+		clog("웹소켓 로그인 성공")
+	default:
+		clog("웹소켓 타입 미정의 type=="+type)
+	}
+}
+
+function initWebsocket() {
+	function recvProc(header, data) {
+		if(!header.startsWith('##>')) {
+			return clog('웹소켓 프로토콜 오류 ', header)
+		}
+		let sp=3
+		let ep=header.indexOf('{')
+		if( ep==-1) {
+			return clog('웹소켓 프로토콜 시작 오류 ', header)
+		}
+		let line=header.substring(sp,ep)
+		if(line.indexOf(':')>0) {
+			const arr=line.split(':')
+			const type=arr[0]
+			const size=parseInt(arr[1])
+			const errorCode=arr[2]
+			if(size>0) {
+				const dataSize = getByteLength(data)
+				if(size!=dataSize) {
+					return clog('웹소켓 프로토콜 데이터 크기오류 ', size, dataSize)
+				}
+			}
+			dispatchRecvMessage(type, errorCode, data)
+		}
+	}
+	
+	ws=new WebsocketManager('ws://localhost:8092/chat', recvProc)
+	ws.connect()
+	clog('ws==>', ws)
+	cf.websocket=ws
+}
+
 // 페이지 설정
 function initChat() {
 	const chatMessages = document.getElementById('chat-messages');
@@ -435,4 +478,184 @@ function initUpload() {
 	}); 
 	*/
 
+}
+
+class WebsocketManager {
+	constructor(url, recvProc) {
+		this.websocket = null
+		this.url = url
+		this.maxRetries = 3
+		this.currentRetry = 0
+		this.retryInterval = 10000
+		this.recvProc=typeof recvProc=='function' ? recvProc: function(header, message) { clog('recvProc>>',header, message) }
+	}
+	closeWebsocket() {
+		if( this.websocket ) {
+			this.websocket.close()
+			this.websocket = null
+		}
+	}
+	connect() {
+		if( this.websocket ) {
+			this.closeWebsocket()
+		}
+		this.currentRetry = 0
+		this.websocket = new WebSocket(this.url);
+		this.websocket.onopen = () => {
+			console.log('웹소켓 연결 성공!')
+			this.sendData('login',{userId:'test'},'')
+		}
+		this.websocket.onmessage = (event) => {
+			try {
+				const pos = event.data.indexOf('\r\n\r\n')
+				if(pos!=-1) {
+					const header = event.data.substr(0,pos)
+					const message = event.data.substr(pos+4)
+					// const node = JSON.parse(message);
+					// 메시지 타입에 따른 처리
+					this.recvProc(header, message);
+				}
+			} catch (error) {
+				console.error('메시지 파싱 오류:', error);
+			}
+		}
+		this.websocket.onclose = (event) => {
+			console.log('웹소켓 연결 종료:', event.code, event.reason);
+			if (!event.wasClean && this.maxRetries && this.currentRetry < this.maxRetries) {
+				this.currentRetry++;
+				console.log(`${this.retryInterval/1000} 초 후 재연결 시도...`);
+				setTimeout(this.connect, this.retryInterval);
+			} else if (this.currentRetry >= this.maxRetries) {
+				console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
+			}
+		}
+		this.websocket.onerror = (error) => {
+			this.closeWebsocket()
+		}
+	}
+	isConnect() {
+		return this.websocket
+	}	
+	sendData(type, params, data) {		
+		if(isObj(params)) {
+			params=JSON.stringify(params)
+		} else {
+			params='{}'
+		}
+        let reqType=''
+		if( data instanceof FileReader ) {
+			const ab = data.result
+			console.log('@@ websocket send readyState == ', data.readyState, ab)
+			data=btoa(String.fromCharCode.apply(null, new Uint8Array(ab)));
+			reqType='base64'
+		} else if( isObj(data) ) {
+            reqType='json'
+            data=JSON.stringify(data)
+        } else {
+            reqType='text'
+        }
+        if(this.websocket==null) {
+			clog('websocket이 정의되지 않았습니다')
+            return
+        }
+		// ##>$type:$size:$reqType$params\r\n\r\n$data
+        const size = getByteLength(data)        
+        const message = `##>${type}:${size}:${reqType}${params}\r\n\r\n${data}`
+		clog(">> send message ", size, message)
+        this.websocket.send(message)
+    } 
+}
+
+function websocketUploadFiles(ws) {
+	const info={ws, uploadFiles:null, fileIndex:1, currentFile:null, chunkSize: 64 * 1024 }	
+	// 파일아이디 생성 
+	function generateFileId() {
+		return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+	}
+
+	// 파일 크기 포맷 함수
+	function formatFileSize(bytes) {
+		if (bytes === 0) return '0 Bytes';
+		const k = 1024;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+	}
+	
+	function start(files) {
+		info.fileIndex=0
+		info.currentFile
+		info.uploadFiles=[]
+		if( Array.isArray(files) && files.length>0 ) {
+			files.map(c=>info.uploadFiles.push({
+				file:c,
+				name:c.name,
+				size:c.size,
+				type:c.type,
+				lastModified:c.lastModified,
+				fieldId:'',
+				progress: 0,
+				currentIndex: 0,
+				currentChunk: 0,
+				currentSendSize: 0,
+				totalChunks:0
+			}))
+			startUpload()
+		}
+	}
+	function startUpload() {
+		if( info.uploadFiles.length==0 ) {
+			return updateUploadStatus(`업로드 파일이 없습니다`);
+		}
+		uploadFile(info.uploadFiles.splice(0,1)[0]).then(e=>start).catch(e=>start)
+	}
+	function uploadFile(cur) {
+		info.currentFile = cur
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			const file = cur.file
+			cur.fieldId = generateFileId();
+			cur.totalChunks = Math.ceil(cur.size / info.chunkSize);
+			// 파일 정보 표시
+			updateUploadStatus(`파일 업로드 시작: ${cur.name} (${formatFileSize(cur.size)})`);
+			
+			// 파일 청크 읽기
+			reader.onload = function(e) {
+				const {fieldId, name, size, currentIndex, currentChunk, totalChunks, lastModified, type } = cur
+				params={fieldId, name, size, currentIndex, currentChunk, totalChunks, lastModified, type}
+				console.log('reader onload params=>', params)
+				ws.sendData('req_chunkFileUpload',params,reader)
+				
+				cur.currentChunk += cur.currentSendSize
+				// 다음 청크 읽기 또는 완료
+				if (cur.currentChunk < cur.size ) {
+					cur.progress = Math.round((cur.currentIndex / cur.totalChunks) * 100);
+					
+					cur.currentIndex++
+					updateUploadStatus(`파일 업로드 중: ${cur.name} (${cur.progress}%)`);
+					readNextChunk();
+				} else {
+					resolve()
+				} 
+			};
+			
+			// 다음 청크 읽기 함수
+			function readNextChunk() {
+				const start = cur.currentChunk;
+				const end = Math.min(start + info.chunkSize, cur.size);
+				cur.currentSendSize = end - start
+				console.log('@@ readNextChunk ', start, end, cur.currentSendSize)
+				reader.readAsArrayBuffer(file.slice(start, end));
+			}
+			// 첫 번째 청크 읽기 시작
+			readNextChunk();
+		});
+		return {}
+	} 
+
+	// 업로드 상태 표시 함수
+	function updateUploadStatus(message, type = 'info') {
+		console.log('@@ upload status >> '+ message)
+	}
+	return {info, start}
 }

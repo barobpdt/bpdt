@@ -19,47 +19,67 @@ class CustomAction(argparse.Action):
 parser.add_argument('--command', action=CustomAction, nargs='+', required=True, help='로그파일')
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
+
+fpOut=open(args.out, 'a', encoding='utf8')
+def logAppend (msg):
+	fpOut.write(f"@#> {msg}\n")
+	fpOut.flush()
+
 class MyWebView(QWebEngineView):
 	# Store external windows.
 	external_windows = []
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self.acceptDrops = True
+		self.acceptDrops = True		
 		try:
 			# self.setBackgroundColor(QtCore.Qt.transparent)
 			self.setAcceptDrops(True)
 			self.setMouseTracking(True)
+			# self.focusProxy().setMouseTracking(True)
+			# self.focusProxy().installEventFilter(self)
 		except Exception as e:
 			print(f" error: {e}")
+	
 	def dragEnterEvent(self, event: QDragEnterEvent):
 		if event.mimeData().hasUrls():
 			event.acceptProposedAction()
 		else:
 			event.ignore()
+
 	def dropEvent(self, event: QDropEvent):
 		files = [u.toLocalFile() for u in event.mimeData().urls()]
 		event.accept()
-	def acceptNavigationRequest(self, url,  _type, isMainFrame):
-		if _type == QWebEnginePage.NavigationTypeLinkClicked:
+
+	def acceptNavigationRequest(self, url,  type, isMainFrame):
+		if type == QWebEnginePage.NavigationTypeLinkClicked:
+			logAppend(f"linkClick:{url}")
+			'''
 			w = QWebEngineView()
 			w.setUrl(url)
 			w.show()
-			# Keep reference to external window, so it isn't cleared up.
 			self.external_windows.append(w)
+			'''
 			return False
 		return super().acceptNavigationRequest(url,  _type, isMainFrame)
+
+	def eventFilter(self, source, event):
+		if source is self.focusProxy() and event.type() == QEvent.Type.MouseButtonPress:
+			logAppend(f"mouseFocus: {event.position().x()}, {event.position().y()}")
+		return super().eventFilter(source, event)
+
 class WebWidget(QWidget):
 	def __init__(self):
 		super().__init__()
 		print("init ", args.command)
 		try:
 			self.fp=open(args.command, 'r', encoding='utf8')
-			self.fa=open(args.out, 'a', encoding='utf8')
+			# self.fa=open(args.out, 'a', encoding='utf8')
 			self.lastPos=self.fp.seek(0, os.SEEK_END)
 			self.tm=time.time()
 		except Exception as e:
 			print(f" error: {e}")
 		self.initUI()
+
 	def initUI(self):
 		self._glwidget = None
 		self.webEngineView = MyWebView(self)
@@ -81,21 +101,14 @@ class WebWidget(QWidget):
 		# self.setWindowFlags(Qt.SplashScreen)
 		# self.hide()
 		self.webEngineView.installEventFilter(self)
+		logAppend(f'start: webview')
+
 	def eventFilter(self, source, event):
-		# self.logAppend(f'web-view event filter: {event.type()}')
-		if (event.type() == QEvent.ChildAdded and
-			source is self.webEngineView and
-			event.child().isWidgetType()):
-			self._glwidget = event.child()
-			self._glwidget.installEventFilter(self)
-		elif event.type() == QEvent.MouseButtonPress:
-			self.logAppend(f'@#>mousePress: {event.pos()}')
-		elif event.type() == QEvent.MouseMove:
-			self.logAppend(f'@#>mouseMove: {event.pos()}')
+		# logAppend(f'web-view event filter: {event.type()}')
+		if source is self.webEngineView.focusProxy() and event.type() == event.MouseButtonPress:
+			logAppend(f'mousePress: {event.pos()}')
 		return super().eventFilter(source, event)
-	def logAppend(self, msg):
-		self.fa.write(f"@#> {msg}\n")
-		self.fa.flush()
+
 	def loadUrl(self, url):
 		self.webEngineView.setUrl(QUrl(url))
 	def loadFile(self):
@@ -116,7 +129,7 @@ class WebWidget(QWidget):
 		if checkCommand:
 			dist=time.time()-self.tm
 			pos=data.find("@#>")
-			# self.logAppend(f"line:{data} dist={dist}")
+			# logAppend(f"line:{data} dist={dist}")
 			params=None
 			val = ''
 			ftype = ''
@@ -135,12 +148,14 @@ class WebWidget(QWidget):
 					params = [v.strip() for v in val.split(',')]
 					#params=map(str.strip, val.split(','))
 			# pos
-			self.logAppend(f">> {ftype} {params}")
+			# logAppend(f">> {ftype} {params}")
 			if params!=None :
 				if ftype=='quit':
+					self.fp.close()
+					fpOut.close()
 					sys.exit()
 				elif ftype=='echo':
-					self.logAppend(f"echo = {params}")
+					logAppend(f"echo = {params}")
 				elif ftype=='pageActive':
 					if self.parent_hwnd != None:
 						win32gui.SetForegroundWindow(self.parent_hwnd)
@@ -171,14 +186,15 @@ class WebWidget(QWidget):
 					self.setWindowFlags(Qt.SplashScreen)
 					self.show()
 				else:
-					self.logAppend(f"{ftype}:not defined")
+					logAppend(f"{ftype}:not defined")
 			## if params
 			self.lastPos=fsize
-			self.logAppend(f"result:{ftype}<next>{self.nextCommand}")
+			logAppend(f"result:{ftype}<next>{self.nextCommand}")
 		# end if print(f"currentTime=={currentTime}")
 def main():
 	app = QApplication(sys.argv)
 	ex = WebWidget()
 	sys.exit(app.exec_())
+
 if __name__ == '__main__':
 	main()

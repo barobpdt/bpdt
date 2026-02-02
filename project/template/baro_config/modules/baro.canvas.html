@@ -47,6 +47,9 @@
 				this.updateCanvas()
 				this.update()
 			}
+		}		
+		if(this.@useTimer) {
+			this.timerCallback()
 		}
 		if(this.@useMdc) {
 			this.timerClipCheck()

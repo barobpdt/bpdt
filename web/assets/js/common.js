@@ -44,6 +44,14 @@ String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g,"") }
 String.prototype.ltrim = function() { return this.replace(/^\s+/,"") }
 String.prototype.rtrim = function() { return this.replace(/\s+$/,"") }
 */
+function getByteLength(s) {
+	if(s != undefined && s != "") {
+		for(b=i=0;c=s.charCodeAt(i++);b+=c>>11?3:c>>7?2:1);
+		return b;
+	} else {
+		return 0;
+	}
+}
 
 function getRandomColor() {
 	var letters = '0123456789ABCDEF';
@@ -111,183 +119,6 @@ const getElOffset = (el, checkRect) => {
 
 const screenSize = () => ({ width:$(window).width(), height:$(window).height() })
 
-class WebsocketManager {
-	constructor(url) {
-		this.websocket = null
-		this.url = url
-		this.maxRetries = 3
-		this.currentRetry = 0
-		this.retryInterval = 10000
-	}
-	closeWebsocket() {
-		if( this.websocket ) {
-			this.websocket.close()
-			this.websocket = null
-		}
-	}
-	connect() {
-		if( this.websocket ) {
-			this.closeWebsocket()
-		}
-		const me = this
-		this.currentRetry = 0
-		this.websocket = new WebSocket(this.url);
-		this.websocket.onopen = function() {
-			console.log('웹소켓 연결 성공!')
-		}
-		this.websocket.onmessage = function(event) {
-			try {
-				const pos = event.data.indexOf('\r\n\r\n')
-				if(pos!=-1) {
-					const header = event.data.substr(0,pos)
-					const message = event.data.substr(pos+4)
-					// const node = JSON.parse(message);
-					// 메시지 타입에 따른 처리
-					me.recvData(header, message);
-				}
-			} catch (error) {
-				console.error('메시지 파싱 오류:', error);
-			}
-		}
-		this.websocket.onclose = function(event) {
-			console.log('웹소켓 연결 종료:', event.code, event.reason);
-			if (!event.wasClean && me.maxRetries && me.currentRetry < me.maxRetries) {
-				me.currentRetry++;
-				console.log(`${me.retryInterval/1000} 초 후 재연결 시도...`);
-				setTimeout(me.connect, me.retryInterval);
-			} else if (me.currentRetry >= me.maxRetries) {
-				console.error('최대 재시도 횟수에 도달했습니다. 연결을 포기합니다.');
-			}
-		}
-		this.websocket.onerror = function(error) {
-			me.closeWebsocket()
-		}
-	}
-	isConnect() {
-		return this.websocket
-	}
-	recvData(header, data) {
-		
-	}
-	sendData(type, header, param) {
-        let message='', contentType=''
-		if( param instanceof FileReader ) {
-			const ab = param.result
-			console.log('@@ websocket send readyState == ', param.readyState, ab)
-			message = btoa(String.fromCharCode.apply(null, new Uint8Array(ab)));
-			contentType='base64'
-		} else if( param && typeof(param)=='object' ) {
-            contentType= 'json'
-            message = JSON.stringify(param)
-        } else {
-            contentType = 'text'
-            message = param
-        }
-        if(ws==null) {
-            updateConnectionStatus('전송오류 웹소켓 미정의', 'error')
-            return
-        }
-        const size = stringByteLength(message)
-        const data = '@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion+'\r\n\r\n'+message
-        console.log('@@ send\r\n@'+type+'::'+header+'\r\n'+size+'::'+contentType+'::'+cf.wsVersion)
-        ws.send(data)
-    } 
-}
-
-function websocketUploadFiles(ws) {
-	const info={ws, uploadFiles:null, fileIndex:1, currentFile:null, chunkSize: 64 * 1024 }	
-	// 파일아이디 생성 
-	function generateFileId() {
-		return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-	}
-
-	// 파일 크기 포맷 함수
-	function formatFileSize(bytes) {
-		if (bytes === 0) return '0 Bytes';
-		const k = 1024;
-		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-	}
-
-
-	function start(files) {
-		info.fileIndex=0
-		info.currentFile
-		info.uploadFiles=[]
-		if( Array.isArray(files) && files.length>0 ) {
-			files.map(c=>info.uploadFiles.push({
-				file:c,
-				name:c.name,
-				size:c.size,
-				type:c.type,
-				lastModified:c.lastModified,
-				fieldId:'',
-				progress: 0,
-				currentIndex: 0,
-				currentChunk: 0,
-				currentSendSize: 0,
-				totalChunks:0
-			}))
-			startUpload()
-		}
-	}
-	function startUpload() {
-		if( info.uploadFiles.length==0 ) {
-			return updateUploadStatus(`업로드 파일이 없습니다`);
-		}
-		uploadFile(info.uploadFiles.splice(0,1)[0]).then(e=>start).catch(e=>start)
-	}
-	function uploadFile(cur) {
-		info.currentFile = cur
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			const file = cur.file
-			cur.fieldId = generateFileId();
-			cur.totalChunks = Math.ceil(cur.size / info.chunkSize);
-			// 파일 정보 표시
-			updateUploadStatus(`파일 업로드 시작: ${cur.name} (${formatFileSize(cur.size)})`);
-			
-			// 파일 청크 읽기
-			reader.onload = function(e) {
-				const {fieldId, name, size, currentIndex, currentChunk, totalChunks, lastModified, type } = cur
-				console.log('reader onload ', reader, ws, appendParam(fieldId, name, size, currentIndex, currentChunk, totalChunks, lastModified, type))
-				ws.sendData('req_chunkFileUpload', appendParam(fieldId, name, size, currentIndex, currentChunk, totalChunks, lastModified, type), reader)
-				
-				cur.currentChunk += cur.currentSendSize
-				// 다음 청크 읽기 또는 완료
-				if (cur.currentChunk < cur.size ) {
-					cur.progress = Math.round((cur.currentIndex / cur.totalChunks) * 100);
-					
-					cur.currentIndex++
-					updateUploadStatus(`파일 업로드 중: ${cur.name} (${cur.progress}%)`);
-					readNextChunk();
-				} else {
-					resolve()
-				} 
-			};
-			
-			// 다음 청크 읽기 함수
-			function readNextChunk() {
-				const start = cur.currentChunk;
-				const end = Math.min(start + info.chunkSize, cur.size);
-				cur.currentSendSize = end - start
-				console.log('@@ readNextChunk ', start, end, cur.currentSendSize)
-				reader.readAsArrayBuffer(file.slice(start, end));
-			}
-			
-			// 첫 번째 청크 읽기 시작
-			readNextChunk();
-		});
-		return {}
-	} 
-
-	// 업로드 상태 표시 함수
-	function updateUploadStatus(message, type = 'info') {
-		console.log('@@ upload status >> '+ message)
-	}
-	return {info, start}
-}
 const getLocalId = (prefix, arr) => {
 	const idx = arr.length+''
 	return prefix+'_'+idx.lpad(2,'0')
@@ -551,7 +382,6 @@ function getCss() {
 const cf = {
 	apps: null
 	, devMode: false 		// 개발자모드
-    , websocket: new WebsocketManager('ws://localhost:8092/chat') // 개발자모드 실시간 메시지 처리
 	, styles:{				// 공통스타일
 		full:{width:'100%',height:'100%'},
 		flexCenter: {display:'flex', alignItems:'center', justifyContent:'center' },		

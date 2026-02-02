@@ -1422,7 +1422,7 @@ parseSource(&s, base, serviceNode) {
 			} else if(checkEval) {
 				continue;
 			}
-			applyFunc(ss, module)		
+			applyFunc(ss, module)
 		} else if( tag.eq('service') ) {
 			project=propValue(prop, 'project')
 			name=propValue(prop, 'name')

@@ -3,61 +3,75 @@
 }>
 	<canvas id="webview" module="canvas_webview" initWidget() {
 		this.@cmd = Baro.process('pythonWebview')
-		this.webviewStart(this.@cmd)
-		this.webviewExec("setParent:${this.winId()}")
+		this.webviewStart()
+		this.timer(500, this.webviewInit)
 	}
 	updateCanvas() {
-		this.geo().inject(x,y,w,h)
-		this.webviewExec("geo:$:x,$:y,$:w,$:h,0")		
+		rect = toRect(this.geo())		
+		rect.inject(x,y,w,h)
+		this.webviewExec("geo:$x,$y,$w,$h,0")		
 	} 
 	drawBackground(dc) {
 		bgColor=this.@baseColor.lightColor(100)
-		textColor=this.@baseColor.darkColor(100)
-		dc.save().font("size:12, color:${bgColor.lightColor(180)}, weight:bold")
-		dc.fill(this.@rcTitle, bgColor)
-		dc.text(this.@rcTitle.incrX(10).move(1,1), '비디오 플래이어 테스트')
-		dc.font("color:$textColor")
-		dc.text(this.@rcTitle.incrX(10), '비디오 플래이어 테스트')
-		dc.restore()
+		dc.fill(bgColor)
 	}
 	setWebviewResult(s) {
-		print("setWebviewResult: webview result ==> $s")
+		print("setWebviewResult: webview result ==> $s")		
+	}
+	this.webviewInit() {
+		this.webviewExec("setParent:${this.winId()}")
+		this.updateCanvas()
 	}
 	>
 </page>
 
 <script eval>
 	p=page('main')
-	/*
 	p.size(800,600)
-	p.open()	
+	p.open()
+	cmd=p.@canvas.@cmd
+	c=p.@canvas
+	c.webviewExec("quit:")
+	/*	
+	c.webviewExec("quit:")
+	c.webviewStart()
+	c.webviewExec("setParent:${p.winId()}")
+	c.webviewExec("show:")
+	c.webviewExec("url:https://www.naver.com/")
+	c.updateCanvas()
 	*/
-	print("CanvasTest eval>>")
+	print("CanvasTest eval>>", cmd)
 	
 </script>
 
 <script module="canvas_webview">
 	webviewStart() {
-		cmd=this.@cmd
-		not(checkTag(cmd,'process')) return;
+		cmd=this.@cmd not(checkTag(cmd,'process')) return;
+		if( cmd.@jobStatus=='run' ) {
+			print("webview 프로세스가 이미 실행중입니다")
+			return;
+		}
 		py=pathJoin(conf('python.path'), 'python.exe')
-		sourcePath	= pathJoin(conf('python.RUN_PATH'), 'webCommand.py')
+		sourcePath=pathJoin(conf('python.RUN_PATH'), 'webCommand.py')
 		not(isFile(sourcePath)) {
 			log("error::@python.getCommand 소스파일 경로가 없습니다 (경로:$sourcePath)")
-		}		
-		
-		logObj	= logAppend("pythonWebview-log")
-		outObj	= logTail("pythonWebview-out")		
-		not( cmd.@jobMode ) {
-			cmd.@jobMode='pythonWebview'		
-			cmd.@workerStatus='stay'
-			cmd.@logAppend = logObj
-			cmd.@logTail = outObj
-			cmd.addArray('@cmdJobList')
-			cmd.addArray('@webviewCommandList')
 		}
-		cmd.@canvas = this
-		cmd.@callbackWorker = this.webviewCallback
+		logObj = logAppend("pythonWebview-log")
+		outObj = logTail("pythonWebview-out")		
+		not( cmd.@jobMode ) {
+			// job
+			cmd.@jobMode='pythonWebview'		
+			cmd.@jobStatus='start'
+			cmd.@logAppend=logObj
+			cmd.@logTail=outObj
+			cmd.@canvas=this
+			cmd.addArray('@cmdJobList')
+			// worker 
+			cmd.@callbackWorker=@webview.callbackWorker
+			cmd.addArray('@webviewCommandList')
+			addCmdJob(cmd)
+		}
+		cmd.webviewCommandList.reuse()
 		logFileName=logObj.get('logFileName')
 		outFileName=outObj.get('logFileName')
 		line=f["$py" "$sourcePath" --command="$logFileName" --out="$outFileName"]
@@ -67,19 +81,30 @@
 		cmd=this.@cmd
 		cmd.@webviewCommandList.add(execSource)
 		print(">> webview.exec : ${cmd.@webviewCommandList}")
+		if( cmd.@jobStatus!='run' ) {
+			if( cmd.@jobStatus=='finish') {
+				cmd.@jobStatus='ready'
+				this.webviewStart()
+				this.webviewInit()
+			}
+		}
 		addUserWorker('webviewCommand', cmd )
 	}
 	webviewStop() {
-		this.webviewExec('quit:webview close')
+		this.webviewExec('quit:')
 	}
-	webviewCallback() {
+	@webview.callbackWorker() {
 		cmd=this
-		if( cmd.@jobStatus!='run' ) {			
-			@webview.pythonStart()
+		if( cmd.@jobStatus!='run' ) {
 			while(n=0,30) {
 				System.sleep(100)
-				print(">>@keyboad.execSource workerStatus => $n", cmd.get('@workerStatus'));
-				if( cmd.@jobStatus=='run' ) break;
+				// print(">>@keyboad.execSource workerStatus => $n", cmd.@jobStatus);
+				if( cmd.@jobStatus=='run' ) {
+					result = cmd.@logTail.timeout()					
+					if( result ) {
+						break;
+					}
+				}
 			}
 			if( cmd.@jobStatus!='run' ) {
 				return print("@@ python webview command 프로그램이 실행중이 아닙니다");
@@ -98,9 +123,6 @@
 				cmd.@canvas.setWebviewResult(result)
 				break;
 			}
-		}
-		if(isValid(cmd.@webviewCommandList)) {
-			addUserWorker('webviewCommand', cmd )
 		}
 	}
 </script>
