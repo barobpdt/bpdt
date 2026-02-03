@@ -51,6 +51,7 @@
 				cmd.@cmdJobList.add("$py -m pip install $moduleName")
 			}
 		}
+		return cmd;
 	}
 	@python.installCallback(result, param) {
 		cmd=this

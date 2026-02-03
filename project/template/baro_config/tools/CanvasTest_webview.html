@@ -3,10 +3,12 @@
 }>
 	<canvas id="webview" module="canvas_webview" initWidget() {
 		this.@cmd = Baro.process('pythonWebview')
+		this.@checkStart=false
 		this.webviewStart()
 		this.timer(500, this.webviewInit)
 	}
 	updateCanvas() {
+		not(this.@checkStart) return;
 		rect = toRect(this.geo())		
 		rect.inject(x,y,w,h)
 		this.webviewExec("geo:$x,$y,$w,$h,0")		
@@ -19,6 +21,7 @@
 		print("setWebviewResult: webview result ==> $s")		
 	}
 	this.webviewInit() {
+		this.@checkStart = true
 		this.webviewExec("setParent:${this.winId()}")
 		this.updateCanvas()
 	}
@@ -45,6 +48,35 @@
 </script>
 
 <script module="canvas_webview">
+	webviewCheck() {
+		info=object('python.installInfo')
+		not(info.childCount()) {
+			pythonInstallStart('list', true)
+			addUserWorker('user', this, function() {
+				while(n=0,20) {
+					System.sleep(200)
+					if( object('python.installInfo').childCount()) {
+						break;
+					}
+				}
+				this.webviewCheck()
+			})
+			return;
+		}
+		pythonInstallStart('PyQt5')
+		pythonInstallStart('PyQtWebEngine')
+		this.@cmdInstall=pythonInstallStart()
+		addUserWorker('user',this,function() {
+			for(n=0,100 ) {
+				System.sleep(200)
+				cmd=this.@cmdInstall
+				if( cmd.@cmdJobList.size()==0 ) {
+					if(cmd.@jobStatus=='
+				}
+			}
+		})
+
+	}
 	webviewStart() {
 		cmd=this.@cmd not(checkTag(cmd,'process')) return;
 		if( cmd.@jobStatus=='run' ) {
