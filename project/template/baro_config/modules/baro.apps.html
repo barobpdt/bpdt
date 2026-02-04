@@ -1,6 +1,85 @@
 <script note="앱공통 유틸리티 함수">
 </script>
 <script note="파이션 유틸리티 함수">
+	pythonCommandError(cmd, &err) {
+		if(err.start('@#> execException:',true)) {
+			msg=err.trim()
+			print("@@ 파이션 명령줄 실행 오류 ", cmd.id, msg)
+		}
+	}
+	pythonCommandStart(callback) {
+		py=pathJoin(conf('python.path'), 'python.exe')
+		sourcePath	= pathJoin(conf('python.RUN_PATH'), 'runCommand.py')
+		not(isFile(sourcePath)) {
+			log("error::@python.getCommand 소스파일 경로가 없습니다 (경로:$sourcePath)")
+		}
+		cmd=Baro.process('pythonCommand')
+		logObj	= logAppend("pythonCommand-log")
+		outObj	= logTail("pythonCommand-out")
+		not( cmd.@jobMode ) {
+			cmd.@jobMode='PythonCommand'		
+			cmd.@workerStatus='stay'
+			cmd.@logAppend = logObj
+			cmd.@logTail = outObj
+			cmd.addArray('@cmdJobList')
+			cmd.addArray('@commandList')
+		}		
+		logFileName=logObj.get('logFileName')
+		outFileName=outObj.get('logFileName')
+		line=f["$py" "$sourcePath" --command="$logFileName" --out="$outFileName"]
+		print("python command start : $line")
+		addCmdJob(cmd, line, callback)
+	}
+	
+	pythonCommand(command, callback) {
+		not(command) return print("@@pythonCommand 명령라인이 없습니다")
+		print(">> parseCommand 시작:$command")
+		cmd=Baro.process('pythonCommand')
+		not(cmd.@commandInfo) {
+			cmd.addNode('@commandInfo')
+		}
+		ca=~(cmd.@jobMode)
+		cb=cmd.@jobStatus.eq('finish')
+		print(">> ", ca, cb)
+		if( ca || cb ) {
+			cmd.@jobStatus='ready'
+			cmd.@commandInfo.with(command, callback)
+			return pythonCommandStart(function(result,endCheck) {
+				if(endCheck) return;
+				this.@commandInfo.inject(command, callback)
+				print(">> python command runCommand.py 시작: $result", command)
+				pythonCommand(command, callback)
+			})
+		}
+		
+		not( typeof(callback,'func')) callback = function() {
+			cmd=this
+			result=""
+			print("pythonCommand 현재명령 작업시작 >> ${getLine(cmd.@currentCommand)}")
+			while(n=0,50) {
+				System.sleep(200)				
+				result=cmd.@logTail.timeout()
+				if(result) {
+					if(result.find('@#> execException:')) {
+						return pythonCommandError(cmd, result);
+					}
+					print(">>pythonCommand 실행결과:$result", n)
+					break;
+				}
+			}
+			not(result) {
+				print(">>pythonCommand 실행결과가 없습니다", n)
+			}
+		};
+		cmd.@callbackWorker = callback
+		cmd.@currentCommand=command
+		cmd.@logTail.timeout()
+		cmd.@logAppend.append("@#>$command")
+		// cmd.@commandList.add(command)
+		// print("python command size:", cmd.@commandList.size())
+		addUserWorker('pythonCommand', cmd )
+	}
+	 
 	pythonVersion(callback) {
 		py=pathJoin(conf('python.path'), 'python.exe')
 		not(isFile(py)) {
@@ -47,6 +126,8 @@
 			cmd.@currentModuleName = moduleName
 			if(moduleName.eq('list')) {
 				cmd.@cmdJobList.add("$py -m pip $moduleName")
+			} else if(moduleName.eq('upgrade')) {
+				cmd.@cmdJobList.add("$py -m pip install --upgrade pip")
 			} else {
 				cmd.@cmdJobList.add("$py -m pip install $moduleName")
 			}
@@ -59,7 +140,7 @@
 			@python.setInstallList(result)
 		} else {
 			print('파이션 설치정보 : ', result);
-			if(isValid(cmd.@installModuleList)) {
+			if(cmd.@installModuleList.size()) {
 				pythonInstallStart()
 			}
 		}

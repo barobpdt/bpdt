@@ -9,9 +9,10 @@
 	<link href="https://emoji-css.afeld.me/emoji.css" rel="stylesheet">
 	<script src="/assets/js/jquery.js"></script>
 	<script src="/assets/js/common.js"></script>
+	<script src="chat.js"></script>
 </head>
 <body>
-<div class="container">
+<div class="pages-main">
 	<div class="chat-container page">
 		<div class="chat-header">
 			<h1>채팅 메시지</h1>
@@ -134,56 +135,54 @@
 			<button class="button clear-button" id="cancleButton">취소</button>
 		</div>
 	</div>
-</div>
-
-	<script src="/assets/js/chat.js"></script>
+</div>	
 	<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 	<script> 
-		let dragMode = false 
-		let bridge=null;
+		cf.dragMode = false 
+		cf.bridge=null;
 		$(document).ready(function() {
+			initWebsocket()
 			initChat()
 			initUpload()
-			initWebsocket()
 			togglePage('chat')
 			$('.toolbar-button.upload-clip').on('click', ()=>togglePage('upload'))
 			$('#cancleButton').on('click', ()=>togglePage('chat'))
 			$('#uploadButton').on('click', ()=>uploadStart())
 			
 			new QWebChannel(qt.webChannelTransport, function(channel) {
-				bridge = channel.objects.bridge;
+				cf.bridge = channel.objects.bridge;
 			});
 		})
 		$(document).on('click', e=>{
 			if(e.target.id=='message-input') return;
-			if(bridge) bridge.logAppend('pageActivate');
+			if(cf.bridge) cf.bridge.logAppend('pageActive');
 		})
 		/*
 		$(document).on('mousemove', e=> {
-			if(dragMode ) {
+			if(cf.dragMode ) {
 				ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY, move:true})
 			}
 		})
 		$(document).on('mousedown', e=>{ 
 			ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY,start:true})
-			if(dragMode == false) dragMode = true 			
+			if(cf.dragMode == false) cf.dragMode = true 			
 		})
 		$(document).on('mouseup', e=>{ 
 			ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY,start:false})
-			dragMode = false 
+			cf.dragMode = false 
 		})
 		*/
 		const togglePage = (name) => {
-			$('.container').find('.page').each((n,el) => $(el).hide())
-			$('.container').find('.'+name+'-container').show()
+			$('.pages-main').find('.page').each((n,el) => $(el).hide())
+			$('.pages-main').find('.'+name+'-container').show()
 		}
 		const uploadStart = () => {
-			upload.start(pageInfo.files)
+			upload.start(cf.files)
 		}
 		
 		
-		pageInfo.closeMode = 'close'
-		pageInfo.wsCallback = function(header, data) {
+		cf.closeMode = 'close'
+		cf.wsCallback = function(header, data) {
 			console.log("@@ websocket callback => header=="+header )
 			var pos = header.indexOf('\r\n')
 			if( pos==-1) return console.log("@@ websocket 헤더 오류")

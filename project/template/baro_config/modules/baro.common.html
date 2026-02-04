@@ -723,6 +723,9 @@ addUserWorker(id, targetNode, callbackWorker ) {
 			targetNode.@callbackWorker=func(node) { print("##userWorker callback  node::$node") };
 		}
 	}
+	not( targetNode.@worker ) {
+		targetNode.@worker=worker
+	}
 	worker.push(targetNode)
 	return worker;
 }

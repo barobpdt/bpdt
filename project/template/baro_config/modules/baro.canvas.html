@@ -12,14 +12,14 @@
 	canvasSize() {
 		return this.rect().size()
 	}
-	updateCheck(rc) {
-		print("@@ update check updateCheckTick==${this.@updateCheckTick}") 
+	updateCheck(rc) {		
 		this.@rectCanvas=rc
 		dist=System.tick()-this.@startTick
 		if(dist<1000) {
 			this.updateCanvas()
 		} else {
 			this.@updateCheckTick=System.tick()
+			print("@@ update check updateCheckTick==${this.@updateCheckTick}") 
 		}
 	}
 	updateCanvas() {

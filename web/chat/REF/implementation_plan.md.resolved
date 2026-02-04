@@ -1,0 +1,109 @@
+# Tablet Ordering System Implementation Plan
+
+A modern, beautiful tablet-based ordering interface for restaurants featuring menu categories (drinks, alcohol, appetizers) with detailed item views and smooth interactions.
+
+## Design Approach
+
+The application will feature:
+- **Vanilla HTML/CSS/JavaScript** - No frameworks, pure web technologies
+- **Premium aesthetics** with vibrant gradients, glassmorphism effects, and smooth animations
+- **Category-based navigation** with visually distinct cards for drinks, alcohol, and appetizers
+- **Grid-based menu layout** showing items with AI-generated images, names, and prices
+- **Modal detail view** that appears when clicking items, showing full description and options
+- **Responsive design** optimized for tablet screens (768px - 1024px)
+- **Dark theme** with warm accents for restaurant ambiance
+
+## Database Schema
+
+### Tables Structure
+
+#### `categories` Table
+- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `name` (VARCHAR(50), NOT NULL) - e.g., "음료", "주류", "안주"
+- `name_en` (VARCHAR(50)) - e.g., "Drinks", "Alcohol", "Appetizers"
+- `icon` (VARCHAR(50)) - Icon identifier
+- `color` (VARCHAR(20)) - Category theme color
+- `created_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+
+#### `menu_items` Table
+- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `category_id` (INT, FOREIGN KEY → categories.id)
+- `name` (VARCHAR(100), NOT NULL)
+- `name_en` (VARCHAR(100))
+- `description` (TEXT)
+- `price` (DECIMAL(10,2), NOT NULL)
+- `image_url` (VARCHAR(255))
+- `is_available` (BOOLEAN, DEFAULT TRUE)
+- `is_popular` (BOOLEAN, DEFAULT FALSE)
+- `created_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+
+#### `orders` Table
+- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `table_number` (INT, NOT NULL)
+- `status` (ENUM('pending', 'preparing', 'completed', 'cancelled'), DEFAULT 'pending')
+- `total_amount` (DECIMAL(10,2))
+- `created_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+- `completed_at` (TIMESTAMP, NULL)
+
+#### `order_items` Table
+- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+- `order_id` (INT, FOREIGN KEY → orders.id)
+- `menu_item_id` (INT, FOREIGN KEY → menu_items.id)
+- `quantity` (INT, NOT NULL, DEFAULT 1)
+- `unit_price` (DECIMAL(10,2), NOT NULL)
+- `subtotal` (DECIMAL(10,2), NOT NULL)
+- `notes` (TEXT) - Special requests
+- `created_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+
+## Proposed Changes
+
+### [NEW] [index.html](file:///e:/TEST/index.html)
+Main application structure featuring:
+- Header with restaurant branding and cart preview
+- Category selection section with three main categories
+- Menu items grid that updates based on selected category
+- Modal overlay for item details
+- Sample menu data for drinks, alcohol, and appetizers
+
+### [NEW] [style.css](file:///e:/TEST/style.css)
+Comprehensive design system including:
+- Modern color palette with gradients (purple/blue for drinks, amber/red for alcohol, green/orange for appetizers)
+- Typography using Google Fonts (Outfit for headings, Inter for body)
+- Glassmorphism effects with backdrop blur
+- Smooth transitions and micro-animations
+- Hover effects and interactive states
+- Responsive grid layouts
+- Modal animations (fade in/scale up)
+
+### [NEW] [app.js](file:///e:/TEST/app.js)
+Application logic handling:
+- Menu data management (sample items for each category)
+- Category filtering and switching
+- Item detail modal display
+- Add to cart functionality
+- Smooth scroll and animation triggers
+- Event listeners for user interactions
+
+### [NEW] [schema.sql](file:///e:/TEST/schema.sql)
+Database schema including:
+- Table definitions for categories, menu_items, orders, and order_items
+- Foreign key relationships
+- Sample data inserts for testing
+- Indexes for performance optimization
+
+### Generated Menu Images
+AI-generated images for each menu item:
+- Drinks: Coffee, smoothies, juices, soft drinks
+- Alcohol: Beer, wine, cocktails, soju
+- Appetizers: Korean appetizers, fried foods, snacks
+
+## Verification Plan
+
+### Manual Verification
+1. Open `index.html` in browser
+2. Test category switching (drinks → alcohol → appetizers)
+3. Click on menu items to verify modal appears with correct details
+4. Test add to cart functionality
+5. Verify smooth animations and hover effects
+6. Check responsive behavior on tablet dimensions

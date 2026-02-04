@@ -1,6 +1,7 @@
 /* 
 페이지 공통설정 
 */
+const pageInfo = {}
 const clog=window.console.log
 const randomKey = () => (new Date%9e64).toString(36)
 const isNull = a => a===null || typeof a == 'undefined'

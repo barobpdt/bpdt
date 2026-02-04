@@ -1,14 +1,38 @@
 <page id="main" margin="0" initPage() {	
 	this.@canvas = widget('webview')
 }>
-	<canvas id="webview" module="canvas_webview" initWidget() {
+	<canvas id="webview" module="canvas_webview" >
+</page>
+
+<script eval>
+	p=page('main')
+	p.size(800,600)
+	p.open()
+	/*	
+	cmd=p.@canvas.@cmd
+	c=p.@canvas
+	c.webviewExec("quit:")
+	c.webviewExec("quit:")
+	c.webviewStart()
+	c.webviewExec("setParent:${p.winId()}")
+	c.webviewExec("show:")
+	c.webviewExec("url:https://www.naver.com/")
+	c.updateCanvas()
+	*/
+	print("CanvasTest eval>>")
+	
+</script>
+
+<script module="canvas_webview">
+	initWidget() {
 		this.@cmd = Baro.process('pythonWebview')
+		this.@status='first'
+		this.@useTimer=true
 		this.@checkStart=false
-		this.webviewStart()
-		this.timer(500, this.webviewInit)
+		this.webviewCheck()
 	}
 	updateCanvas() {
-		not(this.@checkStart) return;
+		if(this.@status.eq('first','check','init')) return;
 		rect = toRect(this.geo())		
 		rect.inject(x,y,w,h)
 		this.webviewExec("geo:$x,$y,$w,$h,0")		
@@ -20,64 +44,72 @@
 	setWebviewResult(s) {
 		print("setWebviewResult: webview result ==> $s")		
 	}
-	this.webviewInit() {
-		this.@checkStart = true
-		this.webviewExec("setParent:${this.winId()}")
-		this.updateCanvas()
+	timerCallback() {
+		if(this.@status.eq('init')) {
+			result = this.@cmd.@logTail.timeout() not(result) return;
+			if(result.find('start:webview') ) {
+				this.@status='start'
+				this.updateCanvas()				
+			}
+			print("init log result==$result")
+			return;
+		}
+		if(this.@status.eq('start')) {
+			not(this.@checkStart) {
+				this.@checkStart = true
+				this.webviewExec("setParent:${this.winId()}")
+			}
+			result = this.@cmd.@logTail.timeout() not(result) return;
+			if( result.find('bridge:pageActive')) {
+				return this.webviewExec('pageActive:')
+			}
+			if( result.find('app:quit')) {
+				
+			}			
+		}
 	}
-	>
-</page>
-
-<script eval>
-	p=page('main')
-	p.size(800,600)
-	p.open()
-	cmd=p.@canvas.@cmd
-	c=p.@canvas
-	c.webviewExec("quit:")
-	/*	
-	c.webviewExec("quit:")
-	c.webviewStart()
-	c.webviewExec("setParent:${p.winId()}")
-	c.webviewExec("show:")
-	c.webviewExec("url:https://www.naver.com/")
-	c.updateCanvas()
-	*/
-	print("CanvasTest eval>>", cmd)
-	
-</script>
-
-<script module="canvas_webview">
 	webviewCheck() {
+		this.@status='check'
 		info=object('python.installInfo')
 		not(info.childCount()) {
 			pythonInstallStart('list', true)
 			addUserWorker('user', this, function() {
-				while(n=0,20) {
-					System.sleep(200)
-					if( object('python.installInfo').childCount()) {
+				info=object('python.installInfo')
+				while(n=0,32) {
+					System.sleep(500)
+					if(info.childCount()) {
 						break;
 					}
 				}
+				not(info.childCount()) return this.alert('파이션 설치정보를 찾을수 없습니다');
 				this.webviewCheck()
 			})
 			return;
+		}
+		// pythonInstallStart('rembg Pillow', true)
+		aa=findField(info,'name','PyQt5')
+		ab=findField(info,'name','PyQtWebEngine')
+		if(aa && ab ) {
+			return this.webviewStart()
 		}
 		pythonInstallStart('PyQt5')
 		pythonInstallStart('PyQtWebEngine')
 		this.@cmdInstall=pythonInstallStart()
 		addUserWorker('user',this,function() {
 			for(n=0,100 ) {
-				System.sleep(200)
+				System.sleep(500)
 				cmd=this.@cmdInstall
-				if( cmd.@cmdJobList.size()==0 ) {
-					if(cmd.@jobStatus=='
+				aa=notValid(cmd.@cmdJobList)
+				ab=cmd.@jobStatus.eq('finish')
+				if( aa && ab ) {
+					return this.webviewStart()
 				}
 			}
 		})
 
 	}
 	webviewStart() {
+		this.@status='init'
 		cmd=this.@cmd not(checkTag(cmd,'process')) return;
 		if( cmd.@jobStatus=='run' ) {
 			print("webview 프로세스가 이미 실행중입니다")
@@ -131,9 +163,8 @@
 			while(n=0,30) {
 				System.sleep(100)
 				// print(">>@keyboad.execSource workerStatus => $n", cmd.@jobStatus);
-				if( cmd.@jobStatus=='run' ) {
-					result = cmd.@logTail.timeout()					
-					if( result ) {
+				if( cmd.@jobStatus=='run' ) {									
+					if( cmd.@canvas.@checkStart ) {
 						break;
 					}
 				}
@@ -159,4 +190,33 @@
 	}
 </script>
 
- 
+<script>
+	mergeCssRoot(pathArr) {
+		map=object('data.cssRoot').removeAll(true)
+		while(path,pathArr) {
+			parse(fileRead(path))
+		}
+		ss='';
+		while(k,map.keys()) {
+			v=map.get(k)
+			ss.add("\n$k:$v;") 
+		}
+		return ":root {$ss}"
+		parse=function(&s) {
+			s.findPos(':root') not(s.ch()) break;
+			s.findPos('{',0,1)
+			ss=s.match()
+			while(ss.valid()) {
+				c=ss.ch() not(c) break;
+				if(c.eq('/')) {
+					c.match()
+					continue;
+				}
+				k=ss.findPos(':').trim()
+				if(map.isVar(k)) continue;
+				v=ss.findPos(';').trim()
+				map.set(k,v)
+			}
+		};
+	}
+</script>

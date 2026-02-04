@@ -1,5 +1,49 @@
 // 웹소켓 설정
 let ws=null
+function parseCommand(command, time) {
+	const pos = command.indexOf(':')	
+	if(pos>0) {
+		const type=command.substring(0,pos).trim()
+		if(type=='menu') {
+			const pageCode=command.substring(pos+1).trim()
+			ws.sendData('pageInfo', {pageCode, time})
+		}
+		else if(type=='cmd' || type=='command') {
+			const cmd=command.substring(pos+1).trim()
+		}
+		else {
+			chatMessageAdd(type+"은 미정의 커멘드입니다")
+		}
+	} else if(command=='list') {
+		ws.sendData('cmdList', {pageCode, time})
+	} else {
+		chatMessageAdd("메시지 형식오류 <br>커멘드 리스트 보기 => list<br>페이지 이동 => menu:test <br>체봇기능은 구현중입니다")
+	}
+}
+function chatMessageAdd() {	
+	const chatMessages = document.getElementById('chat-messages');	
+	messageElement.innerHTML = `
+		<div class="message-content">
+			<p>${randomResponse}</p>
+			<span class="message-time">${timeString}</span>
+		</div>
+	`;
+	const now = new Date();
+	const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+					   now.getMinutes().toString().padStart(2, '0');
+	
+	const messageElement = document.createElement('div');
+	messageElement.className = 'message received';
+	messageElement.innerHTML = `
+		<div class="message-content">
+			<p>${randomResponse}</p>
+			<span class="message-time">${timeString}</span>
+		</div>
+	`;
+	
+	chatMessages.appendChild(messageElement);
+	chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 function dispatchRecvMessage(type, errorCode, data, params) {
 	switch(type) {
 	case 'res_login':
@@ -7,6 +51,7 @@ function dispatchRecvMessage(type, errorCode, data, params) {
 		break;
 	case 'res_pageInfo':
 		if(!data) {
+			alert(param.pageCode +' 페이지가 정의되지 않았습니다')
 			return clog('페이지 정보가 없습니다', params)
 		}
 		$('.pages-main').find('.page').each((n,el) => $(el).hide())
@@ -28,6 +73,7 @@ function recvProc(header, data) {
 	}
 	let line=header.substring(sp,ep)
 	const params=JSON.parse(header.substring(ep))
+	clog('>> recv proc ', this, header)
 	if(line.indexOf(':')>0) {
 		const arr=line.split(':')
 		const type=arr[0]
@@ -38,6 +84,10 @@ function recvProc(header, data) {
 			if(size!=dataSize) {
 				clog('웹소켓 프로토콜 데이터 크기오류 ', size, dataSize)
 			}
+		}
+		if(typeof(this.recv_callback)=='function') {
+			this.recv_callback.call(this, type, errorCode, data, params)
+			this.recv_callback = null
 		}
 		dispatchRecvMessage(type, errorCode, data, params)
 	}
@@ -170,16 +220,18 @@ function initChat() {
     
     // 메시지 전송 함수
     function sendMessage() {
-        let messageText = messageInput.value.trim();
-        
+        let messageText = messageInput.value.trim()
+        let command=''
         // 메시지가 비어있고 파일도 없는 경우 전송하지 않음
         if (messageText === '' && selectedFiles.length === 0) {
             messageText = '내용을 입력하세요' 
             // return;
-        }
+        } else {
+			command=messageText
+		}
         
         // 현재 시간
-        const now = new Date();
+        const now = new Date()
         const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
                            now.getMinutes().toString().padStart(2, '0');
         
@@ -221,20 +273,13 @@ function initChat() {
         // 파일 초기화
         selectedFiles = [];
         filePreview.innerHTML = '';
-        
+        parseCommand(command, timeString)
         // 자동 응답 (데모용)
-        setTimeout(autoReply, 1000);
+        // setTimeout(autoReply, 1000);
     }
     
     // 자동 응답 함수 (데모용)
     function autoReply() {
-        const now = new Date();
-        const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
-                           now.getMinutes().toString().padStart(2, '0');
-        
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message received';
-        
         const responses = [
             '메시지를 받았습니다. 확인해 주셔서 감사합니다.',
             '네, 알겠습니다. 도움이 필요하시면 언제든지 말씀해 주세요.',
@@ -244,16 +289,7 @@ function initChat() {
         ];
         
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        messageElement.innerHTML = `
-            <div class="message-content">
-                <p>${randomResponse}</p>
-                <span class="message-time">${timeString}</span>
-            </div>
-        `;
-        
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessageAdd(randomResponse)
     }
     
     // 텍스트 영역 자동 높이 조절
@@ -496,6 +532,7 @@ class WebsocketManager {
 		this.maxRetries = 3
 		this.currentRetry = 0
 		this.retryInterval = 10000
+		this.recv_callback = null
 		this.recvProc=typeof recvProc=='function' ? recvProc: function(header, message) { clog('recvProc>>',header, message) }
 	}
 	closeWebsocket() {
@@ -522,7 +559,8 @@ class WebsocketManager {
 					const message = event.data.substr(pos+4)
 					// const node = JSON.parse(message);
 					// 메시지 타입에 따른 처리
-					this.recvProc(header, message);
+					
+					this.recvProc(header, message)
 				}
 			} catch (error) {
 				console.error('메시지 파싱 오류:', error);
@@ -545,7 +583,8 @@ class WebsocketManager {
 	isConnect() {
 		return this.websocket
 	}	
-	sendData(type, params, data) {		
+	sendData(type, params, data, callback) {
+		this.recv_callback=callback
 		if(isObj(params)) {
 			params=JSON.stringify(params)
 		} else {

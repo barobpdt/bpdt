@@ -4,6 +4,9 @@ import os
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 import time
+from PIL import Image
+from transparent_background import Remover
+
 class CustomAction(argparse.Action):
 	def __call__(self, parser, namespace, values, option_string=None):
 		setattr(namespace, self.dest, " ".join(values))
@@ -13,6 +16,15 @@ parser = argparse.ArgumentParser(description='프로그램 확장기능 처리')
 parser.add_argument('--command', action=CustomAction, nargs='+', required=True, help='로그파일')
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
+
+remover=None
+def remove_background(input_path, output_path): 
+	if remover==None: 
+        remover = Remover()
+	input_image = Image.open(input_path)	
+	output_image = remover.process(input_image)
+	output_image.save(output_path)
+	log(f"rembg:{output_path}")	
 
 choseong_list = [char for char in "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"]
 jungseong_list = [char for char in "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"]

@@ -1,0 +1,111 @@
+<div class="table-order-container page" style="width:100%; height:100vh;">
+    <link rel="stylesheet" href="table-order.css">
+	<style>
+		.btn-top {
+			text-align:center;
+			gap: var(--spacing-sm);
+			padding: var(--spacing-sm) var(--spacing-md);
+			border-radius: var(--radius-lg);		
+			transition: all var(--transition-normal);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			cursor: pointer;
+		}
+	</style>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🍽️</span>
+                <div class="logo-text">
+                    <h1>Premium Dining</h1>
+                    <p>Table Ordering System</p>
+                </div>
+            </div>
+			<div style="flex:1;margin-left:16px;">
+				<div class="btn-top" style="width:85px;" onclick="togglePage('chat')">
+					채봇
+				</div>
+			</div>
+            <div class="cart-preview" onclick="viewCart()">
+                <div class="cart-icon">
+                    🛒
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <div class="cart-info">
+                    <h3>장바구니</h3>
+                    <p id="cartTotal">₩0</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Category Section -->
+        <section class="category-section">
+            <h2 class="section-title">카테고리를 선택하세요</h2>
+            <div class="category-grid">
+                <div class="category-card active" data-category="drinks" onclick="selectCategory('drinks')">
+                    <span class="category-icon">🥤</span>
+                    <h3>음료</h3>
+                    <p>Drinks & Beverages</p>
+                </div>
+                <div class="category-card" data-category="alcohol" onclick="selectCategory('alcohol')">
+                    <span class="category-icon">🍺</span>
+                    <h3>주류</h3>
+                    <p>Alcoholic Beverages</p>
+                </div>
+                <div class="category-card" data-category="appetizers" onclick="selectCategory('appetizers')">
+                    <span class="category-icon">🍗</span>
+                    <h3>안주</h3>
+                    <p>Appetizers & Snacks</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Menu Section -->
+        <section class="menu-section">
+            <div class="menu-header">
+                <h2 class="menu-title" id="menuTitle">음료 메뉴</h2>
+                <span class="menu-count" id="menuCount">4개 메뉴</span>
+            </div>
+            <div class="menu-grid" id="menuGrid">
+                <!-- Menu items will be dynamically inserted here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal for Item Details -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <img class="modal-image" id="modalImage" src="" alt="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-category" id="modalCategory"></div>
+                    <h2 class="modal-title" id="modalTitle"></h2>
+                </div>
+                <p class="modal-description" id="modalDescription"></p>
+                <div class="modal-price" id="modalPrice"></div>
+                <div class="modal-actions">
+                    <div class="quantity-control">
+                        <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
+                        <span class="quantity-value" id="quantity">1</span>
+                        <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                    </div>
+                    <button class="modal-add-btn" onclick="addToCart()">
+                        장바구니에 담기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="table-order.js"></script>
+</div>
+<script>
+	setTimeout(()=>{
+		renderMenuItems(currentCategory);
+		updateCartDisplay();
+	},500)
+</script>

@@ -17,6 +17,7 @@ escape(s) {
 }
 format(&s, param) {
 	rst=''
+	fn=null
 	arr=args(1), map=null
 	if(typeof(param,'func')) {
 		args(fn, map, params)
@@ -25,8 +26,8 @@ format(&s, param) {
 		arr=param
 	} else if(typeof(param,'node')) {
 		map=param
-		fn=Cf.funcNode('parent')
 	}
+	not(fn)	fn=Cf.funcNode('parent')
 	while(s.valid()) {
 		left=s.findPos('#{')
 		rst.add(left)

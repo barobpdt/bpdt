@@ -40,20 +40,18 @@
 		size=line.findPos(':').trim()
 		params=line.trim()
 		props=data.match()
-		data.findPos("\r\n\r\n")		
+		data.findPos("\r\n\r\n")
+		not(config.@messageNode) {
+			config.addNode('@messageNode')
+		}
 		this.dispatchMessage(client, type, params, props, data, size.toInt() )
 	}
 	dispatchMessage(client, type, params, props, data, size) {
 		print(">> server dispatch message ",type, prarams, props, size )
 		config=client.config()
-		config.inject(@messageNode )
-		if(messageNode) {
-			messageNode.removeAll(true)
-		} else {
-			messageNode=config.addNode('@messageNode')
-		}
+		client.@messageNode.removeAll(true)
 		if( props) {
-			messageNode.parseJson(props)
+			client.@messageNode.parseJson(props)
 		}
 		switch(type) {
 		case login: 
