@@ -1,0 +1,31 @@
+<page id="main" margin="0" initPage() {	
+	this.@canvas = widget('sprite')
+}>
+	<canvas id="sprite" module="canvas_sprite" >
+</page>
+
+<script eval>
+	p=page('main')
+	/*
+	p.size(800,600)
+	p.open() 
+	*/
+	c=p.@canvas
+	c.initWidget()
+	print("CanvasTest eval>>")
+	
+</script>
+
+<script module="canvas_sprite">
+	initWidget() {
+		this.@imgPath = 'sprite/3504-bg.png'
+	}
+	updateCanvas() {
+		print("update rect", this.@rectCanvas)
+	}
+	drawBackground(dc) {
+		c=this.@baseColor.lightColor(100)
+		dc.fill(c)
+		dc.image(this.@rectCanvas, 'sprite/8049563-bg.png', 0, 0)
+	}
+</script>
