@@ -29,10 +29,9 @@
 	init() {
 		this.@colorBody=this.@baseColor.lightColor(120)
 	}
-	clickButton(node) {
-		node.inject(code,name)
+	clickBtn(node) {
 		page=page()
-		switch(code) {
+		switch(nocd.code) {
 		case add:
 			sub=createWidget('canvas','sub',this,'canvas_mdc,canvas_stack_sub')
 			page.@stack.addPage(sub, true)
@@ -50,9 +49,7 @@
 		}
 		this.@editor.move(rcBody.incr(4))
 		// form 업데이트
-		not(this.@form) {
-			this.@form=initForm(conf('form.test_main'))
-		}
+		initForm(conf('form.test_main'))
 		this[@rcTop, @rcBody, @rcBottom]
 		this.updateForm(this.@form, rcBottom)
 	}
@@ -83,14 +80,11 @@
 		rcPrev.center(40,24)
 		rcClose.center(40,24)
 		// form 업데이트 
+		initForm(conf('form.test_sub'))
 		form=this.@form
-		not(form) {
-			form = initForm(conf('form.test_sub'))
-			this.@form=form
-		}
-		form[@formRects:array(true)].add(rcPrev, rcClose)
+		form.addArray('@formRects').reuse()
+		form.@formRects.add(rcPrev, rcClose)
 		this.updateForm(form)
-
 	}
 	drawBackground(dc) {
 		this.inject(@form)

@@ -12,16 +12,7 @@
 	canvasSize() {
 		return this.rect().size()
 	}
-	updateCheck(rc) {		
-		this.@rectCanvas=rc
-		dist=System.tick()-this.@startTick
-		if(dist<1000) {
-			this.updateCanvas()
-		} else {
-			this.@updateCheckTick=System.tick()
-			print("@@ update check updateCheckTick==${this.@updateCheckTick}") 
-		}
-	}
+	
 	updateCanvas() {
 		dist=System.tick()-this.@startTick
 		if(dist<5000) {
@@ -39,15 +30,7 @@
 			print("@@ click button =>" currentNode)
 		}
 	}
-	onTimer() {
-		if(this.@updateCheckTick) {
-			dist=System.tick() - this.@updateCheckTick
-			if(dist>500 ) {
-				this.@updateCheckTick=0
-				this.updateCanvas()
-				this.update()
-			}
-		}		
+	onTimer() {		
 		if(this.@useTimer) {
 			this.timerCallback()
 		}
@@ -61,7 +44,8 @@
 	onDraw(dc,rc) {
 		if( rc.eq(this.rect()) ) {
 			not( rc.eq(this.@rectCanvas) ) {
-				this.updateCheck(rc)
+				this.@rectCanvas=rc
+				this.updateCanvas()
 			}
 		} else {
 			if(this.@useMdc ) {
@@ -276,47 +260,69 @@
 	init() {
 		setBtnColor(this)
 	}
-	initForm(formInfo) {		
+	initForm(formInfo, checkUpdate) {		
+		if(this.@form) {
+			not(checkUpdate) return this.@form;
+		}
 		// ex) form={formRows:'40,*,30', formItmes:[...]}
-		this[@form:node()->form].parseJson(formInfo)
+		// this[@form:node()->form].parseJson(formInfo)
+		form=this.addNode('@form').removeAll(true)		
+		form.parseJson(formInfo)
+		form.addArray('@formRowRects')
 		not( typeof(form.formItems,'array') ) return print("폼아이템 정보가 없습니다 (폼:$form)")
 		
 		if(typeof(form.formItems.0,'array')) {
-			form[!formRows]=form.formItems.size()
+			not(form.formRows) form.formRows=form.formItems.size()
 		}		
 		canvas = this
 		while(cur,form) {
 			cur[=>tag,code]
-			if(tag.eq('btn','space','label','check','radio')) {
+			if(tag.eq('mdc')) {
+				not(this.@useMdc) addModule(this,'canvas_mdc')
+				cur.@form=form
+				cur.@useMdc=true
+			} else if(tag.eq('btn','space','label','check','radio')) {
 				cur.@useDraw=true
 				if(tag.eq('btn','check','radio')) {
 					cur.@useMouseEvent=true
 				}
 			} else if(tag) {
-				cur.@widget = createWidget(tag,code,canvas,'',true) 
+				cur.@widget = this.makeWidget(tag, code, cur)
 			}
 		}
 		return form;
 	}
 	
 	updateForm(form,rect) {
+		not(form) form=this.@form
+		not(rect) rect=this.@rectCanvas
+		not(typeof(rect,'rect')) return print("@@updateForm 영역오류");
 		not(form.formItems) return;
+		form.@formRowRects.reuse()
 		if( typeof(form.formItems.0,'array') ) { 
 			// 폼이 여러줄인경우 formRowRects 행영역배열 생성(vbox)
-			vbox(rect, form[formRows], form[@formRowRects:array(true)] )
-			while(rows, items, rowIndex) {
-				form[fieldCount $rowIndex]=rows.size()
-				while(cur, rows) {
-					not(typeof(cur,'node')) continue;					
-				}
+			vbox(rect, form.formRows, form.@formRowRects)
+			not( isValid(form.@formRowRects) ) {
+				return print("@@updateForm 오류: 폼영역정보 미정의")
 			}
-			if( isValid(form.@formRowRects) ) {
-				while(rows, form.formItems, row) {
-					rect=form.@formRowRects.$row
-					form[!rowInfo $row]=this.getFormRowInfo(rows)
-					colRectArr=hbox(rect, form[rowInfo $row])
-					while(cur, rows, col) {						
-						stRect(cur,colRectArr[col])
+			while(rows, form.formItems, rowIndex) {
+				not( typeof(rows,'array')) {
+					print("@@updateForm 오류: 폼이 여러줄인경우 formItems 행정보는 배열이어야함 ($rowIndex 행)")
+					continue;
+				}
+				not(rows.size()) {
+					print("@@updateForm 오류: 폼 $rowIndex 행정보 없음")
+					continue;
+				}
+				rcRows = form.@formRowRects.$rowIndex
+				if(rows.size()==1) {
+					setCurrentRect(rows.0, rcRows )
+				} else {
+					form[!rowInfo $rowIndex]=this.getFormRowInfo(rows)
+					harr=hbox(rcRows, form[rowInfo $rowIndex])
+					while(cur, rows, col) {
+						cur.@rowIndex = rowIndex
+						setCurrentRect(cur,harr[col])
 					}
 				}
 			}
@@ -330,28 +336,35 @@
 		else if(rect) {
 			// 폼이 한줄인 경우
 			form[!rowInfo 0]=this.getFormRowInfo(form.formItems)
-			colRectArr=hbox(rect, form[rowInfo 0])
+			harr=hbox(rect, form[rowInfo 0], form.@formRowRects.reuse())
 			while(cur, form.formItems, col) {
-				setRect(cur,colRectArr[col])
+				setCurrentRect(harr[col])
 			}
-		}
-		
-		setRect = function(cur, rect) {			
-			if(notValid(cur.padding)) cur.padding=4
+		}		
+		setCurrentRect = function(cur, rect) {			
 			rect.incr(cur.padding)
 			rect.incrYH(2,2)
-			cur[rect]=rect			
+			if( cur.@useMdc ) {
+				not(cur.code) {
+					not(cur.module) return print("@@ updateForm 오류 mdc 정보가 없습니다", cur);
+					cur.code=cur.module
+				}
+				cur.@mdc=this.addMdc(cur.code, rect, cur.module)
+			} else {
+				cur[rect]=rect
+			}
 		};
 	}
 	drawForm(dc,form) {
 		while(cur, form) {
-			cur[=>tag, rect]
+			cur[=>tag, rect, margin]
 			if( cur.@widget) {
 				cur.@widget.move(rect)
 				if(cur.@hide) cur.@widget.hide()
 				continue;
 			}
 			if(cur.@useMouseEvent) {
+				if(margin) rect.incrXW(margin, margin)
 				switch(tag) {
 				case btn: this.drawBtn(dc,rect,cur)
 				case check: this.drawCheckbox(dc,rect,cur)
@@ -362,6 +375,63 @@
 				this.drawLabelText(dc,rect,cur)
 			}			
 		}
+	}
+	changeWidgetValue(widget) {
+		cur=widget.@targetNode
+		cur.@widgetValue = widget.value()
+		print(">> change widget value", widget, cur)
+		if(typeof(this.changeValueCallback,'func')) {
+			this.changeValueCallback(cur)
+		}
+	}
+	makeWidget(tag, code, cur) {
+		widget=createWidget(tag,code,this,'',true)
+		widget.@targetNode=cur
+		widget.@canvas=this
+		if(tag.eq('input')) {
+			widget[onTextChange() { this.@canvas.changeWidgetValue(this) }]
+		} else {
+			widget[onChange() { this.@canvas.changeWidgetValue(this) }]
+		}
+		return widget;
+	}
+	setLabelText(code, value) {
+		cur=findField(this.@form,'code',code)
+		if(cur && cur.tag.eq('label') ) {
+			cur.text=value
+			this.update()
+		}
+	}
+	setWidgetValue(param, value, skipCheck) {
+		widget=null
+		if(typeof(param,'widget')) {
+			widget=param
+			cur=widget.@targetNode
+		} else if(param) {
+			cur=findField(this.@form,'code',param)
+			if(cur) widget=cur.@widget
+		}
+		if(widget) {
+			cur.@changeValueTick= when(skipCheck, 0, System.tick())
+			cur.@widgetValue=value
+			widget.value(value)
+		} else {
+			print("@@ setWidgetValue 위젯오류 ", param)
+		}
+	}
+	getWidgetValue(param, value) {
+		widget=null
+		if(typeof(param,'widget')) {
+			widget=param
+			cur=widget.@targetNode
+		} else if(param) {
+			cur=findField(this.@form,'code',param)
+			if(cur) widget=cur.@widget
+		}
+		not(widget) {
+			return print("@@ getWidgetValue 위젯오류 ", param)
+		}
+		return cur.@widgetValue
 	}
 	drawBtn(dc,rc,cur) {
 		cur[=> rect, text, disable, hide ] if(hide) return;
@@ -386,6 +456,7 @@
 	}
 	drawLabelText(dc,rc,cur) {
 		cur.inject( code, text, disable, hide )
+		dc.text(rc.incrX(4), text)
 	}
 
 	mouseDownForm(pos) {
@@ -404,7 +475,11 @@
 		cur=this.@currentDownNode not(cur) return false;
 		checkContain=false
 		if( cur.rect.contains(pos)) {
-			this.clickButton(this.@currentDownNode)
+			if(typeof(this.clickBtn,'func')) {
+				this.clickBtn(cur)
+			} else {
+				print(">> clickBtn code==", cur.code)
+			}
 			checkContain=true
 		}		
 		this.@currentDownNode=null
@@ -415,6 +490,7 @@
 		arr=[]
 		while(cur, rows) {
 			cur[=>tag, width]
+			not( cur.padding ) cur.padding=4
 			if(width) {
 				arr.add(width)
 			} else if(tag.eq('space')) {			
@@ -428,17 +504,20 @@
 					arr.add(150)
 				}
 			} else if(cur.@useDraw) {
-				cur[=>icon, font, text, padding, image]
+				cur[=>icon, font, text, image, margin]
 				tw=0
-				if(text) {
+				if( text) {
 					not(font) font=this.@font
 					getTextSize(text,font).inject(tw,th)
-					tw+=20
+					tw+=12
 					if(icon) {
 						tw+=45
-					}			
+					}
 				} 
-				if(tag.eq('check')) {
+				if(tag.eq('btn')) {
+					tw+=10
+				}
+				else if(tag.eq('check')) {
 					cur.@checkIcon = 'icons:check1'
 					tw+=40
 				}	
@@ -447,12 +526,13 @@
 					tw=iw
 				}
 				if(tw) {
-					if(padding) tw+=padding*2
+					if(margin) tw+=margin*2
 					arr.add(tw)
 				} else {
 					arr.add(100)
 				}
 			} else {
+				print("width not defined tag==$tag")
 				arr.add(20)
 			}
 		}
@@ -466,7 +546,7 @@
 		not(this.initForm) {
 			addModule(this,'canvas_form')
 		}
-		return this.initForm(formInfo)
+		this.initForm(formInfo)
 	}
 	isMdcSizeChange(mdc, w,h) {
 		mdc.@rect.size().inject(mw,mh)
@@ -627,7 +707,12 @@
 		dc.pen(textBg).text(rcText.move(1,1), text, 'center')
 		dc.pen(textColor).text(rcText, text, 'center')		
 		dc.restore()
-	} 
+	}
+	fillGradient(dc, rc, c1, c2) {
+		rc.lt().inject(sx,sy)
+		rc.lb().inject(ex,ey)
+		dc.fill(rc,'gradient',sx,sy,ex,ey,0,c1,1,c2)
+	}
 
 </script>
 

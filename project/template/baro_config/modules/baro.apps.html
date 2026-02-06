@@ -67,6 +67,7 @@
 					break;
 				}
 			}
+			cmd.@currentCommand=''
 			not(result) {
 				print(">>pythonCommand 실행결과가 없습니다", n)
 			}
@@ -162,5 +163,31 @@
 			}
 		}
 		return info;
+	}
+	closePort(port) {
+		not(port) port=80
+		runCommand("netstat -ano | findstr $port", function(s,endCheck) {
+			not(endCheck) return;
+			while(s.valid()) {		
+					s.findPos('TCP')
+					not(s.ch()) break;
+					line = s.findPos("\n")			
+					line.findPos(":$port")
+					c=line.ch(0)
+					print(">> line:$line [$c]")
+					not(typeof(c,'num')) {
+						line.findPos('LISTENING')
+						pid=line.trim()
+						if(pid) {
+							if(typeof(callback,'func')) {
+								callback(pid)
+							} else if(callback) {
+								runCommand("taskkill /PID $pid /F" )
+							}
+							return;
+						}
+					}
+				}
+		})
 	}
 </script>

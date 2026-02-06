@@ -3,6 +3,12 @@
 		print("mdc 초기화 시작")
 		this.@startTick=System.tick()
 	}
+	updateMdc(rectDraw) {
+		dist=System.tick()-this.@startTick
+		if(dist<5000) {
+			print("@@ mdc 객체에서 updateMdc 함수 중복정의 하세요 (그리기영역:$reactDraw)")
+		}
+	}
 	draw(dc) {
 		not(typeof(this.@rectDraw,'rect')) {
 			return log("rectDraw 캔바스상 영역 미정의", this.id);
@@ -36,12 +42,7 @@
 		this.@clipType=''
 		this.@canvas.removeClipMdc(this)
 	}
-	updateMdc(rectDraw) {
-		dist=System.tick()-this.@startTick
-		if(dist<5000) {
-			print("@@ mdc 객체에서 updateMdc 함수 중복정의 하세요 (그리기영역:$reactDraw)")
-		}
-	}
+	
 	drawTimeline(dc, code, timeline) {
 		dc.save()
 		frame=tm.frame()
@@ -103,23 +104,26 @@
 		}
 		dc.restore()
 	}
-	mouseDownDefault(pos) {				
-		this[=>id, @rectDraw, @offset]
-		not(rectDraw.contains(pos)) {
+	mouseDownDefault(pos) {
+		not(this.@rectDraw.contains(pos)) {
 			return false;
 		}				
-		pt=pos.offset(offset,false)
+		pt=pos.offset(this.@offset,false)
 		return this.mouseDown(pt)
 	} 
-	mouseUpDefault(pos) {
-		this[=>id, @rectDraw, @offset]
-		not(rectDraw.contains(pos)) {
+	mouseUpDefault(pos) {		
+		not(this.@rectDraw.contains(pos)) {
 			return false;
-		}
-		pt=pos.offset(offset,false)		
+		}		
+		pt=pos.offset(this.@offset,false)		
 		return this.mouseUp(pt);
 	}
 	mouseMoveDefault(pos) {	
+	}
+	mouseDown(pt) {
+		print(">> mdc mouse down 함수를 등록하세요")
+	}
+	mouseUp(pt) {	
 	}
 </script>
 <script module="mdc_leftPanel">

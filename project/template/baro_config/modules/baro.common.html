@@ -10,8 +10,8 @@ initService() {
 	initModules()
 	initConfig()
 	initWidgetConfig()
-	initWas()
-	initWebsocket()
+	// initWas()
+	// initWebsocket()
 	Cf.debug(true,"data/logs")
 	include("@apps#SourceRun")
 	
@@ -592,11 +592,15 @@ removeCmdJob(id) {
 		return false;
 	}
 	timerInfo.@jobList.remove(cmd)
+	
+	cmd.@logAppend.close()
+	cmd.@logTail.close()
+	cmd.@cmdJobList.reuse()
+	cmd.@jobStatus='close'
 	if(cmd.run()) {
-		cmd.@cmdJobList.reuse()
 		cmd.close()
 	}
-	cmd.@jobStatus='close'
+	print(">> remove cmd job $id 작업이 제거되었습니다")
 	return true;
 }
 addCmdJob(id, command, logCallback) {	

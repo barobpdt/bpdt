@@ -336,7 +336,7 @@ webObject(id) {
 			}
 			break;
 		}
-		return file;
+		return web;
 	}
 	return Baro.web(id) 
 }
