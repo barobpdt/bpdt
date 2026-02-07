@@ -63,7 +63,7 @@
 			not(cur.@changeValueTick) return;
 			dist=System.tick() - cur.@changeValueTick
 			print("timer callback dist==$dist")
-			if(dist<250) return;
+			if(dist<500) return;
 			this.@currentChangeNode=null
 			if(this.@mdcSprite) {
 				print(">> chnageFormValue ", cur)
@@ -103,11 +103,70 @@
 			dc.image(rcImage, this.@imgRate, rc(0,0,dw,dh))
 		}
 		if(this.@rowCount) {
-			 
+			a=null, b=null
+			if(this.@marginV) {
+				if(this.@marginV.find(',')) {
+					splitSep(this.@marginV).inject(a,b)
+				} else {
+					a=this.@marginV.toInt(), b=a
+				}
+			}
+			if(typeof(a,'num')) {
+				print(">> marginV",a,b)
+				rcImage.incrYH(a,b)
+			}
+			a=null, b=null
+			if(this.@gapV) {
+				if(this.@gapV.find(',')) {
+					splitSep(this.@gapV).inject(a,b)
+				} else {
+					a=this.@gapV.toInt(), b=a
+				}
+			}
+			while(rcCur, vbox(rcImage,this.@rowCount), idx )  {
+				if(typeof(a,'num')) {
+					print(">> gapV",a,b)
+					rcCur.incrYH(a,b)
+					dc.rectLine(rcCur, 24, '#f88', 2, 'dot')
+				} else {
+					not(idx) continue;
+					dc.rectLine(rcCur, 2, '#f00', 2, 'dot')
+				}
+			}
 		}
 		if(this.@columnCount) {
-		
+			a=null, b=null
+			if(this.@marginH) {
+				if(this.@marginH.find(',')) {
+					splitSep(this.@marginH).inject(a,b)
+				} else {
+					a=this.@marginH.toInt(), b=a
+				}
+			}
+			if(typeof(a,'num')) {
+				print(">> marginH",a,b)
+				rcImage.incrXW(a,b)
+			}
+			a=null, b=null
+			if(this.@gapH) {
+				if(this.@gapH.find(',')) {
+					splitSep(this.@gapH).inject(a,b)
+				} else {
+					a=this.@gapH.toInt(), b=a
+				}
+			}
+			while(rcCur, hbox(rcImage,this.@columnCount), idx )  {
+				if(typeof(a,'num')) {
+					print(">> gapH",a,b)
+					rcCur.incrXW(a,b)
+					dc.rectLine(rcCur, 13, '#f88', 2, 'dot')
+				} else {
+					not(idx) continue;
+					dc.rectLine(rcCur, 1, '#f00', 2, 'dot')
+				}
+			}
 		}
+		dc.rectLine(rcImage,0,'#f00',2,'dot')
 		this.@rcImage=rcImage
 	}
 	getDisplayRate() {
@@ -116,12 +175,13 @@
 		img.imageSize().inject(iw,ih)
 		rate=aw/iw.toDouble()		
 		print(">> getDisplayRate ", iw,ih,aw,ah,rate)
-		return rate;
+		return roundValue(rate);
 	}
 	setImage(fileName) {
 		img=Cf.imageLoad(fileName)
 		print('>> setImage ', fileName, img)
 		if(img) {
+			this.@canvas.setWidgetValue('displayRate', '', true)
 			this.@currentImage = img			
 			this.@canvas.setWidgetValue('displayRate', "${this.getDisplayRate()}")
 		} else {
@@ -133,20 +193,31 @@
 		print(">> change form value", cur.code, val)
 		switch(cur.code) {
 		case displayRate:
+			not(val) return;
 			img=this.@currentImage
 			this.@rate=val.toDouble()
 			img.imageSize().inject(iw, ih)
 			dw=iw*this.@rate, dh=ih*this.@rate
 			this.@imgRate=mdc('SpriteImage', dw, dh)
 			this.@imgRate.image(img)
+			this.@canvas.update()
 		case rowCount:
 			this.@rowCount=val.toInt()
 		case columnCount:
 			this.@columnCount=val.toInt()
+		case marginH:
+			this.@marginH=val
+		case marginV:
+			this.@marginV=val
+		case gapH:
+			this.@gapH=val
+		case gapV:
+			this.@gapV=val
 		default:
 			print("to be")
 		}
 		this.drawDc()
+		this.@canvas.update()
 	}
 </script>
 

@@ -379,6 +379,7 @@
 	changeWidgetValue(widget) {
 		cur=widget.@targetNode
 		cur.@widgetValue = widget.value()
+		cur.@changeValueTick= System.tick()
 		print(">> change widget value", widget, cur)
 		if(typeof(this.changeValueCallback,'func')) {
 			this.changeValueCallback(cur)

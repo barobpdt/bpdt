@@ -98,6 +98,20 @@ regServiceFolder(serviceMode, path) {
 	fileUUID(path) {
 		return System.inode(path)
 	}
+	roundValue(s,num) {
+		if(typeof(s,'number')) {
+			a=Math.round(s,2)
+			s="$a"
+		}
+		not(s.find('.')) return s;
+		not(num) num=2
+		s.ref()
+		a=s.findPos('.').trim()
+		b=s.move()
+		c=b.value(0,num)
+		print(">>",a,b,c)
+		return "${a}.${c}";
+	}
 	today(addTime) {
 		return System.date(when(addTime,'yyyy-MM-dd hh:mm:ss','yyyy-MM-dd'));
 	}
