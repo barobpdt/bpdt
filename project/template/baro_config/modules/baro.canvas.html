@@ -577,14 +577,15 @@
 		not(d) {
 			return print("@@위젯랜더 객체오류", param, widget)
 		}
-		if(typeof(widget,'widget')) {			
+		if(typeof(widget,'widget')) {
 			Baro.drawObject(d,widget,rect)
 		}
 		return d;
 	}
 	mdc(id, param) {
-		d=Cf.getObject('mdc',id) 
-		not(d) {
+		if(typeof(id,'node')) {
+			d=id
+		} else {
 			d=Cf.getObject('mdc',id, true)
 			d.id=id
 		}
@@ -609,8 +610,6 @@
 
 		if(typeof(param,'point')) {
 			param.inject(width, height);
-		} else if(typeof(param,'widget')) { 
-			param.rect().inject(x,y,width, height)
 		} else if(typeof(param,'rect')) { 
 			param.size().inject(width, height);
 		} else {

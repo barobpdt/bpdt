@@ -14,7 +14,7 @@
 		client.close()
 	}
 	dispatchMessage(client, type, params, props, data, size) {
-		print(">> server dispatch message ",type, prarams, props, size )
+		print(">> server dispatch message ",type, params, props, size )
 		config=client.config()
 		messageNode = config.@messageNode.removeAll(true)
 		if( props) {
@@ -24,9 +24,11 @@
 		case login: 
 			this.resLogin(client, messageNode, params, config)
 		case uploadFile:
-			this.resUploadFile(client, messageNode, params, config)
+			this.resUploadFile(client, messageNode, params, data, size, config)
 		case downloadFile:
-			this.resDownloadFile(client, messageNode, params, config)
+			this.resDownloadFile(client, messageNode, params, data, size, config)
+		case echo:
+			this.sendClient(client, 'res_echo', params, json(messageNode), '')
 		default:
 			return print("@@dispatchMessage 타입:$type 미정의");
 		}
@@ -48,8 +50,8 @@
 		}
 		data=client.recvData()
 		not(data) {
-			print(">> 사용자종료 serverProc data null")
-			this.closeClient(client)		
+			print(">> serverProc data null")
+			return;
 		}
 		if( typeof(data,'bool') ) {
 			print(">> 사용자종료 serverProc data==$data")
@@ -104,13 +106,13 @@
 		this.sendClient(client, 'res_login', params, json(messageNode), '')
 	}
 	
-	resUploadFile(client, messageNode, params,config) {
-		messageNode.inject(remoteFilename)
-		config.inject(@userId)
+	resUploadFile(client, messageNode, params, data, size, config) {
+		messageNode.inject(remoteFilename) 
 		tempPath = conf('path.temp')
-		tempFilename = pathJoin(tempPath, strJoin(userId,'-',System.tick()) )
-		file=getFileObject()
-		print("xxxx server uploadFile xxxxx", remoteFilename, messageNode, max_buffer_size)
+		not(tempPath) tempPath='C:/temp'
+		tempFilename = pathJoin(tempPath, strJoin(config.@userId,'-',System.tick()) )
+		file=fileObject()
+		print("xxxx server uploadFile xxxxx", remoteFilename, messageNode, data.size())
 		if(file.open(tempFilename,'append')) {
 			file.append(data)
 			appendSize = data.size()
@@ -120,19 +122,20 @@
 				if( remain.gt(max_buffer_size)) remain=max_buffer_size
 				recv = client.recvData(remain)				
 				if(typeof(recv,'bool')) {
-					print("@@ server recv error : ", recv, size, appendSize, remain)
+					print("@@ server recv error : ", recv, size, appendSize, remain, config)
 					errorCheck=true
 					break;
 				}
 				recvSize=recv.size()
 				file.append(recv)
 				appendSize+=recvSize;
-				// print(">> server upload recv 정보 : ", size, appendSize, recvSize )
+				print(">> server upload recv 정보 : ", size, appendSize, recvSize )
 				if( remain.gt(recvSize) ) {
 					print("@@ server upload recv 불일치 : ", remain, recvSize )
 				}
 			}
 			if(errorCheck) {
+				client.flush()
 				print("@@ server upload중 오류가 발생했습니다", messageNode)
 			} else {
 				if( isFile(remoteFilename)) {
@@ -142,16 +145,17 @@
 				fileMove(tempFilename, remoteFilename, true, 'command')
 			}
 			file.close()
-		} else {	
+		} else {
+			client.flush()
 			messageNode.resultType="error"
 			messageNode.message="$remoteFilename 파일열기 오류"
 		}
 		this.sendClient(client, 'res_upload', params, json(messageNode), '')
 	}
 	
-	resDownloadFile(client, messageNode, params,config) {
+	resDownloadFile(client, messageNode, params, data, size, config) {
 		messageNode.inject(remoteFilename)
-		file=getFileObject()
+		file=fileObject()
 		sendFlag=false
 		if(file.open(remoteFilename,'read')) {
 			messageNode.resultType="ok"

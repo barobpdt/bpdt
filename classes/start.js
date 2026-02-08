@@ -992,9 +992,12 @@ fileMove(srcFile, destFile, overwrite, mode) {
 		}
 	}
 	if(mode.eq('command')) {
-		if( conf('cf.os').eq('windows') ) {
+		of=conf('cf.os') not(os) os='windows'
+		if( os.eq('windows') ) {
 			a=srcFile.replace("/","\\"), b=destFile.replace("/","\\")
-			runCommand(str('move /Y "$a" "$b"'))
+			command=f[move /Y "$a" "$b"]
+			print(">> fileMove command:$command")
+			runCommand(command)
 		}
 		result = true
 	} else {

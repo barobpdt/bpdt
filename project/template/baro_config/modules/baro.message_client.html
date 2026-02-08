@@ -7,6 +7,8 @@
 		@max_buffer_size = 8192
 		worker.start(this, this.clientProc, true, 100)
 		this.addNode('@messageNode')
+		this.addArray('@sendMessageList')
+		this.@sendStatus='idle'
 		this.@status='first'
 		this.@userId=userId
 	}
@@ -78,9 +80,16 @@
 			props="{tm:$tm}"
 		}
 		size=data.size()
-		result=socket.sendData("##>$type:$size:$params$props\r\n\r\n$data")
+		buffer="##>$type:$size:$params$props\r\n\r\n$data"
+		if(this.@sendStatus.eq('send')) {
+			this.@sendMessageList.add(buffer)
+			return;
+		}
+		result=socket.sendData(buffer)
 		print(">> client send req 결과: $result")
-		not(result) {
+		if(result) {
+			this.@sendStatus='send'
+		} else {
 			this.closeSocket()
 			this.@status='error'
 		}
@@ -102,6 +111,17 @@
 		props=data.match()
 		data.findPos("\r\n\r\n")		
 		this.dispatchMessage(type, params, props, data, size.toInt() )
+		this.@sendStatus='idle'
+		if(this.@sendMessageList.size()) {
+			buffer=this.@sendMessageList.pop()
+			result=socket.sendData(buffer)
+			if(result) {
+				this.@sendStatus='send'
+			} else {
+				this.closeSocket()
+				this.@status='error'
+			}
+		}
 	}
 	dispatchMessage(type, params, props, data, size) {
 		print(">> dispatch client ", type, params, props, size)
@@ -115,6 +135,10 @@
 			print("$localFilename 파일 업로드에 성공했습니다")
 		case res_download:
 			this.downloadStart(data, messageNode, params)
+		case res_echo:
+			print("echo>>", params, messageNode)
+		case res_command:
+			print("command??", params, messageNode)		
 		default:
 			print("@@ client dispatchMessage $type 미정의", messageNode)
 		}
@@ -134,7 +158,7 @@
 		not(isFile(localFilename)) {
 			return print("@@ message_client upload 파일 미존재 (경로:$localFilename)");
 		}
-		file=getFileObject()
+		file=fileObject()
 		not( file.open(localFilename,'read') ) {
 			return print("@@ message_client upload 파일오픈 오류 (경로:$localFilename)");
 		}
@@ -164,13 +188,14 @@
 			}
 			sendSize+=data.size();
 		}
+		print("xxxxxxxxxxxxxxxxxxxxxxx upload send xxxxxxxxxxxxxxx", totalSize, sendSize)
 		file.close()
 	}
 	downloadStart(data, messageNode, params) {
 		messageNode.inject(localFilename)
 		tempPath = conf('path.temp')
 		tempFilename = pathJoin(tempPath, strJoin(this.@userId,'-',System.tick()) )
-		file=getFileObject()
+		file=fileObject()
 		print("xxxx client download start xxxxx", tempFilename, localFilename, messageNode, max_buffer_size)
 		if(file.open(tempFilename,'append')) {
 			file.append(data)
