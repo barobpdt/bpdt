@@ -567,30 +567,41 @@
 		}
 		return dc.textSize(text)
 	}
-	mdc(check) {
-		if(typeof(check,'node')) {
-			args(d, param)
-		} else if(typeof(check,'string')) {
-			args(id, param)
-			d=Cf.getObject('mdc',id) 
-			not(d) {
-				d=Cf.getObject('mdc',id, true)
-				d.id=id
-			}
+	renderWidget(param, widget, rect) {
+		d=null
+		if(typeof(param,'string')) {
+			d=object("renderWidget.$param")
+		} else typeof(param,'node')) {
+			d=param;
 		}
-		not(param) return d;
+		not(d) {
+			return print("@@위젯랜더 객체오류", param, widget)
+		}
+		if(typeof(widget,'widget')) {			
+			Baro.drawObject(d,widget,rect)
+		}
+		return d;
+	}
+	mdc(id, param) {
+		d=Cf.getObject('mdc',id) 
+		not(d) {
+			d=Cf.getObject('mdc',id, true)
+			d.id=id
+		}
+		not(param) return d;		
 		img=null
 		if(typeof(param,'string')) {
 			img=Cf.imageLoad(param)
 		} else if(typeof(param,'image')) {
 			img=param
 		} else if(typeof(param,'node')) {
-			img=param.var(image)
+			img=param.@img
 		} 
 		if(img) {
-			if( d.var(img)) {
+			if( d.@img) {
+				if(img==d.@img) return d;
+				d.@rect= null
 				d.destroy()
-				d.var(rect, null)
 			}
 			Baro.drawObject(d,img)
 			return d;
@@ -608,11 +619,11 @@
 		not( typeof(width,'num') && typeof(height,'num')) {
 			return print("메모리 DC생성 영역오류(폭:$width 높이:$height)", param);
 		}
-		if(d.var(rect)) {
-			d.var(rect).size().inject(w, h)
+		if(d.@rect) {
+			d.@rect.size().inject(w, h)
 			if( width.eq(w) && height.eq(h) ) {
 				return d;
-			} 
+			}
 			d.destroy()
 			d.var(rect, null)
 		} 

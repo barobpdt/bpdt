@@ -61,32 +61,33 @@ startMessageClient(userId, host, port) {
 			cmd.@firstCall=true
 			cmd.@jobStatus='ready'
 			cmd.@commandInfo.with(command, callbackFinish)
-			return pythonCommandStart(function(result,endCheck) {
+			pythonCommandStart(function(result,endCheck) {
 				if(endCheck) return;
 				cmd=this
 				cmd.@commandInfo.inject(command, callbackFinish)
 				if(cmd.@firstCall && command ) {
-					print(">> python command runCommand.py 시작: $result", command)
+					print(">> python command runCommand.py 실행결과: $result")
 					pythonCommand(command, callbackFinish)
 				}
 			})
+			return;
 		}
 		
 		callback = function() {
 			cmd=this
 			result=""
 			print("pythonCommand 현재명령 작업시작 >> ${getLine(cmd.@currentCommand)}")
-			while(n=0,50) {
+			not(cmd.@maxWaitCount) cmd.@maxWaitCount=512
+			while(n=0,maxCount) {
 				if(cmd.@jobStatus.eq('finish')) {
-					print("@@ python command 실행중 오류가 발생했습니다 status:${cmd.@jobStatus}")
+					print("@@ python command 실행이 종료되었거나 오류가 발생했습니다 status:${cmd.@jobStatus}")
 					return;
 				}
-				if(cmd.@firstCall) {
-					cmd.@firstCall=false
+				if(cmd.@firstCall) {					
 					System.sleep(500)
 					result=cmd.@logTail.timeout()
-					not(result) continue;
-					print("xxxxxxxxx first call xxxxxxxx", cmd.@commandInfo)
+					not(result) continue;					
+					print("xxxxxxxxx first call xxxxxxxx", result, cmd.@commandInfo)
 					cmd.@commandInfo.inject(command)
 					cmd.@commandInfo.reuse()
 					if( command ) {
@@ -95,9 +96,10 @@ startMessageClient(userId, host, port) {
 					} else {
 						return print("@@pythonCommand 현재명령 command 내용이 없습니다", cmd)
 					}
+					cmd.@firstCall=false
 					continue;
 				}
-				System.sleep(200)
+				System.sleep(250)
 				result=cmd.@logTail.timeout()
 				if(result) {
 					if(result.find('@#> execException:')) {

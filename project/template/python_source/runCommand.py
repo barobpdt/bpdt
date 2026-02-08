@@ -24,7 +24,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 from rembg import remove, new_session 
 from PIL import Image
 def remove_background(input_path, output_path): 
-	model_name = "isnet-general-use"  # 여기에 모델 이름을 넣자
+	model_name = "isnet-general-use"  # 모델이름
 	session = new_session(model_name)
 	input_image = Image.open(input_path)
 	output_image = remove(input_image, session=session)

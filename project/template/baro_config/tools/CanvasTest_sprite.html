@@ -42,7 +42,17 @@
 			outName="${folder}/${name}.png"
 			not(this.confirm("현재 이미지 배경을 제거하시겠습니까?","배경제거","파일명:$outName")) return;
 			System.wait(true)
+			cmd=Baro.process('pythonCommand')
+			cmd.@mdcSprite=this.@mdcSprite
 			pythonCommand("exec:remove_background('$this.@currentImageName','$outName')", function(result) {
+				print("배경제거 완료 결과:$result")
+				result.ref()
+				result.findPos('@#> rembg:')
+				rembgName=result.findPos('@#>').trim()
+				print("배경제거 이미지명: $rembgName", this.@mdcSprite, this.id)
+				if( this.@mdcSprite && rembgName) {
+					this.@mdcSprite.setImage(rembgName)
+				}
 				System.wait(false)
 			})
 		default:
