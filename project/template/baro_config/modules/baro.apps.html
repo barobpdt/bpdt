@@ -1,5 +1,21 @@
 <script note="앱공통 유틸리티 함수">
+startMessageServer(port) {
+	not(port) port=8192
+	server=object('baro.server') addModule(server,'message_server')
+	server.start(port)
+	return server;
+}
+
+startMessageClient(userId, host, port) {
+	not(userId) userId="guest_${System.tick()}"
+	not(host) host='localhost'
+	not(port) port=8192
+	client=object("baro.client_$userId") addModule(client,'message_client',userId)
+	client.setConnectInfo(host, port)
+	return client;
+}
 </script>
+
 <script note="파이션 유틸리티 함수">
 	pythonCommandError(cmd, &err) {
 		if(err.start('@#> execException:',true)) {
@@ -31,7 +47,7 @@
 		addCmdJob(cmd, line, callback)
 	}
 	
-	pythonCommand(command, callback) {
+	pythonCommand(command, callbackFinish) {
 		not(command) return print("@@pythonCommand 명령라인이 없습니다")
 		print(">> parseCommand 시작:$command")
 		cmd=Baro.process('pythonCommand')
@@ -42,40 +58,75 @@
 		cb=cmd.@jobStatus.eq('finish')
 		print(">> ", ca, cb)
 		if( ca || cb ) {
+			cmd.@firstCall=true
 			cmd.@jobStatus='ready'
-			cmd.@commandInfo.with(command, callback)
+			cmd.@commandInfo.with(command, callbackFinish)
 			return pythonCommandStart(function(result,endCheck) {
 				if(endCheck) return;
-				this.@commandInfo.inject(command, callback)
-				print(">> python command runCommand.py 시작: $result", command)
-				pythonCommand(command, callback)
+				cmd=this
+				cmd.@commandInfo.inject(command, callbackFinish)
+				if(cmd.@firstCall && command ) {
+					print(">> python command runCommand.py 시작: $result", command)
+					pythonCommand(command, callbackFinish)
+				}
 			})
 		}
 		
-		not( typeof(callback,'func')) callback = function() {
+		callback = function() {
 			cmd=this
 			result=""
 			print("pythonCommand 현재명령 작업시작 >> ${getLine(cmd.@currentCommand)}")
 			while(n=0,50) {
-				System.sleep(200)				
+				if(cmd.@jobStatus.eq('finish')) {
+					print("@@ python command 실행중 오류가 발생했습니다 status:${cmd.@jobStatus}")
+					return;
+				}
+				if(cmd.@firstCall) {
+					cmd.@firstCall=false
+					System.sleep(500)
+					result=cmd.@logTail.timeout()
+					not(result) continue;
+					print("xxxxxxxxx first call xxxxxxxx", cmd.@commandInfo)
+					cmd.@commandInfo.inject(command)
+					cmd.@commandInfo.reuse()
+					if( command ) {
+						cmd.@logAppend.append("@#>$command")
+						if(command.start('quit:')) return;
+					} else {
+						return print("@@pythonCommand 현재명령 command 내용이 없습니다", cmd)
+					}
+					continue;
+				}
+				System.sleep(200)
 				result=cmd.@logTail.timeout()
 				if(result) {
 					if(result.find('@#> execException:')) {
-						return pythonCommandError(cmd, result);
+						pythonCommandError(cmd, result);
 					}
-					print(">>pythonCommand 실행결과:$result", n)
+					if(cmd.@callbackFinish) {
+						cmd.@callbackFinish(result)
+					} else {
+						print(">>pythonCommand 실행결과:$result", n)
+					}
 					break;
 				}
 			}
 			cmd.@currentCommand=''
 			not(result) {
-				print(">>pythonCommand 실행결과가 없습니다", n)
+				if(cmd.@callbackFinish) {
+					cmd.@callbackFinish(result)
+				} else {
+					print(">>pythonCommand 실행결과가 없습니다", n)
+				}
 			}
 		};
 		cmd.@callbackWorker = callback
+		cmd.@callbackFinish = callbackFinish
 		cmd.@currentCommand=command
-		cmd.@logTail.timeout()
-		cmd.@logAppend.append("@#>$command")
+		not(cmd.@firstCall) {
+			cmd.@logTail.timeout()
+			cmd.@logAppend.append("@#>$command")
+		}
 		// cmd.@commandList.add(command)
 		// print("python command size:", cmd.@commandList.size())
 		addUserWorker('pythonCommand', cmd )

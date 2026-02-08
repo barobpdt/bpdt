@@ -7,61 +7,65 @@
 		@max_buffer_size = 8192
 		worker.start(this, this.clientProc, true, 100)
 		this.addNode('@messageNode')
-		this.with(@userId, @status:'first')
+		this.@status='first'
+		this.@userId=userId
 	}
 	setConnectInfo(host,port) {
 		if(socket.isConnect()) {
-			return print("@@message_client 소켓이 이미 연결중입니다")
+			return print("@@message_client::setConnectInfo 연결정보 설정 오류 소켓이 이미 연결중입니다")
 		}
-		this.with(@status:'ready', @host, @port)
+		this.@status='ready'
+		this.@host=host
+		this.@port=port 
 	}
 	isConnect() {
 		return socket.isConnect()
 	}
 	closeSocket() {
 		print(">> close socket start==========",socket)
-		not(socket.isConnect()) {
+		not( socket.isConnect()) {
 			return print("@@message_client 소켓이 연결중이 아닙니다")
 		}
-		this.var(@status, 'close')
+		this.@status='close'
 		socket.close()
 	}
 	clientProc() {
-		this.inject(@status)
-		if( status.eq('ready','error') ) {	
-			this.inject(@host, @port)
-			if( host && port) {
-				this.with(@status: 'connecting')
-				print("======== connect ========", host, port, soeket_timeout)
-				if(socket.connect(host,port,soeket_timeout)) {
-					this.with(@status: 'login')
+		if( this.@status.eq('ready','error') ) {
+			if( this.@host && this.@port) {
+				this.@status='connecting'
+				if( socket.connect(this.@host, this.@port, soeket_timeout)) {
+					this.@status='login'
 				} else {
-					this.with(@status:'connect_error', @retryTick: System.tick())
+					this.@retryTick=System.tick()
+					this.@status='connect_error'
 				}
 			} else {
-				this.with(@status: 'connect_notset')
+				this.@status='connect_notset'
 			}
 			return;
 		} 
 		not( socket.isConnect() ) {
-			if(status.eq('first','close','connect_notset')) {
+			if(this.@status.eq('first','close','connect_notset')) {
 				return;
 			}
-			this.inject(@retryTick)
-			if( retryTick ) {
-				dist=System.tick() - retryTick
-				if(dist.gt(5000)) {
-					this.with(@status:'ready', @retryTick:0)
+			if( this.@retryTick ) {
+				dist=System.tick() - this.@retryTick
+				if( dist.gt(5000)) {
+					this.@retryTick=0
+					this.@status='ready'
 				}
 			}
 			return;
 		}
-		if( status.eq('login')) {
-			this.with(@status: 'login_check')
+		if( this.@status.eq('login')) {
+			this.@status='login_check'
 			return this.reqLogin();
 		}
 		if( socket.isRead(500)) {
-			data=socket.recvData()			
+			data=socket.recvData()
+			not(data) {
+				return this.closeSocket()
+			}
 			if( typeof(data,'bool')) {
 				return this.closeSocket()
 			}
@@ -78,7 +82,7 @@
 		print(">> client send req 결과: $result")
 		not(result) {
 			this.closeSocket()
-			this.with(@status:'error')
+			this.@status='error'
 		}
 	}
 	dispatchRecv(&data) {
@@ -90,7 +94,8 @@
 		not(lineCheck(data,'{')) {
 			return print("@@message_client dispatchRecv 프로토콜오류 line=$line")  
 		}
-		line=data.findPos("{",1,1)		
+		line=data.findPos("{",1,1)
+		print("client>> header:$line")
 		type=line.findPos(':').trim()
 		size=line.findPos(':').trim()
 		params=line.trim()
@@ -101,40 +106,23 @@
 	dispatchMessage(type, params, props, data, size) {
 		print(">> dispatch client ", type, params, props, size)
 		messageNode = this.getMessageNode(props)
-		if( this.checkMessage(type, messageNode) ) {
-			return;
-		}
 		switch(type) {
 		case res_login:			
 			messageNode.inject(userId, workType,token)
 			socket.with(@userId, @workType,@token)
 		case res_upload:
-			
+			messageNode.inject(localFilename)
+			print("$localFilename 파일 업로드에 성공했습니다")
 		case res_download:
 			this.downloadStart(data, messageNode, params)
 		default:
-			print("@@ client dispatchMessage $type 미정의")
+			print("@@ client dispatchMessage $type 미정의", messageNode)
 		}
 	}
 	getMessageNode(props) {
-		node = this.var(@messageNode).removeAll(true)
+		node = this.@messageNode.removeAll(true)
 		if(props) node.parseJson(props)
 		return node;
-	}
-	checkMessage(type, messageNode) {
-		messageNode.inject(resultType, message)		
-		switch(type) {
-		case res_upload:
-			messageNode.inject(localFilename)
-			print("$localFilename 파일 업로드에 성공했습니다")
-			return true;
-		default:
-			if( resultType=='error') {
-				print("@@ client checkMessage $type : $message", messageNode)
-				return true;
-			}
-		}
-		return false;
 	}
 	reqLogin() {
 		this.inject(@userId, @token)
@@ -180,9 +168,8 @@
 	}
 	downloadStart(data, messageNode, params) {
 		messageNode.inject(localFilename)
-		this.inject(@userId)
 		tempPath = conf('path.temp')
-		tempFilename = pathJoin(tempPath, strJoin(userId,'-',System.tick()) )
+		tempFilename = pathJoin(tempPath, strJoin(this.@userId,'-',System.tick()) )
 		file=getFileObject()
 		print("xxxx client download start xxxxx", tempFilename, localFilename, messageNode, max_buffer_size)
 		if(file.open(tempFilename,'append')) {

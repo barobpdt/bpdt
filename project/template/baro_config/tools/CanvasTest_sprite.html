@@ -34,6 +34,17 @@
 				this.@mdcSprite.setImage(fileName)
 			}			
 		case removeBackground:
+			not(this.@currentImageName) {
+				this.alert("선택된 파일이 없습니다")
+			}
+			fnm=getDownloadName(this.@currentImageName)
+			filePathInfo(fnm).inject(folder, null, name)
+			outName="${folder}/${name}.png"
+			not(this.confirm("현재 이미지 배경을 제거하시겠습니까?","배경제거","파일명:$outName")) return;
+			System.wait(true)
+			pythonCommand("exec:remove_background('$this.@currentImageName','$outName')", function(result) {
+				System.wait(false)
+			})
 		default:
 		}
 	}

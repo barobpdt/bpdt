@@ -9,20 +9,55 @@
 		server.startServer(port, this, this.serverProc)
 	}
 	closeClient(client) {
-		cf=client.config()
-		print('close client === ', client, cf)
+		config=client.config()
+		print('close client === ', client, config)
+		client.close()
+	}
+	dispatchMessage(client, type, params, props, data, size) {
+		print(">> server dispatch message ",type, prarams, props, size )
+		config=client.config()
+		messageNode = config.@messageNode.removeAll(true)
+		if( props) {
+			messageNode.parseJson(props)
+		}
+		switch(type) {
+		case login: 
+			this.resLogin(client, messageNode, params, config)
+		case uploadFile:
+			this.resUploadFile(client, messageNode, params, config)
+		case downloadFile:
+			this.resDownloadFile(client, messageNode, params, config)
+		default:
+			return print("@@dispatchMessage 타입:$type 미정의");
+		}
+	}
+	sendClient(client, type, params, props, data) {
+		not(props) {
+			tm=System.localtime()
+			props="{tm:$tm}"
+		}
+		size=data.size()
+		not( client.sendData("##>$type:$size:$params$props\r\n\r\n$data") ) {
+			client.close()
+		}
 	}
 	serverProc(client) { 
 		if( client.isCall()) {
 			print("@@ server 메시지 클라이언트 처리중")
 			return;
 		}
-		data=client.recvData();
+		data=client.recvData()
+		not(data) {
+			print(">> 사용자종료 serverProc data null")
+			this.closeClient(client)		
+		}
 		if( typeof(data,'bool') ) {
-			return;
+			print(">> 사용자종료 serverProc data==$data")
+			this.closeClient(client)
 		}
 		this.dispatchData(client,data)
 		not( client.isConnect()) {
+			print(">> 사용자 종료 serverProc client invalid")
 			this.closeClient(client)
 		}
 	}
@@ -36,49 +71,19 @@
 			return print("@@message_server dispatchData 프로토콜오류 line=$line")  
 		}
 		line=data.findPos("{",1,1)
+		print("server>> header==>$line")
 		type=line.findPos(':').trim()
 		size=line.findPos(':').trim()
 		params=line.trim()
 		props=data.match()
 		data.findPos("\r\n\r\n")
-		not(config.@messageNode) {
+		config=client.config()
+		not( config.@messageNode) {
 			config.addNode('@messageNode')
 		}
 		this.dispatchMessage(client, type, params, props, data, size.toInt() )
 	}
-	dispatchMessage(client, type, params, props, data, size) {
-		print(">> server dispatch message ",type, prarams, props, size )
-		config=client.config()
-		client.@messageNode.removeAll(true)
-		if( props) {
-			client.@messageNode.parseJson(props)
-		}
-		switch(type) {
-		case login: 
-			this.resLogin(client, messageNode, params, config)
-		case uploadFile:
-			this.resUploadFile(client, messageNode, params, config)
-		case downloadFile:
-			this.resDownloadFile(client, messageNode, params, config)
-		default:
-			return print("@@dispatchMessage 타입:$type 미정의");
-		}
-	}
-	setResultType(node, type, message) {
-		node.resultType=type
-		node.message = message
-		return node;
-	}
-	sendClient(client, type, params, props, data) {
-		not(props) {
-			tm=System.localtime()
-			props="{tm:$tm}"
-		}
-		size=data.size()
-		not( client.sendData("##>$type:$size:$params$props\r\n\r\n$data") ) {
-			client.close()
-		}
-	}
+	
 	clientList() {
 		return server.clientArray()
 	}
@@ -88,11 +93,13 @@
 			not(workType) workType='message'
 			token=strEncode(userId,'_',System.tick())
 			messageNode.token = token
-			this.setResultType(messageNode, "ok", "로그인성공")
+			messageNode.resultType='ok'
+			messageNode.message='로그인성공'
 			session.set("login.$token", client)
 			config.with(@userId,@workType,@token)
 		} else {
-			this.setResultType(messageNode, "error", "사용자 아이디가 없습니다")
+			messageNode.resultType='error'
+			messageNode.message='사용자 아이디가 없습니다'
 		}
 		this.sendClient(client, 'res_login', params, json(messageNode), '')
 	}
@@ -136,7 +143,8 @@
 			}
 			file.close()
 		} else {	
-			this.setResultType(messageNode, "error", "$remoteFilename 파일열기 오류")
+			messageNode.resultType="error"
+			messageNode.message="$remoteFilename 파일열기 오류"
 		}
 		this.sendClient(client, 'res_upload', params, json(messageNode), '')
 	}
@@ -146,7 +154,8 @@
 		file=getFileObject()
 		sendFlag=false
 		if(file.open(remoteFilename,'read')) {
-			this.setResultType(messageNode,"ok","$remoteFilename 파일 다운로드 시작")
+			messageNode.resultType="ok"
+			messageNode.message="$remoteFilename 파일 다운로드 시작"
 			sendFlag = true
 			sendSize = 0			
 			totalSize=file.size()
@@ -171,7 +180,8 @@
 				client.close()
 			}
 		} else {
-			this.setResultType(messageNode,"error","$remotFilePath 파일오픈 오류")
+			messageNode.resultType="error"
+			messageNode.message="$remotFilePath 파일오픈 오류"
 			print("@@ download error $remotFilePath", totalSize, sendSize)
 		}
 		file.close()

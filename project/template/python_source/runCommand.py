@@ -4,8 +4,6 @@ import os
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 import time
-from PIL import Image
-from transparent_background import Remover
 
 class CustomAction(argparse.Action):
 	def __call__(self, parser, namespace, values, option_string=None):
@@ -17,14 +15,36 @@ parser.add_argument('--command', action=CustomAction, nargs='+', required=True, 
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
 args = parser.parse_args()
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+'''
+#pip install "rembg[cpu]"  # for CPU
+#pip install "rembg[gpu]"  # for NVIDIA/CUDA GPU
+from rembg import remove, new_session 
+from PIL import Image
+def remove_background(input_path, output_path): 
+	model_name = "isnet-general-use"  # 여기에 모델 이름을 넣자
+	session = new_session(model_name)
+	input_image = Image.open(input_path)
+	output_image = remove(input_image, session=session)
+	output_image.save(output_path)
+	log(f"rembg:{output_path}")
+
+
+from PIL import Image
+from transparent_background import Remover
 remover=None
 def remove_background(input_path, output_path): 
+	global remover
 	if remover==None: 
-        remover = Remover()
-	input_image = Image.open(input_path)	
+		remover = Remover()
+	input_image = Image.open(input_path)
 	output_image = remover.process(input_image)
 	output_image.save(output_path)
-	log(f"rembg:{output_path}")	
+	log(f"rembg:{output_path}")
+'''
+
 
 choseong_list = [char for char in "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"]
 jungseong_list = [char for char in "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"]
