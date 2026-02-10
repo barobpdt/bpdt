@@ -40,14 +40,19 @@
 		}
 		size=data.size()
 		not( client.sendData("##>$type:$size:$params$props\r\n\r\n$data") ) {
-			client.close()
+			this.closeClient(client)
 		}
 	}
-	serverProc(client) { 
+	serverProc(client) {		
 		if( client.isCall()) {
 			print("@@ server 메시지 클라이언트 처리중")
 			return;
 		}
+		config=client.config()
+		if(config.@checkRun ) {
+			return;
+		}
+		config.@checkRun=true
 		data=client.recvData()
 		not(data) {
 			print(">> serverProc data null")
@@ -58,6 +63,7 @@
 			this.closeClient(client)
 		}
 		this.dispatchData(client,data)
+		config.@checkRun=false
 		not( client.isConnect()) {
 			print(">> 사용자 종료 serverProc client invalid")
 			this.closeClient(client)
@@ -113,27 +119,23 @@
 		tempFilename = pathJoin(tempPath, strJoin(config.@userId,'-',System.tick()) )
 		file=fileObject()
 		print("xxxx server uploadFile xxxxx", remoteFilename, messageNode, data.size())
+		buffer_size=4096*20
 		if(file.open(tempFilename,'append')) {
 			file.append(data)
 			appendSize = data.size()
 			errorCheck=false
 			while( size.gt(appendSize) ) {
-				remain=size - appendSize;
-				if( remain.gt(max_buffer_size)) remain=max_buffer_size
-				recv = client.recvData(remain)				
-				if(typeof(recv,'bool')) {
-					print("@@ server recv error : ", recv, size, appendSize, remain, config)
-					errorCheck=true
-					break;
-				}
+				recv = client.read(buffer_size)
 				recvSize=recv.size()
+				not(recvSize) return;
+				if(recvSize!=buffer_size) {
+					print(">> recv recvSize!=max_buffer_size", recvSize, buffer_size);
+					not(client.isRead(500)) break;
+				}
 				file.append(recv)
 				appendSize+=recvSize;
-				print(">> server upload recv 정보 : ", size, appendSize, recvSize )
-				if( remain.gt(recvSize) ) {
-					print("@@ server upload recv 불일치 : ", remain, recvSize )
-				}
 			}
+			print(">> server upload recv 정보 : ", size, appendSize, client.peek() )
 			if(errorCheck) {
 				client.flush()
 				print("@@ server upload중 오류가 발생했습니다", messageNode)
