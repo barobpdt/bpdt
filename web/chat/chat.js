@@ -6,7 +6,13 @@ function parseCommand(command, time) {
 		const type=command.substring(0,pos).trim()
 		if(type=='menu') {
 			const pageCode=command.substring(pos+1).trim()
-			ws.sendData('pageInfo', {pageCode, time})
+			const container = $('.'+pageCode+'-container')
+			if(container[0]) {
+				$('.pages-main').find('.page').each((n,el) => $(el).hide())
+				container.show()
+			} else {
+				ws.sendData('pageInfo', {pageCode, time})
+			}
 		}
 		else if(type=='cmd' || type=='command') {
 			const cmd=command.substring(pos+1).trim()

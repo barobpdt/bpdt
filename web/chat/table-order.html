@@ -21,8 +21,8 @@
                     <p>Table Ordering System</p>
                 </div>
             </div>
-			<div style="flex:1;margin-left:16px;" style="width:85px;">
-				<div class="btn-top" onclick="togglePage('chat')">
+			<div style="flex:1;margin-left:16px;">
+				<div class="btn-top" style="width:85px;" onclick="togglePage('chat')">
 					채봇
 				</div>
 			</div>
@@ -101,6 +101,34 @@
         </div>
     </div>
 
+	<!-- Cart Modal -->
+    <div class="modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
+        <div class="cart-modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeCartModal()">✕</button>
+            <div class="cart-modal-header">
+                <h2 class="cart-modal-title">🛒 장바구니</h2>
+                <p class="cart-modal-subtitle">주문하실 메뉴를 확인해주세요</p>
+            </div>
+            <div class="cart-modal-content" id="cartModalContent">
+                <!-- Cart items will be dynamically inserted here -->
+            </div>
+            <div class="cart-modal-footer">
+                <div class="cart-total">
+                    <span class="cart-total-label">총 금액</span>
+                    <span class="cart-total-price" id="cartModalTotal">₩0</span>
+                </div>
+                <div class="cart-actions">
+                    <button class="cart-clear-btn" onclick="clearCart()">
+                        전체 삭제
+                    </button>
+                    <button class="cart-order-btn" onclick="placeOrder()">
+                        주문하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
     <script src="table-order.js"></script>
 </div>
 <script>

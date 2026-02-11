@@ -29,7 +29,8 @@
 		this.@status='first'
 		this.@useTimer=true
 		this.@checkStart=false
-		this.webviewCheck()
+		// this.webviewCheck()
+		this.webviewStart()
 	}
 	updateCanvas() {
 		if(this.@status.eq('first','check','init')) return;
@@ -47,6 +48,7 @@
 	timerCallback() {
 		if(this.@status.eq('init')) {
 			result = this.@cmd.@logTail.timeout() not(result) return;
+			print(">> timer callback init result:$result")
 			if(result.find('start:webview') ) {
 				this.@status='start'
 				this.updateCanvas()				
@@ -55,11 +57,14 @@
 			return;
 		}
 		if(this.@status.eq('start')) {
+			if(this.@cmd.@jobStatus.eq('finish')) {
+				this.webviewStart()
+			}
 			not(this.@checkStart) {
 				this.@checkStart = true
 				this.webviewExec("setParent:${this.winId()}")
 			}
-			result = this.@cmd.@logTail.timeout() not(result) return;
+			result = this.@cmd.@logTail.timeout() not(result) return;						
 			if( result.find('bridge:pageActive')) {
 				return this.webviewExec('pageActive:')
 			}
@@ -110,7 +115,9 @@
 	}
 	webviewStart() {
 		this.@status='init'
-		cmd=this.@cmd not(checkTag(cmd,'process')) return;
+		this.@checkStart=false
+		cmd=this.@cmd 
+		not(checkTag(cmd,'process')) return print("@@webviewStart 오류 (webview command 객체 미정의)");
 		if( cmd.@jobStatus=='run' ) {
 			print("webview 프로세스가 이미 실행중입니다")
 			return;
@@ -135,7 +142,7 @@
 			cmd.addArray('@webviewCommandList')
 			addCmdJob(cmd)
 		}
-		cmd.webviewCommandList.reuse()
+		cmd.@webviewCommandList.reuse()
 		logFileName=logObj.get('logFileName')
 		outFileName=outObj.get('logFileName')
 		line=f["$py" "$sourcePath" --command="$logFileName" --out="$outFileName"]
@@ -185,6 +192,15 @@
 				print(">>@webview callback result: $n $result")
 				cmd.@canvas.setWebviewResult(result)
 				break;
+			}
+		}
+		
+		if( cmd.@webviewCommandList.size() ) {
+			worker=cmd.@worker
+			workerSize=worker.list().size()
+			not(workerSize) {
+				print(">> 웹커멘드 요청건수 불일치 남은 목록 삭제", cmd.@webviewCommandList)
+				cmd.@webviewCommandList.reuse()
 			}
 		}
 	}

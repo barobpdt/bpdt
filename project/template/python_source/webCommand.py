@@ -176,6 +176,8 @@ class WebWidget(QWidget):
 					sys.exit()
 				elif ftype=='echo':
 					logAppend(f"echo = {params}")
+				elif ftype=='start':
+					logAppend(f"webview:start")
 				elif ftype=='clearCache':
 					profile = self.webEngineView.page().profile()
 					# profile.setHttpCacheType(QWebEngineProfile.NoCache)
@@ -209,8 +211,10 @@ class WebWidget(QWidget):
 					self.setWindowFlags(Qt.SplashScreen)
 					self.show()
 				elif ftype=='geo':
-					self.setGeometry(int(params[0]), int(params[1]), int(params[2]), int(params[3]))
+					# self.setGeometry(int(params[0]), int(params[1]), int(params[2]), int(params[3]))
 					self.setWindowFlags(Qt.SplashScreen)
+					self.move(0,0)
+					self.resize(int(params[2]), int(params[3]))
 					self.show()
 				else:
 					logAppend(f"{ftype}:not defined")

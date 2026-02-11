@@ -6,6 +6,48 @@
 		root.set('@nodeVersion', line)
 	})
 }
+
+##> cors 설정
+res.setHeader('Access-Control-Allow-origin', '*');
+res.setHeader('Access-Control-Allow-Credentials', 'true'); // 쿠키 주고받기 허용
+res.end();
+
+// 모든 허용
+app.use(cors({
+    origin: true, // 출처 허용 옵션
+    credential: true // 사용자 인증이 필요한 리소스(쿠키 ..등) 접근
+}));
+
+// 특정주소 허용
+const whitelist = ["http://localhost:8080", "http://localhost:8081"];
+const corsOptions = {
+  origin: function (origin, callback) { 
+    if (whitelist.indexOf(origin) !== -1) { // 만일 whitelist 배열에 origin인자가 있을 경우
+      callback(null, true); // cors 허용
+    } else {
+      callback(new Error("Not Allowed Origin!")); // cors 비허용
+    }
+  },
+};
+app.use(cors(corsOptions)); 
+
+##> postgresql 설정
+C:\Program Files\PostgreSQL\x.x\bin
+
+psql postgres
+create database nodedb;
+
+##> 새로운 프로잭트 만들기
+mkdir nodejs-api
+cd nodejs-api
+npm init -y
+dotenv - npm i dotenv
+npm install express --save
+npm i nodemon
+npm i pg-pool pg
+
+ 
+
 /*
 @baro.findBindPort(5173, func(port) {
 	if(port) return print("front 데몬이 실행중입니다")

@@ -220,6 +220,7 @@ function createMenuItemElement(item) {
 function openModal(item) {
 	selectedItem = item;
 	modalQuantity = 1;
+	clog('openModal selectedItem=>',selectedItem)
 	
 	const modal = document.getElementById('modalOverlay');
 	const modalImage = document.getElementById('modalImage');
@@ -294,9 +295,9 @@ function decreaseQuantity() {
 // ===================================
 function addToCart() {
 	if (!selectedItem) return;
+	clog('addToCart ->', selectedItem)
 	
-	const existingItem = cart.find(item => item.id === selectedItem.id);
-	
+	const existingItem = cart.find(item => item.id === selectedItem.id);	
 	if (existingItem) {
 		existingItem.quantity += modalQuantity;
 	} else {
@@ -305,12 +306,12 @@ function addToCart() {
 			quantity: modalQuantity
 		});
 	}
-	
-	updateCartDisplay();
-	closeModal();
-	
 	// Show feedback
 	showNotification(`${selectedItem.name} ${modalQuantity}개가 장바구니에 추가되었습니다.`);
+	
+	updateCartDisplay();
+	// closeModal();
+	
 }
 
 function quickAddToCart(itemId) {
@@ -368,6 +369,16 @@ function viewCart() {
 	openCartModal();
 }
 
+// 주문하기
+function placeOrder() {
+	
+}
+// 전체삭제
+function clearCart() {
+	cart=[]
+	openCartModal()
+}
+// 장바구니 정보
 function openCartModal() {
 		const modal = document.getElementById('cartModalOverlay');
 		const content = document.getElementById('cartModalContent');
@@ -390,7 +401,7 @@ function openCartModal() {
 						const cartItem = document.createElement('div');
 						cartItem.className = 'cart-item';
 						cartItem.innerHTML = `
-				<img class="cart-item-image" src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/80?text=${encodeURIComponent(item.name)}'">
+				<img class="cart-item-image" src="${item.image}" alt="${item.name}">
 				<div class="cart-item-info">
 					<h4 class="cart-item-name">${item.name}</h4>
 					<p class="cart-item-price">₩${item.price.toLocaleString()}</p>

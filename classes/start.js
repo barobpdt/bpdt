@@ -975,7 +975,7 @@ fileDelete(path) {
 	}
 	return result;
 }
-fileMove(srcFile, destFile, overwrite, mode) {
+fileMove(srcFile, destFile, overwrite, mode, modifyDate) {
 	not(srcFile && destFile) {
 		return print("fileMove 파일 이동 오류 파일명 미정의", srcFile, destFile);
 	}
@@ -996,8 +996,14 @@ fileMove(srcFile, destFile, overwrite, mode) {
 		if( os.eq('windows') ) {
 			a=srcFile.replace("/","\\"), b=destFile.replace("/","\\")
 			command=f[move /Y "$a" "$b"]
+			cmd=Baro.process('common')
+			cmd.modifyDate=modifyDate
 			print(">> fileMove command:$command")
-			runCommand(command)
+			runCommand(command, function(a,b) { 
+				not(b) return;
+				if(this.modifyDate) Baro.file().timeStamp(destFile,this.modifyDate)
+				print("파일이동:$a") 
+			})
 		}
 		result = true
 	} else {
