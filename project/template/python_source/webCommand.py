@@ -164,9 +164,7 @@ class WebWidget(QWidget):
 				end=line.find(":", pos)
 				if end!=-1 :
 					ftype = line[0:end].strip()
-					val = line[end+1:]
-					params = [v.strip() for v in val.split(',')]
-					#params=map(str.strip, val.split(','))
+					params = line[end+1:]
 			# pos
 			# logAppend(f">> {ftype} {params}")
 			if params!=None :
@@ -174,6 +172,13 @@ class WebWidget(QWidget):
 					self.fp.close()
 					fpOut.close()
 					sys.exit()
+				elif ftype=='geo':
+					# self.setGeometry(int(params[0]), int(params[1]), int(params[2]), int(params[3]))
+					arr = [val.strip() for val in params.split(',')]
+					self.setWindowFlags(Qt.SplashScreen)
+					self.move(0,0)
+					self.resize(int(arr[2]), int(arr[3]))
+					self.show()
 				elif ftype=='echo':
 					logAppend(f"echo = {params}")
 				elif ftype=='start':
@@ -184,13 +189,13 @@ class WebWidget(QWidget):
 					profile.clearHttpCache()
 					profile.cookieStore().deleteAllCookies()
 					self.webEngineView.reload()
-					logAppend(f"echo = {params}")
+					logAppend(f"clearCache = {params}")
 				elif ftype=='pageActive':
 					if self.parent_hwnd != None:
 						win32gui.SetForegroundWindow(self.parent_hwnd)
 				elif ftype=='setParent':
 					# self.setWindowFlag(Qt.WindowStaysOnTopHint)
-					parent = int(params[0])
+					parent = int(params)
 					child_hwnd = self.winId()
 					win32gui.SetParent(child_hwnd, parent)
 					self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
@@ -210,17 +215,11 @@ class WebWidget(QWidget):
 				elif ftype=='splash':
 					self.setWindowFlags(Qt.SplashScreen)
 					self.show()
-				elif ftype=='geo':
-					# self.setGeometry(int(params[0]), int(params[1]), int(params[2]), int(params[3]))
-					self.setWindowFlags(Qt.SplashScreen)
-					self.move(0,0)
-					self.resize(int(params[2]), int(params[3]))
-					self.show()
 				else:
 					logAppend(f"{ftype}:not defined")
 			## if params
 			self.lastPos=fsize
-			logAppend(f"result:{ftype}<next>{self.nextCommand}")
+			logAppend(f"result:{ftype}")
 		# end if print(f"currentTime=={currentTime}")
 def main():
 	app = QApplication(sys.argv)

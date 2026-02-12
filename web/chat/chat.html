@@ -153,11 +153,11 @@
 				cf.bridge = channel.objects.bridge;
 			});
 		})
+		/*
 		$(document).on('click', e=>{
 			if(e.target.id=='message-input') return;
 			if(cf.bridge) cf.bridge.logAppend('pageActive');
 		})
-		/*
 		$(document).on('mousemove', e=> {
 			if(cf.dragMode ) {
 				ws.sendData('pageMove','',{sx:e.screenX,sy:e.screenY, move:true})

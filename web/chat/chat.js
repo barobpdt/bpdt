@@ -1,21 +1,25 @@
 // 웹소켓 설정
 let ws=null
 function parseCommand(command, time) {
-	const pos = command.indexOf(':')	
+	const pos = command.indexOf(':')
+	alert('parse command '+command)
 	if(pos>0) {
 		const type=command.substring(0,pos).trim()
 		if(type=='menu') {
 			const pageCode=command.substring(pos+1).trim()
 			const container = $('.'+pageCode+'-container')
-			if(container[0]) {
+			if( container[0]) {
 				$('.pages-main').find('.page').each((n,el) => $(el).hide())
 				container.show()
 			} else {
 				ws.sendData('pageInfo', {pageCode, time})
 			}
 		}
-		else if(type=='cmd' || type=='command') {
-			const cmd=command.substring(pos+1).trim()
+		else if(type=='fullscreen'||type=='maximized') {
+			if(cf.bridge) cf.bridge.logAppend(type)
+		}
+		else if(type=='cmd') {
+			if(cf.bridge) cf.bridge.logAppend(command)
 		}
 		else {
 			chatMessageAdd(type+"은 미정의 커멘드입니다")

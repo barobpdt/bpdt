@@ -34,9 +34,7 @@
 	}
 	updateCanvas() {
 		if(this.@status.eq('first','check','init')) return;
-		rect = toRect(this.geo())		
-		rect.inject(x,y,w,h)
-		this.webviewExec("geo:$x,$y,$w,$h,0")		
+		this.@webviewResizeTick=System.tick()
 	} 
 	drawBackground(dc) {
 		bgColor=this.@baseColor.lightColor(100)
@@ -57,20 +55,37 @@
 			return;
 		}
 		if(this.@status.eq('start')) {
+			if(this.@webviewResizeTick) {
+				dist=System.tick() - this.@webviewResizeTick
+				if(dist>800) {
+					rect = toRect(this.geo())		
+					rect.inject(x,y,w,h)
+					this.webviewExec("geo:$x,$y,$w,$h,0")
+					this.@webviewResizeTick=0
+				}
+				return;
+			}
 			if(this.@cmd.@jobStatus.eq('finish')) {
-				this.webviewStart()
+				return this.webviewStart()
 			}
 			not(this.@checkStart) {
 				this.@checkStart = true
 				this.webviewExec("setParent:${this.winId()}")
 			}
-			result = this.@cmd.@logTail.timeout() not(result) return;						
-			if( result.find('bridge:pageActive')) {
-				return this.webviewExec('pageActive:')
+			result = this.@cmd.@logTail.timeout() not(result) return;
+			print(">> webview log result:$result")
+			if( result.find('bridge:') ) {
+				page=page('main')
+				if( result.find('bridge:pageActive')) {
+					return this.webviewExec('pageActive:')
+				}
+				if( result.find('bridge:fullscreen')) {
+					return page.pageState('fullscreen')
+				}
+				if( result.find('bridge:maximized')) {
+					return page.pageState('maximized')
+				}
 			}
-			if( result.find('app:quit')) {
-				
-			}			
 		}
 	}
 	webviewCheck() {
@@ -99,6 +114,7 @@
 		}
 		pythonInstallStart('PyQt5')
 		pythonInstallStart('PyQtWebEngine')
+		pythonInstallStart('pywin32')
 		this.@cmdInstall=pythonInstallStart()
 		addUserWorker('user',this,function() {
 			for(n=0,100 ) {
