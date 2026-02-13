@@ -338,7 +338,7 @@
 			form[!rowInfo 0]=this.getFormRowInfo(form.formItems)
 			harr=hbox(rect, form[rowInfo 0], form.@formRowRects.reuse())
 			while(cur, form.formItems, col) {
-				setCurrentRect(harr[col])
+				setCurrentRect(cur,harr[col])
 			}
 		}		
 		setCurrentRect = function(cur, rect) {			

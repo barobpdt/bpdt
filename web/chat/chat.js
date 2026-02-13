@@ -15,18 +15,25 @@ function parseCommand(command, time) {
 				ws.sendData('pageInfo', {pageCode, time})
 			}
 		}
-		else if(type=='fullscreen'||type=='maximized') {
-			if(cf.bridge) cf.bridge.logAppend(type)
-		}
 		else if(type=='cmd') {
 			if(cf.bridge) cf.bridge.logAppend(command)
 		}
 		else {
 			chatMessageAdd(type+"은 미정의 커멘드입니다")
 		}
-	} else if(command=='list') {
+	}
+	else if(command=='clickActive') {
+		$(document).on('click', e=>{
+			if(e.target.id=='message-input') return;
+			if(cf.bridge) cf.bridge.logAppend('pageActive');
+		})
+	else if(command=='fullscreen'|| command=='maximized') {
+		if(cf.bridge) cf.bridge.logAppend(command)
+	} 
+	else if(command=='list') {
 		ws.sendData('cmdList', {pageCode, time})
-	} else {
+	} 
+	else {
 		chatMessageAdd("메시지 형식오류 <br>커멘드 리스트 보기 => list<br>페이지 이동 => menu:test <br>체봇기능은 구현중입니다")
 	}
 }

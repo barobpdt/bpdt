@@ -1382,7 +1382,11 @@ parseSource(&s, base, serviceNode) {
 		sp=s.cur()
 		tag = s.incr().move() 
 		s.pos(sp)
-		ss=s.match("<$tag","</$tag>")
+		if( tag.eq('script') ) {
+			ss=s.match("<script","</script>", 1)
+		} else {			
+			ss=s.match("<$tag","</$tag>")
+		}			
 		if(typeof(ss,'bool')) {
 			line=getLine(s)
 			return print("parseSource 함수오류 ($tag 태그 매칭오류)", line)

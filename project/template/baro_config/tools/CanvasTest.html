@@ -1,45 +1,104 @@
-<page id="main" margin="0" initPage() {	
+<page id="main1" margin="0" initPage() {	
 	this.@canvas = widget('c')
 }>
-	<canvas id="c" module="canvas_form" initWidget() {
-		this.@video = createWidget('video','video',this,'',true)
-	}
-	updateCanvas() {
-		vbox(this.@rectCanvas, '30,*,40').inject(rcTop, rcBody, rcBottom)
-		not(this.@form) {
-			this.@form = initForm(conf('form.test_video'))
-		}
-		this.@video.move(rcBody)
-		this.@rcTitle=rcTop
-		this.updateForm(this.@form, rcBottom)
-	} 
-	drawBackground(dc) {
-		bgColor=this.@baseColor.lightColor(100)
-		textColor=this.@baseColor.darkColor(100)
-		dc.save().font("size:12, color:${bgColor.lightColor(180)}, weight:bold")
-		dc.fill(this.@rcTitle, bgColor)
-		dc.text(this.@rcTitle.incrX(10).move(1,1), '비디오 플래이어 테스트')
-		dc.font("color:$textColor")
-		dc.text(this.@rcTitle.incrX(10), '비디오 플래이어 테스트')
-		dc.restore()
+	<canvas id="c" module="canvas_form, canvas_grid_teset" initWidget() {
+		@grid=createWidget('grid','grid_search', this, 'grid_impl', true)
+		@db=Baro.db('pages-kiosk')
+		not(db.open()) db.open('C:/bpdt/data/pages-kiosk.db')
 	}>
+	
 </page>
 
 <script eval>
-	p=page('main')
+	p=page('CanvasTest:main1')
 	p.size(800,600)
 	p.open()
+	c=p.@canvas 
+	g.model(#[
+		func_type:함수유형 		#90,
+		module_nm:모듈명			#200
+		func_nm: 함수명				#200
+		func_param: 매개변수		#150
+		source_path:소스 경로	#*
+		func_src: 소스정보 			#120
+	])
 	print("CanvasTest eval>>")
 	
 </script>
 
-<script module="canvas_stack_main">
+<script module="canvas_grid_teset">	
+	updateCanvas() {
+		vbox(this.@rectCanvas, '30,*,40').inject(rcTop, rcBody, rcBottom)
+		not(this.@form) {
+			this.@form = initForm(conf('form.test_grid_search'))
+		}
+		grid.move(rcBody.incr(4))
+		this.@rcTop=rcTop
+		this.@rcBottom=rcBottom
+		this.updateForm(this.@form, rcBottom)
+	} 
+	timerCallback() {
+		
+	}
+	drawBackground(dc) {
+		bgColor=this.@baseColor.lightColor(100)
+		title='그리드 조회 테스트'
+		textColor=this.@baseColor.darkColor(100)
+		dc.save().font("size:12, color:${bgColor.lightColor(180)}, weight:bold")
+		dc.fill(this.@rcTop, bgColor)
+		dc.text(this.@rcTop.incrX(10).move(1,1), title) dc.font("color:$textColor")
+		dc.text(this.@rcTop.incrX(10), title)
+		fillGradient(dc, this.@rcBottom, bgColor, bgcolor.lightColor(120))
+		dc.restore()
+	}
+</script>
+<script module="video_imple">
+	onMessage(line) {
+		not(line) return;
+		// print("onMessage =>$line")
+		line.ref()
+		type=line.move()
+		if(line.ch('=')) {
+			val=line.incr().trim()
+			switch(type) {
+			case ANS_LENGTH:
+				this.@streamLength=val.toDouble()
+			case ANS_TIME_POSITION:
+				this.@currentPos=val.toDouble()
+			case ANS_PERCENT_POSITION:
+				this.@currentPercent=val.toInt()
+			default:
+			}
+		}		
+	}
+	onError(err) {
+		print("@@ video player error: $err")
+	}
+	onStateChange(type) {
+		print("state change ${this.id} $type")
+		switch(type) {
+		case play:
+			not(this.is('visible')) {
+				this.command('seek 0 1')
+				this.pause()
+			}
+		case notStarted:
+			canvas=this.parentWidget()
+			canvas.togglePlayer()
+		default:
+		} 
+	}
+	onDraw(dc) {
+		dc.fill('#aaa')
+	}
+
 </script>
 
 
-<conf name="form.test_video">
+<conf name="form.test_grid_search">
 	formItems: [
-		{tag:btn, code:play, text:플래이 시작}
+		{tag:input, code:searchText, width:120}
+		{tag:btn, code:search, text:선택}
 		{tag:space}
 	]
 </conf>

@@ -12,7 +12,6 @@
 	cmd=p.@canvas.@cmd
 	c=p.@canvas
 	c.webviewExec("quit:")
-	c.webviewExec("quit:")
 	c.webviewStart()
 	c.webviewExec("setParent:${p.winId()}")
 	c.webviewExec("show:")
@@ -29,6 +28,10 @@
 		this.@status='first'
 		this.@useTimer=true
 		this.@checkStart=false
+		not( object("baro.was").@was ) {
+			initWas()
+			initWebsocket()
+		}
 		// this.webviewCheck()
 		this.webviewStart()
 	}
