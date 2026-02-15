@@ -98,21 +98,16 @@
 </script>
 
 <script module="grid">	
-	drawState(dc, node, state, index, field) {
+	drawState(dc, node, column, state, over) {
 		last=this.columnCount()-1;
 		rc=dc.rect();
-		clr=this.var(bgColor)
-		not(clr) clr=color("#c96");
+		clr=this.@bgColor not(clr) clr=color("#c96");
 		ty=when(last.eq(idx), 24, 234);
-		if( state & STYLE.Selected ) {
-			if(field.eq('chk','status')) {
-				dc.rectLine(rc,3, clr.lightColor(120), 1 );
-			} else {
-				dc.fill(rc, clr.darkColor(150) );
-				dc.rectLine(rc,3, clr.lightColor(120), 1 );
-				dc.pen(clr.lightColor(220));
-			}
-		} else if( state & STYLE.MouseOver ) {
+		if( state & STYLE.Selected ) { 
+			dc.fill(rc, clr.darkColor(150) );
+			dc.rectLine(rc,3, clr.lightColor(120), 1 );
+			dc.pen(clr.lightColor(220));
+		} else if( over ) {
 			dc.fill(rc,'#def' );
 			dc.pen(clr.darkColor(150));
 			dc.rectLine(rc,ty);

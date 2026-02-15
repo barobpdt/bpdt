@@ -55,18 +55,18 @@
 			}
 			source_path=userFuncInfo.get(name)
 			cur=root.addNode().with(func_type, module_nm, func_nm, source_path)
-			src=root.get(source_path)
-			not(src) {			
-				src=@dev.funcSourceFind( @dev.funcSource(source_path), func_nm, module_nm)
-				root.set(source_path, src)
+			srcFile=root.get(source_path)
+			not(srcFile) {			
+				srcFile=@dev.funcSource(source_path)
+				root.set(source_path, srcFile)
 			}
+			src=@dev.funcSourceFind(srcFile, func_nm, module_nm)
 			if(src) {
 				cur.func_src=src
 				src.ref()
 				src.findPos('(',0,1)
 				cur.func_param=src.match().trim()
 			}
-			if(n==80) break;
 		}
 		return root;
 	}
@@ -85,7 +85,6 @@
 		return fileRead(pathSrc)
 	}
 	@dev.funcSourceFind(&src, funcName, module) {
-		print("@dev.funcSourceFind>> ", funcName, module)
 		sp=0,ep=0
 		if(module) {			
 			nm="@${module}.${funcName}"
@@ -130,7 +129,6 @@
 				}
 				if(ep) break;
 			}
-			print(">> ========== module:$module ", sp, ep)
 			if(sp<ep) {
 				return src.value(sp,ep,true);
 			}

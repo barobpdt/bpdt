@@ -378,10 +378,10 @@
 	}
 	changeWidgetValue(widget) {
 		cur=widget.@targetNode
-		cur.@widgetValue = widget.value()
-		cur.@changeValueTick= System.tick()
-		print(">> change widget value", widget, cur)
 		if(typeof(this.changeValueCallback,'func')) {
+			cur.@widgetValue = widget.value()
+			cur.@changeValueTick= System.tick()
+			// print(">> change widget value", widget, cur)
 			this.changeValueCallback(cur)
 		}
 	}
@@ -450,7 +450,14 @@
 		roundBtn(dc, rect, text, null, btnPenColor, btnBgStart, btnBgEnd)
 	}
 	drawCheckbox(dc,rc,cur) {
-		cur.inject( code, text, disable, hide )
+		rcIcon=rc.width(40).center(28,28)
+		if( cur.checked )
+			dc.image(rcIcon, 'icons:check1');
+		else
+			drawCheckBlank(dc, rcIcon)
+		if(cur.text) {
+			dc.text(rc.incrX(36), cur.text)
+		}
 	}
 	drawRadiobox(dc,rc,cur) {
 		cur.inject( code, text, disable, hide )
@@ -476,6 +483,13 @@
 		cur=this.@currentDownNode not(cur) return false;
 		checkContain=false
 		if( cur.rect.contains(pos)) {
+			if(cur.tag.eq('check')) {
+				cur.checked=~(cur.checked)
+				if(typeof(this.changeValueCallback,'func')) {
+					cur.@changeValueTick= System.tick()
+					this.changeValueCallback(cur)
+				}
+			}
 			if(typeof(this.clickBtn,'func')) {
 				this.clickBtn(cur)
 			} else {
@@ -519,7 +533,6 @@
 					tw+=10
 				}
 				else if(tag.eq('check')) {
-					cur.@checkIcon = 'icons:check1'
 					tw+=40
 				}	
 				else if(image) {
@@ -718,6 +731,35 @@
 		dc.pen(textBg).text(rcText.move(1,1), text, 'center')
 		dc.pen(textColor).text(rcText, text, 'center')		
 		dc.restore()
+	}
+	drawBtn(dc, rc, text, state ) {
+		if(state=='disable') {
+			textColor='#eee'
+			textBg='#aaa'
+			btnBgStart=color('#aaa')
+			btnBgEnd=btnBgStart.darkColor(50)
+		} else {
+			if(state='active') rc.incr(-2)
+			textColor=color('#fff')
+			textBg='#333'
+			btnBgStart=color('#AFAFAF')
+			btnBgEnd=btnBgStart.darkColor(100)
+		}
+		dc.save().mode()
+		path=[]
+		path.add('round',rc, 8, 8)
+		rc.lt().inject(sx,sy)
+		rc.lb().inject(ex,ey)
+		dc.drawPath(path, c1.darkColor(50), true,'gradient',sx,sy,ex,ey,0,btnBgStart,1,btnBgEnd)
+		rcText=rc
+		dc.pen(textBg).text(rcText.move(1,1), text, 'center')
+		dc.pen(textColor).text(rcText, text, 'center')		
+		dc.restore()
+	}
+	drawCheckBlank(dc, rc) {
+		rcIcon=rc.incr(4)
+		dc.fill(rcIcon,'#fff')
+		dc.rectLine(rcIcon, 0, '#778', 2)
 	}
 	fillGradient(dc, rc, c1, c2) {
 		rc.lt().inject(sx,sy)
