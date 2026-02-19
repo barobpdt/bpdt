@@ -23,8 +23,11 @@
 		not(this.@form) {
 			this.@form = initForm(conf('form.test_icons_search'))
 		}
-		view=page('main').member(view)
+		view=page('main').@view
 		view.move(rcBody.incr(2))
+		not(view.is('visible')) {
+			view.show()
+		}
 		this.@rcTop=rcTop
 		this.@rcBottom=rcBottom
 		this.updateForm(this.@form, rcBottom)
