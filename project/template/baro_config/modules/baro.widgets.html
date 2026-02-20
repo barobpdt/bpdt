@@ -2,6 +2,36 @@
 	initWidgetConfig() {
 		print("공통 위젯 설정초기화 시작")
 	}
+	drawCombo(dc, index, state, data) {
+		rc=dc.rect();
+		select=false;
+		if( state>1 ) {
+			select=state & 0x8000;
+			over=sate& 0x2000;
+		} else {
+			over=state;
+		}
+		if( index.eq(0) && combo.@title ) {
+			if( select ) {
+				dc.fill(rc,'#cadeef');
+			} else if( over ) {
+				dc.fill(rc,'#e0e0e0');
+			}
+			dc.font(10).text(rc.incrX(4), combo.@title);
+			dc.rectLine(rc,4,'#606060');
+			return;
+		}
+		if( combo.@title ) {
+			index-=1;
+		}
+		if( select ) {
+			draw.fill(rc,'#cadeef')
+			draw.rectLine(rc,4,'#a0a090')
+		} else if( over ) {
+			draw.fill(rc,'#e0e0e0')
+		}
+		return when(data, data.child(index));
+	}
 </script>
 
 <script module="page">

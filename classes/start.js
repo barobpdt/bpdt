@@ -353,7 +353,20 @@ fileObject(id) {
 	}
 	return Baro.file(id)
 }
-
+checkVar(name) {
+	not(typeof(name,'string')) return;
+	fn=Cf.funcNode('parent')
+	val=fn.get(name)
+	if(isValid(val)) return this.var("$name", val);
+	fn.set(name, this.var("$name"))
+}
+checkValid(s) {
+	not(s) return null;
+	if(typeof(s,'array') ) {
+		not(s.size()) return null;
+	}
+	return s;
+}
 
 isValid(s,idx) {
 	not(s) return false;

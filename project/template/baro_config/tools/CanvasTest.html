@@ -1,6 +1,7 @@
 <page id="main" margin="0" initPage() {	
 	@canvas = widget('c')
 	@view=page('icons_search_view')
+	@itemSearchCanvas=view.@canvas
 	view.parentWidget(this)
 }>
 	<canvas id="c" module="canvas_form, canvas_icons_search">
@@ -12,28 +13,56 @@
 	p=page('CanvasTest:main')
 	p.size(800,600)
 	p.open()
-	c=p.member(canvas)
-	print("CanvasTest eval>>")
+	c=p.@canvas
+	print("CanvasTest eval>>", c)
 	
 </script>
 
-<script module="canvas_icons_search">	
+<script module="canvas_icons_search">
+	init() {
+		this.@iconSearchCanvas=null
+		this.@useTimer=true
+	}
 	updateCanvas() {
 		vbox(this.@rectCanvas, '30,*,40').inject(rcTop, rcBody, rcBottom)
 		not(this.@form) {
 			this.@form = initForm(conf('form.test_icons_search'))
 		}
-		view=page('main').@view
+		view=page().@view
 		view.move(rcBody.incr(2))
 		not(view.is('visible')) {
 			view.show()
 		}
+		not(this.@iconSearchCanvas) {
+			this.@iconSearchCanvas=view.@canvas
+			combo=findField(this.@form,'code','iconTypes').@widget
+			this.@iconSearchCanvas.setMainCanvas(this)			
+			this.@iconSearchCanvas.setIconTypes(combo)			
+		}
 		this.@rcTop=rcTop
 		this.@rcBottom=rcBottom
 		this.updateForm(this.@form, rcBottom)
-	} 
+		this.update()
+	}
 	timerCallback() {
-		
+		cur=this.@currentChangeItem
+		if( cur ) {
+			if( cur.code=='searchText') {
+				filter=cur.@widget.value()
+				this.@iconSearchCanvas.setFilter(filter, true)
+			}
+			this.@currentChangeItem=null
+		}
+	}
+	changeValueCallback(cur) {
+		this.@currentChangeItem=cur
+	}
+	clickBtn(cur) {
+		switch(cur.code) {
+		case search:
+		case deleteIcon:
+		default:
+		}
 	}
 	drawBackground(dc) {
 		bgColor=this.@baseColor.lightColor(100)
@@ -60,29 +89,80 @@
 	}
 	onResize() {
 		this.size().inject(w,h)
-		canvas.updateSize(w-14)
+		canvas.updateSize(w-28, h)
 	}
 </script>
 
 <script module="icons_search_canvas">
 	init() {
 		@db=Baro.db('icons')
-		@data=object('baro.icons')
-		not(data.childCount()) {
-			db.fetchAll("select type, id, prop, data from icons", data)
-		}
+		this.addNode('@dataIcons')
+		this.addArray('@dataFilter')
+		this.addArray('@selectItems')
 		this.@itemSize=pt(50,80)
 		this.@itemGap=5
 		this.@itemMargin=4
+		this.@maxItemCount=0
+		this.setData()
+		this.timer(500)
 	}
-	updateSize(viewWidth) {
+	setData(type) {
+		if(type) type=" and type='$type'"
+		data=this.@dataIcons.removeAll(true)
+		db.fetchAll("select type, id, prop, data from icons where 1=1 $type", data)
+		this.setFilter()
+	}
+	setFilter(filterText, checkUpdate) {
+		a=this.@dataFilter.reuse()
+		while(cur, this.@dataIcons ) {
+			if(filterText) {
+				cur.inject(type, id)
+				ok=type.find(filterText,2) || id.find(filterText,2)
+				if(ok) a.add(cur)
+			} else {
+				a.add(cur)
+			}
+		}
+		if(checkUpdate) {
+			this.updateSize()
+		}
+		return a;
+	}
+	onTimer() {
+		if( this.@topDrawTick) {
+			dist=System.tick()-this.@topDrawTick
+			if(dist>1000) {
+				this.@topDrawTick=0
+				this.update()
+			}
+			return;
+		}
+	}
+	drawItem(dc, item) {
+		item.inject(rect, type, id)
+		bgColor=color('#aaa')
+		if( item==this.@mouseDownItem) {
+			fillGradient(dc, rect, bgColor.lightColor(100), bgColor)
+		} else if( this.@selectItems.find(item) ) {
+			dc.fill(rect, '#eaa')
+		}
+		dc.rectLine(rect,0,bgColor)
+		vbox(rect,'6,2,2').inject(rcIcon, rcText1, rcText2)
+		dc.image(rcIcon.center(30,30), "${type}:${id}")
+		dc.text(rcText1,type,'center') 
+		dc.text(rcText2,id,'center')
+	}
+	updateSize(viewWidth, viewHeight) {
+		checkVar('viewWidth')
+		checkVar('viewHeight')
 		this.@itemSize.inject(iw,ih)
-		size=data.childCount()
+		data=this.@dataFilter
+		size=data.size()
 		gap=this.@itemGap
 		margin=this.@itemMargin
 		cw=$[viewWidth-margin*2]		
-		colcnt=$[cw/(iw+gap)]
-		colcnt=colcnt.toInt()
+		columnCount=$[cw/(iw+gap)]
+		columnCount=columnCount.toInt()
 		x=margin, y=margin
 		idx=0, last=size-1
 		while(cur, data, n) {
@@ -90,29 +170,145 @@
 			x+=iw+gap
 			idx++
 			if( n==last ) break;
-			if( idx==colcnt ) {
+			if( idx==columnCount ) {
 				idx=0
 				x=margin
 				y+=ih+gap
 			}
 		}
 		y+=ih+gap
-		this.size(w,y)
+		this.@maxItemCount=0
+		this.@columnCount=columnCount
+		this.size(viewWidth,y)
 	}
 	onDraw(dc, rc) {
-		print("draw start", rc)
-		while(cur, data, n) {
-			cur.inject(rect, type, id)
-			dc.rectLine(rect, 0, '#f00')
-			dc.text(rect, "${type}.${id}", 'center')
+		size=this.@dataFilter.size()
+		rc.inject(x,y,w,h)
+		rcDraw=rc(x,y,w,h+100)
+		startIndex=0, endIndex=0, bstart=false
+		for(n=0,size) {			
+			rect=this.@dataFilter.$n.rect
+			a=rect.lt(),b=rect.lb()
+			if(bstart) {
+				if(rcDraw.contains(b)) {
+					endIndex=n
+				} else if(rcDraw.contains(a)) {
+					endIndex=n+this.@columnCount
+					break;
+				} else {
+					break;
+				}
+			} else {
+				if(rcDraw.contains(a) || rcDraw.contains(b)) {
+					startIndex=n
+					bstart=true
+				}
+			}
+			n+=this.@columnCount
+		}
+		if(startIndex==0 ) {
+			dist=System.tick()-this.@lastDrawTick
+			if(dist<1000) {
+				this.@topDrawTick=System.tick()
+				c=color('#faa')
+				rcTop=rc(0,0,this.@viewWidth,3)
+				fillGradient(dc,rcTop, c, d.lightColor(100))
+			}
+		}		
+		for(n=startIndex, endIndex) {
+			this.drawItem(dc, this.@dataFilter.get(n))
+		}
+		dist=endIndex-startIndex
+		if(this.@maxItemCount < dist) {
+			this.@maxItemCount=dist
+		}
+		this.@endIndex=endIndex
+		this.@lastDrawTick=System.tick()		
+	}
+	onMouseDown(p,a) {		
+		startIndex=this.@endIndex - this.@maxItemCount
+		if(startIndex<0) return;
+		for(n=startIndex, this.@endIndex) {
+			cur=this.@dataFilter.$n
+			if(cur.rect.contains(p)) {				
+				this.@mouseDownItem=cur
+				this.update()
+				break;
+			}
 		}
 	}
+	onMouseUp(p,a) {
+		not( this.@mouseDownItem) return;
+		item=this.@mouseDownItem
+		rect=item.rect
+		if(rect.contains(p)) {			
+			if(a&KEY.shift) {
+				prev=this.@selectItems.get(-1)
+				not(a&KEY.ctrl) this.@selectItems.reuse()
+				if(prev) {
+					a=this.@dataFilter.find(prev)
+					b=this.@dataFilter.find(item)
+					if(a<b) {
+						sp=a, ep=b
+					} else {
+						sp=b, ep=a
+					}
+					ep+=1
+					for(n=sp,ep) this.@selectItems.add(this.@dataFilter.get(n))
+				} else {
+					this.@selectItems.add(item)
+				}
+			} else {
+				not(a&KEY.ctrl) this.@selectItems.reuse()
+				this.@selectItems.add(item)
+			}
+		}
+		this.@mouseDownItem=null
+		this.update()
+	}
+	setMainCanvas(main) {
+		this.@mainCanvas=main
+	}
+	setIconTypes(combo) {		
+		not(combo) return print("@@ setIconTypes combo 객체 미정의")
+		not(combo.@data) {
+			combo.check('editable', false)
+			event(combo,'onChange', this.changeIconTypes, this)
+			event(combo,'onDraw', this.drawIconTypes, this)
+			data=combo.addANode('@data')
+			db.fetchAll("select type, count(1) type_cnt from icons group by type", data)
+			combo.addItem(data,'type','=선택=')
+		}
+		combo.delegate(true, 30)
+	}
+	changeIconTypes() {
+		form=this.@mainCanvas.@form
+		input=findField(form, 'code', 'searchText').@widget
+		if(input) input.value('')
+		combo=Cf.funcNode().get('@sender')
+		cur=combo.current()
+		type=when(cur, cur.type)
+		this.setData(type)
+	}
+	drawIconTypes(dc, index, state) {
+		combo=Cf.funcNode().get('@sender')
+		if( state.eq(1) ) return;
+		rc=dc.rect()
+		cur=drawCombo(dc, index, state, combo.@data)
+		not(cur) return;
+		cur.inject(type, type_cnt)
+		dc.font(10).text(rc.incrX(6), type)
+		dc.font(8).text(rc.rightCenter(80,0,-6), "($type_cnt) 건", 'right')
+	}
+
 </script>
 
 <conf name="form.test_icons_search">
 	formItems: [
 		{tag:input, code:searchText, width:120}
 		{tag:btn, code:search, text:선택}
+		{tag:combo, code:iconTypes}
 		{tag:space}
+		{tag:btn, code:deleteIcon, text:삭제}
 	]
 </conf>
