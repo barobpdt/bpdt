@@ -235,15 +235,8 @@ parseJson(node,&str,checkStr) {
 	}
 }
 
-event(obj, eventName, fc, param) {		
+event(obj, eventName, fc, target, reset) {		
 	not(typeof(obj,'node')) return print('@@ event 객체 오류', obj, fc) 
-	reset=false, target=null
-	if(typeof(param,'bool')) {
-		reset=param
-	} 
-	else if(typeof(param,'node')) {
-		target=param
-	}
 	fn = obj.get(eventName)
 	if( typeof(fn,'func')) {
 		not(reset) {

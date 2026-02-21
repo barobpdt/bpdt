@@ -110,7 +110,7 @@
 		if(type) type=" and type='$type'"
 		data=this.@dataIcons.removeAll(true)
 		db.fetchAll("select type, id, prop, data from icons where 1=1 $type", data)
-		this.setFilter()
+		this.setFilter('',true)
 	}
 	setFilter(filterText, checkUpdate) {
 		a=this.@dataFilter.reuse()
@@ -271,21 +271,22 @@
 	}
 	setIconTypes(combo) {		
 		not(combo) return print("@@ setIconTypes combo 객체 미정의")
-		not(combo.@data) {
-			combo.check('editable', false)
-			event(combo,'onChange', this.changeIconTypes, this)
-			event(combo,'onDraw', this.drawIconTypes, this)
-			data=combo.addANode('@data')
-			db.fetchAll("select type, count(1) type_cnt from icons group by type", data)
-			combo.addItem(data,'type','=선택=')
-		}
+		if(combo.@data) return;
+		data=combo.addNode('@data')
+		db.fetchAll("select type, count(1) type_cnt from icons group by type", data)
+		combo.check('editable', false)
+		combo.popupSize('expanding',200)
+		combo.addItem(data,'type','=선택=')
 		combo.delegate(true, 30)
+		event(combo,'onChange', this.changeIconTypes, this)
+		event(combo,'onDraw', this.drawIconTypes, this)
 	}
 	changeIconTypes() {
+		combo=Cf.funcNode().get('@sender')
+		print("combo change combo==$combo")
 		form=this.@mainCanvas.@form
 		input=findField(form, 'code', 'searchText').@widget
 		if(input) input.value('')
-		combo=Cf.funcNode().get('@sender')
 		cur=combo.current()
 		type=when(cur, cur.type)
 		this.setData(type)

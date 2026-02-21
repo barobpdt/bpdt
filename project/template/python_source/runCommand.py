@@ -102,8 +102,8 @@ def en2koWord(ko_word):
 					word.pop(3)
 
 	lastIndex = len(words) - 1
-	log(f'lastIndex:{lastIndex}, ing:{words[lastIndex]}, ingLen:{len(words[lastIndex])}')
-
+	# log(f'lastIndex:{lastIndex}, ing:{words[lastIndex]}, ingLen:{len(words[lastIndex])}')
+	log(f'ing:{words[lastIndex]}')
 	# combine each letter
 	output_list = []
 	for char in words:

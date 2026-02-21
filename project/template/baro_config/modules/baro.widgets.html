@@ -25,10 +25,10 @@
 			index-=1;
 		}
 		if( select ) {
-			draw.fill(rc,'#cadeef')
-			draw.rectLine(rc,4,'#a0a090')
+			dc.fill(rc,'#cadeef')
+			dc.rectLine(rc,4,'#a0a090')
 		} else if( over ) {
-			draw.fill(rc,'#e0e0e0')
+			dc.fill(rc,'#e0e0e0')
 		}
 		return when(data, data.child(index));
 	}
