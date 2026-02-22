@@ -118,17 +118,17 @@
 		}
 	}
 	mouseDownMdc(pos) {
-		if(notValid(this.@mdcList)) return;
-		while(n=this.@mdcList.size()-1,0) {
-			cur=this.@mdcList.$n
-			if( cur.mouseDownDefault(pos) ) return true;
+		size=this.@mdcList.size()
+		for(n=size,0) {
+			if(n==size) continue
+			if(this.@mdcList.$n.mouseDownDefault(pos) ) return true;
 		}
 	}
 	mouseUpMdc(pos) {
-		if(notValid(this.@mdcList)) return;
-		while(n=this.@mdcList.size()-1,0) { 
-			cur=this.@mdcList.$n
-			if( cur.mouseUpDefault(pos) ) return true;
+		size=this.@mdcList.size()
+		for(n=size,0) {
+			if(n==size) continue
+			if(this.@mdcList.$n.mouseUpDefault(pos) ) return true;
 		}
 	}
 	
@@ -181,21 +181,21 @@
 		}
 		return mdc;
 	}
-	getMdc(mdcId, moduleType) {
+	getMdc(mdcId, moduleName) {
 		dc=mdc("${this.@baseCode}.${mdcId}")
 		dc.@canvas=this
-		if( moduleType ) {
+		if( moduleName ) {
 			not(dc.@useModule) {
-				addModule(dc,"mdc,$moduleType")				
+				addModule(dc,"mdc,$moduleName")				
 			}
 		}
 		return dc;
 	}
-	addMdc(param, rectDraw, moduleType, baseColor) {
+	addMdc(param, rectDraw, moduleName, baseColor) {
 		if(typeof(param,'node')) {
 			dc=param;
 		} else {
-			dc=this.getMdc(param, moduleType)
+			dc=this.getMdc(param, moduleName)
 		}
 		not( rectDraw ) {
 			if(dc.@img ) {
@@ -226,17 +226,17 @@
 			dc.@baseColor = baseColor
 		}
 		not( dc.@useModule ) {
-			if(moduleType) {
-				addModule(dc,"mdc,$moduleType") 
-				dc.@moduleType = moduleType
+			if(moduleName) {
+				addModule(dc,"mdc,$moduleName") 
+				dc.@moduleName = moduleName
 			}
 		}
 		if( dc.@rectAvail ) {
 			not(dc.@rectAvail.eq(dc.@rectAvailPrev)) {
-				dc.@rectAvailPrev = dc.rectAvail
-				dc.updateMdc()
+				dc.@rectAvailPrev = dc.@rectAvail
+				dc.updateMdc(dc.@rectAvail)
 			}
-			dc.drawDc()
+			dc.drawDc(dc)
 		}		
 		return this.addMdcList(dc)
 	}
@@ -252,8 +252,7 @@
 		this.@overlayList.remove(mdc)
 		this.update()
 	}
-	
-	
+
 </script>
 
 <script module="canvas_form" note="canvas 폼처리함수 함수">
@@ -386,7 +385,7 @@
 		}
 	}
 	makeWidget(tag, code, cur) {
-		widget=createWidget(tag,code,this,'',true)
+		widget=createWidget(tag,code,this)
 		widget.@targetNode=cur
 		widget.@canvas=this
 		if(tag.eq('input')) {
@@ -435,8 +434,8 @@
 		return cur.@widgetValue
 	}
 	drawBtn(dc,rc,cur) {
-		cur[=> rect, text, disable, hide ] if(hide) return;
-		this[=> @baseColor, @btnPenColor, @btnBgStart, @btnBgEnd, @currentDownNode]
+		cur.inject(rect, text, disable, hide) if(hide) return;
+		this.inject(@baseColor, @btnPenColor, @btnBgStart, @btnBgEnd, @currentDownNode)
 		if(disable) {
 			btnPenColor=btnBgStart
 			btnBgStart=color('#aaa')
@@ -469,7 +468,7 @@
 
 	mouseDownForm(pos) {
 		while(cur, this.@form) {
-			cur[=>disable, hide]
+			cur.inject(disable, hide)
 			if(disable || hide) continue;
 			not(cur.@useMouseEvent) continue;
 			not(cur.rect.contains(pos)) continue;

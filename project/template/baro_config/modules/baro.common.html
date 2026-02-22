@@ -148,7 +148,7 @@ regServiceFolder(serviceMode, path) {
 			id="${tag}_${idx}"
 		}		
 		not(target) target=Cf.funcNode().get('@this')
-		base=''
+		base=null
 		if(typeof(target,'node')) {
 			splitSep(target.@baseCode,':').inject(base,pid)
 		}
@@ -168,7 +168,7 @@ regServiceFolder(serviceMode, path) {
 		}
 		return object("${tag}.${base}:${id}")
 	}
-	createWidget(tag, id, target, module, useChild, newCheck) {
+	createWidget(tag, id, target, module, newCheck) {
 		not(tag) return print("@@ createWidget $tag 미정의")
 		widget = getWidgetNode(tag,id,target,newCheck)
 		if(typeof(widget,'widget')) return widget;
@@ -181,13 +181,12 @@ regServiceFolder(serviceMode, path) {
 		}			
 		if(typeof(module,'string')) {
 			addModule(widget,module)
-		}		
+		}
+		base=null
 		if( typeof(target,'widget') ) {
-			if( useChild ) {
-				widget.flags("child")
-				widget.parentWidget(target)
-				widget.show()
-			}
+			widget.flags("child")
+			widget.parentWidget(target)
+			widget.show()
 			splitSep(target.@baseCode,':').inject(base, targetId)
 		}
 		not(base) base='common'

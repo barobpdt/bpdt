@@ -1,7 +1,7 @@
 <page id="main" onInit() {
 	@splitter = widget('splitter')
-	@leftPanel = createWidget('canvas', 'leftPanel', this, 'canvas,canvas_left_panel')
-	@rightPanel = createWidget('canvas', 'rightPanel', this, 'canvas,canvas_right_panel')
+	@leftPanel = createWidget('canvas', 'leftPanel', null, 'canvas,canvas_left_panel')
+	@rightPanel = createWidget('canvas', 'rightPanel', null, 'canvas,canvas_right_panel')
 	splitter.addPage(leftPanel)
 	splitter.addPage(rightPanel)
 	this.timer(200, function() {
@@ -34,9 +34,9 @@
 		this.inject(@splitter, @rectCanvas)
 		canvas=this
 		not(splitter) {
-			splitter=createWidget('splitter','splitter', canvas, '', true)
-			topPanel=createWidget('canvas','topPanel', canvas, 'canvas,canvas_toppanel')
-			bodyPanel=createWidget('canvas','bodyPanel', canvas,'canvas,canvas_bodypanel')
+			splitter=createWidget('splitter','splitter', canvas)
+			topPanel=createWidget('canvas','topPanel', null, 'canvas,canvas_toppanel')
+			bodyPanel=createWidget('canvas','bodyPanel', null,'canvas,canvas_bodypanel')
 			splitter.stretchFactor(1)
 			splitter.orientation('vbox')
 			splitter.minWidth(200)

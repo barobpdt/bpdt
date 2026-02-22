@@ -1,5 +1,5 @@
 <page id="p1" initPage() {
-	this.@main = createWidget('canvas','main',this,'canvas_mdc,canvas_stack_main',true)
+	this.@main = createWidget('canvas','main',this,'canvas_mdc,canvas_stack_main')
 	this.@stack = widget('stack')
 	this.@stack.addPage(this.@main)
 }>
@@ -33,7 +33,7 @@
 		page=page()
 		switch(nocd.code) {
 		case add:
-			sub=createWidget('canvas','sub',this,'canvas_mdc,canvas_stack_sub')
+			sub=createWidget('canvas','sub',null,'canvas_mdc,canvas_stack_sub')
 			page.@stack.addPage(sub, true)
 		case prev:
 			print("prev button click")
@@ -45,7 +45,7 @@
 	updateCanvas() {
 		vbox(this.@rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
 		not( this.@editor) {
-			this.@editor=createWidget('editor','editor',this,'')			
+			this.@editor=createWidget('editor','editor',this)			
 		}
 		this.@editor.move(rcBody.incr(4))
 		// form 업데이트

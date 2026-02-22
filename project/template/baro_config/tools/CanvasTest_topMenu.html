@@ -1,7 +1,7 @@
 <page id="main" margin="0" initPage() {	
 	@canvas = widget('c')
 }>
-	<canvas id="c" module="canvas_form, canvas_mdc, canvas_submenuTest">
+	<canvas id="c" module="canvas_form, canvas_mdc, canvas_menuTest">
 </page>
  
 
@@ -13,7 +13,7 @@
 	
 </script>
 
-<script module="canvas_submenuTest">
+<script module="canvas_menuTest">
 	init() {
 		this.@useTimer=true
 		event(page(), 'onAction', this.execAction, this, true)
@@ -98,7 +98,8 @@
 			default:
 			}
 		}
-	}	
+	}
+	
 	updateMenu(rc) {
 		not(rc) rc=this.@rectAvail
 		dc=this
@@ -242,9 +243,7 @@
 
 	changeTab(id, callback) {		
         tab=findId(this.@data.menuTabs,id)
-		if(tab) {
-			if(tab==this.@currentTab) return;
-		} else {
+        not(tab) {
             tab=this.@data.menuTabs.addNode()
 			action=findId(this.@data.actionList,id)
 			not(action ) {
@@ -256,17 +255,16 @@
 			tab.text=action.text
 			tab.useClose=true;
             this.updateMdc()
-		}
-		canvas=this.@canvas		
+        }
+		canvas=this.@canvas
+		this.currentTab=tab
 		if(typeof(callback,'function')) {
 			call(callback, canvas, id, tab)
-		} else if(typeof(canvas.movePage,'function')) {
+		} else if(typeof(canvas.movePage,'movePage')) {
 			canvas.movePage(id, tab)
 		} else {
 			print("changeTab 탭변경 처리함수 미정의 (액션아이디:$id)")
 		}
-		this.@currentTab=tab
-		this.drawDc()
 		return true;
 	}
 	
