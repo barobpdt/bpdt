@@ -29,7 +29,7 @@
 		case menu.apiForm: 
 			alert("api form action 실행")
 		default:
-			alert("$action.id action 실행")
+			print("$id action 실행")
 		}	
 	}
 	updateCanvas() {
@@ -84,7 +84,7 @@
 	}
 	drawDc(dc) {
 		not(dc) dc=this
-		this.drawMenu(dc, rectAvail)
+		this.drawMenu(dc, this.@rectAvail)
 	}
 	drawOverlay(dc) {
 		tab=this.@mouseDownTab
@@ -122,14 +122,21 @@
 			default:
 			}
 		}
-		wa=''
+		wa='', total=0, tabSize=tabs.size()
 		while(tab,tabs,n) {
 			if(n) wa.add(',')
 			wa.add(tab.tabWidth)
+			total+=tab.tabWidth
 		}
-		wa.add(',*')
-		while(rcTab, hbox(rc,wa), n) tabs.$n.rcTab=rcTab
-		this.drawMenu(dc, rc)
+		if(total<rc.width() ) {
+			wa.add(',*')		
+		} else {
+			wa.add(',8')
+		}
+		while(rcTab, hbox(rc,wa), n) {
+			if(n==tabSize) break;
+			tabs.$n.rcTab=rcTab
+		}
 	}
 	drawMenu(dc,rc) {
 		dc.fill()
@@ -185,14 +192,15 @@
 		dc.pen(fg).text(rcText, tab.text)
 		if( tab.useClose) {
 			rcClose=rcTab.rightCenter(16,16,-8)
-			dc.fill(rcClose.incr(-2), '#ee604055')
+			dc.fill(rcClose.incr(-2), '#aaa')
 			dc.image(rcClose, 'icons:close_gray')
+			tab.@rcClose=rcClose
 		}
 		dc.restore()
 	}
 	mouseDown(pt) {
 		while(tab, this.@data.menuTabs) {
-			if(tab.rcTab.contains(pt)) {
+			if( tab.rcTab.contains(pt)) {
 				this.@mouseDownTab=tab
 				this.addOverlay('mouseDown', tab.rcTab )
 			}
@@ -203,6 +211,10 @@
 		if( tab ) {
 			this.removeOverlay('mouseUp', tab.rcTab )
 			this.@mouseDownTab=null;
+			if( tab.useClose && tab.@rcClose.contains(pt) ) {
+				this.deleteTab(tab)
+				return true;
+			}
 			if(tab.menuId) {
 				this.showMenu(tab)
 			} else {
@@ -240,31 +252,46 @@
 		if(notValid(menuInfo)) return;
 		return setMenuInfo(menuInfo);
 	}
-
+	deleteTab(tab) {
+		this.@currentTab=null
+		this.@data.menuTabs.remove(tab)
+		tab=this.@prevTab
+		not(tab) {
+			tab=this.@data.menuTabs.1
+		}
+		this.changeTab(tab)
+	}
 	changeTab(id, callback) {		
         tab=findId(this.@data.menuTabs,id)
-        not(tab) {
-            tab=this.@data.menuTabs.addNode()
+        if(tab) {
+			if( tab==this.@currentTab ) return;
+		} else {
+			tab=this.@data.addNode()
 			action=findId(this.@data.actionList,id)
 			not(action ) {
 				alert("메뉴변경 오류 - $id 메뉴액션를 찾을수 없습니다")
 				return false;
 			}
-            tab.id=id
-            tab.@actionNode=action
+			tab.tag='action'
+			tab.id=id
+			tab.@actionNode=action
 			tab.text=action.text
-			tab.useClose=true;
-            this.updateMdc()
+			tab.useClose=true
+			this.@data.menuTabs.add(tab)
+			this.updateMenu()
         }
 		canvas=this.@canvas
-		this.currentTab=tab
 		if(typeof(callback,'function')) {
 			call(callback, canvas, id, tab)
-		} else if(typeof(canvas.movePage,'movePage')) {
+		} else if(typeof(canvas.movePage,'function')) {
 			canvas.movePage(id, tab)
 		} else {
 			print("changeTab 탭변경 처리함수 미정의 (액션아이디:$id)")
 		}
+		this.@prevTab=this.@currentTab
+		this.@currentTab=tab
+		this.drawDc()
+		this.@canvas.update()
 		return true;
 	}
 	

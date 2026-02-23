@@ -430,9 +430,9 @@ randomColor() {
 	return Baro.color('hsl', hue, 100, 100);
 }
 randomIcon() {
-	num=System.rand(360).toInt();
+	num=System.rand(360).toInt()
 	Baro.db('icons').fetch("select type, id from icons where type='vicon' limit $num,1"  ).inject( type, id);
-	return "$type.$id";
+	return "$type:$id";
 }
 
 </script>

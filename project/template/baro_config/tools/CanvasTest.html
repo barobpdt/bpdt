@@ -19,7 +19,7 @@
 		event(page(), 'onAction', this.execAction, this, true)
 	}
 	execAction(action) {
-		this.@topMenu.changeTab(action.id, this.movePage)
+		this.@subMenu.changeTab(action.id, this.movePage)
 	}
 	showMenu(menus, pos) {
 		this.menu(page(), menus, pos)
@@ -42,9 +42,9 @@
 			this.@stackPages.show()
 		}
 		this.@stackPages.move(rcBody)		
-		this.@topMenu=this.addMdc('topMenu', rcTopMenu, 'mdc_topMenu')
-		not(this.@topMenu.@data) {
-			this.@topMenu.setMenu()
+		this.@subMenu=this.addMdc('subMenu', rcTopMenu, 'mdc_subMenu')
+		not(this.@subMenu.@data) {
+			this.@subMenu.setMenu()
 		}
 		this.@rcStatus=rcStatus
 		this.updateForm(this.@form, rcStatus)
@@ -70,13 +70,13 @@
 </script>
 
 
-<script module="mdc_topMenu">
+<script module="mdc_subMenu">
 	setMenu(menuCode) {
-		not(menuCode) menuCode='menu.topMenuTest'
-		json=conf(menuCode) not(json) return print("@@ topMenu setMenu함수 오류 (메뉴정보가 없습니다)");
+		not(menuCode) menuCode='menu.subMenuTest'
+		json=conf(menuCode) not(json) return print("@@ subMenu setMenu함수 오류 (메뉴정보가 없습니다)");
 		this.addNode('@data').removeAll(true)
-		this.@data.parseJson(conf(menuCode))
-		this.@bgColor=color('#D4D4B7A0')
+		this.@data.parseJson(json)
+		this.@bgColor=randomColor()
 		this.updateMdc()
 	}
 	updateMdc(rc) {		
@@ -87,17 +87,7 @@
 		this.drawMenu(dc, rectAvail)
 	}
 	drawOverlay(dc) {
-		tab=this.@mouseDownTab
-		if(tab) {
-			rcTab=tab.rcTab.offset(this.@offset)
-			switch(tab.tag) {
-			case btn:
-				this.drawBtn(dc,tab,rcTab,this.@bgColor)
-			case action: 
-				this.drawTab(dc,tab,rcTab,this.@bgColor)
-			default:
-			}
-		}
+		
 	}	
 	updateMenu(rc) {
 		not(rc) rc=this.@rectAvail
@@ -272,45 +262,28 @@
 	
 </script>
 
-<conf name="menu.topMenuTest">	
-	actionList: [
-		{id:menu.apiForm, text:API관리, icon:'vicon:application_lightning', type:tab}
-		{id:menu.htmlTemplateForm, text:HTML템플릿관리, menuText:HTML템플릿, icon:'vicon:html_go', type:tab}
-		{id:menu.dbTableForm, text:DB테이블관리, icon:'vicon:database_gear', type:tab}
-		{id:menu.langMngPage, text:다국어관리, icon:'vicon:keyboard_magnify', type:tab}
-		{id:menu.dbConnectMng, text:DB연결관리, icon:'vicon:database_connect'}
-		{id:menu.codeMng, text:공통코드관리, icon:'vicon:table_gear'}
-		{id:menu.appMenuMng, text:앱메뉴관리, icon:'vicon:application_view_tile'}
-		{id:menu.close, text:프로그램 종료, icon:'icons:close'}
-		{id:sourceEditor, text:실행툴열기, icon:'vicon:script_code'}
-		{id:locknlock, text:락앤락툴열기, icon:'ficon:blog-tumblr'}
-		{id:apiTest, text:API매개변수생성, icon:'vicon:add_default'}
-		{id:copyFields, text:선택복사, icon:'vicon:application_edit', tooltip:선택된 필드 클립보드에 복사}
-		{id:makeTemplate, text:템플릿만들기, icon:'vicon:application_form_add', tooltip:지정된 폴더에 템플릿생성}				
-		{id:addItemComment, text:커멘트달기, icon:'ficon:balloon-quotation', tooltip:'API결과항목 커멘트달기'}
-	]
-	menuTabs:[
-		{tag:btn, menuId:mainMenu, text:메뉴, icon:'icons:menu1'}
-		{tag:action, id:menu.apiForm }
-		{tag:action, id:menu.htmlTemplateForm }
-		{tag:action, id:menu.dbTableForm }
-		{tag:action, id:menu.langMngPage }
-	]
-	mainMenu:[
-		{actionId:menu.apiForm }
-		{actionId:menu.htmlTemplateForm }
-		{actionId:menu.dbTableForm }
-		{actionId:menu.langMngPage }
-		{actionId:sourceEditor }
-		{actionId:locknlock }
-		{type:separator }
-		{text:설정관리, menus:[
-			{actionId:menu.codeMng }
-			{actionId:menu.appMenuMng }
-			{actionId:menu.dbConnectMng }
+<conf name="menu.subMenuTest">
+	menus:[
+		{tag:tab, id:apiTest, text:API 테스트, menus:[
+			{tag:menu, id:apiInfo, text:API 정보}
+			{tag:menu, id:apiCall, text:API 호출}
+			{tag:menu, id:apiHist, text:API 이력관리}
 		]}
-		{type:separator }
-		{actionId:menu.close }
+		{tag:tab, id:dbTest, text:DB 테스트, menus:[
+			{tag:menu, id:apiInfo, text:DB연결관리 }
+			{tag:menu, id:apiInfo, text:DB조회 }
+		]}
+		{tag:tab, id:drawTest, text:그리기 테스트, menus:[ 
+			{tag:menu, id:keyboard, text:키보드 테스트}
+			{tag:menu, id:numberpad, text:숫자패드 테스트}
+			{tag:menu, id:icon_search, text:아이콘 조회}
+		]}
+		{tag:tab, id:utilTest, text:공통화면 관리, menus:[
+			{tag:menu, id:splitter, text:분할창}
+			{tag:menu, id:stack, text:스텍페이지}
+			{tag:menu, id:video, text:동영상플레이}
+			{tag:menu, id:webview, text:웹뷰}
+		]}
 	]
 </conf>
 
