@@ -1,27 +1,5 @@
 <script type="service" note="어플리케이션 시작 초기화 함수">
-initService() {
-	// conf('cf.useWatch', true, true)
-	// conf('cf.useDebug', true, true)
-	// include('classes/common/baro-services')
-	startGlobalTimer()
-	getServiceNode('baro', 'apps')
-	getServiceNode('baro', 'modules')
-	getServiceNode('baro', 'tools')	
-	initModules()
-	initConfig()
-	initWidgetConfig()
-	// initWas()
-	// initWebsocket()
-	Cf.debug(true,"data/logs")
-	include("@apps#SourceRun")
-	
-	page = page("SourceRun:main")
-	page.open()
-	runCommand("cd")
-}
-initConfig() {
-	print("설정초기화 처리")
-}
+
 closeApp() {
 	if(checkFunc('closePythonCommand')) {
 		closePythonCommand()

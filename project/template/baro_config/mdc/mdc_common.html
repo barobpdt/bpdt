@@ -104,19 +104,31 @@
 		}
 		dc.restore()
 	}
+	checkMousePos(pos) {
+		if(this.@rectDraw.contains(pos)) {
+			return true;
+		}
+		if(this.@rectPopup) {
+			rcPopup=this.@rectPopup.offset(this.@offset,false)			
+			return rcPopup.contains(pos);
+		}
+		return false;
+	}
 	mouseDownDefault(pos) {
-		not(this.@rectDraw.contains(pos)) {
-			return false;
+		if(this.checkMousePos(pos)) {			
+			pt=pos.offset(this.@offset,false)
+			this.mouseDown(pt)
+			return true;
 		}				
-		pt=pos.offset(this.@offset,false)
-		return this.mouseDown(pt)
+		return false;
 	} 
 	mouseUpDefault(pos) {		
-		not(this.@rectDraw.contains(pos)) {
-			return false;
-		}		
-		pt=pos.offset(this.@offset,false)		
-		return this.mouseUp(pt);
+		if(this.checkMousePos(pos)) {			
+			pt=pos.offset(this.@offset,false)
+			this.mouseUp(pt)
+			return true;
+		}
+		return false;
 	}
 	mouseMoveDefault(pos) {	
 	}

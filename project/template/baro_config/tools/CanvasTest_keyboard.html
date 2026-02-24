@@ -18,11 +18,16 @@
 	}>
 </page>
 
+<script include>
+	include('@mdc#mdc_common')
+	include('@mdc#mdc_keyboard')
+	include('@mdc#mdc_inputResult')
+</script>
+
 <script eval>
+	// conf('path.mdc','C:/bpdt/project/template/baro_config/mdc', true)
 	page=page('CanvasTest_keyboard:main')
 	page.size(1024,800)
 	page.open()
 	print("eval>> ", page)
 </script>
-
-  

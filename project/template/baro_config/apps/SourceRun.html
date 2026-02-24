@@ -1,54 +1,52 @@
-<widgets>
-	<page id="main" title="소스 테스트 페이지" module="SourceRun">
-		<splitter type="vbox">
-	</page>
-	// ##소스편집 
-	<page id="editPanel" margin="0,8,0,0" module="EditPanel">
-		<hbox>
-			<label id="editorTitle" stretch=1>
-			<label text="찾기: "><input id="searchInput">
-		</hbox>
-		<editor id="editor" module="editor,EditorSource">
-		<hbox>
-			<button id="btnRun" text="실행" onClick() { page().runScript() }>
-			<label id="editorInfo" stretch=1>
-		</hbox>
-	</page>
-	// ##로그출력
-	<page id="logPanel" margin="0,8,0,0" module="LogPanel">
-		<hbox>
-			<label id="logTitle" stretch=1>
-			<label text="찾기: "><input id="searchInput" onEnter() { page().searchText(this)}>
-		</hbox>
-		<editor id="editor">
-		<hbox>
-			<button id="btnClear" text="지우기" onClick() { page().clearLog() }>
-			<label id="logInfo" stretch=1>
-		</hbox>
-	</page>
-	// ##키맵등록 ctrl+s
-	<dialog id="keyMapInput" title="키맵등록 페이지">
+<page id="main" title="소스 테스트 페이지" module="SourceRun">
+	<splitter type="vbox">
+</page>
+// ##소스편집 
+<page id="editPanel" margin="0,8,0,0" module="EditPanel">
+	<hbox>
+		<label id="editorTitle" stretch=1>
+		<label text="찾기: "><input id="searchInput">
+	</hbox>
+	<editor id="editor" module="editor,EditorSource">
+	<hbox>
+		<button id="btnRun" text="실행" onClick() { page().runScript() }>
+		<label id="editorInfo" stretch=1>
+	</hbox>
+</page>
+// ##로그출력
+<page id="logPanel" margin="0,8,0,0" module="LogPanel">
+	<hbox>
+		<label id="logTitle" stretch=1>
+		<label text="찾기: "><input id="searchInput" onEnter() { page().searchText(this)}>
+	</hbox>
+	<editor id="editor">
+	<hbox>
+		<button id="btnClear" text="지우기" onClick() { page().clearLog() }>
+		<label id="logInfo" stretch=1>
+	</hbox>
+</page>
+// ##키맵등록 ctrl+s
+<dialog id="keyMapInput" title="키맵등록 페이지">
+<form>
+	<row>
+	<label text="키맵"><input id="key">
+	</row>
+	<row>
+	<label text="설명"><input id="note">
+	</row>
+</form>
+</dialog>
+
+<dialog id="keyTemplateInput" title="키탬플릿등록 페이지">
 	<form>
 		<row>
-		<label text="키맵"><input id="key">
+			<label text="탬플릿"><input id="key">
 		</row>
 		<row>
-		<label text="설명"><input id="note">
+			<label text="설명"><input id="note">
 		</row>
 	</form>
-	</dialog>
-
-	<dialog id="keyTemplateInput" title="키탬플릿등록 페이지">
-		<form>
-			<row>
-				<label text="탬플릿"><input id="key">
-			</row>
-			<row>
-				<label text="설명"><input id="note">
-			</row>
-		</form>
-	</dialog>
-</widgets>
+</dialog>
 
 <script module="SourceRun">
 	init() {

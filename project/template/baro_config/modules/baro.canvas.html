@@ -108,6 +108,11 @@
 			// @cause, @rectOverlay, @offset
 			mdc.drawOverlay(dc)
 		}
+		if( this.@currentPopupMdc) {
+			not( this.@currentPopupMdc.drawPopup(dc) ) {
+				this.@currentPopupMdc=null
+			}
+		}
 	} 
 	drawMdcClip(dc,rc) {
 		while(mdc, this.@clipList ) {
@@ -129,6 +134,10 @@
 		for(n=size,0) {
 			if(n==size) continue
 			if(this.@mdcList.$n.mouseUpDefault(pos) ) return true;
+		}
+		if( this.@currentPopupMdc) {
+			this.@currentPopupMdc.closePopup()
+			this.@currentPopupMdc=null
 		}
 	}
 	
@@ -236,7 +245,7 @@
 				dc.@rectAvailPrev = dc.@rectAvail
 				dc.updateMdc(dc.@rectAvail)
 			}
-			dc.drawDc(dc)
+			dc.drawDc()
 		}		
 		return this.addMdcList(dc)
 	}
@@ -518,7 +527,7 @@
 					arr.add(150)
 				}
 			} else if(cur.@useDraw) {
-				cur[=>icon, font, text, image, margin]
+				cur.inject(icon, font, text, image, margin)
 				tw=0
 				if( text) {
 					not(font) font=this.@font
@@ -644,6 +653,10 @@
 </script>
 
 <script type="draw" note="공통 그리기 함수">
+	textImage(dc, rc, text, imgCode) {
+		// draw, menu, rcText, menu[value], 'menuSelect'
+	}
+	
 	roundBox(dc, rcBox, rad, penColor) {
 		dc.save()
 		dc.mode()
