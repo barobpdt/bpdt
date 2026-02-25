@@ -25,6 +25,9 @@ def logAppend (msg):
 	fpOut.write(f"@#> {msg}\n")
 	fpOut.flush()
 
+def handle_result(result):
+	logAppend(f"runScript: {result}")
+
 class Bridge(QObject):
 	def __init__(self, webview):
 		super().__init__()
@@ -189,7 +192,9 @@ class WebWidget(QWidget):
 					profile.clearHttpCache()
 					profile.cookieStore().deleteAllCookies()
 					self.webEngineView.reload()
-					logAppend(f"clearCache = {params}")
+					logAppend(f"clearCache:{params}")
+				elif ftype=='runScript':
+					self.webEngineView.page().runJavaScript(params, handle_result)
 				elif ftype=='pageActive':
 					if self.parent_hwnd != None:
 						win32gui.SetForegroundWindow(self.parent_hwnd)

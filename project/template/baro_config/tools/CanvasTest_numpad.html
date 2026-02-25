@@ -1,9 +1,7 @@
-<page margin=0 id="main" module="page_canvas">
-	<canvas id="c" module="canvas, canas_test_numpad">
-</page>
-  
-<script module="canas_test_numpad">
-	updateRect() {
+<page id="main" margin=0 module="page_canvas" initPage() {
+	this.@canvas=widget('c')
+}>
+	<canvas id="c" module="canvas_mdc" updateCanvas() {
 		Cf.imageLoad('tools/login_num_00_n.png').imageSize().inject(btnWidth, btnHeight)
 		this.with(btnWidth, btnHeight)
 		this[numpadWidth = (btnWidth+4)*3]
@@ -16,8 +14,8 @@
 		this.addMdc('right', right.incr(4), 'mdc_box')
 		this.addMdc('numpad',rect.center(numpadWidth, numpadHeight),'mdc_numpad')
 		this.update()
-	}
-</script>
+	}>
+</page> 
 
 <script include>
 	include('@mdc#mdc_common')

@@ -6,11 +6,17 @@
  
 
 <script eval>
+	/*
+	include('#CanvasTest')
+	p=page('CanvasTest:main')
+	p.pageState('fullscreen')
+	p.pageState('normal')
+	p.open()
+	*/
 	p=page('main')
-	p.size(865,600)
+	p.size(1024,600)
 	p.open()
 	print("CanvasTest eval>>", c)
-	
 </script>
 
 <script module="canvas_submenuTest">
@@ -71,13 +77,39 @@
 		this.@stackPages.show()
 		this.update()
 	}
-	changeSubMenu(sub) {		
-		switch(sub.id) {
-		case keyboard:
-			include('@tools#CanvasTest_keyboard', true)
-			page=page("CanvasTest_keyboard:main")
-			this.stackPages.addPage(page, true)
-		default:
+	changeSubMenu(sub) {
+		id=sub.id
+		if(id.eq('webview','funnyMusic','tableOrder')) {
+			include('#CanvasTest_webview')
+			page=page("CanvasTest_webview:main")
+			view=page.@canvas
+			dist=0
+			if(view.@startWebviewTick) {
+				dist=System.tick()-view.@startWebviewTick
+			}
+			switch(id) {
+			case webview:
+				pageCode='chat'
+			case funnyMusic:
+				pageCode='funny-music'
+			case tableOrder:
+				pageCode='table-order'
+			default:
+			}
+			if(dist>5000) {
+				view.webviewExec("runScript:movePage('$pageCode')")
+			} else {
+				view.@movePageCode=when(pageCode.eq('chat'),'',pageCode)
+			}
+			this.@stackPages.addPage(page, true)
+			return;
+		}
+		path=conf('path.tools')
+		if(isFile("${path}/CanvasTest_${id}.html")) {
+			include("#CanvasTest_${id}")
+			page=page("CanvasTest_${id}:main")
+			this.@stackPages.addPage(page, true)
+		} else {
 			print(">> change sub menu", sub)
 		}
 		this.@stackPages.show()
@@ -156,7 +188,7 @@
 	drawMenu(dc, menu) {		
 		hbox(menu.rect, '9,*,8').inject(rcLeft, rcText, rcRight)
 		menu.@rcText=rcText.incrY(8)
-		currentTab=nvl(this.@currentDownTab, this.currentMenuTab)
+		currentTab=nvl(this.@currentDownTab, this.@currentMenuTab)
 		if( menu==currentTab ) {
 			dc.image( rcLeft, 'main/common/menu_tab1.png')
 			dc.image( rcText, 'main/common/menu_tab2.png', 'fill' )
@@ -236,7 +268,9 @@
 			while(sub, this.@currentDownTab.submenu) {
 				if(sub.@rcText.contains(pt)) {
 					this.@currentMenuTab=this.@currentDownTab
-					return this.@canvas.changeSubMenu(sub);
+					this.@canvas.changeSubMenu(sub)
+					this.closePopup()
+					break;
 				}
 			}
 			return;
@@ -295,18 +329,22 @@
 		]}
 		{tag:tab, id:dbTest, text:DB 테스트, submenu:[
 			{tag:menu, id:apiInfo, text:DB연결관리 }
-			{tag:menu, id:apiInfo, text:DB조회 }
+			{tag:menu, id:grid_search, text:DB조회 }
 		]}
 		{tag:tab, id:drawTest, text:그리기 테스트, submenu:[ 
 			{tag:menu, id:keyboard, text:키보드 테스트}
-			{tag:menu, id:numberpad, text:숫자패드 테스트}
+			{tag:menu, id:numpad, text:숫자패드 테스트}
 			{tag:menu, id:icon_search, text:아이콘 조회}
+			{tag:menu, id:sprite, text:GIF 이미지편집}
+			{tag:menu, id:topMenu, text:메뉴테스트}
 		]}
 		{tag:tab, id:utilTest, text:공통화면 관리, submenu:[
 			{tag:menu, id:splitter, text:분할창}
 			{tag:menu, id:stack, text:스텍페이지}
 			{tag:menu, id:video, text:동영상플레이}
 			{tag:menu, id:webview, text:웹뷰}
+			{tag:menu, id:tableOrder, text:테이블주문}
+			{tag:menu, id:funnyMusic, text:곡검색}
 		]}
 	]
 </conf>

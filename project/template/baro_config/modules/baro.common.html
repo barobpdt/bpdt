@@ -5,6 +5,7 @@ closeApp() {
 		closePythonCommand()
 		System.sleep(100)
 	}
+	Baro.process('common').close()
 	Cf.debug(false)
 	Cf.exit()
 }
@@ -1067,14 +1068,18 @@ runGlobalJob(node) {
 <script type="server" note="서버관리">
 initWebsocket() {
 	obj = object("baro.websocketServer")
+	if(obj.@useModule) return obj;
 	addModule(obj,'websocket', 8092)
+	return obj;
 }
 initWas(port,path,devMode) {
 	obj = object("baro.was")
+	if(obj.@useModule) return obj;
 	addModule(obj,'was',devMode)
 	not(port) port=80
 	not(path) path=conf('web.rootPath')
 	obj.start(port,path)
+	return obj;
 }
 </script>
 

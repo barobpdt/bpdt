@@ -1,4 +1,4 @@
-<page id="p1" initPage() {
+<page id="main" initPage() {
 	this.@main = createWidget('canvas','main',this,'canvas_mdc,canvas_stack_main')
 	this.@stack = widget('stack')
 	this.@stack.addPage(this.@main)
@@ -7,7 +7,7 @@
 </page>
 
 <script eval>
-	p=page('p1')
+	p=page('main')
 	p.size(800,600)
 	p.open()
 	/*
@@ -31,9 +31,10 @@
 	}
 	clickBtn(node) {
 		page=page()
-		switch(nocd.code) {
+		switch(node.code) {
 		case add:
 			sub=createWidget('canvas','sub',null,'canvas_mdc,canvas_stack_sub')
+			print("add btn click: sub==$sub")
 			page.@stack.addPage(sub, true)
 		case prev:
 			print("prev button click")
@@ -72,7 +73,7 @@
 
 <script module="canvas_stack_sub">
 	updateCanvas() {
-		vbox(this.@rectCanvas,'45,*,50').inject(rcTop,rcBody,rcBottom)
+		vbox(this.@rectCanvas,'45,*,70').inject(rcTop,rcBody,rcBottom)
 		this[@rcTop, @rcBody, @rcBottom]
 		this.addMdc('box',rcBody.incr(2),'mdc_box').var(@title,'sub box')
 		
@@ -96,9 +97,9 @@
 		node.inject(code,rect)
 		switch(code) {
 		case prev:
-			page.stack.addPage(page.main, true)
+			page.stack.addPage(page.@main, true)
 		case close:
-			page.stack.addPage(page.main, true)
+			page.stack.addPage(page.@main, true)
 		}
 	}
 	

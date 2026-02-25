@@ -1,8 +1,20 @@
 // 웹소켓 설정
 let ws=null
+function movePage(pageCode) {
+	if(!pageCode) pageCode='funny-music'
+	fetch(`http://localhost/chat/${pageCode}.html`).then(res=>res.text()).then(data=>{
+		const container = $('.'+pageCode+'-container')
+		if( container[0]) {
+			$('.pages-main').find('.page').each((n,el) => $(el).hide())
+			container.show()
+		} else {
+			$('.pages-main').find('.page').each((n,el) => $(el).hide())
+			$(data).appendTo('.pages-main')
+		}
+	})
+}
 function parseCommand(command, time) {
 	const pos = command.indexOf(':')
-	alert('parse command '+command)
 	if(pos>0) {
 		const type=command.substring(0,pos).trim()
 		if(type=='menu') {
@@ -27,6 +39,7 @@ function parseCommand(command, time) {
 			if(e.target.id=='message-input') return;
 			if(cf.bridge) cf.bridge.logAppend('pageActive');
 		})
+	}
 	else if(command=='fullscreen'|| command=='maximized') {
 		if(cf.bridge) cf.bridge.logAppend(command)
 	} 

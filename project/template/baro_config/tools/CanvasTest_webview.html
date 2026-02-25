@@ -1,5 +1,10 @@
 <page id="main" margin="0" initPage() {	
 	this.@canvas = widget('webview')
+}
+onClose() {
+	this.@canvas.killTimer()
+	Baro.process('pythonWebview').close()
+	Baro.worker('webviewCommand').close()
 }>
 	<canvas id="webview" module="canvas_webview" >
 </page>
@@ -52,6 +57,7 @@
 			print(">> timer callback init result:$result")
 			if(result.find('start:webview') ) {
 				this.@status='start'
+				this.@startWebviewTick=System.tick()
 				this.updateCanvas()				
 			}
 			print("init log result==$result")
@@ -64,18 +70,30 @@
 					rect = toRect(this.geo())		
 					rect.inject(x,y,w,h)
 					this.webviewExec("geo:$x,$y,$w,$h,0")
+					not(this.@checkStart) {
+						this.@checkStart = true
+						this.webviewExec("setParent:${this.winId()}")
+						return;
+					}
 					this.@webviewResizeTick=0
+				}
+				return;
+			}
+			if(this.@startWebviewTick) {
+				dist=System.tick() - this.@startWebviewTick
+				if(dist>1500) {
+					if( this.@movePageCode ) {
+						this.webviewExec("runScript:movePage('${this.@movePageCode}')")
+						this.@movePageCode=''
+					}
 				}
 				return;
 			}
 			if(this.@cmd.@jobStatus.eq('finish')) {
 				return this.webviewStart()
 			}
-			not(this.@checkStart) {
-				this.@checkStart = true
-				this.webviewExec("setParent:${this.winId()}")
-			}
-			result = this.@cmd.@logTail.timeout() not(result) return;
+			result = this.@cmd.@logTail.timeout() 
+			not(result) return;
 			print(">> webview log result:$result")
 			if( result.find('bridge:') ) {
 				page=page('main')
