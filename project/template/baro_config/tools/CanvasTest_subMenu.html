@@ -6,34 +6,25 @@
  
 
 <script eval>
+	/*
+	include('#CanvasTest')
+	p=page('CanvasTest:main')
+	p.pageState('fullscreen')
+	p.pageState('normal')
+	p.open()
+	*/
 	p=page('main')
-	p.size(865,600)
+	p.size(1024,600)
 	p.open()
 	print("CanvasTest eval>>", c)
-	
 </script>
 
 <script module="canvas_submenuTest">
 	init() {
 		this.@useTimer=true
-		event(page(), 'onAction', this.execAction, this, true)
-	}
-	execAction(action) {
-		this.@topMenu.changeTab(action.id, this.movePage)
-	}
-	showMenu(menus, pos) {
-		this.menu(page(), menus, pos)
-	}
-	movePage(id, tab) {
-		switch(id) {
-		case menu.apiForm: 
-			alert("api form action 실행")
-		default:
-			alert("$action.id action 실행")
-		}	
 	}
 	updateCanvas() {
-		vbox(this.@rectCanvas,'30,*,40').inject(rcTopMenu, rcBody, rcStatus)
+		vbox(this.@rectCanvas,'60,*,40').inject(rcTopMenu, rcBody, rcStatus)
 		not(this.@form) {
 			this.@form=initForm(conf('form.menuTest'))
 		}
@@ -42,10 +33,11 @@
 			this.@stackPages.show()
 		}
 		this.@stackPages.move(rcBody)		
-		this.@topMenu=this.addMdc('topMenu', rcTopMenu, 'mdc_topMenu')
-		not(this.@topMenu.@data) {
-			this.@topMenu.setMenu()
+		this.@subMenu=this.addMdc('topMenu', rcTopMenu, 'mdc_subMenu')
+		not(this.@subMenu.@data) {
+			this.@subMenu.setMenu()
 		}
+		this.@rcBody=rcBody
 		this.@rcStatus=rcStatus
 		this.updateForm(this.@form, rcStatus)
 		this.update()
@@ -66,25 +58,102 @@
 	drawBackground(dc) {
 		bgColor=this.@baseColor
 		fillGradient(dc, this.@rcStatus, bgColor, bgColor.lightColor(120))
+		if(this.@widgetBackground) {
+			dc.image(this.@rcBody, this.@widgetBackground,'blur',0,1.5)
+		}
+	}
+	showPopupMdc(mdc) {
+		currentWidget=this.@stackPages.current()
+		this.@currentPopupMdc=mdc		
+		this.@widgetBackground=renderWidget('widgetBackground', currentWidget)
+		this.@stackPages.hide()
+		this.update()
+	}
+	closePopupMdc(mdc) {
+		if( this.@currentPopupMdc==mdc) {
+			this.@currentPopupMdc=null
+		}
+		this.@widgetBackground=null
+		this.@stackPages.show()
+		this.update()
+	}
+	changeSubMenu(sub) {
+		id=sub.id
+		if(id.eq('video')) {
+			return include('@tools#CanvasTest_video', true)
+		}
+		if(id.eq('webview','funnyMusic','tableOrder','musicSelect')) {
+			include('#CanvasTest_webview')
+			page=page("CanvasTest_webview:main")
+			view=page.@canvas
+			if(id.eq('musicSelect')) {
+				return view.webviewExec("setUrl:http://localhost/MUSIC_SELECT/index.html")
+			}
+			dist=0
+			if(view.@startWebviewTick) {
+				dist=System.tick()-view.@startWebviewTick
+			}
+			switch(id) {
+			case webview:
+				pageCode='chat'
+			case funnyMusic:
+				pageCode='funny-music'
+			case tableOrder:
+				pageCode='table-order'
+			default:
+			}
+			if(dist>5000) {
+				view.webviewExec("runScript:movePage('$pageCode')")
+			} else {
+				view.@movePageCode=when(pageCode.eq('chat'),'',pageCode)
+			}
+			this.@stackPages.addPage(page, true)
+			return;
+		}
+		path=conf('path.tools')
+		if(isFile("${path}/CanvasTest_${id}.html")) {
+			include("#CanvasTest_${id}")
+			page=page("CanvasTest_${id}:main")
+			this.@stackPages.addPage(page, true)
+		} else {
+			print(">> change sub menu", sub)
+		}
+		this.@stackPages.show()
 	}
 </script>
 
 
-<script module="mdc_topMenu">
+<script module="mdc_subMenu">
+	 
 	setMenu(menuCode) {
-		not(menuCode) menuCode='menu.topMenuTest'
+		not(conf('path.images#main')) {
+			imagePath=conf('path.images')
+			conf('path.images#main', imagePath, true)
+		}
+		not(menuCode) menuCode='menu.subMenuTest'
 		json=conf(menuCode) not(json) return print("@@ topMenu setMenu함수 오류 (메뉴정보가 없습니다)");
 		this.addNode('@data').removeAll(true)
 		this.@data.parseJson(conf(menuCode))
 		this.@bgColor=color('#D4D4B7A0')
 		this.updateMdc()
+		this.drawDc()
 	}
-	updateMdc(rc) {		
-		this.updateMenu(rc)
+	updateMdc(rc) {
+		not(rc) rc=this.@rectAvail
+		hbox(rc,'250,*').inject(rcLogo, rcMenuTab)
+		this.with(@rcLogo, @rcMenuTab)
+		this.updateMenu()
 	}
 	drawDc(dc) {
 		not(dc) dc=this
-		this.drawMenu(dc, rectAvail)
+		this.fill()
+		this.mode()
+		dc.image( this.@rectAvail, 'main/common/menu_bg.png', 'fill' )
+		title=this.@title
+		not(dc) dc=this
+		not(title) title='SubMenuTest'
+		dc.font(16).text(this.@rcLogo, title, 'center')
+		this.drawMenus(dc, this.@rcMenuTab)
 	}
 	drawOverlay(dc) {
 		tab=this.@mouseDownTab
@@ -99,218 +168,191 @@
 			}
 		}
 	}	
-	updateMenu(rc) {
-		not(rc) rc=this.@rectAvail
-		dc=this
-		tabs=this.@data.menuTabs
-		while(tab,tabs) {
-			switch(tab.tag) {
-			case btn:
-				dc.textSize(tab.text).inject(tw)
-				tab.tabWidth=tw+38
-			case action:
-				not(tab.@actionNode) {
-					tab.@actionNode=findId(this.@data.actionList, tab.id) 
-					not(tab.@actionNode) continue;
-					not(tab.text) tab.text=tab.@actionNode.text
-				}
-				dc.textSize(tab.text).inject(tw)
-				if(tab.@actionNode.icon) tw+=25
-				if(tab.useClose) tw+=22
-				tab.tabWidth=tw+20
-			default:
-			}
+	updateMenu() {
+		rc=this.@rcMenuTab		
+		rc.inject(x,y,w,h), right=x+w
+		while(cur, this.@data.menus) {
+			getTextSize(cur.text,14).inject(tw)
+			tw+=40
+			cur.rect=rc(x,y,tw,h) 
+			x+=tw+8
 		}
-		wa=''
-		while(tab,tabs,n) {
-			if(n) wa.add(',')
-			wa.add(tab.tabWidth)
-		}
-		wa.add(',*')
-		while(rcTab, hbox(rc,wa), n) tabs.$n.rcTab=rcTab
-		this.drawMenu(dc, rc)
-	}
-	drawMenu(dc,rc) {
-		dc.fill()
-		if(notValid(this.@data.menuTabs)) {
-			return dc.text(rc, '메뉴 아이템정보가 없습니다', 'center')
-		}
-		dc.fill(this.@bgColor)
-		while(tab, this.@data.menuTabs, n) {
-			rcTab=tab.rcTab
-			switch(tab.tag) {
-			case btn:
-				this.drawBtn(dc,tab,rcTab,this.@bgColor)
-			case action: 
-				this.drawTab(dc,tab,rcTab,this.@bgColor)
-			default:
-			}
+		remain=right-x
+		if(remain>0 ) {
+			this.@rcMenuStatus=rc(x,y,remain,h)
 		}
 	}
-	drawBtn(dc, tab, rcTab, bgColor) {
-		fg=bgColor.lightColor(200)
-		if( tab==this.@mouseDownTab ) {
-			bg=bgColor.darkColor(120)
+	drawMenus(dc) {
+		if(notValid(this.@data.menus)) {
+			return dc.text(this.@rcMenuTab, '메뉴 아이템정보가 없습니다', 'center')
+		}
+		while(menu, this.@data.menus, n) {
+			menu.@index=n
+			this.drawMenu(dc, menu)
+		}
+	}
+	drawMenu(dc, menu) {		
+		hbox(menu.rect, '9,*,8').inject(rcLeft, rcText, rcRight)
+		menu.@rcText=rcText.incrY(8)
+		currentTab=nvl(this.@currentDownTab, this.@currentMenuTab)
+		if( menu==currentTab ) {
+			dc.image( rcLeft, 'main/common/menu_tab1.png')
+			dc.image( rcText, 'main/common/menu_tab2.png', 'fill' )
+			dc.image( rcRight,'main/common/menu_tab3.png')			
+			this.textImage(dc, menu, menu.@rcText, menu.text,'menuSelect')
 		} else {
-			bg=bgColor.darkColor(180)
+			arrow=Cf.imageLoad('main/common/menu_down.png')
+			arrow.imageSize().inject(iw,ih)
+			rcArrow = rcText.rightCenter(iw,ih,5)
+			dc.image(rcArrow, arrow)
+			this.textImage(dc, menu, menu.@rcText, menu.text,'menuNormal')
 		}
-		rcIcon=rcTab.leftCenter(16,16,4,2)
-		rcText=rcTab.incrX(25)
-		dc.fill(rcTab.incr(1), bg)
-		dc.image(rcIcon, 'icons:menu1')
-		dc.pen(fg).text(rcText, '메뉴')
-		dc.rectLine(rcTab, 3, bgColor.darkColor(50), 2)
-		dc.rectLine(rcTab.incrW(1), 3, bgColor.lightColor(80))
+		if( menu==this.@mouseOverMenu) ) {
+			dc.fill(rcText.incr(-3), '#c0cad040');
+		}
+	}	
+	drawPopup(dc) {
+		not(this.@currentPopup) return;
+		rcPopup=this.@rectPopup.offset(this.@offset)
+		dc.image(rcPopup,this.@currentPopup)
 	}
-	drawTab(dc, tab, rcTab, bgColor) {		
-		fg=bgColor.darkColor(200)
-		rcText=rcTab.margin(1,2,2,0)
-		dc.save()
-		if( tab==this.@currentTab ) {
-			dc.fill(rcTab, '#fff')
-			dc.rectLine(rcText, 23, '#404030aa', 2 )
-			dc.font('weight:bold')
-		} else if( tab==this.@mouseDownTab) { 
-			dc.fill(rcTab, bgColor)
-			dc.rectLine(rcTab, 23, bgColor.darkColor(120), 2 )
-		} else {
-			dc.fill(rcTab, bgColor)
-			dc.rectLine(rcText, 23, bgColor.darkColor(120) )
+	showPopup(menuTab) {
+		menuTab.rect.moveBottom().inject(x, y, w, h)
+		not( menuTab.@dcPopup ) {
+			/* 최대 폭/높이 계산 */
+			mw=0, mh=0;
+			while(sub, menuTab.submenu) {
+				not(sub.text) continue;
+				getTextSize(sub.text,12).inject(tw)
+				tw+=35
+				if( mw<tw ) mw=tw;
+				mh+=35;
+			}
+			if( mw<w ) mw=w;
+			mh+=20;
+			menuTab.@dcPopup = mdc("subMenu.${menuTab.id}", mw, mh )
+			this.drawSubMenu(menuTab, pt(x,y))
 		}
-		if(tab.@actionNode.icon) {
-			dc.image(rcText.leftCenter(16,16,4), tab.@actionNode.icon)
-			rcText.incrX(24)
+		popup=menuTab.@dcPopup
+		this.@currentPopup=popup
+		this.@rectPopup=rc(x,y,popup.@rect.size())
+		print("popup=>", popup, this.@rectPopup)
+		this.@canvas.showPopupMdc(this)
+	}
+	closePopup() {		
+		this.@rectPopup=null
+		this.@currentPopup=null
+		this.@currentDownTab=null
+		this.@canvas.closePopupMdc(this)
+	}
+	drawSubMenu(menuTab, offset) {
+		dc=menuTab.@dcPopup
+		rcPopup=dc.@rect
+		/* 그리기 영역 */
+		vbox(rcPopup,'*,14').inject(rcBody, rcBottom)
+		hbox(rcBody,'9,*,10').inject(box11,box12,box13)
+		hbox(rcBottom,'9,*,10').inject(box21,box22,box23)
+		/* 배경 그리기 */		
+		dc.image(box11, 'main/common/submenu_box_11.png', 'fill')
+		dc.image(box13, 'main/common/submenu_box_13.png', 'fill')
+		dc.image(box21, 'main/common/submenu_box_21.png')
+		dc.image(box22, 'main/common/submenu_box_22.png', 'fill')
+		dc.image(box23, 'main/common/submenu_box_23.png')
+		dc.fill(box12, '#ffffff' )
+		box12.inject(x,y,w,h), x+=5, y+=8, h=34;
+		while( sub, menuTab.submenu ) {
+			rect=rc(x,y,w,h)
+			y+=h
+			not(sub.icon) sub.icon=randomIcon()
+			sub.@rcText=rect.offset(offset)
+			print(">>", offset, sub.@rcText)
+			this.textImage(dc, sub, rect)
 		}
-		dc.pen(fg).text(rcText, tab.text)
-		if( tab.useClose) {
-			rcClose=rcTab.rightCenter(16,16,-8)
-			dc.fill(rcClose.incr(-2), '#ee604055')
-			dc.image(rcClose, 'icons:close_gray')
-		}
-		dc.restore()
 	}
 	mouseDown(pt) {
-		while(tab, this.@data.menuTabs) {
-			if(tab.rcTab.contains(pt)) {
-				this.@mouseDownTab=tab
-				this.addOverlay('mouseDown', tab.rcTab )
-			}
-		}
-	}
-	mouseUp(pt) {
-		tab=this.@mouseDownTab
-		if( tab ) {
-			this.removeOverlay('mouseUp', tab.rcTab )
-			this.@mouseDownTab=null;
-			if(tab.menuId) {
-				this.showMenu(tab)
-			} else {
-				this.changeTab(tab.id)
-			}
-		}	
-		return true;
-	}
-	showMenu(tab) {
-		rcTab=tab.rcTab.offset(this.@offset)
-		menuInfo=this.makeMenu(tab.menuId)
-		not(menuInfo) return this.@canvas.alert("$menuId 메뉴를 찾을수 없습니다")
-		this.@canvas.showMenu(menuInfo, rcTab.lb())
-	}
-	makeMenu(menuId) {
-		actions=this.@data.actionList
-		setMenuInfo=function(menus) {
-			while(cur, menus) {
-				if(cur.menus) {
-					setMenuInfo(cur.menus)
-					continue;
-				}
-				if( cur.actionId) {
-					if(cur.text) continue;
-					action=findId(actions, cur.actionId) not(action) continue;
-					cur.icon=action.icon
-					cur.text=action.text
-					cur.tooltip=action.tooltip
+		if(this.@rectPopup && this.@rectPopup.contains(pt)) {
+			while(sub, this.@currentDownTab.submenu) {
+				if(sub.@rcText.contains(pt)) {
+					this.@currentMenuTab=this.@currentDownTab
+					this.@canvas.changeSubMenu(sub)
+					this.closePopup()
+					break;
 				}
 			}
-			return menus;
-		};
-		menuId=tab.menuId not(menuId) menuId='mainMenu'
-		menuInfo=this.@data.$menuId
-		if(notValid(menuInfo)) return;
-		return setMenuInfo(menuInfo);
-	}
-
-	changeTab(id, callback) {		
-        tab=findId(this.@data.menuTabs,id)
-		if(tab) {
-			if(tab==this.@currentTab) return;
-		} else {
-            tab=this.@data.menuTabs.addNode()
-			action=findId(this.@data.actionList,id)
-			not(action ) {
-				alert("메뉴변경 오류 - $id 메뉴액션를 찾을수 없습니다")
-				return false;
+			return;
+		}
+		while(menuTab, this.@data.menus) {
+			if(menuTab.@rcText.contains(pt)) {
+				this.@currentDownTab=menuTab
+				this.drawDc()
+				this.showPopup(menuTab)
 			}
-            tab.id=id
-            tab.@actionNode=action
-			tab.text=action.text
-			tab.useClose=true;
-            this.updateMdc()
 		}
-		canvas=this.@canvas		
-		if(typeof(callback,'function')) {
-			call(callback, canvas, id, tab)
-		} else if(typeof(canvas.movePage,'function')) {
-			canvas.movePage(id, tab)
-		} else {
-			print("changeTab 탭변경 처리함수 미정의 (액션아이디:$id)")
-		}
-		this.@currentTab=tab
-		this.drawDc()
-		return true;
 	}
 	
+	textImage(dc, cur, rcOrigin, text, style ) {
+		not(rcOrigin) rcOrigin=cur.rect
+		not(text) text=cur.text
+		rect=rc(0,0,rcOrigin.size())
+		dcText=mdc("textImage:text", rect)
+		dcBg=mdc('textImage:bg',500,200)
+		dcBg.fill(), dcText.fill()		
+		_draw=function(fontSize, weight, align, c1, c2, rcText, rate) {
+			not(rate) rate=1.5;
+			not(rcText) rcText=rect;
+			dcText.font("size:$fontSize,weight:$weight,color:$c1").text(rcText, text, align)
+			dcBg.image(rect.move(1,2), dcText, 'blur', rate)
+			dcText.fill().image(rect, dcBg, 'fixed')
+			dcText.font("size:$fontSize,weight:$weight,color:$c2").text(rcText, text, align)
+		};
+		not(style) style='submenu'
+		switch( style ) {
+		case menuNormal:
+			_draw(12, 'normal', 'center', '#a0a0ca', '#f0f0f0da')
+		case menuSelect:
+			_draw(12, 'bold', 'center', '#c0c0ca', '#404046')
+		case submenu: 
+			_draw(10, 'normal', 'left', '#d0d0da', '#202020', rect.incrX(26) )
+			if( cur.icon ) {
+				rcIcon =rect.width(20).center(16,16)
+				dcText.image(rcIcon, cur.icon)
+			} 
+			dcText.rectLine(rect.incrW(-6), 4, '#a0a0a0', 1, 'dash' )
+		default:
+			_draw(10, 'normal', '#d0d0da', '#202020' )
+		}
+		dc.image(rcOrigin,dcText,0,0);
+	}
 </script>
+ 
 
-<conf name="menu.topMenuTest">	
-	actionList: [
-		{id:menu.apiForm, text:API관리, icon:'vicon:application_lightning', type:tab}
-		{id:menu.htmlTemplateForm, text:HTML템플릿관리, menuText:HTML템플릿, icon:'vicon:html_go', type:tab}
-		{id:menu.dbTableForm, text:DB테이블관리, icon:'vicon:database_gear', type:tab}
-		{id:menu.langMngPage, text:다국어관리, icon:'vicon:keyboard_magnify', type:tab}
-		{id:menu.dbConnectMng, text:DB연결관리, icon:'vicon:database_connect'}
-		{id:menu.codeMng, text:공통코드관리, icon:'vicon:table_gear'}
-		{id:menu.appMenuMng, text:앱메뉴관리, icon:'vicon:application_view_tile'}
-		{id:menu.close, text:프로그램 종료, icon:'icons:close'}
-		{id:sourceEditor, text:실행툴열기, icon:'vicon:script_code'}
-		{id:locknlock, text:락앤락툴열기, icon:'ficon:blog-tumblr'}
-		{id:apiTest, text:API매개변수생성, icon:'vicon:add_default'}
-		{id:copyFields, text:선택복사, icon:'vicon:application_edit', tooltip:선택된 필드 클립보드에 복사}
-		{id:makeTemplate, text:템플릿만들기, icon:'vicon:application_form_add', tooltip:지정된 폴더에 템플릿생성}				
-		{id:addItemComment, text:커멘트달기, icon:'ficon:balloon-quotation', tooltip:'API결과항목 커멘트달기'}
-	]
-	menuTabs:[
-		{tag:btn, menuId:mainMenu, text:메뉴, icon:'icons:menu1'}
-		{tag:action, id:menu.apiForm }
-		{tag:action, id:menu.htmlTemplateForm }
-		{tag:action, id:menu.dbTableForm }
-		{tag:action, id:menu.langMngPage }
-	]
-	mainMenu:[
-		{actionId:menu.apiForm }
-		{actionId:menu.htmlTemplateForm }
-		{actionId:menu.dbTableForm }
-		{actionId:menu.langMngPage }
-		{actionId:sourceEditor }
-		{actionId:locknlock }
-		{type:separator }
-		{text:설정관리, menus:[
-			{actionId:menu.codeMng }
-			{actionId:menu.appMenuMng }
-			{actionId:menu.dbConnectMng }
+<conf name="menu.subMenuTest">
+	menus:[
+		{tag:tab, id:apiTest, text:API 테스트, submenu:[
+			{tag:menu, id:apiInfo, text:API 정보}
+			{tag:menu, id:apiCall, text:API 호출}
+			{tag:menu, id:apiHist, text:API 이력관리}
 		]}
-		{type:separator }
-		{actionId:menu.close }
+		{tag:tab, id:dbTest, text:DB 테스트, submenu:[
+			{tag:menu, id:apiInfo, text:DB연결관리 }
+			{tag:menu, id:grid_search, text:DB조회 }
+		]}
+		{tag:tab, id:drawTest, text:그리기 테스트, submenu:[ 
+			{tag:menu, id:keyboard, text:키보드 테스트}
+			{tag:menu, id:numpad, text:숫자패드 테스트}
+			{tag:menu, id:icon_search, text:아이콘 조회}
+			{tag:menu, id:sprite, text:GIF 이미지편집}
+			{tag:menu, id:topMenu, text:메뉴테스트}
+		]}
+		{tag:tab, id:utilTest, text:공통화면 관리, submenu:[
+			{tag:menu, id:splitter, text:분할창}
+			{tag:menu, id:stack, text:스텍페이지}
+			{tag:menu, id:video, text:동영상플레이}
+			{tag:menu, id:webview, text:웹뷰}
+			{tag:menu, id:tableOrder, text:테이블주문}
+			{tag:menu, id:funnyMusic, text:곡검색}
+			{tag:menu, id:musicSelect, text:퍼니뮤직}
+		]}
 	]
 </conf>
 
@@ -323,3 +365,5 @@
 		{tag:btn, code:deleteIcon, text:삭제}
 	]
 </conf>
+
+ 

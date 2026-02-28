@@ -10,6 +10,20 @@
 		data=json(param,'data')
 		return req.send(data);
 	}
+	songs(req,param,&uri) {
+		param.url='http://localhost:8081/api/songs/search?q='
+		param.url.add(uri.findPos('/'))
+		param.type='songs'
+		addApiJob('song_search', param, @callback.songs)
+		while(n=0,100) {
+			System.sleep(250)
+			if(param.apiResult) {
+				return req.send(param.apiResult)
+			}
+		}
+		param.error="$param.url 조회오류"
+		return param
+	}
 	addCmd(req, param, &uri) {
 		addCmdWorker('api','cd')
 	}

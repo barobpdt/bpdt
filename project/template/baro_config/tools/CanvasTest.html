@@ -6,15 +6,8 @@
  
 
 <script eval>
-	/*
-	include('#CanvasTest')
-	p=page('CanvasTest:main')
-	p.pageState('fullscreen')
-	p.pageState('normal')
-	p.open()
-	*/
 	p=page('main')
-	p.size(1024,600)
+	p.size(1400,950)
 	p.open()
 	print("CanvasTest eval>>", c)
 </script>
@@ -50,8 +43,10 @@
 	}
 	clickBtn(cur) {
 		switch(cur.code) {
-		case search:
-		case deleteIcon:
+		case fullscreen:
+			page().pageState('fullscreen')
+		case normal:
+			page().pageState('normal')
 		default:
 		}
 	}
@@ -79,28 +74,69 @@
 	}
 	changeSubMenu(sub) {
 		id=sub.id
-		if(id.eq('webview','funnyMusic','tableOrder')) {
+		if(id.eq('closeApp')) {
+			closeApp()
+			return;
+		}
+		if(id.eq('video')) {
+			include('#CanvasTest_video')
+			page=page('CanvasTest_video:main')
+			page.size(1200,800)			
+			if(page.@playStartTick) {
+				page.active()
+			} else {					
+				c=page.@canvas
+				c.addMovie('D:/mp4/sample03.mp4')
+				c.addMovie('D:/mp4/sample01.mp4')
+				c.addMovie('D:/mp4/sample02.mp4')
+				c.startVideoPlay()
+				page.@playStartTick=System.tick()
+				page.open()
+			}
+			return;
+		}
+		if(id.start('api')) {
+			include('#CanvasTest_songs_search')
+			page=page("CanvasTest_songs_search:main")
+			this.@stackPages.addPage(page, true)
+			return;
+		}		
+		
+		if(id.eq('funnyMusic','lyrics','fileTrans','webRtc','order','musicSelect')) {
 			include('#CanvasTest_webview')
 			page=page("CanvasTest_webview:main")
 			view=page.@canvas
-			dist=0
-			if(view.@startWebviewTick) {
-				dist=System.tick()-view.@startWebviewTick
+			view.@movePageCode=''
+			switch(id) {
+			case funnyMusic:
+				view.webviewExec("url:http://localhost:8081/funny_music.html?table=5")
+			case lyrics:
+				view.webviewExec("url:http://localhost:8081/lyrics.html")	
+			case fileTrans:
+				view.webviewExec("url:http://localhost:8081/file-transfer.html")	
+			case webRtc:
+				view.webviewExec("url:http://localhost:8081/webrtc.html")
+			case order:
+				view.webviewExec("url:http://localhost:8081/dashboard.html")
+			case musicSelect:
+				view.webviewExec("url:http://localhost/MUSIC_SELECT/index.html")
 			}
+			this.@stackPages.addPage(page, true)
+			return;
+		}
+		if(id.eq('webview','tableOrder')) {
+			include('#CanvasTest_webview')
+			page=page("CanvasTest_webview:main")
+			view=page.@canvas
+			view.webviewExec("url:http://localhost/chat/chat.html")
 			switch(id) {
 			case webview:
 				pageCode='chat'
-			case funnyMusic:
-				pageCode='funny-music'
 			case tableOrder:
 				pageCode='table-order'
 			default:
 			}
-			if(dist>5000) {
-				view.webviewExec("runScript:movePage('$pageCode')")
-			} else {
-				view.@movePageCode=when(pageCode.eq('chat'),'',pageCode)
-			}
+			view.@movePageCode=pageCode
 			this.@stackPages.addPage(page, true)
 			return;
 		}
@@ -145,8 +181,8 @@
 		dc.image( this.@rectAvail, 'main/common/menu_bg.png', 'fill' )
 		title=this.@title
 		not(dc) dc=this
-		not(title) title='SubMenuTest'
-		dc.font(16).text(this.@rcLogo, title, 'center')
+		not(title) title='퍼니뮤직 테스트'
+		dc.font("size:16,color:#fff").text(this.@rcLogo, title, 'center')
 		this.drawMenus(dc, this.@rcMenuTab)
 	}
 	drawOverlay(dc) {
@@ -326,10 +362,12 @@
 			{tag:menu, id:apiInfo, text:API 정보}
 			{tag:menu, id:apiCall, text:API 호출}
 			{tag:menu, id:apiHist, text:API 이력관리}
+			{tag:menu, id:closeApp, text:프로그램 종료}
 		]}
 		{tag:tab, id:dbTest, text:DB 테스트, submenu:[
 			{tag:menu, id:apiInfo, text:DB연결관리 }
 			{tag:menu, id:grid_search, text:DB조회 }
+			{tag:menu, id:order, text:주문관리 }
 		]}
 		{tag:tab, id:drawTest, text:그리기 테스트, submenu:[ 
 			{tag:menu, id:keyboard, text:키보드 테스트}
@@ -337,25 +375,27 @@
 			{tag:menu, id:icon_search, text:아이콘 조회}
 			{tag:menu, id:sprite, text:GIF 이미지편집}
 			{tag:menu, id:topMenu, text:메뉴테스트}
+			{tag:menu, id:webRtc, text:WEB RTC}
+			{tag:menu, id:lyrics, text:가사조회}
+			{tag:menu, id:fileTrans, text:파일전송}
 		]}
 		{tag:tab, id:utilTest, text:공통화면 관리, submenu:[
+			{tag:menu, id:funnyMusic, text:퍼니뮤직}
 			{tag:menu, id:splitter, text:분할창}
 			{tag:menu, id:stack, text:스텍페이지}
 			{tag:menu, id:video, text:동영상플레이}
 			{tag:menu, id:webview, text:웹뷰}
 			{tag:menu, id:tableOrder, text:테이블주문}
-			{tag:menu, id:funnyMusic, text:곡검색}
+			{tag:menu, id:musicSelect, text:노래선곡}
 		]}
 	]
 </conf>
 
 <conf name="form.menuTest">
 	formItems: [
-		{tag:input, code:searchText, width:120}
-		{tag:btn, code:search, text:선택}
-		{tag:combo, code:iconTypes}
 		{tag:space}
-		{tag:btn, code:deleteIcon, text:삭제}
+		{tag:btn, code:fullscreen, text:전체화면}
+		{tag:btn, code:normal, text:창화면}
 	]
 </conf>
 

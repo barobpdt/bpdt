@@ -14,12 +14,12 @@
 
 <script eval>
 	p=page('CanvasTest_video:main')
-	p.size(800,600)
+	p.size(1200,800)
 	p.open()
 	c=p.@canvas
+	c.addMovie('D:/mp4/sample03.mp4')
 	c.addMovie('D:/mp4/sample01.mp4')
 	c.addMovie('D:/mp4/sample02.mp4')
-	c.addMovie('D:/mp4/sample03.mp4')
 	c.startVideoPlay()
 	print("CanvasTest eval>>")
 	

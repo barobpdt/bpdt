@@ -18,6 +18,7 @@ initService() {
 	page = page("SourceRun:main")
 	page.open()
 	runCommand("cd")
+	// include('@tools#CanvasTest')
 }
 initConfig() {
 	print("설정초기화 처리")
@@ -223,10 +224,11 @@ range(sp,ep) {
 	while(n=sp, n<ep, n++) a.add(n)
 	return a;
 }
-checkTick(tick, dist) {
-	not(tick) tick=0
-	d=System.tick() - tick;
-	return d.gt(dist);
+checkTick(tick, duration) {
+	not(tick) return false;
+	not(duration) duration=1000
+	dist=System.tick() - tick;
+	return dist.gt(duration);
 }
 setArray(arr, idx, node) {
 	not(typeof(idx,"num")) return arr;
@@ -314,12 +316,7 @@ checkModule(param) {
 		return object('user.subfuncMap').get(moduleName);
 	}
 }
-checkTick(tick, duration) {
-	not(tick) return false;
-	not(duration) duration=250
-	d=System.tick() - tick;
-	return when(d.gt(duration), true, false)
-}
+
 getObjectInfo(name) {
 	info={}
 	fnm="${name}."
@@ -1457,7 +1454,7 @@ parseSource(&s, base, serviceNode) {
 						not(type) type='default'
 					}
 					if( ss.eq(mapNode.get(type)) ) {
-						// print("@@ source not change $base:$type")
+						print("@@ 소스변경되지 않음 $base:$type")
 						continue;
 					}
 					mapNode.set(type,ss)
@@ -1472,6 +1469,7 @@ parseSource(&s, base, serviceNode) {
 				}
 				continue;
 			}
+			print("@@ 소스적용 $base:$type 모듈:$module")
 			applyFunc(ss, module)
 		} else if( tag.eq('eval') ) {
 			evalSource.add(ss)
@@ -1562,6 +1560,16 @@ nodeVar(obj, name, value) {
 		}
 		return obj.get(vnm)
 	}
+}
+escapeString(&s) {
+	ss='', nl="\n"
+	while(s.valid()) {
+		left=s.findPos('\n')
+		ss.add(left)
+		not(s.valid()) break
+		ss.add(nl)
+	}
+	return ss;
 }
  
 resetModule(obj) {

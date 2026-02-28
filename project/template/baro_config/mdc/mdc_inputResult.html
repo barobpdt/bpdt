@@ -23,11 +23,10 @@
 	drawClip(dc, rc) {
 		if( this.@keyboardMdc ) {
 			ingString = this.@keyboardMdc.@ingString
-			color = this.@baseColor
 			if( ingString ) {
 				dc.save()
 				if(this.@clipFlag) {
-					dc.fill(rc, color)
+					dc.fill(rc, '#333')
 					dc.font('size:16,weight:bold,color:#fff').text(rc,ingString)
 					this.@clipFlag=false
 				} else {

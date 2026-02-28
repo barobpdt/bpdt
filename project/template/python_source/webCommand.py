@@ -18,9 +18,11 @@ class CustomAction(argparse.Action):
 # 입력받을 인자값 등록
 parser.add_argument('--command', action=CustomAction, nargs='+', required=True, help='로그파일')
 parser.add_argument('--out', action=CustomAction, nargs='+', required=True, help='출력파일')
+parser.add_argument('--url')
 args = parser.parse_args()
 
 fpOut=open(args.out, 'a', encoding='utf8')
+
 def logAppend (msg):
 	fpOut.write(f"@#> {msg}\n")
 	fpOut.flush()
@@ -105,8 +107,9 @@ class WebWidget(QWidget):
 	def initUI(self):
 		self._glwidget = None
 		self.webEngineView = MyWebView(self)
-		
-		self.loadUrl('http://localhost/chat/chat.html')
+		urlDefault='http://localhost/chat/chat.html'
+		if args.url:
+			urlDefault=args.url
 		vbox = QVBoxLayout(self)
 		vbox.setContentsMargins(0, 0, 0, 0)
 		# vbox.setMargin(0)
@@ -124,6 +127,10 @@ class WebWidget(QWidget):
 		# self.setWindowFlags(Qt.SplashScreen)
 		# self.hide()
 		# self.webEngineView.installEventFilter(self)
+		profile = self.webEngineView.page().profile()
+		# profile.setHttpCacheType(QWebEngineProfile.NoCache)
+		profile.clearHttpCache()
+		self.loadUrl(urlDefault)
 		logAppend(f'start:webview')
 
 	def eventFilter(self, source, event):
@@ -195,6 +202,8 @@ class WebWidget(QWidget):
 					logAppend(f"clearCache:{params}")
 				elif ftype=='runScript':
 					self.webEngineView.page().runJavaScript(params, handle_result)
+				elif ftype=='zoom':
+					self.webEngineView.setZoomFactor(float(params))
 				elif ftype=='pageActive':
 					if self.parent_hwnd != None:
 						win32gui.SetForegroundWindow(self.parent_hwnd)
@@ -213,7 +222,7 @@ class WebWidget(QWidget):
 				elif ftype=='show':
 					self.show()
 				elif ftype=='url':
-					self.loadUrl(val.strip())
+					self.loadUrl(params.strip())
 				elif ftype=='top':
 					self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint|Qt.SplashScreen)
 					self.show()

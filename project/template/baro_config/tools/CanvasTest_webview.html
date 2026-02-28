@@ -22,6 +22,7 @@ onClose() {
 	c.webviewExec("show:")
 	c.webviewExec("url:https://www.naver.com/")
 	c.updateCanvas()
+	캐시위치 = C:\Users\{user}\AppData\Local\python\QtWebEngine
 	*/
 	print("CanvasTest eval>>")
 	
@@ -37,6 +38,8 @@ onClose() {
 			initWas()
 			initWebsocket()
 		}
+		this.addArray('@penddingList')
+		this.@startWebviewTick=0
 		// this.webviewCheck()
 		this.webviewStart()
 	}
@@ -52,48 +55,45 @@ onClose() {
 		print("setWebviewResult: webview result ==> $s")		
 	}
 	timerCallback() {
-		if(this.@status.eq('init')) {
-			result = this.@cmd.@logTail.timeout() not(result) return;
-			print(">> timer callback init result:$result")
+		this.inject(@cmd, @status)
+		if( status.eq('init')) {
+			result = cmd.@logTail.timeout() not(result) return;
 			if(result.find('start:webview') ) {
 				this.@status='start'
 				this.@startWebviewTick=System.tick()
-				this.updateCanvas()				
+				this.updateCanvas()
 			}
 			print("init log result==$result")
 			return;
 		}
-		if(this.@status.eq('start')) {
-			if(this.@webviewResizeTick) {
-				dist=System.tick() - this.@webviewResizeTick
-				if(dist>800) {
-					rect = toRect(this.geo())		
-					rect.inject(x,y,w,h)
-					this.webviewExec("geo:$x,$y,$w,$h,0")
-					not(this.@checkStart) {
-						this.@checkStart = true
-						this.webviewExec("setParent:${this.winId()}")
-						return;
-					}
-					this.@webviewResizeTick=0
-				}
+		if( status.eq('start')) {
+			if(checkTick(this.@webviewResizeTick,500)) {
+				rect = toRect(this.geo())
+				rect.inject(x,y,w,h)
+				this.webviewExec("geo:$x,$y,$w,$h,0")				
+				this.@webviewResizeTick=0
 				return;
-			}
-			if(this.@startWebviewTick) {
-				dist=System.tick() - this.@startWebviewTick
-				if(dist>1500) {
-					if( this.@movePageCode ) {
-						this.webviewExec("runScript:movePage('${this.@movePageCode}')")
-						this.@movePageCode=''
-					}
+			} 
+			if(checkTick(this.@startWebviewTick)) {
+				not(this.@checkStart) {
+					this.@checkStart = true
+					this.webviewExec("setParent:${this.winId()}")
 				}
-				return;
+				if(isValid(this.@penddingList) ) {
+					execSource=this.@penddingList.pop()
+					print("@@ pendding execSource:$execSource")
+					this.webviewExec(execSource, true)
+					return;
+				}
 			}
-			if(this.@cmd.@jobStatus.eq('finish')) {
+			
+			if(cmd.@jobStatus.eq('finish')) {
 				return this.webviewStart()
 			}
-			result = this.@cmd.@logTail.timeout() 
-			not(result) return;
+			result=cmd.@logTail.timeout() 
+			not(result) {
+				return;
+			}
 			print(">> webview log result:$result")
 			if( result.find('bridge:') ) {
 				page=page('main')
@@ -101,9 +101,11 @@ onClose() {
 					return this.webviewExec('pageActive:')
 				}
 				if( result.find('bridge:fullscreen')) {
+					this.webviewExec('zoom:1.5')
 					return page.pageState('fullscreen')
 				}
 				if( result.find('bridge:maximized')) {
+					this.webviewExec('zoom:1.0')
 					return page.pageState('maximized')
 				}
 			}
@@ -153,6 +155,8 @@ onClose() {
 	webviewStart() {
 		this.@status='init'
 		this.@checkStart=false
+		this.@startWebviewTick=0
+		this.@penddingList.reuse()
 		cmd=this.@cmd 
 		not(checkTag(cmd,'process')) return print("@@webviewStart 오류 (webview command 객체 미정의)");
 		if( cmd.@jobStatus=='run' ) {
@@ -183,20 +187,27 @@ onClose() {
 		logFileName=logObj.get('logFileName')
 		outFileName=outObj.get('logFileName')
 		line=f["$py" "$sourcePath" --command="$logFileName" --out="$outFileName"]
+		url=this.@movePageUrl
+		if(url) {
+			this.@movePageUrl=''
+			line.add(" --url=$url")
+		}
 		addCmdJob(cmd, line)
 	}
-	webviewExec(execSource) {
+	webviewExec(execSource, skipPendding) {
 		cmd=this.@cmd
-		cmd.@webviewCommandList.add(execSource)
-		print(">> webview.exec : ${cmd.@webviewCommandList}")
 		if( cmd.@jobStatus!='run' ) {
-			if( cmd.@jobStatus=='finish') {
-				cmd.@jobStatus='ready'
-				this.webviewStart()
-				this.webviewInit()
-			}
+			print("@@ webviewExec 오류 웹뷰 실행중이 아닙니다")
+			this.@penddingList.add(execSource)
+			return;
 		}
-		addUserWorker('webviewCommand', cmd )
+		if(checkTick(this.@startWebviewTick)) {
+			cmd.@webviewCommandList.add(execSource)
+			addUserWorker('webviewCommand', cmd )
+		}  else {
+			this.@penddingList.add(execSource)
+			print(">> webview.exec : ${this.@penddingList}")
+		}		
 	}
 	webviewStop() {
 		this.webviewExec('quit:')

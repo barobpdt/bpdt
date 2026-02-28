@@ -24,7 +24,7 @@ function parseCommand(command, time) {
 				$('.pages-main').find('.page').each((n,el) => $(el).hide())
 				container.show()
 			} else {
-				ws.sendData('pageInfo', {pageCode, time})
+				movePage(pageCode)
 			}
 		}
 		else if(type=='cmd') {
@@ -124,10 +124,12 @@ function recvProc(header, data) {
 }
 
 function initWebsocket() {
+	/*
 	ws=new WebsocketManager('ws://localhost:8092/chat', recvProc)
 	ws.connect()
 	clog('ws==>', ws)
 	cf.websocket=ws
+	*/
 }
 
 // 페이지 설정

@@ -134,7 +134,14 @@ startMessageClient(userId, host, port, callback) {
 		// print("python command size:", cmd.@commandList.size())
 		addUserWorker('pythonCommand', cmd )
 	}
-	 
+	pythonRun(command, callback) {
+		py=pathJoin(conf('python.path'), 'python.exe')
+		not(isFile(py)) {
+			return print("파이션 설치 경로 미설정 (경로:$py)");
+		}
+		not(callback) callback=function(s) { print("python version:$s") }
+		runCommand("$py $command", callback)
+	}
 	pythonVersion(callback) {
 		py=pathJoin(conf('python.path'), 'python.exe')
 		not(isFile(py)) {
@@ -243,5 +250,62 @@ startMessageClient(userId, host, port, callback) {
 					}
 				}
 		})
+	}
+</script>
+
+<script note="FM API호출">
+	@fm.artistApply(name, target) {
+		not(name) return print("@@@fm.artistSearch 오류 가수명을 입력하세요")
+		not(target) {
+			target=object('web.req').addNode()
+		}
+		target.url="https://lrclib.net/api/search?q=${name}&search_fields=artist_name"
+		target.type='apply'
+		addApiJob('artist_name', target, @callback.songs)
+	}
+	@callback.songs(&result, target) {
+		not(result.find('#@>finish:')) return;
+		result.findPos('#@>finish:')
+		result.findPos('result=')
+		success=result.match()
+		result.findPos('url=')
+		url=result.match()
+		fnm=target.downloadFilename
+		print("API JOB finish >>", url, success, fnm, target.type)
+		if(target.type=='save') {
+			apiResult=fileRead(fnm)
+			print("db save apiResult==$apiResult")
+			return;
+		}
+		if(target.type=='songs') {
+			target.apiResult=fileRead(fnm)
+			return;
+		}
+		if(target.type=='apply') {
+			data=fileRead(fnm)
+			target.parseJson(data)
+			while(cur, target) {
+				sub=object('web.req').addNode()
+				data=sub.addNode()
+				data.artist=cur.artistName
+				data.title=cur.name
+				data.lyrics=escapeString(cur.plainLyrics)			
+				sub.type='save'
+				sub.header='Content-Type:application/json'
+				sub.url='http://localhost:8081/api/songs/save'
+				sub.method='POST'
+				sub.data=json(data)
+				addApiJob('artist_name',sub, @callback.songs)
+			}
+			if(typeof(target.widget,'widget')) {
+				cnt=target.size()
+				if(cnt) {
+					target.widget.alert("원격DB에 ${cnt}건 노래가 저장되었습니다")
+				} else {
+					target.widget.alert("저장할 데이터가 없습니다")
+				}
+			}
+			return;
+		}
 	}
 </script>

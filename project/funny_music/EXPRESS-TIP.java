@@ -1,7 +1,7 @@
 ##> neon 사용법
-	const sql = neon(DATABASE_URL)
-	const result = await sql`insert into tbl (a,b,c) values (a,b,c) RETURNING *`
-	clog(result[0])
+const sql = neon(DATABASE_URL)
+const result = await sql`insert into tbl (a,b,c) values (a,b,c) RETURNING *`
+clog(result[0])
 
 ##> 게시글 CRUD cros 적용
 import express from 'express';
@@ -337,7 +337,6 @@ app.delete('/api/posts/:id', async (req, res) => {
         });
     }
 });
-
 
 ##> ENV 활용
 #config/env.js

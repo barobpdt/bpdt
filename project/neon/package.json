@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/neon-js": "^0.2.0-beta.1",
+    "@neondatabase/serverless": "^1.0.2"
+  }
+}

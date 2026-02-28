@@ -7,6 +7,8 @@ closeApp() {
 	}
 	Baro.process('common').close()
 	Cf.debug(false)
+	stopGlobalTimer(true)
+	System.sleep(200)
 	Cf.exit()
 }
 
@@ -486,7 +488,7 @@ webRequestInfo(web, url, method, data, headerInfo) {
 			headerNode.parseJson(headerInfo)
 		}
 	}
-	return ss;
+	return web;
 }
 
 /* API 결과처리 작업등록 */
@@ -1049,17 +1051,17 @@ runGlobalJob(node) {
 		} 
 		targetNode=web.@webJobList.pop()
 		if(targetNode) {
-			targetNode[=>url, method, data, header, downloadFilename]
+			targetNode.inject(url, method, data, header)
 			targetNode.@requestStartTick=System.tick()
-			not( downloadFilename) {
-				downloadFilename=@baro.jobFilename(web)
+			not( targetNode.downloadFilename) {
+				targetNode.downloadFilename=@baro.jobFilename(web)
 			}
 			web.data=''				
 			webRequestInfo(web, url, method, data, header)
 			web.@webStartTick = System.tick()
 			web.@jobStatus = 'ready'
 			web.@targetNode=targetNode
-			web.download(url, downloadFilename)
+			web.download(url, targetNode.downloadFilename)
 		}
 	}	
 }
@@ -1095,7 +1097,7 @@ initWas(port,path,devMode) {
 	not(tag) tag='object'
 	not(id) id='common'
 	idx=obj.incrNum('@downloadIndex')
-	return pathJoin(path, str('$tag-$id-$idx.data'));
+	return pathJoin(path, "${tag}-${id}-${idx}.data");
 }
 /* ==============================================================
 *

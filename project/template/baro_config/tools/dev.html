@@ -58,6 +58,7 @@
 			srcFile=root.get(source_path)
 			not(srcFile) {			
 				srcFile=@dev.funcSource(source_path)
+				not(srcFile) continue;
 				root.set(source_path, srcFile)
 			}
 			src=@dev.funcSourceFind(srcFile, func_nm, module_nm)
@@ -78,7 +79,7 @@
 			not(path) return print("소스찾기오류 $code 설정 정보를 찾을수 없습니다");
 			pathSrc=pathJoin(path,"${name}.${sourceExt}")
 		} else {
-			path=conf("include.path") not(path) path=System.path()
+			path=conf("path.libs") not(path) path=System.path()
 			pathSrc=pathJoin(path,source_path)
 		}
 		not(isFile(pathSrc)) return print("소스찾기오류 $pathSrc 파일경로를 찾을수 없습니다");
