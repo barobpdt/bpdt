@@ -19,13 +19,14 @@
             background: #000;
             color: #c9d1d9;
             height: 100dvh;
-            display: grid;
-            grid-template-rows: 1fr auto;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
         /* ── 영상 영역 ── */
         #player-wrap {
+            flex: 1;
             position: relative;
             background: #000;
             display: flex;
@@ -125,11 +126,11 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
         }
 
         #playlist {
             flex: 1;
+            min-width: 0;
             display: flex;
             gap: 8px;
             overflow-x: auto;
@@ -423,13 +424,17 @@
                 return;
             }
 
-            // 현재 시각에 맞는 스케줄이 있으면 해당 인덱스로 시작
+            // 현재 시각에 맞는 스케줄만 필터링
             const now = new Date();
-            const todayStr = now.toISOString().slice(0, 10);
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
             const timeStr = now.toTimeString().slice(0, 5);
             const dow = now.getDay();
 
-            const matchIdx = schedule.findIndex(item => {
+            schedule = schedule.filter(item => {
+                if (!item.startTime || !item.endTime) return true; // 시간 미지정시 기본 포함
                 const inTime = item.startTime <= timeStr && timeStr <= item.endTime;
                 if (!inTime) return false;
                 if (item.repeatType === 'once') return item.playDate === todayStr;
@@ -438,7 +443,17 @@
                 return false;
             });
 
-            current = matchIdx >= 0 ? matchIdx : 0;
+            if (!schedule.length) {
+                document.getElementById('overlay').classList.remove('hidden');
+                document.getElementById('overlay').querySelector('.msg').textContent = '현재 시간에 재생 가능한 영상이 없습니다';
+                document.getElementById('playlist').innerHTML = '';
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                return;
+            }
+
+            current = 0;
 
             renderPlaylist();
             playCurrent();

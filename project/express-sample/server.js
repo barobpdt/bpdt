@@ -16,8 +16,28 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
+import http from "http";
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+	ws.on('message', (message) => {
+		try {
+			const parsed = JSON.parse(message);
+			// Broadcast to all clients
+			wss.clients.forEach(client => {
+				if (client.readyState === 1 /* WebSocket.OPEN */) {
+					client.send(JSON.stringify(parsed));
+				}
+			});
+		} catch (e) {
+			logger.error("Failed to parse websocket message", { stack: e.stack });
+		}
+	});
+});
 
 if (ENV.NODE_ENV === "production") job.start();
 
@@ -608,8 +628,8 @@ app.use(errorMiddleware);
 (async () => {
 	try {
 		await initializeDatabase();
-		app.listen(ENV.PORT, () => {
-			logger.info(`Server is running on PORT: ${ENV.PORT}`);
+		server.listen(ENV.PORT, () => {
+			logger.info(`Server (HTTP & WS) is running on PORT: ${ENV.PORT}`);
 		});
 	} catch (err) {
 		logger.error("Failed to start server", { stack: err.stack });
