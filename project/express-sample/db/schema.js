@@ -102,3 +102,28 @@ export const videoScheduleTable = pgTable("video_schedule", {
 	isActive: boolean("is_active").default(true),
 	createdAt: timestamp("created_at").defaultNow(),
 });
+
+// ─── Todo 애플리케이션 ───────────────────────────────────────────────────────
+export const todosTable = pgTable("todos", {
+	id: serial("id").primaryKey(),
+	title: text("title").notNull(),
+	description: text("description"),
+	status: text("status").default("계획"), // 계획, 진행, 대기, 반려, 완료, 삭제
+	issueTrackerText: text("issue_tracker_text"),
+	remindAt: timestamp("remind_at"),
+	startDate: text("start_date"), // YYYY-MM-DD
+	endDate: text("end_date"), // YYYY-MM-DD
+	progress: integer("progress").default(0), // 0 ~ 100
+	dependencies: text("dependencies"), // 콤마(,)로 구분된 선행 Todo ID 문자열 혹은 빈 값
+	createdAt: timestamp("created_at").defaultNow(),
+	updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const todoHistoryTable = pgTable("todo_history", {
+	id: serial("id").primaryKey(),
+	todoId: integer("todo_id").notNull(), // todos 참조
+	oldStatus: text("old_status"),
+	newStatus: text("new_status"),
+	note: text("note"), // 변경 사유/메모
+	changedAt: timestamp("changed_at").defaultNow(),
+});

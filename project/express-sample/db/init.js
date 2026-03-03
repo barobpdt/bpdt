@@ -120,6 +120,40 @@ export const initializeDatabase = async () => {
 		await sql`ALTER TABLE video_schedule ADD COLUMN IF NOT EXISTS end_time    TEXT DEFAULT '23:59'`;
 		await sql`ALTER TABLE video_schedule ADD COLUMN IF NOT EXISTS repeat_type TEXT DEFAULT 'once'`;
 
+		// ─── Todo 애플리케이션 테이블 ────────────────────────────────────────────────
+		await sql`
+		CREATE TABLE IF NOT EXISTS todos (
+			id                 SERIAL PRIMARY KEY,
+			title              TEXT NOT NULL,
+			description        TEXT,
+			status             TEXT DEFAULT '계획',
+			issue_tracker_text TEXT,
+			remind_at          TIMESTAMP,
+			start_date         TEXT,
+			end_date           TEXT,
+			progress           INTEGER DEFAULT 0,
+			dependencies       TEXT,
+			created_at         TIMESTAMP DEFAULT NOW(),
+			updated_at         TIMESTAMP DEFAULT NOW()
+		)`;
+
+		// 기존 테이블에 컬럼이 없으면 추가 (WBS 마이그레이션)
+		await sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS start_date TEXT`;
+		await sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS end_date   TEXT`;
+		await sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS progress   INTEGER DEFAULT 0`;
+		await sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS dependencies TEXT`;
+
+
+		await sql`
+		CREATE TABLE IF NOT EXISTS todo_history (
+			id         SERIAL PRIMARY KEY,
+			todo_id    INTEGER NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
+			old_status TEXT,
+			new_status TEXT,
+			note       TEXT,
+			changed_at TIMESTAMP DEFAULT NOW()
+		)`;
+
 		console.log("✅ Database tables initialized successfully.");
 	} catch (error) {
 		console.error("❌ Failed to initialize database tables:", error);

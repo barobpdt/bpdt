@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL Studio - Premium Web Client</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- jstree Dark Theme -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default-dark/style.min.css" />
+
+    <!-- Tabulator Midnight Theme -->
+    <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator_midnight.min.css" rel="stylesheet">
+
+    <style>
+        /* Premium Dark Mode Design System */
+        :root {
+            --bg-base: #0b0f19;
+            --bg-panel: #111827;
+            --bg-header: rgba(15, 23, 42, 0.85);
+            --bg-titlebar: #1e293b;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-glow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body,
+        html {
+            height: 100%;
+            width: 100%;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* App Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header / Navbar */
+        .header {
+            height: 60px;
+            background: var(--bg-header);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 50;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-icon {
+            color: var(--primary);
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-badge {
+            font-size: 0.7rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 99px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+        }
+
+        /* Toolbar / Buttons */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-run:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Workspace Split Layout */
+        .main-stage {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            background: #1e1e1e;
+            /* Match monaco native bg */
+            overflow: hidden;
+        }
+
+        /* Panel Title Bars */
+        .panel-header {
+            background: var(--bg-titlebar);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .sidebar-content {
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Editor & Grid Containers */
+        #editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        #monaco-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        #grid-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-panel);
+            position: relative;
+        }
+
+        #result-grid {
+            flex: 1;
+            border: none;
+            background-color: transparent;
+        }
+
+        /* Split.js Gutter Styling */
+        .gutter {
+            background-color: var(--bg-base);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transition: background-color 0.2s;
+            position: relative;
+            z-index: 10;
+        }
+
+        .gutter:hover {
+            background-color: var(--primary);
+        }
+
+        .gutter.gutter-horizontal {
+            cursor: col-resize;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="20" fill="%23475569"><path d="M1 0h2v20H1z"/></svg>');
+        }
+
+        .gutter.gutter-vertical {
+            cursor: row-resize;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="4" fill="%23475569"><path d="M0 1h20v2H0z"/></svg>');
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 5px;
+            border: 2px solid var(--bg-panel);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.4);
+        }
+
+        /* Customizes jsTree styling to fit premium theme */
+        .jstree-default-dark .jstree-anchor {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            transition: all 0.15s;
+        }
+
+        .jstree-default-dark .jstree-clicked,
+        .jstree-default-dark .jstree-hovered {
+            background: rgba(139, 92, 246, 0.2) !important;
+            border-radius: 4px;
+            box-shadow: none !important;
+        }
+
+        /* Tabulator Custom Overrides for Midnight theme */
+        .tabulator-row {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .tabulator .tabulator-header {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color) !important;
+        }
+
+        /* Query metrics */
+        .query-metrics {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 500;
+            display: none;
+            margin-left: auto;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .query-metrics.visible {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(2px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Application Header -->
+        <header class="header">
+            <div class="brand">
+                <i class="fa-solid fa-layer-group brand-icon"></i>
+                <span class="brand-text">PostgreSQL Studio</span>
+                <span class="brand-badge"><i class="fa-solid fa-circle-check" style="margin-right:2px;"></i>
+                    Connected</span>
+            </div>
+
+            <div class="toolbar">
+                <button class="btn btn-secondary" onclick="resetEditor()">
+                    <i class="fa-solid fa-eraser"></i> Clear
+                </button>
+                <button class="btn btn-run" id="btn-run">
+                    <i class="fa-solid fa-play"></i> Run Query <span
+                        style="opacity:0.7; font-size: 0.7rem; margin-left:4px;">(F5)</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace Component -->
+        <main class="main-stage">
+
+            <!-- Left Sidebar: Schema Tree -->
+            <aside id="sidebar" class="sidebar">
+                <div class="panel-header">
+                    <i class="fa-solid fa-sitemap"></i> Database Explorer
+                </div>
+                <div class="sidebar-content">
+                    <div id="schema-tree"></div>
+                </div>
+            </aside>
+
+            <!-- Right Area: Editor & Grid -->
+            <section id="workspace" class="workspace">
+
+                <!-- Query Editor Panel -->
+                <div id="editor-wrapper">
+                    <div class="panel-header" style="background: #1e1e1e; border-bottom: 1px solid #333;">
+                        <i class="fa-solid fa-terminal"></i> Query Editor
+                    </div>
+                    <div id="monaco-container"></div>
+                </div>
+
+                <!-- Result Grid Panel -->
+                <div id="grid-wrapper">
+                    <div class="panel-header">
+                        <i class="fa-solid fa-table"></i> Query Results
+                        <div class="query-metrics" id="query-metrics">
+                            <i class="fa-solid fa-bolt"></i> <span>Success (4 rows affected) in 42ms</span>
+                        </div>
+                    </div>
+                    <div id="result-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <!-- jQuery (Required for jstree) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- jsTree -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+    <!-- Split.js for resizable panels -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+
+    <!-- Tabulator -->
+    <script src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
+
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+
+    <script>
+        // 1. Initialize Layout Splitter
+        Split(['#sidebar', '#workspace'], {
+            sizes: [20, 80],
+            minSize: 220,
+            gutterSize: 6,
+            snapOffset: 0
+        });
+
+        Split(['#editor-wrapper', '#grid-wrapper'], {
+            direction: 'vertical',
+            sizes: [50, 50],
+            minSize: 150,
+            gutterSize: 6,
+            snapOffset: 0
+        });
+
+        // 2. Initialize jsTree (Schema Explorer Mock)
+        $(document).ready(function () {
+            $('#schema-tree').jstree({
+                'core': {
+                    'themes': {
+                        'name': 'default-dark',
+                        'dots': true,
+                        'icons': true
+                    },
+                    'data': [
+                        {
+                            "text": "PostgreSQL (localhost:5432)", "state": { "opened": true }, "icon": "fa-solid fa-database text-primary", "children": [
+                                {
+                                    "text": "Databases", "state": { "opened": true }, "icon": "fa-solid fa-server", "children": [
+                                        {
+                                            "text": "express_db", "state": { "opened": true }, "icon": "fa-solid fa-database", "children": [
+                                                {
+                                                    "text": "Schemas", "state": { "opened": true }, "icon": "fa-solid fa-layer-group", "children": [
+                                                        {
+                                                            "text": "public", "state": { "opened": true }, "icon": "fa-solid fa-folder-open", "children": [
+                                                                {
+                                                                    "text": "Tables", "state": { "opened": true }, "icon": "fa-solid fa-table", "children": [
+                                                                        { "text": "users", "icon": "fa-regular fa-window-maximize" },
+                                                                        { "text": "orders", "icon": "fa-regular fa-window-maximize" },
+                                                                        { "text": "products", "icon": "fa-regular fa-window-maximize" },
+                                                                        { "text": "reviews", "icon": "fa-regular fa-window-maximize" }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "text": "Views", "icon": "fa-solid fa-eye", "children": [
+                                                                        { "text": "active_users_vw", "icon": "fa-regular fa-window-maximize" }
+                                                                    ]
+                                                                },
+                                                                { "text": "Functions", "icon": "fa-solid fa-code" }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            });
+        });
+
+        // 3. Initialize Tabulator Grid
+        window.resultTable = new Tabulator("#result-grid", {
+            height: "100%",
+            layout: "fitColumns",
+            theme: "midnight",
+            placeholder: "<div style='color: #64748b; font-size: 1rem;'><i class='fa-solid fa-inbox fa-2x mb-2'></i><br/>Execute a query to see results</div>",
+            columns: [], // Dynamically generated on query run
+            data: []
+        });
+
+        // 4. Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+
+            // Define custom premium theme (based on vs-dark but better background)
+            monaco.editor.defineTheme('premium-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [],
+                colors: {
+                    'editor.background': '#1e1e1e',
+                    'editorLineNumber.foreground': '#475569',
+                    'editorIndentGuide.background': '#334155',
+                }
+            });
+
+            window.sqlEditor = monaco.editor.create(document.getElementById('monaco-container'), {
+                value: `-- PostgreSQL Web Studio
+-- Press F5 or click Run Query to execute
+
+SELECT 
+    id, 
+    username, 
+    email, 
+    role, 
+    status,
+    created_at
+FROM 
+    users 
+WHERE 
+    status = 'active'
+ORDER BY 
+    created_at DESC
+LIMIT 100;`,
+                language: 'sql',
+                theme: 'premium-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+                lineHeight: 24,
+                padding: { top: 16, bottom: 16 },
+                scrollBeyondLastLine: false,
+                smoothScrolling: true,
+                cursorBlinking: "smooth",
+                cursorSmoothCaretAnimation: true
+            });
+
+            // Bind F5 to run query
+            window.sqlEditor.addCommand(monaco.KeyCode.F5, function () {
+                executeQuery();
+            });
+        });
+
+        // Clear button logic
+        function resetEditor() {
+            if (window.sqlEditor) {
+                window.sqlEditor.setValue('');
+                window.sqlEditor.focus();
+            }
+        }
+
+        // Run Query Logic
+        document.getElementById('btn-run').addEventListener('click', executeQuery);
+
+        function executeQuery() {
+            if (!window.sqlEditor) return;
+
+            // Get selected text, or full text if nothing selected
+            let query = window.sqlEditor.getModel().getValueInRange(window.sqlEditor.getSelection());
+            if (!query.trim()) {
+                query = window.sqlEditor.getValue();
+            }
+
+            if (!query.trim()) return;
+
+            const runBtn = document.getElementById('btn-run');
+            const metrics = document.getElementById('query-metrics');
+
+            // Loading State
+            runBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Running...';
+            runBtn.style.pointerEvents = 'none';
+            metrics.classList.remove('visible');
+
+            // Simulate network request & DB execution delay (400-800ms)
+            const delay = Math.floor(Math.random() * 400) + 400;
+
+            setTimeout(() => {
+                // Mock result generation for demonstration
+                const mockColumns = [
+                    { title: "id", field: "id", width: 70, hozAlign: "center", headerSort: true },
+                    { title: "username", field: "username", minWidth: 120 },
+                    { title: "email", field: "email", minWidth: 180 },
+                    { title: "role", field: "role", width: 100 },
+                    { title: "status", field: "status", width: 100, formatter: statusFormatter },
+                    { title: "created_at", field: "created_at", minWidth: 150 }
+                ];
+
+                const mockData = [
+                    { id: 1, username: "admin_super", email: "admin@system.io", role: "admin", status: "active", created_at: "2026-03-01 10:23:44" },
+                    { id: 2, username: "john_doe", email: "john@example.com", role: "user", status: "active", created_at: "2026-03-02 14:11:09" },
+                    { id: 3, username: "alice_wonder", email: "alice@company.com", role: "user", status: "active", created_at: "2026-03-02 16:45:21" },
+                    { id: 4, username: "sys_bot", email: "bot@system.io", role: "system", status: "inactive", created_at: "2026-03-03 01:00:00" },
+                    { id: 5, username: "charlie_db", email: "charlie@dev.com", role: "developer", status: "active", created_at: "2026-03-03 09:15:30" }
+                ];
+
+                // Update tabulator with mock columns & data
+                window.resultTable.setColumns(mockColumns);
+                window.resultTable.setData(mockData);
+
+                // Restore Button State
+                runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Query <span style="opacity:0.7; font-size: 0.7rem; margin-left:4px;">(F5)</span>';
+                runBtn.style.pointerEvents = 'auto';
+
+                // Show Success Metrics
+                metrics.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>Success (${mockData.length} rows affected) in ${delay}ms</span>`;
+                metrics.classList.add('visible');
+
+            }, delay);
+        }
+
+        // Custom Formatter for tabulator "status" column purely for aesthetics
+        function statusFormatter(cell, formatterParams, onRendered) {
+            var value = cell.getValue();
+            if (value === "active") {
+                return `<span style="color: #10b981; font-weight: 600;"><i class="fa-solid fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:4px;"></i> ${value}</span>`;
+            } else {
+                return `<span style="color: #94a3b8;"><i class="fa-regular fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:4px;"></i> ${value}</span>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

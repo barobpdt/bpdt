@@ -166,7 +166,14 @@
             background: var(--bg-color);
             display: flex;
             gap: 10px;
-            align-items: flex-end;
+            align-items: center;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            flex-shrink: 0;
         }
 
         textarea {
@@ -175,13 +182,15 @@
             border: 1px solid var(--border);
             color: var(--text-main);
             border-radius: 20px;
-            padding: 12px 16px;
+            padding: 10px 16px;
             font-size: 0.95rem;
             resize: none;
-            min-height: 44px;
+            min-height: 40px;
             max-height: 120px;
             outline: none;
             font-family: inherit;
+            overflow: hidden;
+            line-height: 1.4;
         }
 
         textarea:focus {
@@ -263,8 +272,15 @@
 
     <div id="chat-container">
         <div id="header">
-            <h1><span id="status-dot" class="status-dot"></span>채팅방</h1>
-            <div style="font-size:0.8rem; color:var(--text-muted)">명령어 테스트: /open URL, /alert 메세지</div>
+            <h1 style="display:flex; align-items:center; gap:8px;">
+                <span id="status-dot" class="status-dot"></span>채팅방
+                <span id="user-count"
+                    style="font-size:0.75rem; background:var(--primary); color:white; padding:2px 8px; border-radius:12px; font-weight:normal; display:none;">1명</span>
+            </h1>
+            <div style="font-size:0.8rem; color:var(--text-muted); text-align:right; line-height:1.6">
+                /open URL &nbsp;·&nbsp; /alert 메시지 &nbsp;·&nbsp; /screenshot &nbsp;·&nbsp; /sharescreen<br>
+                <span style="font-size:0.72rem; opacity:0.7">이미지 Ctrl+V 로 붙여넣기 가능</span>
+            </div>
         </div>
 
         <div id="messages">
@@ -276,13 +292,24 @@
         </div>
 
         <div id="input-area">
-            <button class="btn secondary" onclick="document.getElementById('file-input').click()"
-                title="파일 첨부">📎</button>
+            <button class="btn secondary" onclick="document.getElementById('file-input').click()" title="파일 첨부">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
+            </button>
             <input type="file" id="file-input" onchange="handleFileUpload(event)">
 
             <textarea id="msg-input" placeholder="메시지 입력... (Enter로 전송)"></textarea>
 
-            <button class="btn" onclick="sendMessage()" title="전송">✈️</button>
+            <button class="btn" onclick="sendMessage()" title="전송">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+            </button>
         </div>
 
         <div id="progress-overlay">
@@ -408,7 +435,7 @@
 
             ws.send(JSON.stringify(payload));
             inputEl.value = '';
-            inputEl.style.height = '44px'; // Reset height
+            inputEl.style.height = '40px'; // Reset height
             inputEl.focus();
         }
 
@@ -422,12 +449,31 @@
 
         // 자동 리사이즈
         inputEl.addEventListener('input', function () {
-            this.style.height = '44px';
+            this.style.height = '40px';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+
+            // 최대 높이 도달 시 스크롤 허용, 아닐 땐 숨김
+            if (this.scrollHeight > 120) {
+                this.style.overflowY = 'auto';
+            } else {
+                this.style.overflowY = 'hidden';
+            }
         });
 
         // ─── 메시지 수신 및 명령어 실행 ───
         function receiveMessage(data) {
+            if (data.type === 'userCount') {
+                const countBadge = document.getElementById('user-count');
+                countBadge.innerText = `${data.count}명 접속 중`;
+                countBadge.style.display = 'inline-block';
+                return;
+            }
+
+            if (data.type.startsWith('webrtc-')) {
+                handleWebRTCSignaling(data);
+                return;
+            }
+
             appendMessageBubble(data);
 
             // 본인 메시지는 명령어를 실행하지 않음 (본인이 보낸 시점에 실행되도록 할 수도 있으나, 여기선 수신 시 일괄 처리로 하되 다른 사람 명령어로 내 브라우저 제어)
@@ -446,17 +492,192 @@
             } else if (cmd === '/alert' && args) {
                 // 알림 띄우기
                 alert(`🚨 알림: ${args}`);
+            } else if (cmd === '/screenshot') {
+                // 상대방이 /screenshot 커맨드를 보내면 내 화면을 캡처해서 공유
+                captureScreen();
+            } else if (cmd === '/sharescreen') {
+                // 내가 /sharescreen 커맨드 입력 시 실시간 화면 스트리밍 시작
+                startScreenShare();
             }
         }
 
-        // ─── 파일 업로드 ───
+        // ─── 화면 캡처 (/screenshot 커맨드) ───
+        async function captureScreen() {
+            if (!navigator.mediaDevices?.getDisplayMedia) {
+                alert('이 브라우저에서는 화면 캡처를 지원하지 않습니다.');
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' } });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.muted = true;
+                await new Promise(resolve => { video.onloadedmetadata = resolve; });
+                await video.play();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                stream.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `screenshot_${Date.now()}.png`, { type: 'image/png' });
+                    await uploadAndShare(file);
+                }, 'image/png', 0.9);
+            } catch (err) {
+                console.warn('화면 캡처 취소 또는 실패:', err);
+            }
+        }
+
+        // ─── WebRTC 실시간 화면 공유 (/sharescreen 커맨드) ───
+        const peerConnections = {}; // targetId -> RTCPeerConnection
+        let localStream = null;
+
+        async function startScreenShare() {
+            if (!navigator.mediaDevices?.getDisplayMedia) {
+                alert('이 브라우저에서는 화면 공유를 지원하지 않습니다.');
+                return;
+            }
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false });
+
+                // 시스템(브라우저)에서 공유 중지 버튼을 누를 경우 처리
+                localStream.getVideoTracks()[0].onended = () => {
+                    stopScreenShare();
+                };
+
+                // 다른 사용자들에게 방송 시작 알림
+                ws.send(JSON.stringify({
+                    type: 'webrtc-start',
+                    senderId: myId,
+                    timestamp: Date.now()
+                }));
+
+                appendMessageBubble({ senderId: myId, timestamp: Date.now(), type: 'text', text: '✅ 실시간 화면 공유를 시작했습니다.' });
+
+            } catch (err) {
+                console.warn('화면 공유 취소 또는 실패:', err);
+            }
+        }
+
+        function stopScreenShare() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+            }
+            Object.values(peerConnections).forEach(pc => pc.close());
+            for (let key in peerConnections) delete peerConnections[key];
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'webrtc-stop', senderId: myId }));
+            }
+            appendMessageBubble({ senderId: myId, timestamp: Date.now(), type: 'text', text: '🛑 실시간 화면 공유가 종료되었습니다.' });
+        }
+
+        function createPeerConnection(peerId) {
+            if (peerConnections[peerId]) return peerConnections[peerId];
+
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            peerConnections[peerId] = pc;
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    ws.send(JSON.stringify({
+                        type: 'webrtc-ice',
+                        targetId: peerId,
+                        senderId: myId,
+                        candidate: e.candidate
+                    }));
+                }
+            };
+
+            pc.ontrack = (e) => {
+                let videoEl = document.getElementById(`video-${peerId}`);
+                if (!videoEl) {
+                    const msg = document.createElement('div');
+                    msg.className = 'message others';
+                    msg.innerHTML = `
+                        <div class="bubble">
+                            <span style="font-size:0.85rem; color:#bae6fd; font-weight:bold;">📺 실시간 화면 공유 (User-${peerId.substring(0, 4)})</span>
+                            <video id="video-${peerId}" autoplay playsinline controls style="max-width: 100%; border-radius: 8px; margin-top: 10px; background: #000;"></video>
+                        </div>
+                    `;
+                    msgContainer.appendChild(msg);
+                    scrollToBottom();
+                    videoEl = document.getElementById(`video-${peerId}`);
+                }
+                videoEl.srcObject = e.streams[0];
+            };
+
+            return pc;
+        }
+
+        async function handleWebRTCSignaling(data) {
+            if (data.senderId === myId) return; // ignore my own messages
+
+            try {
+                if (data.type === 'webrtc-start') {
+                    // Someone started broadcast, join automatically
+                    ws.send(JSON.stringify({ type: 'webrtc-join', targetId: data.senderId, senderId: myId }));
+                }
+                else if (data.type === 'webrtc-join' && data.targetId === myId && localStream) {
+                    // Someone wants to view my broadcast
+                    const pc = createPeerConnection(data.senderId);
+                    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    ws.send(JSON.stringify({ type: 'webrtc-offer', targetId: data.senderId, senderId: myId, offer }));
+                }
+                else if (data.type === 'webrtc-offer' && data.targetId === myId) {
+                    // Broadcaster sent me an offer
+                    const pc = createPeerConnection(data.senderId);
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    ws.send(JSON.stringify({ type: 'webrtc-answer', targetId: data.senderId, senderId: myId, answer }));
+                }
+                else if (data.type === 'webrtc-answer' && data.targetId === myId) {
+                    // Viewer sent answer to my offer
+                    const pc = peerConnections[data.senderId];
+                    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+                }
+                else if (data.type === 'webrtc-ice' && data.targetId === myId) {
+                    // Received ICE candidate
+                    const pc = peerConnections[data.senderId];
+                    if (pc) await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+                else if (data.type === 'webrtc-stop') {
+                    // Broadcaster stopped sharing
+                    const pc = peerConnections[data.senderId];
+                    if (pc) {
+                        pc.close();
+                        delete peerConnections[data.senderId];
+                    }
+                    const videoEl = document.getElementById(`video-${data.senderId}`);
+                    if (videoEl) {
+                        videoEl.srcObject = null;
+                        const bubble = videoEl.closest('.bubble');
+                        if (bubble) {
+                            bubble.innerHTML += '<div style="font-size:0.75rem; color:#ef4444; margin-top:8px;">❌ 화면 공유가 종료되었습니다.</div>';
+                        }
+                        videoEl.remove();
+                    }
+                }
+            } catch (err) {
+                console.error("WebRTC Signaling Error:", err);
+            }
+        }
+
+        // ─── 파일 업로드 (공통) ───
         const progOverlay = document.getElementById('progress-overlay');
         const progBar = document.getElementById('up-prog');
 
-        async function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
+        // 파일 업로드 + WebSocket 공유 공통 함수
+        async function uploadAndShare(file) {
             const formData = new FormData();
             formData.append('file', file);
 
@@ -464,7 +685,6 @@
             progBar.style.width = '0%';
 
             try {
-                // XMLHttpRequest 로 프로그레스 바 구현
                 const result = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.upload.onprogress = e => {
@@ -475,30 +695,46 @@
                         else reject(new Error(xhr.responseText));
                     };
                     xhr.onerror = () => reject(new Error('네트워크 오류'));
-                    xhr.open('POST', `/api/files`);
+                    xhr.open('POST', '/api/files');
                     xhr.send(formData);
                 });
 
-                // 성공 시 WebSocket 으로 공유 알림
                 if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
                         senderId: myId,
                         timestamp: Date.now(),
                         type: 'file',
-                        file: {
-                            id: result.fileId,
-                            name: result.name,
-                            size: result.size
-                        }
+                        file: { id: result.fileId, name: result.name, size: result.size }
                     }));
                 }
             } catch (err) {
                 alert('파일 업로드에 실패했습니다. ' + err.message);
             } finally {
                 progOverlay.style.display = 'none';
-                event.target.value = ''; // Reset input
             }
         }
+
+        // 파일 input (<input type="file">) 핸들러
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            await uploadAndShare(file);
+            event.target.value = '';
+        }
+
+        // ─── 클립보드 이미지 붙여넣기 (Ctrl+V) ───
+        inputEl.addEventListener('paste', async (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (file) await uploadAndShare(file);
+                    break;
+                }
+            }
+        });
 
     </script>
 </body>

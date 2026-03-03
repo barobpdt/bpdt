@@ -1,8 +1,8 @@
 import express from "express";
 import { ENV } from "./config/env.js";
 import { db } from "./config/db.js";
-import { favoritesTable, peerConnectionsTable, songsTable, videoScheduleTable } from "./db/schema.js";
-import { and, eq, or, like, sql } from "drizzle-orm";
+import { favoritesTable, peerConnectionsTable, songsTable, videoScheduleTable, todosTable, todoHistoryTable } from "./db/schema.js";
+import { and, eq, or, like, sql, desc } from "drizzle-orm";
 import job from "./config/cron.js";
 import cors from "cors";
 import { initializeDatabase } from "./db/init.js";
@@ -18,12 +18,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 import http from "http";
+import ExcelJS from "exceljs";
+import Database from "better-sqlite3";
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+let activeSqliteDb = null;
 
 wss.on('connection', (ws) => {
+	// 새로운 클라이언트 연결 시 접속자 수 브로드캐스트
+	broadcastUserCount();
+
 	ws.on('message', (message) => {
 		try {
 			const parsed = JSON.parse(message);
@@ -37,7 +43,27 @@ wss.on('connection', (ws) => {
 			logger.error("Failed to parse websocket message", { stack: e.stack });
 		}
 	});
+
+	ws.on('close', () => {
+		// 클라이언트 연결 해제 시 접속자 수 갱신 브로드캐스트
+		broadcastUserCount();
+	});
 });
+
+function broadcastUserCount() {
+	let count = 0;
+	wss.clients.forEach(client => {
+		if (client.readyState === 1 /* WebSocket.OPEN */) {
+			count++;
+		}
+	});
+	const msg = JSON.stringify({ type: 'userCount', count });
+	wss.clients.forEach(client => {
+		if (client.readyState === 1) {
+			client.send(msg);
+		}
+	});
+}
 
 if (ENV.NODE_ENV === "production") job.start();
 
@@ -618,6 +644,373 @@ app.delete("/api/files/:id", (req, res) => {
 	fileStore.delete(req.params.id);
 	res.json({ message: "삭제 완료" });
 });
+
+// ─── Todo 애플리케이션 API ───────────────────────────────────────────────────
+
+// Todo 목록 조회
+app.get("/api/todos", catchAsyncErrors(async (req, res) => {
+	const { status, keyword } = req.query;
+	const conditions = [];
+	if (status && status !== '전체') {
+		conditions.push(eq(todosTable.status, status));
+	}
+	if (keyword) {
+		conditions.push(
+			or(
+				like(todosTable.title, `%${keyword}%`),
+				like(todosTable.description, `%${keyword}%`)
+			)
+		);
+	}
+	const todos = await db.select().from(todosTable)
+		.where(conditions.length > 0 ? and(...conditions) : undefined)
+		.orderBy(desc(todosTable.createdAt));
+	res.status(200).json(todos);
+}));
+
+// 단일 Todo 조회
+app.get("/api/todos/:id", catchAsyncErrors(async (req, res) => {
+	const { id } = req.params;
+	const todos = await db.select().from(todosTable).where(eq(todosTable.id, parseInt(id)));
+	if (!todos.length) return res.status(404).json({ error: "Todo not found" });
+	res.status(200).json(todos[0]);
+}));
+
+// Todo 생성
+app.post("/api/todos", catchAsyncErrors(async (req, res) => {
+	const { title, description, issueTrackerText, remindAt, startDate, endDate, progress, dependencies } = req.body;
+	if (!title) return res.status(400).json({ error: "title is required" });
+
+	const [newTodo] = await db.insert(todosTable).values({
+		title,
+		description,
+		issueTrackerText,
+		remindAt: remindAt ? new Date(remindAt) : null,
+		startDate: startDate || null,
+		endDate: endDate || null,
+		progress: progress ? parseInt(progress) : 0,
+		dependencies: dependencies || null,
+		status: '계획'
+	}).returning();
+
+	// 생성 이력
+	await db.insert(todoHistoryTable).values({
+		todoId: newTodo.id,
+		newStatus: '계획',
+		note: '초기 생성'
+	});
+
+	res.status(201).json(newTodo);
+}));
+
+// Todo 수정 (상태 변경 시 이력 저장)
+app.patch("/api/todos/:id", catchAsyncErrors(async (req, res) => {
+	const { id } = req.params;
+	const { title, description, status, issueTrackerText, remindAt, note, startDate, endDate, progress, dependencies } = req.body;
+
+	const existing = await db.select().from(todosTable).where(eq(todosTable.id, parseInt(id)));
+	if (!existing.length) return res.status(404).json({ error: "Todo not found" });
+	const oldItem = existing[0];
+
+	const updateData = { updatedAt: new Date() };
+	if (title !== undefined) updateData.title = title;
+	if (description !== undefined) updateData.description = description;
+	if (status !== undefined) updateData.status = status;
+	if (issueTrackerText !== undefined) updateData.issueTrackerText = issueTrackerText;
+	if (remindAt !== undefined) updateData.remindAt = remindAt ? new Date(remindAt) : null;
+	if (startDate !== undefined) updateData.startDate = startDate;
+	if (endDate !== undefined) updateData.endDate = endDate;
+	if (progress !== undefined) updateData.progress = parseInt(progress);
+	if (dependencies !== undefined) updateData.dependencies = dependencies;
+
+	const [updatedTodo] = await db.update(todosTable)
+		.set(updateData)
+		.where(eq(todosTable.id, parseInt(id)))
+		.returning();
+
+	// 상태가 변경되었거나, 명시적으로 note(메모)를 남긴 경우 이력 추가
+	if (oldItem.status !== updatedTodo.status || note) {
+		await db.insert(todoHistoryTable).values({
+			todoId: updatedTodo.id,
+			oldStatus: oldItem.status,
+			newStatus: updatedTodo.status,
+			note: note || '상태 변경'
+		});
+	}
+
+	res.status(200).json(updatedTodo);
+}));
+
+// Todo 삭제 (실제로는 Soft Delete 처리: status = '삭제')
+app.delete("/api/todos/:id", catchAsyncErrors(async (req, res) => {
+	const { id } = req.params;
+
+	const existing = await db.select().from(todosTable).where(eq(todosTable.id, parseInt(id)));
+	if (!existing.length) return res.status(404).json({ error: "Todo not found" });
+
+	const [deletedTodo] = await db.update(todosTable)
+		.set({ status: '삭제', updatedAt: new Date() })
+		.where(eq(todosTable.id, parseInt(id)))
+		.returning();
+
+	await db.insert(todoHistoryTable).values({
+		todoId: deletedTodo.id,
+		oldStatus: existing[0].status,
+		newStatus: '삭제',
+		note: '사용자 삭제 처리'
+	});
+
+	res.status(200).json({ message: "Deleted successfully", deletedTodo });
+}));
+
+// 특정 Todo 변경 이력 조회
+app.get("/api/todos/:id/history", catchAsyncErrors(async (req, res) => {
+	const { id } = req.params;
+	const history = await db.select().from(todoHistoryTable)
+		.where(eq(todoHistoryTable.todoId, parseInt(id)))
+		.orderBy(desc(todoHistoryTable.changedAt));
+	res.status(200).json(history);
+}));
+
+// 리포트/통계 대시보드
+app.get("/api/todos-report", catchAsyncErrors(async (req, res) => {
+	const allTodos = await db.select().from(todosTable);
+	const stats = {
+		total: allTodos.length,
+		계획: 0, 진행: 0, 대기: 0, 반려: 0, 완료: 0, 삭제: 0
+	};
+	allTodos.forEach(t => {
+		if (stats[t.status] !== undefined) stats[t.status]++;
+	});
+	res.status(200).json(stats);
+}));
+
+// Excel 다운로드 API
+app.get("/api/todos-export", catchAsyncErrors(async (req, res) => {
+	// 진행 밎 완료 건만 엑셀로 노출
+	const exportQuery = await db.select().from(todosTable).where(
+		or(eq(todosTable.status, '진행'), eq(todosTable.status, '완료'))
+	).orderBy(desc(todosTable.createdAt));
+
+	const workbook = new ExcelJS.Workbook();
+	const worksheet = workbook.addWorksheet('Todo List');
+
+	worksheet.columns = [
+		{ header: 'ID', key: 'id', width: 10 },
+		{ header: '제목', key: 'title', width: 30 },
+		{ header: '상태', key: 'status', width: 15 },
+		{ header: '이슈 번호', key: 'issueTrackerText', width: 20 },
+		{ header: '상세 내용', key: 'description', width: 40 },
+		{ header: '리마인드 일시', key: 'remindAt', width: 20 },
+		{ header: '생성 일시', key: 'createdAt', width: 20 },
+		{ header: '최종 수정', key: 'updatedAt', width: 20 },
+	];
+
+	worksheet.getRow(1).font = { bold: true };
+
+	exportQuery.forEach(todo => {
+		worksheet.addRow({
+			...todo,
+			remindAt: todo.remindAt ? new Date(todo.remindAt).toLocaleString() : '',
+			createdAt: todo.createdAt ? new Date(todo.createdAt).toLocaleString() : '',
+			updatedAt: todo.updatedAt ? new Date(todo.updatedAt).toLocaleString() : '',
+		});
+	});
+
+	res.setHeader(
+		'Content-Type',
+		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+	);
+	res.setHeader(
+		'Content-Disposition',
+		'attachment; filename=' + encodeURIComponent('TodoList_Export.xlsx')
+	);
+
+	await workbook.xlsx.write(res);
+	res.end();
+}));
+
+// ─── PostgreSQL Web Client API ───────────────────────────────────────────────
+
+app.get("/api/pg/schema", catchAsyncErrors(async (req, res) => {
+	const query = `
+		SELECT 
+			table_schema, 
+			table_name, 
+			table_type 
+		FROM information_schema.tables 
+		WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
+		ORDER BY table_schema, table_type DESC, table_name;
+	`;
+	const schemaList = await db.execute(sql.raw(query));
+
+	// Convert into jstree data format
+	const treeData = [
+		{
+			id: 'root',
+			text: 'PostgreSQL DB',
+			state: { opened: true },
+			icon: 'fa-solid fa-database text-primary',
+			children: []
+		}
+	];
+
+	const rows = Array.isArray(schemaList) ? schemaList : (schemaList.rows || []);
+	const schemaMap = {};
+
+	rows.forEach(row => {
+		const schemaName = row.table_schema;
+		const tableName = row.table_name;
+		const tableType = row.table_type;
+
+		if (!schemaMap[schemaName]) {
+			schemaMap[schemaName] = {
+				id: 'schema_' + schemaName,
+				text: schemaName,
+				state: { opened: true },
+				icon: 'fa-solid fa-folder-open',
+				children: []
+			};
+			treeData[0].children.push(schemaMap[schemaName]);
+		}
+
+		schemaMap[schemaName].children.push({
+			id: 'table_' + schemaName + '_' + tableName,
+			text: tableName,
+			icon: tableType === 'VIEW' ? 'fa-solid fa-eye' : 'fa-regular fa-window-maximize',
+		});
+	});
+
+	res.json(treeData);
+}));
+
+app.get("/api/pg/columns/:schema/:table", catchAsyncErrors(async (req, res) => {
+	const { schema, table } = req.params;
+	const query = `
+		SELECT 
+			column_name, 
+			data_type, 
+			is_nullable, 
+			column_default
+		FROM information_schema.columns 
+		WHERE table_schema = '${schema}' AND table_name = '${table}'
+		ORDER BY ordinal_position;
+	`;
+	const result = await db.execute(sql.raw(query));
+	const rows = Array.isArray(result) ? result : (result.rows || []);
+	res.json(rows);
+}));
+
+app.post("/api/pg/execute", catchAsyncErrors(async (req, res) => {
+	const { query } = req.body;
+	if (!query) return res.status(400).json({ error: "No query provided" });
+	const startTime = Date.now();
+	try {
+		// Drizzle의 raw 쿼리 실행
+		const result = await db.execute(sql.raw(query));
+		const duration = Date.now() - startTime;
+		res.json({ success: true, data: result, duration });
+	} catch (error) {
+		res.status(400).json({ success: false, error: error.message, duration: Date.now() - startTime });
+	}
+}));
+
+// ─── SQLite Web Client API ───────────────────────────────────────────────
+
+app.post("/api/sqlite/connect", catchAsyncErrors(async (req, res) => {
+	const { dbPath } = req.body;
+	if (!dbPath) return res.status(400).json({ error: "DB path is required" });
+
+	try {
+		if (activeSqliteDb) {
+			activeSqliteDb.close();
+			activeSqliteDb = null;
+		}
+		activeSqliteDb = new Database(dbPath, { fileMustExist: false });
+		res.json({ success: true, message: `Connected to SQLite Database: ${dbPath}` });
+	} catch (error) {
+		res.status(400).json({ success: false, error: error.message });
+	}
+}));
+
+app.get("/api/sqlite/schema", catchAsyncErrors(async (req, res) => {
+	if (!activeSqliteDb) return res.status(400).json({ error: "No SQLite DB connected" });
+
+	const query = `
+		SELECT name, type 
+		FROM sqlite_master 
+		WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
+		ORDER BY type DESC, name;
+	`;
+	const rows = activeSqliteDb.prepare(query).all();
+
+	const treeData = [
+		{
+			id: 'root',
+			text: 'SQLite DB',
+			state: { opened: true },
+			icon: 'fa-solid fa-database text-primary',
+			children: [
+				{
+					id: 'schema_public', // Dummy schema layer to match pg-client logic
+					text: 'main',
+					state: { opened: true },
+					icon: 'fa-solid fa-folder-open',
+					children: []
+				}
+			]
+		}
+	];
+
+	rows.forEach(row => {
+		treeData[0].children[0].children.push({
+			id: 'table_public_' + row.name, // Format: table_schema_table
+			text: row.name,
+			icon: row.type === 'view' ? 'fa-solid fa-eye' : 'fa-regular fa-window-maximize',
+		});
+	});
+
+	res.json(treeData);
+}));
+
+app.get("/api/sqlite/columns/:schema/:table", catchAsyncErrors(async (req, res) => {
+	if (!activeSqliteDb) return res.status(400).json({ error: "No SQLite DB connected" });
+	const { table } = req.params;
+
+	try {
+		const columns = activeSqliteDb.prepare(`PRAGMA table_info("${table}")`).all();
+		const formatted = columns.map(c => ({
+			column_name: c.name,
+			data_type: c.type,
+			is_nullable: c.notnull === 0 ? 'YES' : 'NO',
+			column_default: c.dflt_value || null
+		}));
+		res.json(formatted);
+	} catch (error) {
+		res.status(400).json({ error: error.message });
+	}
+}));
+
+app.post("/api/sqlite/execute", catchAsyncErrors(async (req, res) => {
+	if (!activeSqliteDb) return res.status(400).json({ error: "No SQLite DB connected" });
+	const { query } = req.body;
+	if (!query) return res.status(400).json({ error: "No query provided" });
+
+	const startTime = Date.now();
+	try {
+		let result;
+		if (query.trim().toLowerCase().startsWith('select') || query.trim().toLowerCase().startsWith('pragma')) {
+			result = activeSqliteDb.prepare(query).all();
+		} else {
+			const info = activeSqliteDb.prepare(query).run();
+			result = [{ affectedRows: info.changes, lastInsertRowid: info.lastInsertRowid }];
+		}
+		const duration = Date.now() - startTime;
+		res.json({ success: true, data: result, duration });
+	} catch (error) {
+		res.status(400).json({ success: false, error: error.message, duration: Date.now() - startTime });
+	}
+}));
 
 // 주문 시스템 라우터
 app.use("/api/order", orderRouter);
