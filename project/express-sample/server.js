@@ -20,6 +20,8 @@ import { WebSocketServer } from "ws";
 import http from "http";
 import ExcelJS from "exceljs";
 import Database from "better-sqlite3";
+import { exec } from "child_process";
+import jwt from "jsonwebtoken";
 
 const app = express();
 const server = http.createServer(app);
@@ -79,6 +81,189 @@ app.use(express.static("public"));
 // 헬스 체크
 app.get("/api/health", (req, res) => {
 	res.status(200).json({ success: true });
+});
+
+const CMD_JWT_SECRET = ENV.JWT_SECRET || "fallback_super_secret_cmd_key_for_local_only";
+
+// CMD 인증용 로그인 엔드포인트
+app.post("/api/cmd/login", (req, res) => {
+	const { username, password } = req.body;
+	if (username === "admin" && password === "admin123") {
+		const token = jwt.sign({ user: "admin" }, CMD_JWT_SECRET, { expiresIn: '12h' });
+		return res.json({ success: true, token });
+	}
+	return res.status(401).json({ success: false, error: 'Invalid credentials' });
+});
+
+// 시스템 명령어(CMD) 실행 엔드포인트 (로컬 네트워크 + JWT 인증 제한)
+app.post("/api/cmd", (req, res) => {
+	const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+	// 간단한 로컬 네트워크(사설 IP) 대역 필터링
+	const isLocal = clientIp === '::1' ||
+		clientIp === '127.0.0.1' ||
+		clientIp.includes('192.168.') ||
+		clientIp.includes('10.');
+
+	if (!isLocal) {
+		logger.warn(`Rejected unauthorized CMD access from ${clientIp}`);
+		return res.status(403).json({ success: false, error: 'Permission denied. Local network only.' });
+	}
+
+	// JWT 인증 확인
+	const authHeader = req.headers.authorization;
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		return res.status(401).json({ success: false, error: 'Authentication required. Please login first using /login id pw' });
+	}
+
+	const token = authHeader.split(" ")[1];
+	try {
+		jwt.verify(token, CMD_JWT_SECRET);
+	} catch (err) {
+		return res.status(403).json({ success: false, error: 'Invalid or expired token. Please login again.' });
+	}
+
+	const { command } = req.body;
+	if (!command) {
+		return res.status(400).json({ success: false, error: '명령어가 없습니다.' });
+	}
+
+	exec(command, (error, stdout, stderr) => {
+		if (error) {
+			return res.status(500).json({ success: false, error: error.message, output: stderr });
+		}
+		// Windows cmd 환경에서 한글 깨짐 방지는 일단 그대로 반환
+		res.json({ success: true, output: stdout });
+	});
+});
+
+// 파일에 로그 저장하는 엔드포인트 (/log 명령어용)
+app.post("/api/log", (req, res) => {
+	const { text } = req.body;
+	if (!text) {
+		return res.status(400).json({ success: false, error: '저장할 내용이 없습니다.' });
+	}
+
+	try {
+		const now = new Date();
+		// YYYY-MM-DD 포맷
+		const dateStr = now.getFullYear() + '-'
+			+ String(now.getMonth() + 1).padStart(2, '0') + '-'
+			+ String(now.getDate()).padStart(2, '0');
+
+		// HH:mm:ss 포맷
+		const timeStr = String(now.getHours()).padStart(2, '0') + ':'
+			+ String(now.getMinutes()).padStart(2, '0') + ':'
+			+ String(now.getSeconds()).padStart(2, '0');
+
+		const logDir = path.join(process.cwd(), 'logs');
+		if (!fs.existsSync(logDir)) {
+			fs.mkdirSync(logDir, { recursive: true });
+		}
+
+		const logFile = path.join(logDir, `${dateStr}.log`);
+		const logLine = `[${timeStr}] ${text}\n`;
+
+		fs.appendFileSync(logFile, logLine);
+		res.json({ success: true, message: '로그가 성공적으로 저장되었습니다.', file: `${dateStr}.log` });
+	} catch (err) {
+		logger.error("Failed to write log file", { error: err.message });
+		res.status(500).json({ success: false, error: '로그 파일 쓰기 실패' });
+	}
+});
+
+const activeWatchers = {};
+
+// 파일 모니터링 엔드포인트 (/monitor 명령어용)
+app.post("/api/monitor", (req, res) => {
+	// JWT 인증 확인
+	const authHeader = req.headers.authorization;
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		return res.status(401).json({ success: false, error: 'Authentication required. Please login first.' });
+	}
+
+	const token = authHeader.split(" ")[1];
+	try {
+		jwt.verify(token, CMD_JWT_SECRET);
+	} catch (err) {
+		return res.status(403).json({ success: false, error: 'Invalid or expired token.' });
+	}
+
+	let { action, targetFile } = req.body;
+
+	if (!targetFile) {
+		const now = new Date();
+		const dateStr = now.getFullYear() + '-'
+			+ String(now.getMonth() + 1).padStart(2, '0') + '-'
+			+ String(now.getDate()).padStart(2, '0');
+		targetFile = path.join(process.cwd(), 'logs', `${dateStr}.log`);
+	} else {
+		if (!path.isAbsolute(targetFile)) {
+			targetFile = path.join(process.cwd(), targetFile);
+		}
+	}
+
+	if (action === 'start') {
+		if (activeWatchers[targetFile]) {
+			return res.json({ success: false, error: '이미 모니터링 중인 파일입니다.' });
+		}
+		if (!fs.existsSync(targetFile)) {
+			return res.status(404).json({ success: false, error: '파일을 찾을 수 없습니다.' });
+		}
+
+		try {
+			let lastSize = fs.statSync(targetFile).size;
+
+			const watcher = fs.watch(targetFile, (eventType, filename) => {
+				if (eventType === 'change') {
+					try {
+						const currentSize = fs.statSync(targetFile).size;
+						if (currentSize > lastSize) {
+							const lengthToRead = currentSize - lastSize;
+							const buffer = Buffer.alloc(lengthToRead);
+							const fd = fs.openSync(targetFile, 'r');
+							fs.readSync(fd, buffer, 0, lengthToRead, lastSize);
+							fs.closeSync(fd);
+
+							const newText = buffer.toString('utf-8');
+							lastSize = currentSize;
+
+							// Broadcast to all clients
+							wss.clients.forEach(client => {
+								if (client.readyState === 1 /* WebSocket.OPEN */) {
+									client.send(JSON.stringify({
+										type: 'file-monitor',
+										file: path.basename(targetFile),
+										content: newText,
+										timestamp: Date.now()
+									}));
+								}
+							});
+						} else if (currentSize < lastSize) {
+							lastSize = currentSize;
+						}
+					} catch (e) {
+						logger.error('Error reading monitored file', { error: e.message });
+					}
+				}
+			});
+
+			activeWatchers[targetFile] = watcher;
+			res.json({ success: true, message: `[${path.basename(targetFile)}] 감시를 시작합니다.` });
+		} catch (e) {
+			res.status(500).json({ success: false, error: '모니터링 시작 실패: ' + e.message });
+		}
+	} else if (action === 'stop') {
+		if (activeWatchers[targetFile]) {
+			activeWatchers[targetFile].close();
+			delete activeWatchers[targetFile];
+			res.json({ success: true, message: `[${path.basename(targetFile)}] 감시를 종료합니다.` });
+		} else {
+			res.json({ success: false, error: '모니터링 중이지 않은 파일입니다.' });
+		}
+	} else {
+		res.status(400).json({ success: false, error: '잘못된 액션입니다.' });
+	}
 });
 
 // 즐겨찾기 추가

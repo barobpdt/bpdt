@@ -1,0 +1,1 @@
+npm install @capacitor/core; npm install -D @capacitor/cli; npx cap init "ExpressMessenger" "com.express.messenger" --web-dir public
